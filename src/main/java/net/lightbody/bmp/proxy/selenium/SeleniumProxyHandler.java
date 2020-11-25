@@ -688,7 +688,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
      * sendError(403)
      */
     protected void sendForbid(HttpRequest request, HttpResponse response, URI uri) throws IOException {
-        response.sendError(HttpResponse.__403_Forbidden, "Forbidden for Proxy");
+        response.sendError(HttpResponse.__403_Forbidden, "Forbidden for Proxy @691");
     }
 
     /**

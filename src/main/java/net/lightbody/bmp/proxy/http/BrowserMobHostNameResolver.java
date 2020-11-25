@@ -31,11 +31,7 @@ public class BrowserMobHostNameResolver implements HostNameResolver {
 
     public BrowserMobHostNameResolver(Cache cache) {
         this.cache = cache;
-        try {
-            resolver = new ExtendedResolver();
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
+        resolver = new ExtendedResolver();
     }
 
     @Override

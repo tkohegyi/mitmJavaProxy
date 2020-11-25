@@ -615,7 +615,7 @@ public class ProxyHandler extends AbstractHttpHandler
      */
     protected void sendForbid(HttpRequest request, HttpResponse response, URI uri) throws IOException
     {
-        response.sendError(HttpResponse.__403_Forbidden, "Forbidden for Proxy");
+        response.sendError(HttpResponse.__403_Forbidden, "Forbidden for Proxy @618");
     }
 
     /* ------------------------------------------------------------ */
