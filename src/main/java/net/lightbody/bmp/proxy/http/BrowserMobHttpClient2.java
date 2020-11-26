@@ -13,7 +13,7 @@ import net.lightbody.bmp.core.har.HarPostDataParam;
 import net.lightbody.bmp.core.har.HarRequest;
 import net.lightbody.bmp.core.har.HarResponse;
 import net.lightbody.bmp.core.har.HarTimings;
-import net.lightbody.bmp.proxy.ProxyServer;
+import com.epam.wilma.proxy.ProxyServer;
 import net.lightbody.bmp.proxy.util.Base64;
 import net.lightbody.bmp.proxy.util.CappedByteArrayOutputStream;
 import net.lightbody.bmp.proxy.util.ClonedOutputStream;

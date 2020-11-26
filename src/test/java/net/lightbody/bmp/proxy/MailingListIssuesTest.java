@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
+import com.epam.wilma.proxy.ProxyServer;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarContent;
 import net.lightbody.bmp.core.har.HarEntry;
@@ -23,7 +24,6 @@ import net.lightbody.bmp.proxy.http.RequestInterceptor;
 import net.lightbody.bmp.proxy.util.IOUtils;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;

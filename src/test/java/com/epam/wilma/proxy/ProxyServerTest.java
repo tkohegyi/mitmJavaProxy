@@ -1,4 +1,4 @@
-package net.lightbody.bmp.proxy;
+package com.epam.wilma.proxy;
 
 import org.junit.After;
 import org.junit.Before;

@@ -4,7 +4,6 @@ import com.epam.wilma.proxy.help.AbstractProxyTool;
 import com.epam.wilma.proxy.help.DefaultRequestInterceptor;
 import com.epam.wilma.proxy.help.DefaultResponseInterceptor;
 import com.epam.wilma.proxy.help.ResponseInfo;
-import net.lightbody.bmp.proxy.ProxyServer;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

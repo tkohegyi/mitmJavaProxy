@@ -35,7 +35,7 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'jacoco'
 
-version = "0.1.0-alpha-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
+version = "0.1.1-alpha-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
 
 repositories {
     jcenter()

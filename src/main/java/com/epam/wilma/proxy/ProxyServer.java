@@ -1,4 +1,4 @@
-package net.lightbody.bmp.proxy;
+package com.epam.wilma.proxy;
 
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
@@ -6,7 +6,7 @@ import net.lightbody.bmp.core.har.HarLog;
 import net.lightbody.bmp.core.har.HarNameVersion;
 import net.lightbody.bmp.core.har.HarPage;
 import net.lightbody.bmp.core.util.ThreadUtils;
-import net.lightbody.bmp.proxy.http.BrowserMobHttpClient;
+import net.lightbody.bmp.proxy.BrowserMobProxyHandler;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpClient2;
 import net.lightbody.bmp.proxy.http.RequestInterceptor;
 import net.lightbody.bmp.proxy.http.ResponseInterceptor;

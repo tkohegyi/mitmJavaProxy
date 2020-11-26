@@ -15,7 +15,7 @@
 
 package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
-import net.lightbody.bmp.proxy.ProxyServer;
+import com.epam.wilma.proxy.ProxyServer;
 import net.lightbody.bmp.proxy.jetty.http.HttpOnlyCookie;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LazyList;
