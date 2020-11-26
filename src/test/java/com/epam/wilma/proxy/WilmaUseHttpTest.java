@@ -16,7 +16,7 @@ public class WilmaUseHttpTest extends AbstractProxyTool {
     @Override
     protected void setUp() {
         String stubUrl = "http://127.0.0.1:" + stubServerPort + "/stub";
-        LOGGER.info("STUB URL used: {}" , stubUrl);
+        LOGGER.info("STUB URL used: {}", stubUrl);
         DefaultRequestInterceptor defaultRequestInterceptor = new DefaultRequestInterceptor(requestCount, NEED_STUB_RESPONSE, stubUrl);
         DefaultResponseInterceptor defaultResponseInterceptor = new DefaultResponseInterceptor(responseCount);
         proxyServer.addRequestInterceptor(defaultRequestInterceptor);
