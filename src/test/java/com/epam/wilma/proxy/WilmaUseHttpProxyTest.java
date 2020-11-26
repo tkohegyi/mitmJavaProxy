@@ -4,6 +4,7 @@ import com.epam.wilma.proxy.help.AbstractProxyTool;
 import com.epam.wilma.proxy.help.DefaultRequestInterceptor;
 import com.epam.wilma.proxy.help.DefaultResponseInterceptor;
 import com.epam.wilma.proxy.help.ResponseInfo;
+import net.lightbody.bmp.proxy.ProxyServer;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -23,6 +24,7 @@ public class WilmaUseHttpProxyTest extends AbstractProxyTool {
         proxyServer.addResponseInterceptor(defaultResponseInterceptor);
         proxyServer.setCaptureBinaryContent(false);
         proxyServer.setCaptureContent(false);
+        ProxyServer.setResponseVolatile(true);
     }
 
     @Test
@@ -46,7 +48,7 @@ public class WilmaUseHttpProxyTest extends AbstractProxyTool {
     @Test
     public void testSimplePostRequest() throws Exception {
         ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true);
-        Thread.sleep(10); //magic delay is here, otherwise response interceptor update happens later than arriving the response back - wow...
+        //Thread.sleep(10); //magic delay is here, otherwise response interceptor update happens later than arriving the response back - wow...
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());

@@ -28,6 +28,15 @@ HTTP Request Manipulation
 
 TODO
 
+HTTP Response Manipulation
+-------------------
+The key is the Response Volatility. 
+If volatile, proxy must extract, call interceptor, compress, then release response towards Client. This is SLOW.
+If not volatile, proxy may release the response towards the Client, meanwhile extracting the response and notify interceptors.
+So if not volatile, maybe the response arrives to Client before the interceptor actually is called. This ensures the fastest method.
+Response volatility can be set in general via static method: ProxyServer.SetResponseVolatility
+Or can be set per message via ...
+
 SSL Support
 -----------
 
