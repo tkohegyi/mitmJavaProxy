@@ -68,6 +68,9 @@ public class TestUtils {
             SSLContext sslContext = contextSource.getSslContext();
 
             sslContextFactory.setSslContext(sslContext);
+
+            sslContextFactory.setIncludeProtocols("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
+
             ServerConnector connector = new ServerConnector(httpServer, sslContextFactory);
             connector.setPort(0);
             connector.setIdleTimeout(0);

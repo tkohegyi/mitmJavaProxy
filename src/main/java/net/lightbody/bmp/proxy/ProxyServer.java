@@ -7,6 +7,7 @@ import net.lightbody.bmp.core.har.HarNameVersion;
 import net.lightbody.bmp.core.har.HarPage;
 import net.lightbody.bmp.core.util.ThreadUtils;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpClient;
+import net.lightbody.bmp.proxy.http.BrowserMobHttpClient2;
 import net.lightbody.bmp.proxy.http.RequestInterceptor;
 import net.lightbody.bmp.proxy.http.ResponseInterceptor;
 import net.lightbody.bmp.proxy.jetty.http.HttpContext;
@@ -33,7 +34,7 @@ public class ProxyServer {
     private Server server;
     private int port = -1;
     private static Boolean shouldKeepSslConnectionAlive = new Boolean(false); //set it to true if such (e.g. .net) clients we have
-    private BrowserMobHttpClient client;
+    private BrowserMobHttpClient2 client;
     private StreamManager streamManager;
     private HarPage currentPage;
     private BrowserMobProxyHandler handler;
@@ -67,7 +68,7 @@ public class ProxyServer {
         handler = new BrowserMobProxyHandler();
         handler.setJettyServer(server);
         handler.setShutdownLock(new Object());
-        client = new BrowserMobHttpClient(streamManager, requestCounter, requestTimeOut);
+        client = new BrowserMobHttpClient2(streamManager, requestCounter, requestTimeOut);
         client.prepareForBrowser();
         handler.setHttpClient(client);
 
@@ -148,9 +149,9 @@ public class ProxyServer {
         currentPage = null;
     }
 
-    public void setRetryCount(final int count) {
+    /* public void setRetryCount(final int count) {
         client.setRetryCount(count);
-    }
+    } */
 
     public void remapHost(final String source, final String target) {
         client.remapHost(source, target);
@@ -178,10 +179,6 @@ public class ProxyServer {
 
     public void setConnectionTimeout(final int connectionTimeout) {
         client.setConnectionTimeout(connectionTimeout);
-    }
-
-    public void autoBasicAuthorization(final String domain, final String username, final String password) {
-        client.autoBasicAuthorization(domain, username, password);
     }
 
     public void rewriteUrl(final String match, final String replace) {

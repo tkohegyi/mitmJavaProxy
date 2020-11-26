@@ -48,7 +48,6 @@ public class WilmaUseHttpProxyTest extends AbstractProxyTool {
     @Test
     public void testSimplePostRequest() throws Exception {
         ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true);
-        //Thread.sleep(10); //magic delay is here, otherwise response interceptor update happens later than arriving the response back - wow...
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());

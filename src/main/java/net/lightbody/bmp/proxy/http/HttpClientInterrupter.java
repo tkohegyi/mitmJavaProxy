@@ -7,14 +7,14 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 public class HttpClientInterrupter {
     private static final Log LOG = new Log();
-    private static Set<BrowserMobHttpClient> clients = new CopyOnWriteArraySet<BrowserMobHttpClient>();
+    private static Set<BrowserMobHttpClient2> clients = new CopyOnWriteArraySet<BrowserMobHttpClient2>();
 
     static {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 while (true) {
-                    for (BrowserMobHttpClient client : clients) {
+                    for (BrowserMobHttpClient2 client : clients) {
                         try {
                             client.checkTimeout();
                         } catch (Exception e) {
@@ -34,11 +34,11 @@ public class HttpClientInterrupter {
         thread.start();
     }
 
-    public static void watch(BrowserMobHttpClient client) {
+    public static void watch(BrowserMobHttpClient2 client) {
         clients.add(client);
     }
 
-    public static void release(BrowserMobHttpClient client) {
+    public static void release(BrowserMobHttpClient2 client) {
         clients.remove(client);
     }
 }

@@ -7,7 +7,12 @@ import net.lightbody.bmp.core.har.HarCookie;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.proxy.util.IOUtils;
 
+import org.apache.http.HttpHost;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,33 +38,19 @@ public class CookieTest extends DummyServerTest {
     }
 
     @Test
-    public void testCookiesAreCapturedWhenSet() throws IOException {
-        proxy.setCaptureContent(true);
-        proxy.newHar("Test");
-
-        // set the cookie on the server side
-        IOUtils.readFully(client.execute(new HttpGet(COOKIE_URL)).getEntity().getContent());
-
-        Har har = proxy.getHar();
-        HarEntry entry = har.getLog().getEntries().get(0);
-        HarCookie cookie = entry.getResponse().getCookies().get(0);
-        Assert.assertEquals("foo", cookie.getName());
-        Assert.assertEquals("bar", cookie.getValue());
-    }
-
-    @Test
     public void testCookiesAreCapturedWhenRequested() throws IOException {
         proxy.setCaptureContent(true);
         proxy.newHar("Test");
 
+        BasicCookieStore cookieStore = new BasicCookieStore();
         BasicClientCookie cookie = new BasicClientCookie("foo", "bar");
         cookie.setDomain("127.0.0.1");
         cookie.setPath("/");
-        client.getCookieStore().addCookie(cookie);
-
+        cookieStore.addCookie(cookie);
+        HttpHost proxyHost = new HttpHost("127.0.0.1", 8081, "http");
+        HttpClient localClient = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).setProxy(proxyHost).build();
         // set the cookie on the server side
-        String body = IOUtils.readFully(client.execute(new HttpGet(ECHO_URL)).getEntity().getContent());
-        System.out.println(body);
+        String body = IOUtils.readFully(localClient.execute(new HttpGet(ECHO_URL)).getEntity().getContent());
 
         Har har = proxy.getHar();
         HarEntry entry = har.getLog().getEntries().get(0);

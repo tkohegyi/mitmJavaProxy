@@ -2,6 +2,7 @@ package net.lightbody.bmp.proxy;
 
 import net.lightbody.bmp.proxy.http.BadURIException;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpClient;
+import net.lightbody.bmp.proxy.http.BrowserMobHttpClient2;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpRequest;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpResponse;
 import net.lightbody.bmp.proxy.http.RequestCallback;
@@ -52,7 +53,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
 
     private Server jettyServer;
     private int headerBufferMultiplier = HEADER_BUFFER_DEFAULT;
-    private BrowserMobHttpClient httpClient;
+    private BrowserMobHttpClient2 httpClient;
 
     public BrowserMobProxyHandler() {
         super(true, "", "", false, false);
@@ -355,10 +356,6 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
         }
     }
 
-    public void autoBasicAuthorization(final String domain, final String username, final String password) {
-        httpClient.autoBasicAuthorization(domain, username, password);
-    }
-
     public void rewriteUrl(final String match, final String replace) {
         httpClient.rewriteUrl(match, replace);
     }
@@ -405,7 +402,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
         }
     }
 
-    public void setHttpClient(final BrowserMobHttpClient httpClient) {
+    public void setHttpClient(final BrowserMobHttpClient2 httpClient) {
         this.httpClient = httpClient;
     }
 

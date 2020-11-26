@@ -18,7 +18,6 @@ import net.lightbody.bmp.proxy.util.Base64;
 import net.lightbody.bmp.proxy.util.CappedByteArrayOutputStream;
 import net.lightbody.bmp.proxy.util.ClonedOutputStream;
 import net.lightbody.bmp.proxy.util.IOUtils;
-import net.lightbody.bmp.proxy.util.Log;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpClientConnection;
@@ -29,7 +28,6 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.NameValuePair;
 import org.apache.http.ParseException;
 import org.apache.http.StatusLine;
@@ -37,9 +35,8 @@ import org.apache.http.auth.AuthScheme;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.AuthState;
 import org.apache.http.auth.Credentials;
-import org.apache.http.auth.NTCredentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
@@ -48,41 +45,34 @@ import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.params.ClientPNames;
-import org.apache.http.client.params.CookiePolicy;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.conn.ClientConnectionRequest;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
-import org.apache.http.conn.ManagedClientConnection;
+import org.apache.http.conn.ConnectionRequest;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.conn.routing.HttpRoute;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.cookie.CookieOrigin;
 import org.apache.http.cookie.CookieSpec;
-import org.apache.http.cookie.CookieSpecFactory;
+import org.apache.http.cookie.CookieSpecProvider;
 import org.apache.http.cookie.MalformedCookieException;
-import org.apache.http.cookie.params.CookieSpecPNames;
 import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.impl.cookie.BasicClientCookie;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.cookie.BrowserCompatSpec;
 import org.apache.http.params.CoreConnectionPNames;
-import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpRequestExecutor;
-import org.eclipse.jetty.util.MultiMap;
-import org.eclipse.jetty.util.UrlEncoded;
 import org.java_bandwidthlimiter.StreamManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xbill.DNS.Cache;
 import org.xbill.DNS.DClass;
-import sun.nio.ch.IOUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -106,6 +96,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -115,16 +106,18 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
-public class BrowserMobHttpClient {
-    private static final Log LOG = new Log();
+public class BrowserMobHttpClient2 {
+    private final static Logger LOGGER = LoggerFactory.getLogger(BrowserMobHttpClient2.class);
     private static final int MAX_BUFFER_SIZE = 1024 * 1024; // MOB-216 don't buffer more than 1 MB
+    private static final int BUFFER = 4096;
+    private static final int MAX_REDIRECT = 10;
     public static UASparser PARSER = null;
 
     static {
         try {
             PARSER = new CachingOnlineUpdateUASparser();
         } catch (IOException e) {
-            LOG.severe("Unable to create User-Agent parser, falling back but proxy is in damaged state and should be restarted", e);
+            LOGGER.error("Unable to create User-Agent parser, falling back but proxy is in damaged state and should be restarted", e);
             try {
                 PARSER = new UASparser();
             } catch (Exception e1) {
@@ -133,88 +126,74 @@ public class BrowserMobHttpClient {
         }
     }
 
-    public static void setUserAgentParser(final UASparser parser) {
-        PARSER = parser;
-    }
-
-    private static final int BUFFER = 4096;
-
-    private Har har;
-    private String harPageRef;
-
-    private boolean captureHeaders;
-    private boolean captureContent;
-    // if captureContent is set, default policy is to capture binary contents too
-    private boolean captureBinaryContent = true;
-
-    private SimulatedSocketFactory socketFactory;
-    private TrustingSSLSocketFactory sslSocketFactory;
-    private ThreadSafeClientConnManager httpClientConnMgr; // use PoolingHttpClientConnectionManager
-    private DefaultHttpClient httpClient;
-    private List<BlacklistEntry> blacklistEntries = null;
-    private WhitelistEntry whitelistEntry = null;
     private final List<RewriteRule> rewriteRules = new CopyOnWriteArrayList<RewriteRule>();
     private final List<RequestInterceptor> requestInterceptors = new CopyOnWriteArrayList<RequestInterceptor>();
     private final List<ResponseInterceptor> responseInterceptors = new CopyOnWriteArrayList<ResponseInterceptor>();
     private final HashMap<String, String> additionalHeaders = new LinkedHashMap<String, String>();
-    private int requestTimeout;
     private final AtomicBoolean allowNewRequests = new AtomicBoolean(true);
-    private BrowserMobHostNameResolver hostNameResolver;
-    private boolean decompress = true;
     // not using CopyOnWriteArray because we're WRITE heavy and it is for READ heavy operations
     // instead doing it the old fashioned way with a synchronized block
     private final Set<ActiveRequest> activeRequests = new HashSet<ActiveRequest>();
+    private Har har;
+    private String harPageRef;
+    private boolean captureHeaders;
+    private boolean captureContent;
+    // if captureContent is set, default policy is to capture binary contents too
+    private boolean captureBinaryContent = true;
+    private SimulatedSocketFactory2 socketFactory;
+    private TrustingSSLSocketFactory2 sslSocketFactory;
+    private PoolingHttpClientConnectionManager httpClientConnMgr;
+    private HttpClient httpClient;
+    private List<BlacklistEntry> blacklistEntries = null;
+    private WhitelistEntry whitelistEntry = null;
+    private int requestTimeout;
+    private BrowserMobHostNameResolver hostNameResolver;
+    private boolean decompress = true;
     private WildcardMatchingCredentialsProvider credsProvider;
     private boolean shutdown = false;
     private AuthType authType;
 
     private boolean followRedirects = true;
-    private static final int MAX_REDIRECT = 10;
     private AtomicInteger requestCounter;
 
-    public BrowserMobHttpClient(final StreamManager streamManager, final AtomicInteger requestCounter, final int requestTimeOut) {
+    public BrowserMobHttpClient2(final StreamManager streamManager, final AtomicInteger requestCounter, final int requestTimeOut) {
         this.requestCounter = requestCounter;
         this.requestTimeout = requestTimeOut;
-        SchemeRegistry schemeRegistry = new SchemeRegistry();
         hostNameResolver = new BrowserMobHostNameResolver(new Cache(DClass.ANY));
 
-        socketFactory = new SimulatedSocketFactory(hostNameResolver, streamManager, requestTimeout);
+        socketFactory = new SimulatedSocketFactory2(hostNameResolver, streamManager, requestTimeout);
         try {
-            sslSocketFactory = new TrustingSSLSocketFactory(hostNameResolver, streamManager, requestTimeout);
-        } catch (KeyManagementException e) {
-            throw new RuntimeException(e);
-        } catch (UnrecoverableKeyException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (KeyStoreException e) {
+            sslSocketFactory = new TrustingSSLSocketFactory2(hostNameResolver, streamManager, requestTimeout);
+        } catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
             throw new RuntimeException(e);
         }
 
-        sslSocketFactory.setHostnameVerifier(new AllowAllHostnameVerifier());
+        Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", socketFactory)
+                .register("https", sslSocketFactory)
+                .build();
 
-        schemeRegistry.register(new Scheme("http", 80, socketFactory));
-        schemeRegistry.register(new Scheme("https", 443, sslSocketFactory));
-
-        httpClientConnMgr = new ThreadSafeClientConnManager(schemeRegistry) {
-            @Override
-            public ClientConnectionRequest requestConnection(final HttpRoute route, final Object state) {
-                final ClientConnectionRequest wrapped = super.requestConnection(route, state);
-                return new ClientConnectionRequest() {
+        httpClientConnMgr = new PoolingHttpClientConnectionManager(registry) {
+            public ConnectionRequest requestConnection(
+                    final HttpRoute route,
+                    final Object state) {
+                final ConnectionRequest wrapped = super.requestConnection(route, state);
+                return new ConnectionRequest() {
                     @Override
-                    public ManagedClientConnection getConnection(final long timeout, final TimeUnit tunit) throws InterruptedException,
-                        ConnectionPoolTimeoutException {
-                        Date start = new Date();
-                        try {
-                            return wrapped.getConnection(timeout, tunit);
-                        } finally {
-                            RequestInfo.get().blocked(start, new Date());
-                        }
+                    public boolean cancel() {
+                        return wrapped.cancel();
                     }
 
                     @Override
-                    public void abortRequest() {
-                        wrapped.abortRequest();
+                    public HttpClientConnection get(
+                            final long timeout,
+                            final TimeUnit timeUnit) throws InterruptedException, ExecutionException, ConnectionPoolTimeoutException {
+                        Date start = new Date();
+                        try {
+                            return wrapped.get(timeout, timeUnit);
+                        } finally {
+                            RequestInfo.get().blocked(start, new Date());
+                        }
                     }
                 };
             }
@@ -223,116 +202,52 @@ public class BrowserMobHttpClient {
         // MOB-338: 30 total connections and 6 connections per host matches the behavior in Firefox 3
         httpClientConnMgr.setMaxTotal(30);
         httpClientConnMgr.setDefaultMaxPerRoute(6);
-
-        httpClient = new DefaultHttpClient(httpClientConnMgr) {
-            @Override
-            protected HttpRequestExecutor createRequestExecutor() {
-                return new HttpRequestExecutor() {
-                    @Override
-                    protected HttpResponse doSendRequest(final HttpRequest request, final HttpClientConnection conn, final HttpContext context)
-                        throws IOException, HttpException {
-                        Date start = new Date();
-                        HttpResponse response = super.doSendRequest(request, conn, context);
-                        RequestInfo.get().send(start, new Date());
-                        return response;
-                    }
-
-                    @Override
-                    protected HttpResponse doReceiveResponse(final HttpRequest request, final HttpClientConnection conn, final HttpContext context)
-                        throws HttpException, IOException {
-                        Date start = new Date();
-                        HttpResponse response = super.doReceiveResponse(request, conn, context);
-                        RequestInfo.get().wait(start, new Date());
-                        return response;
-                    }
-                };
-            }
-        };
         credsProvider = new WildcardMatchingCredentialsProvider();
-        httpClient.setCredentialsProvider(credsProvider);
-        httpClient.addRequestInterceptor(new PreemptiveAuth(), 0);
-        httpClient.getParams().setParameter(ClientPNames.HANDLE_REDIRECTS, true);
-        httpClient.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.BROWSER_COMPATIBILITY);
-        httpClient.getParams().setParameter(CookieSpecPNames.SINGLE_COOKIE_HEADER, Boolean.TRUE);
-        setRetryCount(0);
 
-        // we always set this to false so it can be handled manually:
-        httpClient.getParams().setParameter(ClientPNames.HANDLE_REDIRECTS, false);
+        httpClient = HttpClientBuilder.create()
+                .setConnectionManager(httpClientConnMgr)
+                .setRequestExecutor(new SimulatedRequestExecutor())
+                .setDefaultCredentialsProvider(credsProvider)
+                .addInterceptorFirst(new PreemptiveAuth())
+                .setRetryHandler(new DefaultHttpRequestRetryHandler(0, false))
+                .setDefaultCookieStore(new BlankCookieStore())
+                .setDefaultCookieSpecRegistry(
+                        RegistryBuilder.<CookieSpecProvider>create().register("easy", new CookieSpecProvider() {
+                                    @Override
+                                    public CookieSpec create(HttpContext context) {
+                                        return new BrowserCompatSpec() {
+                                            @Override
+                                            public void validate(final Cookie cookie, final CookieOrigin origin) throws MalformedCookieException {
+                                                // easy!
+                                            }
+                                        };
+                                    }
+                                }
+                        ).build())
+                .disableRedirectHandling() //setRedirectStrategy(new LaxRedirectStrategy())
+                .setConnectionTimeToLive(requestTimeOut, TimeUnit.MILLISECONDS)
+                .build();
 
-      //  HttpClientInterrupter.watch(this);
-        setConnectionTimeout(requestTimeOut);
-        setSocketOperationTimeout(requestTimeOut);
-        setRequestTimeout(-1);
+
+        HttpClientInterrupter.watch(this);
     }
 
-    public void setRetryCount(final int count) {
-        httpClient.setHttpRequestRetryHandler(new DefaultHttpRequestRetryHandler(count, false));
+    public static void setUserAgentParser(final UASparser parser) {
+        PARSER = parser;
     }
 
     public void remapHost(final String source, final String target) {
         hostNameResolver.remap(source, target);
     }
 
-    @Deprecated
-    public void addRequestInterceptor(final HttpRequestInterceptor i) {
-        httpClient.addRequestInterceptor(i);
-    }
-
     public void addRequestInterceptor(final RequestInterceptor interceptor) {
         requestInterceptors.add(interceptor);
-    }
-
-    @Deprecated
-    public void addResponseInterceptor(final HttpResponseInterceptor i) {
-        httpClient.addResponseInterceptor(i);
     }
 
     public void addResponseInterceptor(final ResponseInterceptor interceptor) {
         responseInterceptors.add(interceptor);
     }
 
-    public void createCookie(final String name, final String value, final String domain) {
-        createCookie(name, value, domain, null);
-    }
-
-    public void createCookie(final String name, final String value, final String domain, final String path) {
-        BasicClientCookie cookie = new BasicClientCookie(name, value);
-        cookie.setDomain(domain);
-        if (path != null) {
-            cookie.setPath(path);
-        }
-        httpClient.getCookieStore().addCookie(cookie);
-    }
-
-    public void clearCookies() {
-        httpClient.getCookieStore().clear();
-    }
-
-    public Cookie getCookie(final String name) {
-        return getCookie(name, null, null);
-    }
-
-    public Cookie getCookie(final String name, final String domain) {
-        return getCookie(name, domain, null);
-    }
-
-    public Cookie getCookie(final String name, final String domain, final String path) {
-        for (Cookie cookie : httpClient.getCookieStore().getCookies()) {
-            if (cookie.getName().equals(name)) {
-                if (domain != null && !domain.equals(cookie.getDomain())) {
-                    continue;
-                }
-                if (path != null && !path.equals(cookie.getPath())) {
-                    continue;
-                }
-
-                return cookie;
-            }
-        }
-
-        return null;
-    }
-/*
     public BrowserMobHttpRequest newPost(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
         try {
             URI uri = makeUri(url);
@@ -386,7 +301,7 @@ public class BrowserMobHttpClient {
             throw reportBadURI(url, "HEAD");
         }
     }
-*/
+
     private URI makeUri(String url) throws URISyntaxException {
         // MOB-120: check for | character and change to correctly escaped %7C
         url = url.replace(" ", "%20");
@@ -527,7 +442,7 @@ public class BrowserMobHttpClient {
                 } catch (IOException e) {
                     // ignore it, it's fine
                 } catch (Exception e) {
-                    LOG.warn("Failed to parse user agent string", e);
+                    LOGGER.warn("Failed to parse user agent string", e);
                 }
             }
         }
@@ -546,7 +461,7 @@ public class BrowserMobHttpClient {
                 method.setURI(new URI(newUrl));
                 url = newUrl;
             } catch (URISyntaxException e) {
-                LOG.warn("Could not rewrite url to %s", newUrl);
+                LOGGER.warn("Could not rewrite url to %s", newUrl);
             }
         }
 
@@ -697,22 +612,20 @@ public class BrowserMobHttpClient {
                     if (contentEncodingHeader != null) {
                         if ("gzip".equalsIgnoreCase(contentEncodingHeader.getValue())) {
                             gzipping = true;
-                            }
-                        else if ("deflate".equalsIgnoreCase(contentEncodingHeader.getValue())) {
+                        } else if ("deflate".equalsIgnoreCase(contentEncodingHeader.getValue())) {
                             deflating = true;
-                            }
+                        }
                     }
 
                     // deal with GZIP content!
-                    if(decompress && response.getEntity().getContentLength() != 0) { //getContentLength<0 if unknown
+                    if (decompress && response.getEntity().getContentLength() != 0) { //getContentLength<0 if unknown
                         if (gzipping) {
                             is = new GZIPInputStream(is);
-                            }
-                        else if (deflating) {  //RAW deflate only
+                        } else if (deflating) {  //RAW deflate only
                             // WARN : if system is using zlib<=1.1.4 the stream must be append with a dummy byte
                             // that is not required for zlib>1.1.4 (not mentioned on current Inflater javadoc)
                             is = new InflaterInputStream(is, new Inflater(true));
-                            }
+                        }
                     }
 
                     if (isResponseVolatile) {
@@ -740,7 +653,7 @@ public class BrowserMobHttpClient {
 
             // only log it if we're not shutdown (otherwise, errors that happen during a shutdown can likely be ignored)
             if (!shutdown) {
-                LOG.info(String.format("%s when requesting %s", errorMessage, url));
+                LOGGER.info(String.format("%s when requesting %s", errorMessage, url));
             }
         } finally {
             // the request is done, get it out of here
@@ -817,7 +730,7 @@ public class BrowserMobHttpClient {
                             }
                         }
                     } catch (Exception e) {
-                        LOG.info("Unexpected problem when parsing input copy", e);
+                        LOGGER.info("Unexpected problem when parsing input copy", e);
                     }
                 } else {
                     // not URL encoded, so let's grab the body of the POST and capture that
@@ -861,8 +774,7 @@ public class BrowserMobHttpClient {
                                 InputStream temp = null;
                                 if (gzipping) {
                                     temp = new GZIPInputStream(new ByteArrayInputStream(copy.toByteArray()));
-                                }
-                                else if (deflating) {
+                                } else if (deflating) {
                                     //RAW deflate only
                                     // WARN : if system is using zlib<=1.1.4 the stream must be append with a dummy byte
                                     // that is not required for zlib>1.1.4 (not mentioned on current Inflater javadoc)
@@ -968,7 +880,7 @@ public class BrowserMobHttpClient {
 
                 return execute(req, ++depth, isResponseVolatile);
             } catch (URISyntaxException e) {
-                LOG.warn("Could not parse URL", e);
+                LOGGER.warn("Could not parse URL", e);
             }
         }
 
@@ -1023,7 +935,7 @@ public class BrowserMobHttpClient {
         rewriteRules.clear();
         credsProvider.clear();
         httpClientConnMgr.shutdown();
-        //HttpClientInterrupter.release(this);
+        HttpClientInterrupter.release(this);
     }
 
     public void abortActiveRequests() {
@@ -1035,10 +947,6 @@ public class BrowserMobHttpClient {
             }
             activeRequests.clear();
         }
-    }
-
-    public void setHar(final Har har) {
-        this.har = har;
     }
 
     public void setHarPageRef(final String harPageRef) {
@@ -1057,23 +965,13 @@ public class BrowserMobHttpClient {
         httpClient.getParams().setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, connectionTimeout);
     }
 
-    public void setFollowRedirects(final boolean followRedirects) {
-        this.followRedirects = followRedirects;
-
-    }
-
     public boolean isFollowRedirects() {
         return followRedirects;
     }
 
-    public void autoBasicAuthorization(final String domain, final String username, final String password) {
-        authType = AuthType.BASIC;
-        httpClient.getCredentialsProvider().setCredentials(new AuthScope(domain, -1), new UsernamePasswordCredentials(username, password));
-    }
+    public void setFollowRedirects(final boolean followRedirects) {
+        this.followRedirects = followRedirects;
 
-    public void autoNTLMAuthorization(final String domain, final String username, final String password) {
-        authType = AuthType.NTLM;
-        httpClient.getCredentialsProvider().setCredentials(new AuthScope(domain, -1), new NTCredentials(username, password, "workstation", domain));
     }
 
     public void rewriteUrl(final String match, final String replace) {
@@ -1102,25 +1000,6 @@ public class BrowserMobHttpClient {
         additionalHeaders.put(name, value);
     }
 
-    public void prepareForBrowser() {
-        // Clear cookies, let the browser handle them
-        httpClient.setCookieStore(new BlankCookieStore());
-        httpClient.getCookieSpecs().register("easy", new CookieSpecFactory() {
-            @Override
-            public CookieSpec newInstance(final HttpParams params) {
-                return new BrowserCompatSpec() {
-                    @Override
-                    public void validate(final Cookie cookie, final CookieOrigin origin) throws MalformedCookieException {
-                        // easy!
-                    }
-                };
-            }
-        });
-        httpClient.getParams().setParameter(ClientPNames.COOKIE_POLICY, "easy");
-        decompress = false;
-        setFollowRedirects(false);
-    }
-
     public String remappedHost(final String host) {
         return hostNameResolver.remapping(host);
     }
@@ -1131,6 +1010,10 @@ public class BrowserMobHttpClient {
 
     public Har getHar() {
         return har;
+    }
+
+    public void setHar(final Har har) {
+        this.har = har;
     }
 
     public void setCaptureHeaders(final boolean captureHeaders) {
@@ -1150,6 +1033,27 @@ public class BrowserMobHttpClient {
         Integer port = Integer.parseInt(httpProxy.split(":")[1]);
         HttpHost proxy = new HttpHost(host, port);
         httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
+    }
+
+    public void clearDNSCache() {
+        hostNameResolver.clearCache();
+    }
+
+    public void setDNSCacheTimeout(final int timeout) {
+        hostNameResolver.setCacheTimeout(timeout);
+    }
+
+    public void prepareForBrowser() {
+        // Clear cookies, let the browser handle them
+        //httpClient.getParams().setParameter(ClientPNames.COOKIE_POLICY, "easy");
+        decompress = false;
+        setFollowRedirects(false);
+    }
+
+    private enum AuthType {
+        NONE,
+        BASIC,
+        NTLM
     }
 
     static class PreemptiveAuth implements HttpRequestInterceptor {
@@ -1188,8 +1092,7 @@ public class BrowserMobHttpClient {
         void checkTimeout() {
             if (requestTimeout != -1) {
                 if (request != null && start != null && new Date(System.currentTimeMillis() - requestTimeout).after(start)) {
-                    LOG.info("Aborting request to %s after it failed to complete in %d ms", request.getURI().toString(), requestTimeout);
-
+                    LOGGER.info("Aborting request to %s after it failed to complete in %d ms", request.getURI().toString(), requestTimeout);
                     abort();
                 }
             }
@@ -1241,20 +1144,6 @@ public class BrowserMobHttpClient {
             this.match = Pattern.compile(match);
             this.replace = replace;
         }
-    }
-
-    private enum AuthType {
-        NONE,
-        BASIC,
-        NTLM
-    }
-
-    public void clearDNSCache() {
-        hostNameResolver.clearCache();
-    }
-
-    public void setDNSCacheTimeout(final int timeout) {
-        hostNameResolver.setCacheTimeout(timeout);
     }
 
 }
