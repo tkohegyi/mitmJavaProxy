@@ -1,4 +1,4 @@
-package org.epam.wilma.proxy.help;
+package com.epam.wilma.proxy.help;
 
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.ssl.SSLSocketFactory;

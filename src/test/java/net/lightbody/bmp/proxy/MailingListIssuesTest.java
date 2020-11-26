@@ -315,45 +315,6 @@ public class MailingListIssuesTest extends DummyServerTest {
     }
 
     @Test
-    public void testThatUrlEncodedQueryStringIsParsedCorrectlyNotVolatile() throws IOException, InterruptedException {
-        ProxyServer.setResponseVolatile(false);
-        testThatUrlEncodedQueryStringIsParsedCorrectly();
-    }
-
-    @Test
-    public void testThatUrlEncodedQueryStringIsParsedCorrectlyVolatile() throws IOException, InterruptedException {
-        ProxyServer.setResponseVolatile(true);
-        testThatUrlEncodedQueryStringIsParsedCorrectly();
-    }
-
-    public void testThatUrlEncodedQueryStringIsParsedCorrectly() throws IOException, InterruptedException {
-        proxy.setCaptureContent(true);
-        proxy.newHar("Test");
-
-        HttpGet get = new HttpGet(ENCODED_QUERY_STRING_URL);
-        client.execute(get);
-
-        Har har = proxy.getHar();
-        Assert.assertNotNull("Har is null", har);
-        HarLog log = har.getLog();
-        Assert.assertNotNull("Log is null", log);
-        List<HarEntry> entries = log.getEntries();
-        Assert.assertNotNull("Entries are null", entries);
-        HarEntry entry = entries.get(0);
-        Assert.assertNotNull("No entry found", entry);
-        HarRequest req = entry.getRequest();
-        Assert.assertNotNull("No request found", req);
-        HarNameValuePair queryStringParam = req.getQueryString().get(1);
-        Assert.assertNotNull("No request query string param found", queryStringParam);
-        Assert.assertEquals("foo", queryStringParam.getName());
-        Assert.assertEquals("bar", queryStringParam.getValue());
-        queryStringParam = req.getQueryString().get(0);
-        Assert.assertNotNull("No request query string param found", queryStringParam);
-        Assert.assertEquals("a", queryStringParam.getName());
-        Assert.assertEquals("1&2", queryStringParam.getValue());
-    }
-
-    @Test
     public void testThatGzippedContentIsProperlyCapturedInHarNotVolatile() throws IOException, InterruptedException {
         ProxyServer.setResponseVolatile(false);
         testThatGzippedContentIsProperlyCapturedInHar();

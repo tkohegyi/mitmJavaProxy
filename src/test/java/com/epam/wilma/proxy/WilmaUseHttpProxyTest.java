@@ -1,9 +1,9 @@
-package org.epam.wilma.proxy;
+package com.epam.wilma.proxy;
 
-import org.epam.wilma.proxy.help.AbstractProxyTool;
-import org.epam.wilma.proxy.help.DefaultRequestInterceptor;
-import org.epam.wilma.proxy.help.DefaultResponseInterceptor;
-import org.epam.wilma.proxy.help.ResponseInfo;
+import com.epam.wilma.proxy.help.AbstractProxyTool;
+import com.epam.wilma.proxy.help.DefaultRequestInterceptor;
+import com.epam.wilma.proxy.help.DefaultResponseInterceptor;
+import com.epam.wilma.proxy.help.ResponseInfo;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -16,7 +16,6 @@ public class WilmaUseHttpProxyTest extends AbstractProxyTool {
     @Override
     protected void setUp() {
         String stubUrl = "http://127.0.0.1:" + stubServerPort + "/stub";
-//       String stubUrl = "http://127.0.0.1:9090/ok";
         LOGGER.info("STUB URL used: {}" , stubUrl);
         DefaultRequestInterceptor defaultRequestInterceptor = new DefaultRequestInterceptor(requestCount, NEED_STUB_RESPONSE, stubUrl);
         DefaultResponseInterceptor defaultResponseInterceptor = new DefaultResponseInterceptor(responseCount);
@@ -47,7 +46,7 @@ public class WilmaUseHttpProxyTest extends AbstractProxyTool {
     @Test
     public void testSimplePostRequest() throws Exception {
         ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true);
-        Thread.sleep(10);
+        Thread.sleep(10); //magic delay is here, otherwise response interceptor update happens later than arriving the response back - wow...
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());

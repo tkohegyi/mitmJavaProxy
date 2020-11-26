@@ -616,6 +616,7 @@ public class BrowserMobHttpClient {
             har.getLog().addEntry(entry);
         }
 
+        /* This part puts query info into the har entry - Wilma don1t need it so cut out
         String query = method.getURI().getRawQuery();
         if (query != null) {
             MultiMap<String> params = new MultiMap<String>();
@@ -625,7 +626,7 @@ public class BrowserMobHttpClient {
                     entry.getRequest().getQueryString().add(new HarNameValuePair(k, (String) v));
                 }
             }
-        }
+        }*/
 
         String errorMessage = null;
         HttpResponse response = null;

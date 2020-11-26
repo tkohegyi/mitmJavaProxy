@@ -1,4 +1,4 @@
-package org.epam.wilma.proxy.help;
+package com.epam.wilma.proxy.help;
 
 import net.lightbody.bmp.proxy.http.BrowserMobHttpResponse;
 import net.lightbody.bmp.proxy.http.ResponseInterceptor;

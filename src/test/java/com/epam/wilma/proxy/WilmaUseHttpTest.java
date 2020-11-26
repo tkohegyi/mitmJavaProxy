@@ -1,9 +1,9 @@
-package org.epam.wilma.proxy;
+package com.epam.wilma.proxy;
 
-import org.epam.wilma.proxy.help.AbstractProxyTool;
-import org.epam.wilma.proxy.help.DefaultRequestInterceptor;
-import org.epam.wilma.proxy.help.DefaultResponseInterceptor;
-import org.epam.wilma.proxy.help.ResponseInfo;
+import com.epam.wilma.proxy.help.AbstractProxyTool;
+import com.epam.wilma.proxy.help.DefaultRequestInterceptor;
+import com.epam.wilma.proxy.help.DefaultResponseInterceptor;
+import com.epam.wilma.proxy.help.ResponseInfo;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
