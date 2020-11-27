@@ -1,4 +1,4 @@
-package com.epam.browsermob.messagemarker.idgenerator;
+package com.epam.mitm.idgenerator;
 /*==========================================================================
 Copyright since 2013, EPAM Systems
 
@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with Wilma.  If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
+import com.epam.mitm.idgenerator.CurrentDateProvider;
+import com.epam.mitm.idgenerator.TimeStampBasedIdGenerator;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;

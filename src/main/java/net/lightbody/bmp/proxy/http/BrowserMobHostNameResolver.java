@@ -1,8 +1,18 @@
 package net.lightbody.bmp.proxy.http;
 
-import net.lightbody.bmp.proxy.util.Log;
 import org.apache.http.conn.scheme.HostNameResolver;
-import org.xbill.DNS.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xbill.DNS.ARecord;
+import org.xbill.DNS.Address;
+import org.xbill.DNS.Cache;
+import org.xbill.DNS.ExtendedResolver;
+import org.xbill.DNS.Lookup;
+import org.xbill.DNS.Name;
+import org.xbill.DNS.Record;
+import org.xbill.DNS.Resolver;
+import org.xbill.DNS.TextParseException;
+import org.xbill.DNS.Type;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -14,15 +24,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BrowserMobHostNameResolver implements HostNameResolver {
-    private static final Log LOG = new Log();
-
     public static ThreadLocal<Boolean> fakeSlow = new ThreadLocal<Boolean>() {
         @Override
         protected Boolean initialValue() {
             return false;
         }
     };
-
+    protected final Logger logger = LoggerFactory.getLogger(BrowserMobHostNameResolver.class);
     private Map<String, String> remappings = new ConcurrentHashMap<String, String>();
     private Map<String, List<String>> reverseMapping = new ConcurrentHashMap<String, List<String>>();
 

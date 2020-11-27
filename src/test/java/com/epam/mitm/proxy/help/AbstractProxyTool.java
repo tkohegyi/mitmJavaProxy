@@ -1,6 +1,6 @@
-package com.epam.wilma.proxy.help;
+package com.epam.mitm.proxy.help;
 
-import com.epam.wilma.proxy.ProxyServer;
+import com.epam.mitm.proxy.ProxyServer;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;

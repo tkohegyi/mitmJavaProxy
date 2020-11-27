@@ -1,4 +1,4 @@
-package com.epam.wilma.proxy.help;
+package com.epam.mitm.proxy.help;
 
 import com.google.common.io.ByteStreams;
 

@@ -1,6 +1,6 @@
 package net.lightbody.bmp.proxy.selenium;
 
-import com.epam.wilma.proxy.ProxyServer;
+import com.epam.mitm.proxy.ProxyServer;
 import net.lightbody.bmp.proxy.jetty.http.*;
 import net.lightbody.bmp.proxy.jetty.http.handler.AbstractHttpHandler;
 import net.lightbody.bmp.proxy.jetty.util.IO;

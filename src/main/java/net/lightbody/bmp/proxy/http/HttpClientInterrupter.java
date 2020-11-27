@@ -1,12 +1,13 @@
 package net.lightbody.bmp.proxy.http;
 
-import net.lightbody.bmp.proxy.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class HttpClientInterrupter {
-    private static final Log LOG = new Log();
+    protected static final Logger logger = LoggerFactory.getLogger(HttpClientInterrupter.class);
     private static Set<BrowserMobHttpClient2> clients = new CopyOnWriteArraySet<BrowserMobHttpClient2>();
 
     static {
@@ -18,7 +19,7 @@ public class HttpClientInterrupter {
                         try {
                             client.checkTimeout();
                         } catch (Exception e) {
-                            LOG.severe("Unexpected problem while checking timeout on a client", e);
+                            logger.error("Unexpected problem while checking timeout on a client", e);
                         }
                     }
 

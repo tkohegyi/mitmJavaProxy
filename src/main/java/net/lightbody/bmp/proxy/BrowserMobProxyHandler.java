@@ -1,7 +1,6 @@
 package net.lightbody.bmp.proxy;
 
 import net.lightbody.bmp.proxy.http.BadURIException;
-import net.lightbody.bmp.proxy.http.BrowserMobHttpClient;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpClient2;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpRequest;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpResponse;
@@ -18,7 +17,6 @@ import net.lightbody.bmp.proxy.jetty.jetty.Server;
 import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
 import net.lightbody.bmp.proxy.jetty.util.URI;
 import net.lightbody.bmp.proxy.selenium.SeleniumProxyHandler;
-import net.lightbody.bmp.proxy.util.Log;
 import org.apache.http.Header;
 import org.apache.http.StatusLine;
 import org.apache.http.conn.ConnectTimeoutException;
@@ -45,11 +43,9 @@ import java.util.Set;
  * Proxy handler.
  */
 public class BrowserMobProxyHandler extends SeleniumProxyHandler {
-    private static final Log LOG = new Log();
+    protected static final Logger logger = LoggerFactory.getLogger(BrowserMobProxyHandler.class);
     private static final int HEADER_BUFFER_DEFAULT = 2;
     protected final Set<SslRelay> sslRelays = new HashSet<SslRelay>();
-
-    private final Logger logger = LoggerFactory.getLogger(BrowserMobProxyHandler.class);
 
     private Server jettyServer;
     private int headerBufferMultiplier = HEADER_BUFFER_DEFAULT;
@@ -78,9 +74,43 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
         setTunnelTimeoutMs(300000);
     }
 
+    private static void reportError(final Exception e, final URL url, final HttpResponse response) {
+        int status = HttpServletResponse.SC_BAD_GATEWAY;
+        String shortDesc = "PROXY: Bad Gateway";
+        String longDesc = "The server was acting as a gateway or proxy and received an invalid response from the upstream server.";
+        if (e instanceof UnknownHostException) {
+            status = HttpServletResponse.SC_NOT_FOUND;
+            shortDesc = "PROXY: Not Found";
+            longDesc = "The requested resource could not be found but may be available again in the future. Subsequent requests by the client are permissible.";
+        } else if (e instanceof ConnectException) {
+            status = HttpServletResponse.SC_SERVICE_UNAVAILABLE;
+            shortDesc = "PROXY: Service Unavailable";
+            longDesc = "The server is currently unavailable (because it is overloaded or down for maintenance). Generally, this is a temporary state.";
+        } else if (e instanceof ConnectTimeoutException) {
+            status = HttpServletResponse.SC_GATEWAY_TIMEOUT;
+            shortDesc = "PROXY: Connection timed out!";
+            longDesc = "The server was acting as a gateway or proxy and did not receive a timely response from the upstream server.";
+        } else if (e instanceof SocketTimeoutException) {
+            status = HttpServletResponse.SC_GATEWAY_TIMEOUT;
+            shortDesc = "PROXY: Connection timed out!";
+            longDesc = "The server was acting as a gateway or proxy and did not receive a timely response from the upstream server.";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(shortDesc).append("\n").append(longDesc);
+        String text = sb.toString();
+        try {
+            response.setStatus(status);
+            response.setContentLength(text.length());
+            response.getOutputStream().write(text.getBytes());
+        } catch (IOException e1) {
+            logger.warn("IOException while trying to report an HTTP error");
+        }
+    }
+
     @Override
     public void handleConnect(final String pathInContext, final String pathParams, final HttpRequest request, final HttpResponse response)
-        throws HttpException, IOException {
+            throws HttpException, IOException {
         URI uri = request.getURI();
         String original = uri.toString();
         String host = original;
@@ -155,7 +185,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
 
     @Override
     protected HttpTunnel newHttpTunnel(final HttpRequest httpRequest, final HttpResponse httpResponse, final InetAddress inetAddress, final int i,
-            final int i1) throws IOException {
+                                       final int i1) throws IOException {
         // we're opening up a new tunnel, so let's make sure that the associated SslRelay (which may or may not be new) has the proper buffer settings
         adjustListenerBuffers();
 
@@ -165,7 +195,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
     @Override
     @SuppressWarnings({"unchecked"})
     protected long proxyPlainTextRequest(final URL url, final String pathInContext, final String pathParams, final HttpRequest request,
-            final HttpResponse response) throws IOException {
+                                         final HttpResponse response) throws IOException {
         try {
             String urlStr = url.toString();
 
@@ -259,7 +289,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
                     httpReq.setRequestInputStream(new ByteArrayInputStream(baos.toByteArray()), contentLength);
                 }
             } catch (Exception e) {
-                LOG.fine(e.getMessage(), e);
+                logger.debug(e.getMessage(), e);
             }
 
             // execute the request
@@ -301,7 +331,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
             return httpRes.getEntry().getResponse().getBodySize();
         } catch (BadURIException e) {
             // this is a known error case (see MOB-93)
-            LOG.info(e.getMessage());
+            logger.info(e.getMessage());
             BrowserMobProxyHandler.reportError(e, url, response);
             return -1;
         } catch (Exception e) {
@@ -320,40 +350,6 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
         }
         baos.flush();
         return baos;
-    }
-
-    private static void reportError(final Exception e, final URL url, final HttpResponse response) {
-        int status = HttpServletResponse.SC_BAD_GATEWAY;
-        String shortDesc = "PROXY: Bad Gateway";
-        String longDesc = "The server was acting as a gateway or proxy and received an invalid response from the upstream server.";
-        if (e instanceof UnknownHostException) {
-            status = HttpServletResponse.SC_NOT_FOUND;
-            shortDesc = "PROXY: Not Found";
-            longDesc = "The requested resource could not be found but may be available again in the future. Subsequent requests by the client are permissible.";
-        } else if (e instanceof ConnectException) {
-            status = HttpServletResponse.SC_SERVICE_UNAVAILABLE;
-            shortDesc = "PROXY: Service Unavailable";
-            longDesc = "The server is currently unavailable (because it is overloaded or down for maintenance). Generally, this is a temporary state.";
-        } else if (e instanceof ConnectTimeoutException) {
-            status = HttpServletResponse.SC_GATEWAY_TIMEOUT;
-            shortDesc = "PROXY: Connection timed out!";
-            longDesc = "The server was acting as a gateway or proxy and did not receive a timely response from the upstream server.";
-        } else if (e instanceof SocketTimeoutException) {
-            status = HttpServletResponse.SC_GATEWAY_TIMEOUT;
-            shortDesc = "PROXY: Connection timed out!";
-            longDesc = "The server was acting as a gateway or proxy and did not receive a timely response from the upstream server.";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(shortDesc).append("\n").append(longDesc);
-        String text = sb.toString();
-        try {
-            response.setStatus(status);
-            response.setContentLength(text.length());
-            response.getOutputStream().write(text.getBytes());
-        } catch (IOException e1) {
-            LOG.warn("IOException while trying to report an HTTP error");
-        }
     }
 
     public void rewriteUrl(final String match, final String replace) {

@@ -1,4 +1,4 @@
-package com.epam.wilma.proxy.help;
+package com.epam.mitm.proxy.help;
 
 public class ResponseInfo {
     private int statusCode;

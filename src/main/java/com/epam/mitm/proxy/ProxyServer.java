@@ -1,4 +1,4 @@
-package com.epam.wilma.proxy;
+package com.epam.mitm.proxy;
 
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
@@ -15,9 +15,10 @@ import net.lightbody.bmp.proxy.jetty.http.HttpListener;
 import net.lightbody.bmp.proxy.jetty.http.SocketListener;
 import net.lightbody.bmp.proxy.jetty.jetty.Server;
 import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
-import net.lightbody.bmp.proxy.util.Log;
 import org.java_bandwidthlimiter.BandwidthLimiter;
 import org.java_bandwidthlimiter.StreamManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.Map;
@@ -25,27 +26,41 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProxyServer {
+    protected static final Logger logger = LoggerFactory.getLogger(ProxyServer.class);
+    private static final HarNameVersion CREATOR = new HarNameVersion("Wilma Proxy", "2.2.1");
     public static int PROXY_TIMEOUT = 240000; //4 minutes, by default will be set during ProxyServer.start()
-
-    private static final HarNameVersion CREATOR = new HarNameVersion("BrowserMob Proxy - for Wilma", "2.2");
-    private static final Log LOG = new Log();
-    private static Boolean responseVolatile = new Boolean(false);
-
+    private static Boolean responseVolatile = Boolean.FALSE;  //general default approach is that the response is not volatile
+    private static Boolean shouldKeepSslConnectionAlive = Boolean.FALSE; //set it to true if such (e.g. .net) clients we have
+    private final AtomicInteger requestCounter = new AtomicInteger(0);
     private Server server;
     private int port = -1;
-    private static Boolean shouldKeepSslConnectionAlive = new Boolean(false); //set it to true if such (e.g. .net) clients we have
     private BrowserMobHttpClient2 client;
     private StreamManager streamManager;
     private HarPage currentPage;
     private BrowserMobProxyHandler handler;
     private int pageCount = 1;
-    private final AtomicInteger requestCounter = new AtomicInteger(0);
 
     public ProxyServer() {
     }
 
     public ProxyServer(final int port) {
         this.port = port;
+    }
+
+    public static Boolean getResponseVolatile() {
+        return responseVolatile;
+    }
+
+    public static void setResponseVolatile(Boolean responseVolatile) {
+        ProxyServer.responseVolatile = responseVolatile;
+    }
+
+    public static Boolean getShouldKeepSslConnectionAlive() {
+        return shouldKeepSslConnectionAlive;
+    }
+
+    public static void setShouldKeepSslConnectionAlive(Boolean shouldKeepSslConnectionAlive) {
+        ProxyServer.shouldKeepSslConnectionAlive = shouldKeepSslConnectionAlive;
     }
 
     public void start(final int requestTimeOut) throws Exception {
@@ -97,6 +112,10 @@ public class ProxyServer {
         this.port = port;
     }
 
+    /* public void setRetryCount(final int count) {
+        client.setRetryCount(count);
+    } */
+
     public Har getHar() {
         // Wait up to 5 seconds for all active requests to cease before returning the HAR.
         // This helps with race conditions but won't cause deadlocks should a request hang
@@ -109,7 +128,7 @@ public class ProxyServer {
         }, TimeUnit.SECONDS, 5);
 
         if (!success) {
-            LOG.warn("Waited 5 seconds for requests to cease before returning HAR; giving up!");
+            logger.warn("Waited 5 seconds for requests to cease before returning HAR; giving up!");
         }
 
         return client.getHar();
@@ -148,10 +167,6 @@ public class ProxyServer {
         client.setHarPageRef(null);
         currentPage = null;
     }
-
-    /* public void setRetryCount(final int count) {
-        client.setRetryCount(count);
-    } */
 
     public void remapHost(final String source, final String target) {
         client.remapHost(source, target);
@@ -254,22 +269,6 @@ public class ProxyServer {
         if (options.containsKey("httpProxy")) {
             client.setHttpProxy(options.get("httpProxy"));
         }
-    }
-
-    public static Boolean getResponseVolatile() {
-        return responseVolatile;
-    }
-
-    public static void setResponseVolatile(Boolean responseVolatile) {
-        ProxyServer.responseVolatile = responseVolatile;
-    }
-
-    public static Boolean getShouldKeepSslConnectionAlive() {
-        return shouldKeepSslConnectionAlive;
-    }
-
-    public static void setShouldKeepSslConnectionAlive(Boolean shouldKeepSslConnectionAlive) {
-        ProxyServer.shouldKeepSslConnectionAlive = shouldKeepSslConnectionAlive;
     }
 
 }

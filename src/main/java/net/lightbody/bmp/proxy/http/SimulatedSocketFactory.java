@@ -1,6 +1,5 @@
 package net.lightbody.bmp.proxy.http;
 
-import net.lightbody.bmp.proxy.util.Log;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.HttpInetSocketAddress;
 import org.apache.http.conn.scheme.HostNameResolver;
@@ -8,6 +7,8 @@ import org.apache.http.conn.scheme.SchemeSocketFactory;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.java_bandwidthlimiter.StreamManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +23,35 @@ import java.net.SocketTimeoutException;
 import java.util.Date;
 
 public class SimulatedSocketFactory implements SchemeSocketFactory {
-    private static Log LOG = new Log();
+    protected static final Logger logger = LoggerFactory.getLogger(SimulatedSocketFactory.class);
+    /**
+     * Prevent unnecessary class inspection at runtime.
+     */
+    private static Method getHostMethod;
+
+    static {
+        try {
+            getHostMethod = InetSocketAddress.class.getDeclaredMethod("getHostString", new Class[]{});
+            if (!Modifier.isPublic(getHostMethod.getModifiers())) {
+                getHostMethod = null;
+            }
+        } catch (Exception e) {
+            // ok to ignore, try the fall back
+        }
+
+        if (getHostMethod == null) {
+            try {
+                getHostMethod = InetSocketAddress.class.getDeclaredMethod("getHostName", new Class[]{});
+                logger.warn("Using InetSocketAddress.getHostName() rather than InetSocketAddress.getHostString(). Consider upgrading to Java 7 for faster performance!");
+            } catch (NoSuchMethodException e) {
+                String msg = "Something is wrong inside SimulatedSocketFactory and I don't know why!";
+                logger.error(msg, e);
+                throw new RuntimeException(msg, e);
+            }
+        }
+
+        getHostMethod.setAccessible(true);
+    }
 
     private HostNameResolver hostNameResolver;
     private StreamManager streamManager;
@@ -55,7 +84,8 @@ public class SimulatedSocketFactory implements SchemeSocketFactory {
         try {
             sock.setReuseAddress(true);
             sock.setSoLinger(true, 0);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
     }
 
     @Override
@@ -75,6 +105,7 @@ public class SimulatedSocketFactory implements SchemeSocketFactory {
                 Date end = new Date();
                 RequestInfo.get().connect(start, end);
             }
+
             @Override
             public void connect(SocketAddress endpoint, int timeout) throws IOException {
                 Date start = new Date();
@@ -82,6 +113,7 @@ public class SimulatedSocketFactory implements SchemeSocketFactory {
                 Date end = new Date();
                 RequestInfo.get().connect(start, end);
             }
+
             @Override
             public InputStream getInputStream() throws IOException {
                 // whenever this socket is asked for its input stream
@@ -90,6 +122,7 @@ public class SimulatedSocketFactory implements SchemeSocketFactory {
                 // automatically be throttled
                 return streamManager.registerStream(super.getInputStream());
             }
+
             @Override
             public OutputStream getOutputStream() throws IOException {
                 // whenever this socket is asked for its output stream
@@ -101,34 +134,6 @@ public class SimulatedSocketFactory implements SchemeSocketFactory {
         };
         SimulatedSocketFactory.configure(newSocket);
         return newSocket;
-    }
-
-    /**
-     * Prevent unnecessary class inspection at runtime.
-     */
-    private static Method getHostMethod;
-    static {
-        try {
-            getHostMethod = InetSocketAddress.class.getDeclaredMethod("getHostString", new Class[]{});
-            if (!Modifier.isPublic(getHostMethod.getModifiers())) {
-                getHostMethod = null;
-            }
-        } catch (Exception e) {
-            // ok to ignore, try the fall back
-        }
-
-        if (getHostMethod == null) {
-            try {
-                getHostMethod = InetSocketAddress.class.getDeclaredMethod("getHostName", new Class[]{});
-                LOG.warn("Using InetSocketAddress.getHostName() rather than InetSocketAddress.getHostString(). Consider upgrading to Java 7 for faster performance!");
-            } catch (NoSuchMethodException e) {
-                String msg = "Something is wrong inside SimulatedSocketFactory and I don't know why!";
-                LOG.severe(msg, e);
-                throw new RuntimeException(msg, e);
-            }
-        }
-
-        getHostMethod.setAccessible(true);
     }
 
     /**
@@ -164,8 +169,8 @@ public class SimulatedSocketFactory implements SchemeSocketFactory {
             sock = createSocket(null);
         }
 
-        if ((localAddress != null) ) {
-            sock.bind( localAddress );
+        if ((localAddress != null)) {
+            sock.bind(localAddress);
         }
 
         String hostName;

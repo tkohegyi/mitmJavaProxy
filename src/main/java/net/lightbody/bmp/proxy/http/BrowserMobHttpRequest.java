@@ -1,10 +1,9 @@
 package net.lightbody.bmp.proxy.http;
 
-import com.epam.browsermob.messagemarker.idgenerator.TimeStampBasedIdGenerator;
+import com.epam.mitm.idgenerator.TimeStampBasedIdGenerator;
 import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 import net.lightbody.bmp.proxy.util.Base64;
 import net.lightbody.bmp.proxy.util.ClonedInputStream;
-import net.lightbody.bmp.proxy.util.Log;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
@@ -18,6 +17,8 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -28,22 +29,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BrowserMobHttpRequest {
-    private static final Log LOG = new Log();
     public static final TimeStampBasedIdGenerator TIME_STAMP_BASED_ID_GENERATOR = new TimeStampBasedIdGenerator();
-
+    protected static final Logger logger = LoggerFactory.getLogger(BrowserMobHttpRequest.class);
     private final HttpRequestBase method;
     private final BrowserMobHttpClient2 client;
+    private final List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+    private final boolean collectAdditionalInfo;
+    private final HttpRequest proxyRequest;
     private int expectedStatusCode;
     private String verificationText;
-    private final List<NameValuePair> nvps = new ArrayList<NameValuePair>();
     private StringEntity stringEntity;
     private ByteArrayEntity byteArrayEntity;
     private InputStreamEntity inputStreamEntity;
     private MultipartEntity multipartEntity;
     private OutputStream outputStream;
     private RequestCallback requestCallback;
-    private final boolean collectAdditionalInfo;
-    private final HttpRequest proxyRequest;
     private ByteArrayOutputStream copy;
     private String expectedLocation;
     private boolean multiPart;
@@ -52,7 +52,7 @@ public class BrowserMobHttpRequest {
     private boolean responseVolatile = false;
 
     protected BrowserMobHttpRequest(final HttpRequestBase method, final BrowserMobHttpClient2 client, final int expectedStatusCode,
-            final boolean collectAdditionalInfo, final HttpRequest proxyRequest) {
+                                    final boolean collectAdditionalInfo, final HttpRequest proxyRequest) {
         this.method = method;
         this.client = client;
         this.expectedStatusCode = expectedStatusCode;
@@ -142,7 +142,7 @@ public class BrowserMobHttpRequest {
                         enclosingRequest.setEntity(multipartEntity);
                     }
                 } catch (UnsupportedEncodingException e) {
-                    LOG.severe("Could not find UTF-8 encoding, something is really wrong", e);
+                    logger.error("Could not find UTF-8 encoding, something is really wrong", e);
                 }
             } else if (multipartEntity != null) {
                 enclosingRequest.setEntity(multipartEntity);
@@ -194,7 +194,9 @@ public class BrowserMobHttpRequest {
         this.playGround = playGround;
     }
 
-    public String getWilmaMessageId() { return wilmaMessageId; }
+    public String getWilmaMessageId() {
+        return wilmaMessageId;
+    }
 
     public boolean getResponseVolatile() {
         return responseVolatile;

@@ -1,5 +1,6 @@
-package com.epam.wilma.proxy;
+package com.epam.mitm.proxy;
 
+import com.epam.mitm.proxy.ProxyServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

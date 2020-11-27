@@ -2,12 +2,13 @@ package net.lightbody.bmp.proxy.http;
 
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarTimings;
-import net.lightbody.bmp.proxy.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 
 public class RequestInfo {
-    private static final Log LOG = new Log();
+    protected static final Logger logger = LoggerFactory.getLogger(RequestInfo.class);
 
     private static ThreadLocal<RequestInfo> instance = new ThreadLocal<RequestInfo>() {
         @Override
@@ -15,6 +16,18 @@ public class RequestInfo {
             return new RequestInfo();
         }
     };
+    private Long blocked;
+    private Long dns;
+    private Long connect;
+    private Long ssl;
+    private Long send;
+    private Long wait;
+    private Long receive;
+    private String resolvedAddress;
+    private Date start;
+    private Date end;
+    private String url;
+    private HarEntry entry;
 
     public static RequestInfo get() {
         return instance.get();
@@ -41,24 +54,11 @@ public class RequestInfo {
         info.end = null;
     }
 
-    private Long blocked;
-    private Long dns;
-    private Long connect;
-    private Long ssl;
-    private Long send;
-    private Long wait;
-    private Long receive;
-    private String resolvedAddress;
-    private Date start;
-    private Date end;
-    private String url;
-    private HarEntry entry;
-
     private Long ping(Date start, Date end) {
         if (this.start == null) {
             this.start = start;
         } else if (this.start.after(start)) {
-            LOG.severe("Saw a later start time that was before the first start time for URL %s", url);
+            logger.error("Saw a later start time that was before the first start time for URL {}", url);
         }
 
         return end.getTime() - start.getTime();
@@ -143,7 +143,7 @@ public class RequestInfo {
         }
 
         if (receive < 0) {
-            LOG.severe("Got a negative receiving time (%d) for URL %s", receive, url);
+            logger.error("Got a negative receiving time ({}) for URL {}", receive, url);
             receive = 0L;
         }
     }

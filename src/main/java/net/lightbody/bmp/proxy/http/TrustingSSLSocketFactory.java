@@ -1,12 +1,13 @@
 package net.lightbody.bmp.proxy.http;
 
-import net.lightbody.bmp.proxy.util.Log;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.scheme.HostNameResolver;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.params.HttpParams;
 import org.java_bandwidthlimiter.StreamManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLSocket;
 import java.io.FileInputStream;
@@ -25,16 +26,9 @@ import java.security.cert.X509Certificate;
 
 public class TrustingSSLSocketFactory extends SSLSocketFactory {
 
-    public enum SSLAlgorithm {
-        SSLv3,
-        TLSv1
-    }
-
-    private static final Log LOG = new Log();
+    protected static final Logger logger = LoggerFactory.getLogger(TrustingSSLSocketFactory.class);
     private static TrustStrategy trustStrategy;
     private static KeyStore keyStore;
-    private final StreamManager streamManager;
-    private final int timeout;
     private static String keyStorePassword;
 
     static {
@@ -50,7 +44,7 @@ public class TrustingSSLSocketFactory extends SSLSocketFactory {
             throw new RuntimeException(e);
         } catch (FileNotFoundException e) {
             // JKS file not found, continue with keyStore == null
-            LOG.warn("JKS file not found continue without keyStore", e);
+            logger.warn("JKS file not found continue without keyStore", e);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         } catch (CertificateException e) {
@@ -66,8 +60,11 @@ public class TrustingSSLSocketFactory extends SSLSocketFactory {
         };
     }
 
+    private final StreamManager streamManager;
+    private final int timeout;
+
     public TrustingSSLSocketFactory(final HostNameResolver nameResolver, final StreamManager streamManager, int timeout) throws KeyManagementException,
-        UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
+            UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
         super(SSL, keyStore, keyStorePassword, null, null, trustStrategy, ALLOW_ALL_HOSTNAME_VERIFIER);
         assert nameResolver != null;
         assert streamManager != null;
@@ -93,7 +90,7 @@ public class TrustingSSLSocketFactory extends SSLSocketFactory {
     @SuppressWarnings("deprecation")
     @Override
     public Socket connectSocket(final Socket socket, final String host, final int port, final InetAddress localAddress, final int localPort,
-            final HttpParams params) throws java.io.IOException, java.net.UnknownHostException, org.apache.http.conn.ConnectTimeoutException {
+                                final HttpParams params) throws java.io.IOException, java.net.UnknownHostException, org.apache.http.conn.ConnectTimeoutException {
         SSLSocket sslSocket = (SSLSocket) super.connectSocket(socket, host, port, localAddress, localPort, params);
         if (sslSocket instanceof SimulatedSSLSocket) {
             return sslSocket;
@@ -109,12 +106,17 @@ public class TrustingSSLSocketFactory extends SSLSocketFactory {
 
     @Override
     public Socket connectSocket(final Socket socket, final InetSocketAddress remoteAddress, final InetSocketAddress localAddress,
-            final HttpParams params) throws IOException, ConnectTimeoutException {
+                                final HttpParams params) throws IOException, ConnectTimeoutException {
         SSLSocket sslSocket = (SSLSocket) super.connectSocket(socket, remoteAddress, localAddress, params);
         if (sslSocket instanceof SimulatedSSLSocket) {
             return sslSocket;
         }
         //not sure this is needed
         return createSimulatedSocket(sslSocket);
+    }
+
+    public enum SSLAlgorithm {
+        SSLv3,
+        TLSv1
     }
 }

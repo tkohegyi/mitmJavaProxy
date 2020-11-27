@@ -1,5 +1,6 @@
 package net.lightbody.bmp.proxy.http;
 
+import com.epam.mitm.proxy.ProxyServer;
 import cz.mallat.uasparser.CachingOnlineUpdateUASparser;
 import cz.mallat.uasparser.UASparser;
 import cz.mallat.uasparser.UserAgentInfo;
@@ -13,12 +14,10 @@ import net.lightbody.bmp.core.har.HarPostDataParam;
 import net.lightbody.bmp.core.har.HarRequest;
 import net.lightbody.bmp.core.har.HarResponse;
 import net.lightbody.bmp.core.har.HarTimings;
-import com.epam.wilma.proxy.ProxyServer;
 import net.lightbody.bmp.proxy.util.Base64;
 import net.lightbody.bmp.proxy.util.CappedByteArrayOutputStream;
 import net.lightbody.bmp.proxy.util.ClonedOutputStream;
 import net.lightbody.bmp.proxy.util.IOUtils;
-import net.lightbody.bmp.proxy.util.Log;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.HttpClientConnection;
@@ -72,6 +71,8 @@ import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestExecutor;
 import org.java_bandwidthlimiter.StreamManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xbill.DNS.Cache;
 import org.xbill.DNS.DClass;
 
@@ -107,15 +108,17 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 public class BrowserMobHttpClient {
-    private static final Log LOG = new Log();
+    protected static final Logger logger = LoggerFactory.getLogger(BrowserMobHttpClient.class);
     private static final int MAX_BUFFER_SIZE = 1024 * 1024; // MOB-216 don't buffer more than 1 MB
+    private static final int BUFFER = 4096;
+    private static final int MAX_REDIRECT = 10;
     public static UASparser PARSER = null;
 
     static {
         try {
             PARSER = new CachingOnlineUpdateUASparser();
         } catch (IOException e) {
-            LOG.severe("Unable to create User-Agent parser, falling back but proxy is in damaged state and should be restarted", e);
+            logger.error("Unable to create User-Agent parser, falling back but proxy is in damaged state and should be restarted", e);
             try {
                 PARSER = new UASparser();
             } catch (Exception e1) {
@@ -124,45 +127,35 @@ public class BrowserMobHttpClient {
         }
     }
 
-    public static void setUserAgentParser(final UASparser parser) {
-        PARSER = parser;
-    }
-
-    private static final int BUFFER = 4096;
-
+    private final List<RewriteRule> rewriteRules = new CopyOnWriteArrayList<RewriteRule>();
+    private final List<RequestInterceptor> requestInterceptors = new CopyOnWriteArrayList<RequestInterceptor>();
+    private final List<ResponseInterceptor> responseInterceptors = new CopyOnWriteArrayList<ResponseInterceptor>();
+    private final HashMap<String, String> additionalHeaders = new LinkedHashMap<String, String>();
+    private final AtomicBoolean allowNewRequests = new AtomicBoolean(true);
+    // not using CopyOnWriteArray because we're WRITE heavy and it is for READ heavy operations
+    // instead doing it the old fashioned way with a synchronized block
+    private final Set<ActiveRequest> activeRequests = new HashSet<ActiveRequest>();
     private Har har;
     private String harPageRef;
-
     private boolean captureHeaders;
     private boolean captureContent;
     // if captureContent is set, default policy is to capture binary contents too
     private boolean captureBinaryContent = true;
-
     private SimulatedSocketFactory socketFactory;
     private TrustingSSLSocketFactory sslSocketFactory;
     private ThreadSafeClientConnManager httpClientConnMgr; // use PoolingHttpClientConnectionManager
     private DefaultHttpClient httpClient;
     private List<BlacklistEntry> blacklistEntries = null;
     private WhitelistEntry whitelistEntry = null;
-    private final List<RewriteRule> rewriteRules = new CopyOnWriteArrayList<RewriteRule>();
-    private final List<RequestInterceptor> requestInterceptors = new CopyOnWriteArrayList<RequestInterceptor>();
-    private final List<ResponseInterceptor> responseInterceptors = new CopyOnWriteArrayList<ResponseInterceptor>();
-    private final HashMap<String, String> additionalHeaders = new LinkedHashMap<String, String>();
     private int requestTimeout;
-    private final AtomicBoolean allowNewRequests = new AtomicBoolean(true);
     private BrowserMobHostNameResolver hostNameResolver;
     private boolean decompress = true;
-    // not using CopyOnWriteArray because we're WRITE heavy and it is for READ heavy operations
-    // instead doing it the old fashioned way with a synchronized block
-    private final Set<ActiveRequest> activeRequests = new HashSet<ActiveRequest>();
     private WildcardMatchingCredentialsProvider credsProvider;
     private boolean shutdown = false;
     private AuthType authType;
 
     private boolean followRedirects = true;
-    private static final int MAX_REDIRECT = 10;
     private AtomicInteger requestCounter;
-
     public BrowserMobHttpClient(final StreamManager streamManager, final AtomicInteger requestCounter, final int requestTimeOut) {
         this.requestCounter = requestCounter;
         this.requestTimeout = requestTimeOut;
@@ -194,7 +187,7 @@ public class BrowserMobHttpClient {
                 return new ClientConnectionRequest() {
                     @Override
                     public ManagedClientConnection getConnection(final long timeout, final TimeUnit tunit) throws InterruptedException,
-                        ConnectionPoolTimeoutException {
+                            ConnectionPoolTimeoutException {
                         Date start = new Date();
                         try {
                             return wrapped.getConnection(timeout, tunit);
@@ -221,7 +214,7 @@ public class BrowserMobHttpClient {
                 return new HttpRequestExecutor() {
                     @Override
                     protected HttpResponse doSendRequest(final HttpRequest request, final HttpClientConnection conn, final HttpContext context)
-                        throws IOException, HttpException {
+                            throws IOException, HttpException {
                         Date start = new Date();
                         HttpResponse response = super.doSendRequest(request, conn, context);
                         RequestInfo.get().send(start, new Date());
@@ -230,7 +223,7 @@ public class BrowserMobHttpClient {
 
                     @Override
                     protected HttpResponse doReceiveResponse(final HttpRequest request, final HttpClientConnection conn, final HttpContext context)
-                        throws HttpException, IOException {
+                            throws HttpException, IOException {
                         Date start = new Date();
                         HttpResponse response = super.doReceiveResponse(request, conn, context);
                         RequestInfo.get().wait(start, new Date());
@@ -250,10 +243,14 @@ public class BrowserMobHttpClient {
         // we always set this to false so it can be handled manually:
         httpClient.getParams().setParameter(ClientPNames.HANDLE_REDIRECTS, false);
 
-      //  HttpClientInterrupter.watch(this);
+        //  HttpClientInterrupter.watch(this);
         setConnectionTimeout(requestTimeOut);
         setSocketOperationTimeout(requestTimeOut);
         setRequestTimeout(-1);
+    }
+
+    public static void setUserAgentParser(final UASparser parser) {
+        PARSER = parser;
     }
 
     public void setRetryCount(final int count) {
@@ -323,61 +320,62 @@ public class BrowserMobHttpClient {
 
         return null;
     }
-/*
-    public BrowserMobHttpRequest newPost(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
-        try {
-            URI uri = makeUri(url);
-            return new BrowserMobHttpRequest(new HttpPost(uri), this, -1, captureContent, proxyRequest);
-        } catch (URISyntaxException e) {
-            throw reportBadURI(url, "POST");
-        }
-    }
 
-    public BrowserMobHttpRequest newGet(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
-        try {
-            URI uri = makeUri(url);
-            return new BrowserMobHttpRequest(new HttpGet(uri), this, -1, captureContent, proxyRequest);
-        } catch (URISyntaxException e) {
-            throw reportBadURI(url, "GET");
+    /*
+        public BrowserMobHttpRequest newPost(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
+            try {
+                URI uri = makeUri(url);
+                return new BrowserMobHttpRequest(new HttpPost(uri), this, -1, captureContent, proxyRequest);
+            } catch (URISyntaxException e) {
+                throw reportBadURI(url, "POST");
+            }
         }
-    }
 
-    public BrowserMobHttpRequest newPut(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
-        try {
-            URI uri = makeUri(url);
-            return new BrowserMobHttpRequest(new HttpPut(uri), this, -1, captureContent, proxyRequest);
-        } catch (Exception e) {
-            throw reportBadURI(url, "PUT");
+        public BrowserMobHttpRequest newGet(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
+            try {
+                URI uri = makeUri(url);
+                return new BrowserMobHttpRequest(new HttpGet(uri), this, -1, captureContent, proxyRequest);
+            } catch (URISyntaxException e) {
+                throw reportBadURI(url, "GET");
+            }
         }
-    }
 
-    public BrowserMobHttpRequest newDelete(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
-        try {
-            URI uri = makeUri(url);
-            return new BrowserMobHttpRequest(new HttpDelete(uri), this, -1, captureContent, proxyRequest);
-        } catch (URISyntaxException e) {
-            throw reportBadURI(url, "DELETE");
+        public BrowserMobHttpRequest newPut(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
+            try {
+                URI uri = makeUri(url);
+                return new BrowserMobHttpRequest(new HttpPut(uri), this, -1, captureContent, proxyRequest);
+            } catch (Exception e) {
+                throw reportBadURI(url, "PUT");
+            }
         }
-    }
 
-    public BrowserMobHttpRequest newOptions(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
-        try {
-            URI uri = makeUri(url);
-            return new BrowserMobHttpRequest(new HttpOptions(uri), this, -1, captureContent, proxyRequest);
-        } catch (URISyntaxException e) {
-            throw reportBadURI(url, "OPTIONS");
+        public BrowserMobHttpRequest newDelete(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
+            try {
+                URI uri = makeUri(url);
+                return new BrowserMobHttpRequest(new HttpDelete(uri), this, -1, captureContent, proxyRequest);
+            } catch (URISyntaxException e) {
+                throw reportBadURI(url, "DELETE");
+            }
         }
-    }
 
-    public BrowserMobHttpRequest newHead(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
-        try {
-            URI uri = makeUri(url);
-            return new BrowserMobHttpRequest(new HttpHead(uri), this, -1, captureContent, proxyRequest);
-        } catch (URISyntaxException e) {
-            throw reportBadURI(url, "HEAD");
+        public BrowserMobHttpRequest newOptions(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
+            try {
+                URI uri = makeUri(url);
+                return new BrowserMobHttpRequest(new HttpOptions(uri), this, -1, captureContent, proxyRequest);
+            } catch (URISyntaxException e) {
+                throw reportBadURI(url, "OPTIONS");
+            }
         }
-    }
-*/
+
+        public BrowserMobHttpRequest newHead(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
+            try {
+                URI uri = makeUri(url);
+                return new BrowserMobHttpRequest(new HttpHead(uri), this, -1, captureContent, proxyRequest);
+            } catch (URISyntaxException e) {
+                throw reportBadURI(url, "HEAD");
+            }
+        }
+    */
     private URI makeUri(String url) throws URISyntaxException {
         // MOB-120: check for | character and change to correctly escaped %7C
         url = url.replace(" ", "%20");
@@ -518,7 +516,7 @@ public class BrowserMobHttpClient {
                 } catch (IOException e) {
                     // ignore it, it's fine
                 } catch (Exception e) {
-                    LOG.warn("Failed to parse user agent string", e);
+                    logger.warn("Failed to parse user agent string", e);
                 }
             }
         }
@@ -537,7 +535,7 @@ public class BrowserMobHttpClient {
                 method.setURI(new URI(newUrl));
                 url = newUrl;
             } catch (URISyntaxException e) {
-                LOG.warn("Could not rewrite url to %s", newUrl);
+                logger.warn("Could not rewrite url to %s", newUrl);
             }
         }
 
@@ -688,22 +686,20 @@ public class BrowserMobHttpClient {
                     if (contentEncodingHeader != null) {
                         if ("gzip".equalsIgnoreCase(contentEncodingHeader.getValue())) {
                             gzipping = true;
-                            }
-                        else if ("deflate".equalsIgnoreCase(contentEncodingHeader.getValue())) {
+                        } else if ("deflate".equalsIgnoreCase(contentEncodingHeader.getValue())) {
                             deflating = true;
-                            }
+                        }
                     }
 
                     // deal with GZIP content!
-                    if(decompress && response.getEntity().getContentLength() != 0) { //getContentLength<0 if unknown
+                    if (decompress && response.getEntity().getContentLength() != 0) { //getContentLength<0 if unknown
                         if (gzipping) {
                             is = new GZIPInputStream(is);
-                            }
-                        else if (deflating) {  //RAW deflate only
+                        } else if (deflating) {  //RAW deflate only
                             // WARN : if system is using zlib<=1.1.4 the stream must be append with a dummy byte
                             // that is not required for zlib>1.1.4 (not mentioned on current Inflater javadoc)
                             is = new InflaterInputStream(is, new Inflater(true));
-                            }
+                        }
                     }
 
                     if (isResponseVolatile) {
@@ -731,7 +727,7 @@ public class BrowserMobHttpClient {
 
             // only log it if we're not shutdown (otherwise, errors that happen during a shutdown can likely be ignored)
             if (!shutdown) {
-                LOG.info(String.format("%s when requesting %s", errorMessage, url));
+                logger.info(String.format("%s when requesting %s", errorMessage, url));
             }
         } finally {
             // the request is done, get it out of here
@@ -808,7 +804,7 @@ public class BrowserMobHttpClient {
                             }
                         }
                     } catch (Exception e) {
-                        LOG.info("Unexpected problem when parsing input copy", e);
+                        logger.info("Unexpected problem when parsing input copy", e);
                     }
                 } else {
                     // not URL encoded, so let's grab the body of the POST and capture that
@@ -852,8 +848,7 @@ public class BrowserMobHttpClient {
                                 InputStream temp = null;
                                 if (gzipping) {
                                     temp = new GZIPInputStream(new ByteArrayInputStream(copy.toByteArray()));
-                                }
-                                else if (deflating) {
+                                } else if (deflating) {
                                     //RAW deflate only
                                     // WARN : if system is using zlib<=1.1.4 the stream must be append with a dummy byte
                                     // that is not required for zlib>1.1.4 (not mentioned on current Inflater javadoc)
@@ -959,7 +954,7 @@ public class BrowserMobHttpClient {
 
                 return execute(req, ++depth, isResponseVolatile);
             } catch (URISyntaxException e) {
-                LOG.warn("Could not parse URL", e);
+                logger.warn("Could not parse URL", e);
             }
         }
 
@@ -1028,10 +1023,6 @@ public class BrowserMobHttpClient {
         }
     }
 
-    public void setHar(final Har har) {
-        this.har = har;
-    }
-
     public void setHarPageRef(final String harPageRef) {
         this.harPageRef = harPageRef;
     }
@@ -1048,13 +1039,13 @@ public class BrowserMobHttpClient {
         httpClient.getParams().setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, connectionTimeout);
     }
 
+    public boolean isFollowRedirects() {
+        return followRedirects;
+    }
+
     public void setFollowRedirects(final boolean followRedirects) {
         this.followRedirects = followRedirects;
 
-    }
-
-    public boolean isFollowRedirects() {
-        return followRedirects;
     }
 
     public void autoBasicAuthorization(final String domain, final String username, final String password) {
@@ -1124,6 +1115,10 @@ public class BrowserMobHttpClient {
         return har;
     }
 
+    public void setHar(final Har har) {
+        this.har = har;
+    }
+
     public void setCaptureHeaders(final boolean captureHeaders) {
         this.captureHeaders = captureHeaders;
     }
@@ -1141,6 +1136,20 @@ public class BrowserMobHttpClient {
         Integer port = Integer.parseInt(httpProxy.split(":")[1]);
         HttpHost proxy = new HttpHost(host, port);
         httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
+    }
+
+    public void clearDNSCache() {
+        hostNameResolver.clearCache();
+    }
+
+    public void setDNSCacheTimeout(final int timeout) {
+        hostNameResolver.setCacheTimeout(timeout);
+    }
+
+    private enum AuthType {
+        NONE,
+        BASIC,
+        NTLM
     }
 
     static class PreemptiveAuth implements HttpRequestInterceptor {
@@ -1179,7 +1188,7 @@ public class BrowserMobHttpClient {
         void checkTimeout() {
             if (requestTimeout != -1) {
                 if (request != null && start != null && new Date(System.currentTimeMillis() - requestTimeout).after(start)) {
-                    LOG.info("Aborting request to %s after it failed to complete in %d ms", request.getURI().toString(), requestTimeout);
+                    logger.info("Aborting request to %s after it failed to complete in %d ms", request.getURI().toString(), requestTimeout);
 
                     abort();
                 }
@@ -1232,20 +1241,6 @@ public class BrowserMobHttpClient {
             this.match = Pattern.compile(match);
             this.replace = replace;
         }
-    }
-
-    private enum AuthType {
-        NONE,
-        BASIC,
-        NTLM
-    }
-
-    public void clearDNSCache() {
-        hostNameResolver.clearCache();
-    }
-
-    public void setDNSCacheTimeout(final int timeout) {
-        hostNameResolver.setCacheTimeout(timeout);
     }
 
 }
