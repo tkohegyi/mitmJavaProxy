@@ -567,7 +567,7 @@ public class BrowserMobHttpClient2 {
         try {
             // set the User-Agent if it's not already set
             if (method.getHeaders("User-Agent").length == 0) {
-                method.addHeader("User-Agent", "BrowserMob VU/1.0");
+                method.addHeader("User-Agent", "MITM-Proxy V/1.0");
             }
 
             // was the request mocked out?
