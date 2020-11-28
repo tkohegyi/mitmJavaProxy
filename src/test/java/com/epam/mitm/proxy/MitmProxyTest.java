@@ -1,6 +1,5 @@
 package com.epam.mitm.proxy;
 
-import com.epam.mitm.proxy.ProxyServer;
 import com.epam.mitm.proxy.help.AbstractProxyTool;
 import com.epam.mitm.proxy.help.DefaultRequestInterceptor;
 import com.epam.mitm.proxy.help.DefaultResponseInterceptor;
