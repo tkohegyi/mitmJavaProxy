@@ -1,11 +1,16 @@
 package com.epam.mitm.proxy.help;
 
 import com.google.common.io.ByteStreams;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.*;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,8 +27,7 @@ import java.util.Arrays;
  * file doesn't yet exist.
  */
 public class SelfSignedSslEngineSource {
-    private static final Logger LOG = LoggerFactory
-            .getLogger(SelfSignedSslEngineSource.class);
+    private final Logger logger = LoggerFactory.getLogger(SelfSignedSslEngineSource.class);
 
     private static final String PROTOCOL = "TLSv1.2";
 
@@ -46,7 +50,7 @@ public class SelfSignedSslEngineSource {
     }
 
     public SelfSignedSslEngineSource(String keyStorePath, boolean trustAllServers, boolean sendCerts) {
-        this(keyStorePath, trustAllServers, sendCerts, "wilmaProxy", "vvilma");
+        this(keyStorePath, trustAllServers, sendCerts, "mitmProxy", "vvilma");
     }
 
     public SelfSignedSslEngineSource(String keyStorePath) {
@@ -58,7 +62,7 @@ public class SelfSignedSslEngineSource {
     }
 
     public SelfSignedSslEngineSource(boolean trustAllServers, boolean sendCerts) {
-        this("wilmaProxy_keystore.jks", trustAllServers, sendCerts);
+        this("sslSupport/mitmProxy_keystore.jks", trustAllServers, sendCerts);
     }
 
     public SelfSignedSslEngineSource() {
@@ -80,17 +84,16 @@ public class SelfSignedSslEngineSource {
     private void initializeKeyStore(String filename) {
         nativeCall("keytool", "-genkey", "-alias", alias, "-keysize",
                 "4096", "-validity", "36500", "-keyalg", "RSA", "-dname",
-                "CN=wilmaProxy", "-keypass", password, "-storepass",
+                "CN=mitmProxy", "-keypass", password, "-storepass",
                 password, "-keystore", filename);
 
         nativeCall("keytool", "-exportcert", "-alias", alias, "-keystore",
                 filename, "-storepass", password, "-file",
-                "wilmaProxy_cert");
+                "mitmProxy.cer");
     }
 
     private void initializeSSLContext() {
-        String algorithm = Security
-                .getProperty("ssl.KeyManagerFactory.algorithm");
+        String algorithm = Security.getProperty("ssl.KeyManagerFactory.algorithm");
         if (algorithm == null) {
             algorithm = "SunX509";
         }
@@ -99,20 +102,18 @@ public class SelfSignedSslEngineSource {
             final KeyStore ks = loadKeyStore();
 
             // Set up key manager factory to use our key store
-            final KeyManagerFactory kmf =
-                    KeyManagerFactory.getInstance(algorithm);
+            final KeyManagerFactory kmf = KeyManagerFactory.getInstance(algorithm);
             kmf.init(ks, password.toCharArray());
 
             // Set up a trust manager factory to use our key store
-            TrustManagerFactory tmf = TrustManagerFactory
-                    .getInstance(algorithm);
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(algorithm);
             tmf.init(ks);
 
             TrustManager[] trustManagers;
             if (!trustAllServers) {
                 trustManagers = tmf.getTrustManagers();
             } else {
-                trustManagers = new TrustManager[] { new X509TrustManager() {
+                trustManagers = new TrustManager[]{new X509TrustManager() {
                     // TrustManager that trusts all servers
                     @Override
                     public void checkClientTrusted(X509Certificate[] arg0, String arg1) {
@@ -126,9 +127,9 @@ public class SelfSignedSslEngineSource {
                     public X509Certificate[] getAcceptedIssuers() {
                         return null;
                     }
-                } };
+                }};
             }
-            
+
             KeyManager[] keyManagers;
             if (sendCerts) {
                 keyManagers = kmf.getKeyManagers();
@@ -148,11 +149,11 @@ public class SelfSignedSslEngineSource {
     private KeyStore loadKeyStore() throws IOException, GeneralSecurityException {
         final KeyStore keyStore = KeyStore.getInstance("JKS");
         URL resourceUrl = getClass().getResource(keyStoreFile);
-        if(resourceUrl != null) {
+        if (resourceUrl != null) {
             loadKeyStore(keyStore, resourceUrl);
         } else {
             File keyStoreLocalFile = new File(keyStoreFile);
-            if(!keyStoreLocalFile.isFile()) {
+            if (!keyStoreLocalFile.isFile()) {
                 initializeKeyStore(keyStoreLocalFile.getName());
             }
             loadKeyStore(keyStore, keyStoreLocalFile.toURI().toURL());
@@ -161,13 +162,13 @@ public class SelfSignedSslEngineSource {
     }
 
     private void loadKeyStore(KeyStore keyStore, URL url) throws IOException, GeneralSecurityException {
-        try(InputStream is = url.openStream()) {
+        try (InputStream is = url.openStream()) {
             keyStore.load(is, password.toCharArray());
         }
     }
 
     private String nativeCall(final String... commands) {
-        LOG.info("Running '{}'", Arrays.asList(commands));
+        logger.info("Running '{}'", Arrays.asList(commands));
         final ProcessBuilder pb = new ProcessBuilder(commands);
         try {
             final Process process = pb.start();
@@ -177,11 +178,10 @@ public class SelfSignedSslEngineSource {
             }
             String dataAsString = new String(data);
 
-            LOG.info("Completed native call: '{}'\nResponse: '" + dataAsString + "'",
-                    Arrays.asList(commands));
+            logger.info("Completed native call: '{}'\nResponse: '" + dataAsString + "'", Arrays.asList(commands));
             return dataAsString;
         } catch (final IOException e) {
-            LOG.error("Error running commands: " + Arrays.asList(commands), e);
+            logger.error("Error running commands: " + Arrays.asList(commands), e);
             return "";
         }
     }

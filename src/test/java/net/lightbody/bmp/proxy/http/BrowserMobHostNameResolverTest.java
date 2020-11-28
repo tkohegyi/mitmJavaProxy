@@ -12,9 +12,14 @@ import java.net.UnknownHostException;
 
 public class BrowserMobHostNameResolverTest {
 
-    @Test (expected = UnknownHostException.class)
+    @Test
     public void testLibraryUsageLocalhost() throws UnknownHostException {
-        Address.getByName("localhost");
+        try {
+            InetAddress addr = Address.getByName("localhost");
+            Assert.assertNotNull(addr);  //this is expected in java >1.8
+        } catch (UnknownHostException e) {
+            //this is expected in java <=1.8
+        }
     }
 
     @Test

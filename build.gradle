@@ -33,9 +33,10 @@ apply plugin: 'eclipse'
 apply plugin: 'checkstyle'
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'java-library'
 apply plugin: 'jacoco'
 
-version = "0.3-beta-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
+version = "0.4-beta-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
 
 repositories {
     jcenter()
@@ -48,6 +49,11 @@ repositories {
 // Source and target info
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
+
+java {
+//    withJavadocJar()
+    withSourcesJar()
+}
 
 task sourceZip(type: Zip) {
     from 'src'
@@ -96,10 +102,18 @@ dependencies {
     }
 }
 
+def myCopySpec = project.copySpec {
+    from(rootProject.rootDir.absolutePath + '/') {
+        include 'sslSupport/mitmProxy.cer'
+        include 'sslSupport/mitmProxy_keystore.jks'
+    }
+}
+
 jar {
     manifest.attributes( 'provider': 'gradle')
     manifest.attributes( 'Implementation-Title': "$componentDescription - V$version")
     archiveName = "$componentName-$version"+'.jar'
+    with myCopySpec
 }
 
 task copyJarToDistributions (type: Copy) {

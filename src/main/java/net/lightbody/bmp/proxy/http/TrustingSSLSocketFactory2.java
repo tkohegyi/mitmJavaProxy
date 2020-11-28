@@ -10,8 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.HostnameVerifier;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.KeyManagementException;
@@ -30,11 +30,11 @@ public class TrustingSSLSocketFactory2 extends SSLConnectionSocketFactory {
     static {
         try {
             keyStorePassword = "vvilma";
-            String keyStorePath = "wilmaProxy_keystore.jks";
+            String keyStorePath = "sslSupport/mitmProxy_keystore.jks";
 //            keyStorePassword = System.getProperty("javax.net.ssl.keyStorePassword");
 //            String keyStorePath = System.getProperty("javax.net.ssl.keyStore");
             if (keyStorePath != null) {
-                FileInputStream fis = new FileInputStream(keyStorePath);
+                InputStream fis = TrustingSSLSocketFactory2.class.getResourceAsStream(keyStorePath);
                 keyStore = KeyStore.getInstance("jks");
                 keyStore.load(fis, keyStorePassword.toCharArray());
             }
