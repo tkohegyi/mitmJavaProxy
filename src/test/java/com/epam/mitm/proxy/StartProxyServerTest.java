@@ -9,7 +9,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
-public class ProxyServerTest {
+public class StartProxyServerTest {
     public static final int PROXY_TIMEOUT = 60000; //1 minute
 
     private final ProxyServer server = new ProxyServer(0);

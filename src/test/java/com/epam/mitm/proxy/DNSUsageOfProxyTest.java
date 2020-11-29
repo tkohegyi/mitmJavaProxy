@@ -4,18 +4,19 @@ import com.epam.mitm.proxy.help.AbstractProxyTool;
 import com.epam.mitm.proxy.help.DefaultRequestInterceptor;
 import com.epam.mitm.proxy.help.DefaultResponseInterceptor;
 import com.epam.mitm.proxy.help.ResponseInfo;
+import org.apache.http.HttpHost;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 /**
- * Tests just a single basic proxy running as a man in the middle.
+ * Tests that DNS resolution works properly inside the proxy.
  */
-public class MitmProxyTest extends AbstractProxyTool {
+public class DNSUsageOfProxyTest extends AbstractProxyTool {
 
     @Override
     protected void setUp() {
-        String stubUrl = "http://127.0.0.1:" + stubServerPort + "/stub";
+        String stubUrl = "http://localhost:" + stubServerPort + "/stub";
         LOGGER.info("STUB URL used: {}", stubUrl);
         DefaultRequestInterceptor defaultRequestInterceptor = new DefaultRequestInterceptor(requestCount, NEED_STUB_RESPONSE, stubUrl);
         DefaultResponseInterceptor defaultResponseInterceptor = new DefaultResponseInterceptor(responseCount);
@@ -24,10 +25,33 @@ public class MitmProxyTest extends AbstractProxyTool {
         proxyServer.setCaptureBinaryContent(false);
         proxyServer.setCaptureContent(false);
         ProxyServer.setResponseVolatile(true);
+        //update servers
+        stubHost = new HttpHost("localhost", stubServerPort);
+        webHost = new HttpHost("localhost", webServerPort);
+        httpsWebHost = new HttpHost("localhost", httpsWebServerPort, "https");
+
     }
 
     @Test
-    public void testSimpleGetRequest() throws Exception {
+    public void testSimpleGetRequestUsingDNSNoProxyInUse() throws Exception {
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, false, false);
+        assertEquals(200, proxiedResponse.getStatusCode());
+        assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
+        assertEquals(0, responseCount.get());
+        assertEquals(0, requestCount.get());
+    }
+
+    @Test
+    public void testSimplePostRequestUsingDNSNoProxyInUse() throws Exception {
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, false);
+        assertEquals(200, proxiedResponse.getStatusCode());
+        assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
+        assertEquals(0, responseCount.get());
+        assertEquals(0, requestCount.get());
+    }
+
+    @Test
+    public void testSimpleGetRequestDNSAndProxyInUse() throws Exception {
         ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true, false);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
@@ -36,7 +60,7 @@ public class MitmProxyTest extends AbstractProxyTool {
     }
 
     @Test
-    public void testSimpleGetRequestOverHTTPS() throws Exception {
+    public void testSimpleGetRequestOverHTTPSDNSAndProxyInUse() throws Exception {
         ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true, false);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
@@ -45,7 +69,7 @@ public class MitmProxyTest extends AbstractProxyTool {
     }
 
     @Test
-    public void testSimplePostRequest() throws Exception {
+    public void testSimplePostRequestDNSAndProxyInUse() throws Exception {
         ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
@@ -54,7 +78,7 @@ public class MitmProxyTest extends AbstractProxyTool {
     }
 
     @Test
-    public void testSimplePostRequestOverHTTPS() throws Exception {
+    public void testSimplePostRequestOverHTTPSDNSAndProxyInUse() throws Exception {
         ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
@@ -63,7 +87,7 @@ public class MitmProxyTest extends AbstractProxyTool {
     }
 
     @Test
-    public void testSimpleGetRequestToStub() throws Exception {
+    public void testSimpleGetRequestToStubDNSAndProxyInUse() throws Exception {
         ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NEED_STUB_RESPONSE, true, false);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
@@ -72,7 +96,7 @@ public class MitmProxyTest extends AbstractProxyTool {
     }
 
     @Test
-    public void testSimpleGetRequestOverHTTPSToStub() throws Exception {
+    public void testSimpleGetRequestOverHTTPSToStubDNSAndProxyInUse() throws Exception {
         ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true, false);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
@@ -81,7 +105,7 @@ public class MitmProxyTest extends AbstractProxyTool {
     }
 
     @Test
-    public void testSimplePostRequestToStub() throws Exception {
+    public void testSimplePostRequestToStubDNSAndProxyInUse() throws Exception {
         ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NEED_STUB_RESPONSE, true);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
@@ -90,7 +114,7 @@ public class MitmProxyTest extends AbstractProxyTool {
     }
 
     @Test
-    public void testSimplePostRequestOverHTTPSToStub() throws Exception {
+    public void testSimplePostRequestOverHTTPSToStubDNSAndProxyInUse() throws Exception {
         ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
