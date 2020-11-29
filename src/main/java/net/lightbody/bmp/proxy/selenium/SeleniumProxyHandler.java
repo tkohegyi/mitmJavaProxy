@@ -516,8 +516,10 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
                     wireUpSslWithRemoteService(host, listener);
                 }
 
-                listener.setPassword("password");
-                listener.setKeyPassword("password");
+//                listener.setPassword("password");
+//                listener.setKeyPassword("password");
+                listener.setPassword("vvilma");
+                listener.setKeyPassword("vvilma");
                 server.addListener(listener);
 
                 synchronized (shutdownLock) {

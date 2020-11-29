@@ -205,6 +205,7 @@ public class BrowserMobHttpClient2 {
         credsProvider = new WildcardMatchingCredentialsProvider();
 
         httpClient = HttpClientBuilder.create()
+                .setSSLSocketFactory(sslSocketFactory)
                 .setConnectionManager(httpClientConnMgr)
                 .setRequestExecutor(new SimulatedRequestExecutor())
                 .setDefaultCredentialsProvider(credsProvider)
@@ -1092,7 +1093,7 @@ public class BrowserMobHttpClient2 {
         void checkTimeout() {
             if (requestTimeout != -1) {
                 if (request != null && start != null && new Date(System.currentTimeMillis() - requestTimeout).after(start)) {
-                    LOGGER.info("Aborting request to %s after it failed to complete in %d ms", request.getURI().toString(), requestTimeout);
+                    LOGGER.info("Aborting request to {} after it failed to complete in {} ms", request.getURI().toString(), requestTimeout);
                     abort();
                 }
             }

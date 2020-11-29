@@ -62,7 +62,7 @@ public class SelfSignedSslEngineSource {
     }
 
     public SelfSignedSslEngineSource(boolean trustAllServers, boolean sendCerts) {
-        this("sslSupport/mitmProxy_keystore.jks", trustAllServers, sendCerts);
+        this("/sslSupport/mitmProxy_keystore.jks", trustAllServers, sendCerts);
     }
 
     public SelfSignedSslEngineSource() {

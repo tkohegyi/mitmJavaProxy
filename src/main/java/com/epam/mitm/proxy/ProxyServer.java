@@ -13,7 +13,7 @@ import net.lightbody.bmp.proxy.http.ResponseInterceptor;
 import net.lightbody.bmp.proxy.jetty.http.HttpContext;
 import net.lightbody.bmp.proxy.jetty.http.HttpListener;
 import net.lightbody.bmp.proxy.jetty.http.SocketListener;
-import net.lightbody.bmp.proxy.jetty.jetty.Server;
+import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
 import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
 import org.java_bandwidthlimiter.BandwidthLimiter;
 import org.java_bandwidthlimiter.StreamManager;
@@ -32,7 +32,7 @@ public class ProxyServer {
     private static Boolean responseVolatile = Boolean.FALSE;  //general default approach is that the response is not volatile
     private static Boolean shouldKeepSslConnectionAlive = Boolean.FALSE; //set it to true if such (e.g. .net) clients we have
     private final AtomicInteger requestCounter = new AtomicInteger(0);
-    private Server server;
+    private BmpServer bmpServer;
     private int port = -1;
     private BrowserMobHttpClient2 client;
     private StreamManager streamManager;
@@ -73,15 +73,15 @@ public class ProxyServer {
         //remember that by default it is disabled!
         streamManager = new StreamManager(100 * BandwidthLimiter.OneMbps);
 
-        server = new Server();
+        bmpServer = new BmpServer();
         HttpListener listener = new SocketListener(new InetAddrPort(getPort()));
-        server.addListener(listener);
+        bmpServer.addListener(listener);
         HttpContext context = new HttpContext();
         context.setContextPath("/");
-        server.addContext(context);
+        bmpServer.addContext(context);
 
         handler = new BrowserMobProxyHandler();
-        handler.setJettyServer(server);
+        handler.setJettyServer(bmpServer);
         handler.setShutdownLock(new Object());
         client = new BrowserMobHttpClient2(streamManager, requestCounter, requestTimeOut);
         client.prepareForBrowser();
@@ -89,7 +89,7 @@ public class ProxyServer {
 
         context.addHandler(handler);
 
-        server.start();
+        bmpServer.start();
 
         setPort(listener.getPort());
     }
@@ -101,7 +101,7 @@ public class ProxyServer {
     public void stop() throws Exception {
         cleanup();
         client.shutdown();
-        server.stop();
+        bmpServer.stop();
     }
 
     public int getPort() {

@@ -16,7 +16,7 @@
 package net.lightbody.bmp.proxy.jetty.jetty.jmx;
 
 import net.lightbody.bmp.proxy.jetty.http.jmx.HttpServerMBean;
-import net.lightbody.bmp.proxy.jetty.jetty.Server;
+import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import org.apache.commons.logging.Log;
@@ -41,7 +41,7 @@ public class ServerMBean extends HttpServerMBean
 {
     private static Log log = LogFactory.getLog(ServerMBean.class);
 
-    private Server _jettyServer;
+    private BmpServer _jettyBmpServer;
     private String _configuration;
 
     /* ------------------------------------------------------------ */
@@ -49,10 +49,10 @@ public class ServerMBean extends HttpServerMBean
      * @exception MBeanException 
      * @exception InstanceNotFoundException 
      */
-    public ServerMBean(Server jettyServer)
+    public ServerMBean(BmpServer jettyBmpServer)
         throws MBeanException, InstanceNotFoundException
     {
-        super(jettyServer);
+        super(jettyBmpServer);
     }
 
     /* ------------------------------------------------------------ */
@@ -63,7 +63,7 @@ public class ServerMBean extends HttpServerMBean
     public ServerMBean()
         throws MBeanException, InstanceNotFoundException
     {
-        this(new Server());
+        this(new BmpServer());
     }
 
     /* ------------------------------------------------------------ */
@@ -76,7 +76,7 @@ public class ServerMBean extends HttpServerMBean
     public ServerMBean(String configuration)
         throws IOException,MBeanException, InstanceNotFoundException
     {
-        this(new Server());
+        this(new BmpServer());
         _configuration=configuration;
     }
 
@@ -108,7 +108,7 @@ public class ServerMBean extends HttpServerMBean
                         new String[]{"java.lang.String",
                                      "java.lang.String"},
                         IMPACT_ACTION);
-        _jettyServer=(Server)getManagedResource();
+        _jettyBmpServer =(BmpServer)getManagedResource();
     }
     
     
@@ -127,8 +127,8 @@ public class ServerMBean extends HttpServerMBean
             {
                 try
                 {
-                    _jettyServer.configure(_configuration);
-                    _jettyServer.start();
+                    _jettyBmpServer.configure(_configuration);
+                    _jettyBmpServer.start();
                 }
                 catch(Exception e)
                 {
@@ -144,8 +144,8 @@ public class ServerMBean extends HttpServerMBean
         _configuration=null;   
         try
         {
-            if (null!=_jettyServer)
-                _jettyServer.stop();
+            if (null!= _jettyBmpServer)
+                _jettyBmpServer.stop();
         }
         catch(Exception e)
         {

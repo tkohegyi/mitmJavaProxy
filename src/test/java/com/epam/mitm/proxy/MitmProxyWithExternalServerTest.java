@@ -5,6 +5,7 @@ import com.epam.mitm.proxy.help.DefaultRequestInterceptor;
 import com.epam.mitm.proxy.help.DefaultResponseInterceptor;
 import com.epam.mitm.proxy.help.ResponseInfo;
 import org.apache.http.HttpHost;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -28,6 +29,7 @@ public class MitmProxyWithExternalServerTest extends AbstractProxyTool {
         ProxyServer.setResponseVolatile(true);
     }
 
+    @Ignore
     @Test
     public void testSimpleLocalGetRequestOverHTTPSThroughProxy() throws Exception {
         String CALL = "/ok";

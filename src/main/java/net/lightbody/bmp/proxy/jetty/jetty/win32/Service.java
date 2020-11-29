@@ -16,7 +16,7 @@
 package net.lightbody.bmp.proxy.jetty.jetty.win32;
 
 import net.lightbody.bmp.proxy.jetty.http.HttpServer;
-import net.lightbody.bmp.proxy.jetty.jetty.Server;
+import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import org.apache.commons.logging.Log;
@@ -111,8 +111,8 @@ public class Service
                 {
                     try
                     {
-                        Server server = new Server((String)_configs.get(i));
-                        _servers.add(server);
+                        BmpServer bmpServer = new BmpServer((String)_configs.get(i));
+                        _servers.add(bmpServer);
                     }
                     catch(Exception e)
                     {

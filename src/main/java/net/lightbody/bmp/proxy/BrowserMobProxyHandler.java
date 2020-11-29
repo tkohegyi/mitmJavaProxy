@@ -13,7 +13,7 @@ import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
 import net.lightbody.bmp.proxy.jetty.http.HttpServer;
 import net.lightbody.bmp.proxy.jetty.http.HttpTunnel;
 import net.lightbody.bmp.proxy.jetty.http.SocketListener;
-import net.lightbody.bmp.proxy.jetty.jetty.Server;
+import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
 import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
 import net.lightbody.bmp.proxy.jetty.util.URI;
 import net.lightbody.bmp.proxy.selenium.SeleniumProxyHandler;
@@ -47,7 +47,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
     private static final int HEADER_BUFFER_DEFAULT = 2;
     protected final Set<SslRelay> sslRelays = new HashSet<SslRelay>();
 
-    private Server jettyServer;
+    private BmpServer jettyBmpServer;
     private int headerBufferMultiplier = HEADER_BUFFER_DEFAULT;
     private BrowserMobHttpClient2 httpClient;
 
@@ -360,8 +360,8 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
         httpClient.remapHost(source, target);
     }
 
-    public void setJettyServer(final Server jettyServer) {
-        this.jettyServer = jettyServer;
+    public void setJettyServer(final BmpServer jettyBmpServer) {
+        this.jettyBmpServer = jettyBmpServer;
     }
 
     public void adjustListenerBuffers(int headerBufferMultiplier) {
@@ -383,7 +383,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
         // configure the listeners to have larger buffers. We do this because we've seen cases where the header is
         // too large. Normally this would happen on "meaningless" JS includes for ad networks, but we eventually saw
         // it in a way that caused a Selenium script not to work due to too many headers (see tom.schwenk@musictoday.com)
-        HttpListener[] listeners = jettyServer.getListeners();
+        HttpListener[] listeners = jettyBmpServer.getListeners();
         for (HttpListener listener : listeners) {
             if (listener instanceof SocketListener) {
                 SocketListener sl = (SocketListener) listener;

@@ -16,7 +16,7 @@
 package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
 import net.lightbody.bmp.proxy.jetty.http.*;
-import net.lightbody.bmp.proxy.jetty.jetty.Server;
+import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.*;
 import org.apache.commons.logging.Log;
@@ -364,7 +364,7 @@ public class WebApplicationContext extends ServletHttpContext implements Externa
         
         //if this webapp does not have its own set of configurators, use the defaults
         if (null==names)
-            names = ((Server)getHttpServer()).getWebApplicationConfigurationClassNames();
+            names = ((BmpServer)getHttpServer()).getWebApplicationConfigurationClassNames();
         
         if (null!=names)
         {

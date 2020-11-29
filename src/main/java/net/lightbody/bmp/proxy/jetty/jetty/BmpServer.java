@@ -56,9 +56,9 @@ import java.util.Iterator;
  * @version $Revision: 1.40 $
  * @author Greg Wilkins (gregw)
  */
-public class Server extends HttpServer 
+public class BmpServer extends HttpServer
 {
-    static Log log = LogFactory.getLog(Server.class);
+    static Log log = LogFactory.getLog(BmpServer.class);
     private String[] _webAppConfigurationClassNames = 
         new String[]{"net.lightbody.bmp.proxy.jetty.jetty.servlet.XMLConfiguration", "net.lightbody.bmp.proxy.jetty.jetty.servlet.JettyWebConfiguration"};
     private String _configuration;
@@ -68,7 +68,7 @@ public class Server extends HttpServer
     /* ------------------------------------------------------------ */
     /** Constructor. 
      */
-    public Server()
+    public BmpServer()
     {
     }
     
@@ -77,7 +77,7 @@ public class Server extends HttpServer
      * @param configuration The filename or URL of the XML
      * configuration file.
      */
-    public Server(String configuration)
+    public BmpServer(String configuration)
         throws IOException
     {
         this(Resource.newResource(configuration).getURL());
@@ -88,7 +88,7 @@ public class Server extends HttpServer
      * @param configuration The filename or URL of the XML
      * configuration file.
      */
-    public Server(Resource configuration)
+    public BmpServer(Resource configuration)
         throws IOException
     {
         this(configuration.getURL());
@@ -99,11 +99,11 @@ public class Server extends HttpServer
      * @param configuration The filename or URL of the XML
      * configuration file.
      */
-    public Server(URL configuration)
+    public BmpServer(URL configuration)
         throws IOException
     {
         _configuration=configuration.toString();
-        Server.hookThread.add(this);
+        BmpServer.hookThread.add(this);
         try
         {
             XmlConfiguration config=new XmlConfiguration(configuration);
@@ -447,16 +447,16 @@ public class Server extends HttpServer
             arg=dftConfig;
         }
 
-        final Server[] servers=new Server[arg.length];
+        final BmpServer[] bmpServers =new BmpServer[arg.length];
 
         // create and start the servers.
         for (int i=0;i<arg.length;i++)
         {
             try
             {
-                servers[i] = new Server(arg[i]);
-                servers[i].setStopAtShutdown(true);
-                servers[i].start();
+                bmpServers[i] = new BmpServer(arg[i]);
+                bmpServers[i].setStopAtShutdown(true);
+                bmpServers[i].start();
 
             }
             catch(Exception e)
@@ -468,7 +468,8 @@ public class Server extends HttpServer
         // create and start the servers.
         for (int i=0;i<arg.length;i++)
         {
-            try{servers[i].join();}
+            try{
+                bmpServers[i].join();}
             catch (Exception e){LogSupport.ignore(log,e);}
         }
     }
@@ -502,16 +503,16 @@ public class Server extends HttpServer
     /**
      * Add Server to servers list.
      */
-    public boolean add(Server server) {
+    public boolean add(BmpServer bmpServer) {
       createShutdownHook();
-      return this.servers.add(server);
+      return this.servers.add(bmpServer);
     }
     
     /**
      * Contains Server in servers list?
      */
-    public boolean contains(Server server) {
-      return this.servers.contains(server);
+    public boolean contains(BmpServer bmpServer) {
+      return this.servers.contains(bmpServer);
     }
 
     /**
@@ -533,9 +534,9 @@ public class Server extends HttpServer
     /**
      * Remove Server from list.
      */
-    public boolean remove(Server server) {
+    public boolean remove(BmpServer bmpServer) {
       createShutdownHook();
-      return this.servers.remove(server);
+      return this.servers.remove(bmpServer);
     }
 
     /**
@@ -554,7 +555,7 @@ public class Server extends HttpServer
       log.info("Shutdown hook executing");
       Iterator it = servers.iterator();
       while (it.hasNext()) {
-        Server svr = (Server) it.next();
+        BmpServer svr = (BmpServer) it.next();
         if (svr == null) continue;
         try {
           svr.stop();

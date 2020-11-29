@@ -30,7 +30,7 @@ public class TrustingSSLSocketFactory2 extends SSLConnectionSocketFactory {
     static {
         try {
             keyStorePassword = "vvilma";
-            String keyStorePath = "sslSupport/mitmProxy_keystore.jks";
+            String keyStorePath = "/sslSupport/mitmProxy_keystore.jks";
 //            keyStorePassword = System.getProperty("javax.net.ssl.keyStorePassword");
 //            String keyStorePath = System.getProperty("javax.net.ssl.keyStore");
             if (keyStorePath != null) {

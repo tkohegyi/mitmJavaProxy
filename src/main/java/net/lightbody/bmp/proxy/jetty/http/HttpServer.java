@@ -18,6 +18,7 @@ package net.lightbody.bmp.proxy.jetty.http;
 import net.lightbody.bmp.proxy.jetty.http.handler.DumpHandler;
 import net.lightbody.bmp.proxy.jetty.http.handler.NotFoundHandler;
 import net.lightbody.bmp.proxy.jetty.http.handler.ResourceHandler;
+import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.*;
 import org.apache.commons.logging.Log;
@@ -48,7 +49,7 @@ import java.util.*;
  * @see HttpHandler
  * @see HttpConnection
  * @see HttpListener
- * @see net.lightbody.bmp.proxy.jetty.jetty.Server
+ * @see BmpServer
  * @version $Id: HttpServer.java,v 1.70 2005/12/04 11:43:21 gregwilkins Exp $
  * @author Greg Wilkins (gregw)
  */

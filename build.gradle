@@ -36,7 +36,7 @@ apply plugin: 'maven'
 apply plugin: 'java-library'
 apply plugin: 'jacoco'
 
-version = "0.6-beta-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
+version = "0.8-beta-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
 
 repositories {
     jcenter()
@@ -80,7 +80,10 @@ jacocoTestReport {
 test.finalizedBy jacocoTestReport
 
 dependencies {
-    compile group: 'org.slf4j', name: 'slf4j-jdk14', version:'1.7.12'
+    compile group: 'ch.qos.logback', name: 'logback-classic', version:'1.0.13'
+    compile(group: 'org.slf4j', name: 'jcl-over-slf4j', version:'1.7.12')
+    compile(group: 'org.slf4j', name: 'jul-to-slf4j', version:'1.7.12')
+    compile group: 'janino', name: 'janino', version:'2.5.10'
     compile group: 'org.codehaus.jackson', name: 'jackson-core-asl', version:'1.7.1'
     compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version:'1.7.1'
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.5.12'
