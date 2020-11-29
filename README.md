@@ -1,15 +1,17 @@
-MitmProxy - FOR Wilma
+MitmJavaProxy - For Wilma
 ============================
 
-This Men-In-The-Middle Proxy is a derivative work that was originated from BrowserMob Proxy, then tailored for old Wilma versions, 
+This Men-In-The-Middle Java Proxy is a derivative work that was originated from BrowserMob Proxy, then tailored for old Wilma versions, 
 then upgraded in order to be prepared for the next generation of Wilma. 
 
-WARNING!!! Major Changes!!!
+WARNING!!! Under Construction !!!
 ---------------------------
-**The main aim to create this MITM proxy is to support the proxy need of Wilma.**
+**Right now HTTP proxy mode is working, HTTPS is still under construction, and works only partially.**
 
+Also please be aware that the main aim of creating this MITM Java proxy is to support the proxy need of Wilma.
 Therefore none of the original browsermob-proxy features should be expected as working, 
 because the main purpose is just proxying the messages and by intercepting them do what Wilma wants to do with the messages.
+
 
 Embedded Mode
 -------------
@@ -18,8 +20,8 @@ If you're using Java, the easiest way to get started is to embed the project dir
     
     <dependency>
         <groupId>com.epam.wilma</groupId>
-        <artifactId>proxy</artifactId>
-        <version>0.2-alpha-wilma-2.0.DEV</version>
+        <artifactId>mitmJavaproxy</artifactId>
+        <version><versionToBeUsed></version>
     </dependency>
 
 

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Wilma.  If not, see <http://www.gnu.org/licenses/>.
 ===========================================================================*/
 
-ext.componentDescription = "MITM Proxy of Wilma"
+ext.componentDescription = "MITM Java Proxy of Wilma"
 
 // Common local repository info
 ext.myLocalRepository='file://C:/tmp/myRepo/'
@@ -36,7 +36,7 @@ apply plugin: 'maven'
 apply plugin: 'java-library'
 apply plugin: 'jacoco'
 
-version = "0.5-beta-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
+version = "0.6-beta-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
 
 repositories {
     jcenter()
