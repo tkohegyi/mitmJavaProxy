@@ -109,6 +109,7 @@ def myCopySpec = project.copySpec {
     from(rootProject.rootDir.absolutePath + '/') {
         include 'sslSupport/mitmProxy.cer'
         include 'sslSupport/mitmProxy_keystore.jks'
+        exclude 'logback.xml'
     }
 }
 
