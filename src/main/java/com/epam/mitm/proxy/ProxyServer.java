@@ -6,17 +6,16 @@ import net.lightbody.bmp.core.har.HarLog;
 import net.lightbody.bmp.core.har.HarNameVersion;
 import net.lightbody.bmp.core.har.HarPage;
 import net.lightbody.bmp.core.util.ThreadUtils;
-import net.lightbody.bmp.proxy.BrowserMobProxyHandler;
+import net.lightbody.bmp.proxy.BrowserMobProxyHandler2;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpClient2;
 import net.lightbody.bmp.proxy.http.RequestInterceptor;
 import net.lightbody.bmp.proxy.http.ResponseInterceptor;
-import net.lightbody.bmp.proxy.jetty.http.HttpContext;
-import net.lightbody.bmp.proxy.jetty.http.HttpListener;
-import net.lightbody.bmp.proxy.jetty.http.SocketListener;
-import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
-import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
 import org.java_bandwidthlimiter.BandwidthLimiter;
 import org.java_bandwidthlimiter.StreamManager;
+import org.openqa.jetty.http.HttpContext;
+import org.openqa.jetty.http.SocketListener;
+import org.openqa.jetty.jetty.Server;
+import org.openqa.jetty.util.InetAddrPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,12 +31,12 @@ public class ProxyServer {
     private static Boolean responseVolatile = Boolean.FALSE;  //general default approach is that the response is not volatile
     private static Boolean shouldKeepSslConnectionAlive = Boolean.FALSE; //set it to true if such (e.g. .net) clients we have
     private final AtomicInteger requestCounter = new AtomicInteger(0);
-    private BmpServer bmpServer;
+    private Server bmpServer;
     private int port = -1;
     private BrowserMobHttpClient2 client;
     private StreamManager streamManager;
     private HarPage currentPage;
-    private BrowserMobProxyHandler handler;
+    private BrowserMobProxyHandler2 handler;
     private int pageCount = 1;
 
     public ProxyServer() {
@@ -73,14 +72,14 @@ public class ProxyServer {
         //remember that by default it is disabled!
         streamManager = new StreamManager(100 * BandwidthLimiter.OneMbps);
 
-        bmpServer = new BmpServer();
-        HttpListener listener = new SocketListener(new InetAddrPort(getPort()));
+        bmpServer = new Server();
+        SocketListener listener = new SocketListener(new InetAddrPort(getPort()));
         bmpServer.addListener(listener);
         HttpContext context = new HttpContext();
         context.setContextPath("/");
         bmpServer.addContext(context);
 
-        handler = new BrowserMobProxyHandler();
+        handler = new BrowserMobProxyHandler2();
         handler.setJettyServer(bmpServer);
         handler.setShutdownLock(new Object());
         client = new BrowserMobHttpClient2(streamManager, requestCounter, requestTimeOut);

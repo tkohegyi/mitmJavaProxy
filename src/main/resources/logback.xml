@@ -49,11 +49,15 @@
   </appender>
 
   <logger name="com.epam.mitm" level="DEBUG">
-    <appender-ref ref="CONSOLE-APPENDER" />
+    <appender-ref ref="DEV" />
   </logger>
 
-  <logger name="net.lightbody.bmp.proxy" level="DEBUG"/>
-  <logger name="net.lightbody.bmp.proxy.selenium" level="DEBUG"/>
+  <logger name="net.lightbody.bmp.proxy" level="DEBUG">
+  <appender-ref ref="DEV" />
+  </logger>
+  <logger name="net.lightbody.bmp.proxy.selenium" level="DEBUG">
+  <appender-ref ref="DEV" />
+  </logger>
 
   <root level="INFO">
     <appender-ref ref="${logger:-EMPTY}" />

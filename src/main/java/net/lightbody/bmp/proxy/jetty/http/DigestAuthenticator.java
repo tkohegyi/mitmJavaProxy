@@ -18,6 +18,10 @@ package net.lightbody.bmp.proxy.jetty.http;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.*;
 import org.apache.commons.logging.Log;
+import org.openqa.jetty.http.HttpRequest;
+import org.openqa.jetty.http.HttpResponse;
+import org.openqa.jetty.http.SecurityConstraint;
+import org.openqa.jetty.http.UserRealm;
 
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -29,7 +33,7 @@ import java.security.Principal;
  * @version $Id: DigestAuthenticator.java,v 1.16 2005/08/13 00:01:24 gregwilkins Exp $
  * @author Greg Wilkins (gregw)
  */
-public class DigestAuthenticator implements Authenticator
+public class DigestAuthenticator
 {
     static Log log = LogFactory.getLog(DigestAuthenticator.class);
 
@@ -46,9 +50,9 @@ public class DigestAuthenticator implements Authenticator
      * @exception IOException 
      */
     public Principal authenticate(UserRealm realm,
-                                           String pathInContext,
-                                           HttpRequest request,
-                                           HttpResponse response)
+                                  String pathInContext,
+                                  HttpRequest request,
+                                  HttpResponse response)
         throws IOException
     {
         // Get the user if we can

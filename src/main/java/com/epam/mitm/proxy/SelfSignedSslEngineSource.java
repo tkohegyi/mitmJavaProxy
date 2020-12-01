@@ -1,6 +1,5 @@
-package com.epam.mitm.proxy.help;
+package com.epam.mitm.proxy;
 
-import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,25 +166,6 @@ public class SelfSignedSslEngineSource {
     private void loadKeyStore(KeyStore keyStore, URL url) throws IOException, GeneralSecurityException {
         try (InputStream is = url.openStream()) {
             keyStore.load(is, password.toCharArray());
-        }
-    }
-
-    private String nativeCall(final String... commands) {
-        logger.info("Running '{}'", Arrays.asList(commands));
-        final ProcessBuilder pb = new ProcessBuilder(commands);
-        try {
-            final Process process = pb.start();
-            byte[] data;
-            try (InputStream is = process.getInputStream()) {
-                data = ByteStreams.toByteArray(is);
-            }
-            String dataAsString = new String(data);
-
-            logger.info("Completed native call: '{}'\nResponse: '" + dataAsString + "'", Arrays.asList(commands));
-            return dataAsString;
-        } catch (final IOException e) {
-            logger.error("Error running commands: " + Arrays.asList(commands), e);
-            return "";
         }
     }
 

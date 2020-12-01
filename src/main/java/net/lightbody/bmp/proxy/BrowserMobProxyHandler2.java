@@ -7,19 +7,19 @@ import net.lightbody.bmp.proxy.http.BrowserMobHttpResponse;
 import net.lightbody.bmp.proxy.http.RequestCallback;
 import net.lightbody.bmp.proxy.jetty.http.HttpException;
 import net.lightbody.bmp.proxy.jetty.http.HttpFields;
-import net.lightbody.bmp.proxy.jetty.http.HttpListener;
-import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
-import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
-import net.lightbody.bmp.proxy.jetty.http.HttpServer;
-import net.lightbody.bmp.proxy.jetty.http.HttpTunnel;
 import net.lightbody.bmp.proxy.jetty.http.SocketListener;
-import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
-import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
-import net.lightbody.bmp.proxy.jetty.util.URI;
-import net.lightbody.bmp.proxy.selenium.SeleniumProxyHandler;
+import net.lightbody.bmp.proxy.selenium.SeleniumProxyHandler2;
 import org.apache.http.Header;
 import org.apache.http.StatusLine;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.openqa.jetty.http.HttpListener;
+import org.openqa.jetty.http.HttpRequest;
+import org.openqa.jetty.http.HttpResponse;
+import org.openqa.jetty.http.HttpServer;
+import org.openqa.jetty.http.HttpTunnel;
+import org.openqa.jetty.jetty.Server;
+import org.openqa.jetty.util.InetAddrPort;
+import org.openqa.jetty.util.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,16 +42,16 @@ import java.util.Set;
 /**
  * Proxy handler.
  */
-public class BrowserMobProxyHandler extends SeleniumProxyHandler {
-    protected static final Logger logger = LoggerFactory.getLogger(BrowserMobProxyHandler.class);
+public class BrowserMobProxyHandler2 extends SeleniumProxyHandler2 {
+    protected static final Logger logger = LoggerFactory.getLogger(BrowserMobProxyHandler2.class);
     private static final int HEADER_BUFFER_DEFAULT = 2;
-    protected final Set<SslRelay> sslRelays = new HashSet<SslRelay>();
+    protected final Set<SeleniumProxyHandler2.SslRelay> sslRelays = new HashSet<SeleniumProxyHandler2.SslRelay>();
 
-    private BmpServer jettyBmpServer;
+    private Server jettyBmpServer;
     private int headerBufferMultiplier = HEADER_BUFFER_DEFAULT;
     private BrowserMobHttpClient2 httpClient;
 
-    public BrowserMobProxyHandler() {
+    public BrowserMobProxyHandler2() {
         super(true, "", "", false, false);
         setShutdownLock(new Object());
 
@@ -133,7 +133,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
     }
 
     @Override
-    protected void wireUpSslWithCyberVilliansCA(String host, final SeleniumProxyHandler.SslRelay listener) {
+    protected void wireUpSslWithCyberVilliansCA(String host, final SslRelay listener) {
         List<String> originalHosts = httpClient.originalHosts(host);
         if (originalHosts != null && !originalHosts.isEmpty()) {
             if (originalHosts.size() == 1) {
@@ -318,7 +318,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
 
                 @Override
                 public void reportError(final Exception e) {
-                    BrowserMobProxyHandler.reportError(e, url, response);
+                    BrowserMobProxyHandler2.reportError(e, url, response);
                 }
             });
 
@@ -332,11 +332,11 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
         } catch (BadURIException e) {
             // this is a known error case (see MOB-93)
             logger.info(e.getMessage());
-            BrowserMobProxyHandler.reportError(e, url, response);
+            BrowserMobProxyHandler2.reportError(e, url, response);
             return -1;
         } catch (Exception e) {
             logger.info("Exception while proxying " + url, e);
-            BrowserMobProxyHandler.reportError(e, url, response);
+            BrowserMobProxyHandler2.reportError(e, url, response);
             return -1;
         }
     }
@@ -360,7 +360,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
         httpClient.remapHost(source, target);
     }
 
-    public void setJettyServer(final BmpServer jettyBmpServer) {
+    public void setJettyServer(final Server jettyBmpServer) {
         this.jettyBmpServer = jettyBmpServer;
     }
 

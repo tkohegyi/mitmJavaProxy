@@ -18,11 +18,15 @@ package net.lightbody.bmp.proxy.jetty.http;
 
 import net.lightbody.bmp.proxy.jetty.jetty.servlet.ServletSSL;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
-import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.Password;
 import net.lightbody.bmp.proxy.jetty.util.Resource;
 import org.apache.commons.logging.Log;
+import org.openqa.jetty.http.HttpConnection;
+import org.openqa.jetty.http.HttpMessage;
+import org.openqa.jetty.http.HttpRequest;
+import org.openqa.jetty.http.HttpResponse;
+import org.openqa.jetty.util.InetAddrPort;
+import org.openqa.jetty.util.LogSupport;
 
 import javax.net.ssl.*;
 import java.io.ByteArrayInputStream;

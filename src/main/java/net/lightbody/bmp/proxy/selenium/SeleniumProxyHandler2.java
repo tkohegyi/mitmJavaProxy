@@ -1,22 +1,47 @@
 package net.lightbody.bmp.proxy.selenium;
 
 import com.epam.mitm.proxy.ProxyServer;
-import net.lightbody.bmp.proxy.jetty.http.*;
-import net.lightbody.bmp.proxy.jetty.http.handler.AbstractHttpHandler;
+import net.lightbody.bmp.proxy.jetty.http.HttpException;
+import net.lightbody.bmp.proxy.jetty.http.HttpFields;
+import net.lightbody.bmp.proxy.jetty.http.SslListener;
 import net.lightbody.bmp.proxy.jetty.util.IO;
-import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
 import net.lightbody.bmp.proxy.jetty.util.StringMap;
-import net.lightbody.bmp.proxy.jetty.util.URI;
 import net.lightbody.bmp.proxy.util.ResourceExtractor;
 import net.lightbody.bmp.proxy.util.TrustEverythingSSLTrustManager;
+import org.openqa.jetty.http.HttpConnection;
+import org.openqa.jetty.http.HttpMessage;
+import org.openqa.jetty.http.HttpRequest;
+import org.openqa.jetty.http.HttpResponse;
+import org.openqa.jetty.http.HttpServer;
+import org.openqa.jetty.http.HttpTunnel;
+import org.openqa.jetty.http.handler.AbstractHttpHandler;
+import org.openqa.jetty.util.InetAddrPort;
+import org.openqa.jetty.util.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLHandshakeException;
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.Proxy;
+import java.net.Socket;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /* ------------------------------------------------------------ */
 
@@ -30,8 +55,8 @@ import java.util.*;
  * @author giacof@tiscali.it (chained proxy)
  * @version $Id: ProxyHandler.java,v 1.34 2005/10/05 13:32:59 gregwilkins Exp $
  */
-public class SeleniumProxyHandler extends AbstractHttpHandler {
-    private final Logger log = LoggerFactory.getLogger(SeleniumProxyHandler.class);
+public class SeleniumProxyHandler2 extends AbstractHttpHandler {
+    private final Logger log = LoggerFactory.getLogger(SeleniumProxyHandler2.class);
     private final Map<String, SslRelay> _sslMap = new LinkedHashMap<String, SslRelay>();
     private final String dontInjectRegex;
     private final String debugURL;
@@ -55,10 +80,6 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
      * instead.
      */
     protected StringMap _ProxySchemes = new StringMap();
-    /**
-     * Set of allowed CONNECT ports.
-     */
-    protected HashSet<Integer> _allowedConnectPorts = new HashSet<Integer>();
     private boolean _anonymous = false;
     private transient boolean _chained = false;
     @SuppressWarnings("unused")
@@ -103,17 +124,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
         _ProxySchemes.put("ftp", o);
     }
 
-    {
-        _allowedConnectPorts.add(80);
-        _allowedConnectPorts.add(4444);
-        _allowedConnectPorts.add(8000);
-        _allowedConnectPorts.add(8080);
-        _allowedConnectPorts.add(8888);
-        _allowedConnectPorts.add(443);
-        _allowedConnectPorts.add(8443);
-    }
-
-    public SeleniumProxyHandler(boolean trustAllSSLCertificates, String dontInjectRegex, String debugURL, boolean proxyInjectionMode, boolean forceProxyChain) {
+    public SeleniumProxyHandler2(boolean trustAllSSLCertificates, String dontInjectRegex, String debugURL, boolean proxyInjectionMode, boolean forceProxyChain) {
         super();
         this.trustAllSSLCertificates = trustAllSSLCertificates;
         this.dontInjectRegex = dontInjectRegex;
@@ -147,8 +158,30 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
         _tunnelTimeoutMs = ms;
     }
 
-    /* ------------------------------------------------------------ */
-    public void handle(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws HttpException, IOException {
+    private boolean isSeleniumUrl(String url) {
+        int slashSlash = url.indexOf("//");
+        if (slashSlash == -1) {
+            return false;
+        }
+
+        int nextSlash = url.indexOf("/", slashSlash + 2);
+        if (nextSlash == -1) {
+            return false;
+        }
+
+        int seleniumServer = url.indexOf("/selenium-server/");
+        if (seleniumServer == -1) {
+            return false;
+        }
+
+        // we do this complex checking because sometimes some sites/pages (such as ominture ads) embed the referrer URL,
+        // which will include selenium stuff, in to the query parameter, which would fake out a simple String.contains()
+        // call. This method is more robust and will catch this stuff.
+        return seleniumServer == nextSlash;
+    }
+
+    @Override
+    public void handle(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws org.openqa.jetty.http.HttpException, IOException {
         URI uri = request.getURI();
 
         // Is this a CONNECT request?
@@ -235,28 +268,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
             if (!response.isCommitted())
                 response.sendError(HttpResponse.__400_Bad_Request, "Could not proxy " + uri + "\n" + e);
         }
-    }
 
-    private boolean isSeleniumUrl(String url) {
-        int slashSlash = url.indexOf("//");
-        if (slashSlash == -1) {
-            return false;
-        }
-
-        int nextSlash = url.indexOf("/", slashSlash + 2);
-        if (nextSlash == -1) {
-            return false;
-        }
-
-        int seleniumServer = url.indexOf("/selenium-server/");
-        if (seleniumServer == -1) {
-            return false;
-        }
-
-        // we do this complex checking because sometimes some sites/pages (such as ominture ads) embed the referrer URL,
-        // which will include selenium stuff, in to the query parameter, which would fake out a simple String.contains()
-        // call. This method is more robust and will catch this stuff.
-        return seleniumServer == nextSlash;
     }
 
     protected long proxyPlainTextRequest(URL url, String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws IOException {
@@ -516,10 +528,10 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
                     wireUpSslWithRemoteService(host, listener);
                 }
 
-//                listener.setPassword("password");
-//                listener.setKeyPassword("password");
-                listener.setPassword("vvilma");
-                listener.setKeyPassword("vvilma");
+                listener.setPassword("password");
+                listener.setKeyPassword("password");
+//                listener.setPassword("vvilma");
+//                listener.setKeyPassword("vvilma");
                 server.addListener(listener);
 
                 synchronized (shutdownLock) {
@@ -579,8 +591,8 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
             mgr.getKeyStore().deleteEntry(KeyStoreManager._caPrivKeyAlias);
             mgr.persist();
 
-            listener.setKeystore(new File(root, "mitmProxy_keystore.jks").getAbsolutePath());
-//            listener.setKeystore(new File(root, "cybervillainsCA.jks").getAbsolutePath());
+//            listener.setKeystore(new File(root, "mitmProxy_keystore.jks").getAbsolutePath());
+            listener.setKeystore(new File(root, "cybervillainsCA.jks").getAbsolutePath());
             listener.setNukeDirOrFile(root);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -663,13 +675,6 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
      * @return True if the request to the scheme,host and port is not forbidden.
      */
     protected boolean isForbidden(String scheme, String host, int port, boolean openNonPrivPorts) {
-        // Check port
-        if (false) { // DGF Don't check the port, SRC-354
-            if (port > 0 && !_allowedConnectPorts.contains(new Integer(port))) {
-                if (!openNonPrivPorts || port <= 1024)
-                    return true;
-            }
-        }
 
         // Must be a scheme that can be proxied.
         if (scheme == null || !_ProxySchemes.containsKey(scheme))
@@ -728,6 +733,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
 
         this.shutdownLock = shutdownLock;
     }
+
 
     public static class SslRelay extends SslListener {
         InetAddrPort _addr;

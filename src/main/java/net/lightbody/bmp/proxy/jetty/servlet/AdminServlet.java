@@ -17,13 +17,18 @@ package net.lightbody.bmp.proxy.jetty.servlet;
 
 import net.lightbody.bmp.proxy.jetty.html.*;
 import net.lightbody.bmp.proxy.jetty.http.*;
-import net.lightbody.bmp.proxy.jetty.jetty.servlet.ServletHandler;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import net.lightbody.bmp.proxy.jetty.util.LifeCycle;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.URI;
 import net.lightbody.bmp.proxy.jetty.util.UrlEncoded;
 import org.apache.commons.logging.Log;
+import org.openqa.jetty.http.HttpContext;
+import org.openqa.jetty.http.HttpHandler;
+import org.openqa.jetty.http.HttpListener;
+import org.openqa.jetty.http.HttpResponse;
+import org.openqa.jetty.http.HttpServer;
+import org.openqa.jetty.jetty.servlet.ServletHandler;
+import org.openqa.jetty.util.LifeCycle;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -58,7 +63,7 @@ public class AdminServlet extends HttpServlet
          throws ServletException
     {
         super.init(config);
-        _servers =HttpServer.getHttpServers();
+        _servers = HttpServer.getHttpServers();
     }
     
     /* ------------------------------------------------------------ */

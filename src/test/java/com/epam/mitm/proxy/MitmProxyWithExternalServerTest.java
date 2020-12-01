@@ -29,7 +29,6 @@ public class MitmProxyWithExternalServerTest extends AbstractProxyTool {
         ProxyServer.setResponseVolatile(true);
     }
 
-    @Ignore
     @Test
     public void testSimpleLocalGetRequestOverHTTPSThroughProxy() throws Exception {
         String CALL = "/ok";
@@ -100,6 +99,18 @@ public class MitmProxyWithExternalServerTest extends AbstractProxyTool {
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(0, responseCount.get());
         assertEquals(0, requestCount.get());
+    }
+
+    @Test
+    public void testSimpleRemoteGetRequestOverHTTPSThroughProxyV2() throws Exception {
+        //check if external test server is available
+        String CALL = "/version";
+        HttpHost externalHost = new HttpHost("orokimadas.info", 9092, "https");
+        //do test if available
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, true, false);
+        assertEquals(200, proxiedResponse.getStatusCode());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
     }
 
 

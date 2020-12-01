@@ -30,7 +30,7 @@ import java.io.OutputStream;
  */
 public class BufferedOutputStream
     extends ByteBufferOutputStream
-    implements HttpMessage.HeaderWriter
+
 {
     protected OutputStream _out;
     protected ByteArrayISO8859Writer _httpMessageWriter;
@@ -110,15 +110,7 @@ public class BufferedOutputStream
         _bypassBuffer = bypassBuffer;
     }
     
-    /* ------------------------------------------------------------ */
-    public void writeHeader(HttpMessage httpMessage)
-        throws IOException
-    {
-        httpMessage.writeHeader(_httpMessageWriter);
-        if (_httpMessageWriter.size()>capacity())
-            throw new IllegalStateException("Header too large");
-    }
-    
+
     /* ------------------------------------------------------------ */
     public void write(byte[] b)
         throws IOException

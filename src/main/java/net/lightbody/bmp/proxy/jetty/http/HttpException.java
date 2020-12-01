@@ -16,6 +16,7 @@
 package net.lightbody.bmp.proxy.jetty.http;
 
 import net.lightbody.bmp.proxy.jetty.util.TypeUtil;
+import org.openqa.jetty.http.HttpResponse;
 
 import java.io.IOException;
 
@@ -37,7 +38,7 @@ public class HttpException extends IOException
     
     public String getReason()
     {
-        return (String)HttpResponse.__statusMsg.get(TypeUtil.newInteger(_code));
+        return (String) HttpResponse.__statusMsg.get(TypeUtil.newInteger(_code));
     }
     
     public HttpException()

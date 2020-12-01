@@ -15,9 +15,9 @@
 
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.http.HttpContext;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import org.apache.commons.logging.Log;
+import org.openqa.jetty.http.HttpContext;
+import org.openqa.jetty.log.LogFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -268,7 +268,7 @@ public abstract class Container implements LifeCycle,EventProvider,Serializable
             for (int c=0;c<LazyList.size(_components);c++)
             {
                 Object o=LazyList.get(_components,c);
-                if (o instanceof HttpContext )
+                if (o instanceof HttpContext)
                     ((HttpContext)o).destroy();
                 
                 ComponentEvent event = new ComponentEvent(this,o);
