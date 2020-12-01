@@ -1,35 +1,17 @@
 package com.epam.mitm.proxy.help;
 
-import net.lightbody.bmp.proxy.http.AllowAllHostnameVerifier;
-import net.lightbody.bmp.proxy.http.BlankCookieStore;
-import net.lightbody.bmp.proxy.http.BrowserMobHttpClient2;
-import net.lightbody.bmp.proxy.http.SimulatedRequestExecutor;
 import org.apache.http.HttpHost;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.conn.ssl.TrustStrategy;
-import org.apache.http.conn.ssl.X509HostnameVerifier;
-import org.apache.http.cookie.Cookie;
-import org.apache.http.cookie.CookieOrigin;
-import org.apache.http.cookie.CookieSpec;
-import org.apache.http.cookie.CookieSpecProvider;
-import org.apache.http.cookie.MalformedCookieException;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
-import org.apache.http.impl.cookie.BrowserCompatSpec;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Request;
@@ -40,27 +22,23 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocket;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.cert.X509Certificate;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 public class TestUtils {
     private final static Logger LOGGER = LoggerFactory.getLogger(TestUtils.class);
+
     /**
      * Creates and starts an embedded web server on JVM-assigned HTTP and HTTPS ports.
      * Each response has a body that contains the specified contents.
      *
      * @param enableHttps if true, an HTTPS connector will be added to the web server
-     * @param content The response the server will return
+     * @param content     The response the server will return
      * @return Instance of Server
      */
     public static Server startWebServerWithResponse(boolean enableHttps, final byte[] content) {
@@ -149,9 +127,9 @@ public class TestUtils {
     /**
      * Creates a DefaultHttpClient instance.
      *
-     * @return instance of DefaultHttpClient
      * @param isProxied
      * @param port
+     * @return instance of DefaultHttpClient
      */
     public static CloseableHttpClient buildHttpClient(boolean isProxied, int port) throws Exception {
         /*DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -197,7 +175,7 @@ public class TestUtils {
                 NoopHostnameVerifier.INSTANCE);
 
         Registry<ConnectionSocketFactory> socketFactoryRegistry =
-                RegistryBuilder.<ConnectionSocketFactory> create()
+                RegistryBuilder.<ConnectionSocketFactory>create()
                         .register("https", sslsf)
                         .register("http", new PlainConnectionSocketFactory())
                         .build();

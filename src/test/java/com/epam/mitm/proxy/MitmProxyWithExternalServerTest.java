@@ -29,7 +29,6 @@ public class MitmProxyWithExternalServerTest extends AbstractProxyTool {
         ProxyServer.setResponseVolatile(true);
     }
 
-    @Ignore
     @Test
     public void testSimpleLocalGetRequestOverHTTPSThroughProxy() throws Exception {
         String CALL = "/ok";

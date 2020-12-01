@@ -36,7 +36,7 @@ apply plugin: 'maven'
 apply plugin: 'java-library'
 apply plugin: 'jacoco'
 
-version = "0.8-beta-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
+version = "0.9-beta-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
 
 repositories {
     jcenter()
@@ -92,8 +92,11 @@ dependencies {
     compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version:'3.2'
     compile group: 'org.apache.ant', name: 'ant', version:'1.9.4'
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:'1.47'
-    compile group: 'org.eclipse.jetty', name: 'jetty-server', version:'7.4.5.v20110725'
-    compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version:'7.4.5.v20110725'
+
+    compile group: 'org.eclipse.jetty', name: 'jetty-io', version: '7.4.5.v20110725'
+    compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
+//    compile group: 'org.eclipse.jetty', name: 'jetty-server', version:'7.4.5.v20110725'
+//    compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version:'7.4.5.v20110725'
     compile group: 'dnsjava', name: 'dnsjava', version: '3.3.1'
     testCompile group: 'junit', name: 'junit', version:'4.12'
     testCompile group: 'com.google.guava', name: 'guava', version: '29.0-jre'
