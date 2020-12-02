@@ -15,16 +15,21 @@
 
 package net.lightbody.bmp.proxy.jetty.http;
 
-import com.sun.net.ssl.*;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
 import net.lightbody.bmp.proxy.jetty.util.Password;
 import org.apache.commons.logging.Log;
 
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.security.KeyStore;
+import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.Security;
 
@@ -59,7 +64,8 @@ public class SunJsseListener extends JsseListener
     /* ------------------------------------------------------------ */
     static
     {
-        Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
+        log.error("Calling unwanted class: SunJsseListener");
+        //Security.addProvider(new Provider());
     }
 
     /* ------------------------------------------------------------ */
@@ -222,9 +228,9 @@ public class SunJsseListener extends JsseListener
         ks.load( new FileInputStream( new File( _keystore ) ),
                  _password.toString().toCharArray());
         
-        KeyManagerFactory km = KeyManagerFactory.getInstance( "SunX509","SunJSSE"); 
+        KeyManagerFactory km = KeyManagerFactory.getInstance( "SunX509","SunJSSE");
         km.init( ks, _keypassword.toString().toCharArray() );
-        KeyManager[] kma = km.getKeyManagers();                        
+        KeyManager[] kma = km.getKeyManagers();
         
         TrustManagerFactory tm = TrustManagerFactory.getInstance("SunX509","SunJSSE");
         if (_useDefaultTrustStore) {
@@ -235,7 +241,7 @@ public class SunJsseListener extends JsseListener
 
         TrustManager[] tma = tm.getTrustManagers();
         
-        SSLContext sslc = SSLContext.getInstance( "SSL" ); 
+        SSLContext sslc = SSLContext.getInstance( "SSL" );
         sslc.init( kma, tma, SecureRandom.getInstance("SHA1PRNG"));
         
         SSLServerSocketFactory ssfc = sslc.getServerSocketFactory();

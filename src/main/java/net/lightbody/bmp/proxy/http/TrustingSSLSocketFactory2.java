@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -67,9 +68,19 @@ public class TrustingSSLSocketFactory2 extends SSLConnectionSocketFactory {
         this.timeout = timeout;
     }
 
+    //just an helper function to wrap a normal sslSocket into a simulated one so we can do throttling
+    private Socket createSimulatedSocket(final Socket socket) {
+        SimulatedSocketFactory.configure(socket);
+        //socket.setEnabledProtocols(new String[]{ "SSLv3", "TLSv1", "TLSv1.3", "TLSv1.2", "TLSv1.1" });
+        //socket.setEnabledCipherSuites(new String[] { "SSL_RSA_WITH_RC4_128_MD5" });
+        return new SimulatedSSLSocket2(socket, streamManager, timeout);
+        //return socket;
+    }
+
     @Override
     public Socket createSocket(final HttpContext context) throws IOException {
-        return super.createSocket(context);
+        Socket sslSocket = super.createSocket(context);
+        return createSimulatedSocket(sslSocket);
     }
 
     @Override
@@ -80,8 +91,12 @@ public class TrustingSSLSocketFactory2 extends SSLConnectionSocketFactory {
             final InetSocketAddress remoteAddress,
             final InetSocketAddress localAddress,
             final HttpContext context) throws IOException {
+        Socket sslSocket = super.connectSocket(connectTimeout, socket, host, remoteAddress, localAddress, context);
 
-        return super.connectSocket(connectTimeout, socket, host, remoteAddress, localAddress, context);
+        if (sslSocket instanceof SimulatedSSLSocket) {
+            return sslSocket;
+        }
+        return createSimulatedSocket(sslSocket);
     }
 
     @Override
@@ -90,7 +105,11 @@ public class TrustingSSLSocketFactory2 extends SSLConnectionSocketFactory {
             final String target,
             final int port,
             final HttpContext context) throws IOException {
-        return super.createLayeredSocket(socket, target, port, context);
-    }
+        Socket sslSocket = super.createLayeredSocket(socket, target, port, context);
 
+        if (sslSocket instanceof SimulatedSSLSocket) {
+            return sslSocket;
+        }
+        return createSimulatedSocket(sslSocket);
+    }
 }

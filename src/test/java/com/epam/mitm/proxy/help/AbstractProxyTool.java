@@ -7,10 +7,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.jetty.server.Server;
 import org.junit.After;
@@ -67,6 +65,7 @@ public abstract class AbstractProxyTool {
         LOGGER.info("*** Proxy Server started on port: {}", proxyPort);
         //and finally
         setUp();
+        LOGGER.info("*** Setup DONE - starting TEST");
     }
 
     protected abstract void setUp() throws Exception;
@@ -109,6 +108,8 @@ public abstract class AbstractProxyTool {
 
     @After
     public void runTearDown() throws Exception {
+        LOGGER.info("*** Test DONE - starting TEARDOWN");
+
         try {
             tearDown();
         } finally {

@@ -140,7 +140,7 @@ public class BrowserMobHttpClient2 {
     private boolean captureContent;
     // if captureContent is set, default policy is to capture binary contents too
     private boolean captureBinaryContent = true;
-    private SimulatedSocketFactory2 socketFactory;
+    private SimulatedSocketFactory socketFactory;
     private TrustingSSLSocketFactory2 sslSocketFactory;
     private PoolingHttpClientConnectionManager httpClientConnMgr;
     private HttpClient httpClient;
@@ -161,7 +161,7 @@ public class BrowserMobHttpClient2 {
         this.requestTimeout = requestTimeOut;
         hostNameResolver = new BrowserMobHostNameResolver(new Cache(DClass.ANY));
 
-        socketFactory = new SimulatedSocketFactory2(hostNameResolver, streamManager, requestTimeout);
+        socketFactory = new SimulatedSocketFactory(hostNameResolver, streamManager, requestTimeout);
         try {
             sslSocketFactory = new TrustingSSLSocketFactory2(hostNameResolver, streamManager, requestTimeout);
         } catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {

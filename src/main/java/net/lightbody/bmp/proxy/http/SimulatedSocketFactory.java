@@ -1,11 +1,11 @@
 package net.lightbody.bmp.proxy.http;
 
+import org.apache.http.HttpHost;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.HttpInetSocketAddress;
 import org.apache.http.conn.scheme.HostNameResolver;
-import org.apache.http.conn.scheme.SchemeSocketFactory;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.protocol.HttpContext;
 import org.java_bandwidthlimiter.StreamManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.Date;
 
-public class SimulatedSocketFactory implements SchemeSocketFactory {
+public class SimulatedSocketFactory implements ConnectionSocketFactory {
     protected static final Logger logger = LoggerFactory.getLogger(SimulatedSocketFactory.class);
     /**
      * Prevent unnecessary class inspection at runtime.
@@ -88,8 +88,27 @@ public class SimulatedSocketFactory implements SchemeSocketFactory {
         }
     }
 
+    /**
+     * A minor optimization to prevent possible host resolution when inspecting a InetSocketAddress for a hostname....
+     *
+     * @param remoteAddress
+     * @return
+     * @throws IOException
+     */
+    private String resolveHostName(InetSocketAddress remoteAddress) {
+        String hostString = null;
+        try {
+            hostString = (String) getHostMethod.invoke(remoteAddress, new Object[]{});
+        } catch (InvocationTargetException ite) {
+            throw new RuntimeException("Expecting InetSocketAddress to have a package scoped \"getHostString\" method which returns a String and takes no input");
+        } catch (IllegalAccessException iae) {
+            throw new RuntimeException("Expecting InetSocketAddress to have a package scoped \"getHostString\" method which returns a String and takes no input");
+        }
+        return hostString;
+    }
+
     @Override
-    public Socket createSocket(HttpParams httpParams) {
+    public Socket createSocket(HttpContext context) throws IOException {
         //Ignoring httpParams
         //apparently it's only useful to pass through a SOCKS server
         //see: http://svn.apache.org/repos/asf/httpcomponents/httpclient/trunk/httpclient/src/examples/org/apache/http/examples/client/ClientExecuteSOCKS.java
@@ -136,33 +155,14 @@ public class SimulatedSocketFactory implements SchemeSocketFactory {
         return newSocket;
     }
 
-    /**
-     * A minor optimization to prevent possible host resolution when inspecting a InetSocketAddress for a hostname....
-     *
-     * @param remoteAddress
-     * @return
-     * @throws IOException
-     */
-    private String resolveHostName(InetSocketAddress remoteAddress) {
-        String hostString = null;
-        try {
-            hostString = (String) getHostMethod.invoke(remoteAddress, new Object[]{});
-        } catch (InvocationTargetException ite) {
-            throw new RuntimeException("Expecting InetSocketAddress to have a package scoped \"getHostString\" method which returns a String and takes no input");
-        } catch (IllegalAccessException iae) {
-            throw new RuntimeException("Expecting InetSocketAddress to have a package scoped \"getHostString\" method which returns a String and takes no input");
-        }
-        return hostString;
-    }
-
     @Override
-    public Socket connectSocket(Socket sock, InetSocketAddress remoteAddress, InetSocketAddress localAddress, HttpParams params) throws IOException {
+    public Socket connectSocket(int connectTimeout, Socket sock, HttpHost host, InetSocketAddress remoteAddress, InetSocketAddress localAddress, HttpContext context) throws IOException {
         if (remoteAddress == null) {
             throw new IllegalArgumentException("Target host may not be null.");
         }
 
-        if (params == null) {
-            throw new IllegalArgumentException("Parameters may not be null.");
+        if (context == null) {
+            throw new IllegalArgumentException("Context may not be null.");
         }
 
         if (sock == null) {
@@ -185,37 +185,12 @@ public class SimulatedSocketFactory implements SchemeSocketFactory {
             remoteAddr = new InetSocketAddress(this.hostNameResolver.resolve(hostName), remoteAddress.getPort());
         }
 
-        int timeout = HttpConnectionParams.getConnectionTimeout(params);
-
         try {
-            sock.connect(remoteAddr, timeout);
+            sock.connect(remoteAddr, connectTimeout);
         } catch (SocketTimeoutException ex) {
             throw new ConnectTimeoutException("Connect to " + remoteAddress + " timed out");
         }
 
         return sock;
-    }
-
-    /**
-     * Checks whether a socket connection is secure. This factory creates plain socket connections which are not
-     * considered secure.
-     *
-     * @param sock the connected socket
-     * @return <code>false</code>
-     * @throws IllegalArgumentException if the argument is invalid
-     */
-    @Override
-    public final boolean isSecure(Socket sock)
-            throws IllegalArgumentException {
-
-        if (sock == null) {
-            throw new IllegalArgumentException("Socket may not be null.");
-        }
-        // This check is performed last since it calls a method implemented
-        // by the argument object. getClass() is final in java.lang.Object.
-        if (sock.isClosed()) {
-            throw new IllegalArgumentException("Socket is closed.");
-        }
-        return false;
     }
 }

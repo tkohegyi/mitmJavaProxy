@@ -256,45 +256,7 @@ public class KeyStoreManager {
 		{
 			try
 			{
-				log.debug("Keystore or signing cert & keypair not found.  Generating...");
-
-				KeyPair caKeypair = getRSAKeyPair();
-				caPrivKey = caKeypair.getPrivate();
-				signingCert = CertificateCreator.createTypicalMasterCert(caKeypair);
-
-				log.debug("Done generating signing cert");
-				log.debug(signingCert);
-
-				_ks.load(null, _keystorepass);
-
-				_ks.setCertificateEntry(_caCertAlias, signingCert);
-				_ks.setKeyEntry(_caPrivKeyAlias, caPrivKey, _keypassword, new java.security.cert.Certificate[] {signingCert});
-
-				File caKsFile = new File(root, _caPrivateKeystore);
-
-				OutputStream os = new FileOutputStream(caKsFile);
-				_ks.store(os, _keystorepass);
-
-				log.debug("Wrote JKS keystore to: " +
-						caKsFile.getAbsolutePath());
-
-				// also export a .cer that can be imported as a trusted root
-				// to disable all warning dialogs for interception
-
-				File signingCertFile = new File(root, EXPORTED_CERT_NAME);
-
-				FileOutputStream cerOut = new FileOutputStream(signingCertFile);
-
-				byte[] buf = signingCert.getEncoded();
-
-				log.debug("Wrote signing cert to: " + signingCertFile.getAbsolutePath());
-
-				cerOut.write(buf);
-				cerOut.flush();
-				cerOut.close();
-
-				_caCert = (X509Certificate)signingCert;
-				_caPrivKey  = caPrivKey;
+				throw new RuntimeException("Ups, tried to create a Cert");
 			}
 			catch(Exception e)
 			{
@@ -374,7 +336,6 @@ public class KeyStoreManager {
 	/**
 	 * Returns the aliased certificate.  Certificates are aliased by their hostname.
 	 * @see ThumbprintUtil
-	 * @param alias
 	 * @return
 	 * @throws KeyStoreException
 	 * @throws UnrecoverableKeyException
@@ -558,9 +519,9 @@ public class KeyStoreManager {
 			KeyPair kp = getRSAKeyPair();
 
 			X509Certificate newCert = CertificateCreator.generateStdSSLServerCertificate(kp.getPublic(),
-																						 getSigningCert(),
-																						 getSigningPrivateKey(),
-																						 subject);
+					getSigningCert(),
+					getSigningPrivateKey(),
+					subject);
 
 			addCertAndPrivateKey(hostname, newCert, kp.getPrivate());
 
@@ -573,7 +534,6 @@ public class KeyStoreManager {
 			}
 
 			return newCert;
-
 		}
         return getCertificateByAlias(thumbprint);
 
@@ -718,7 +678,6 @@ public class KeyStoreManager {
 	 * later see an X509Data with the same public key, we shouldn't split this
 	 * in our MITM impl.  So when creating a new cert, we should check if we've already
 	 * assigned a substitute key and re-use it, and vice-versa.
-	 * @param pk
 	 * @return
 	 */
 	public synchronized PublicKey getMappedPublicKey(final PublicKey original)

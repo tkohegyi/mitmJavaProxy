@@ -24,6 +24,7 @@ public class ComplexMitmProxyTest extends AbstractProxyTool {
         proxyServer.setCaptureBinaryContent(false);
         proxyServer.setCaptureContent(false);
         ProxyServer.setResponseVolatile(true);
+        ProxyServer.setShouldKeepSslConnectionAlive(true);
     }
 
     @Test
