@@ -103,9 +103,6 @@ dependencies {
     testCompile group: 'org.mockito', name: 'mockito-all', version:'1.9.5'
     testCompile (group: 'io.netty', name: 'netty-all', version: '4.1.51.Final')
     testCompile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.4.31.v20200723'
-    testCompile(group: 'org.testng', name: 'testng', version:'6.8.5') {
-        exclude(module: 'junit')
-    }
 }
 
 def myCopySpec = project.copySpec {

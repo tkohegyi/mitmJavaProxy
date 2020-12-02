@@ -50,7 +50,8 @@ public class SelfSignedSslEngineSource {
     }
 
     public SelfSignedSslEngineSource(String keyStorePath, boolean trustAllServers, boolean sendCerts) {
-        this(keyStorePath, trustAllServers, sendCerts, "mitmProxy", "vvilma");
+//        this(keyStorePath, trustAllServers, sendCerts, "mitmProxy", "vvilma");
+        this(keyStorePath, trustAllServers, sendCerts, "signingCert", "password");
     }
 
     public SelfSignedSslEngineSource(String keyStorePath) {
@@ -62,7 +63,8 @@ public class SelfSignedSslEngineSource {
     }
 
     public SelfSignedSslEngineSource(boolean trustAllServers, boolean sendCerts) {
-        this("/sslSupport/mitmProxy_keystore.jks", trustAllServers, sendCerts);
+//        this("/sslSupport/mitmProxy_keystore.jks", trustAllServers, sendCerts);
+        this("/sslSupport/cybervillainsCA.jks", trustAllServers, sendCerts);
     }
 
     public SelfSignedSslEngineSource() {
@@ -82,7 +84,8 @@ public class SelfSignedSslEngineSource {
     }
 
     private void initializeKeyStore(String filename) {
-        nativeCall("keytool", "-genkey", "-alias", alias, "-keysize",
+        throw new RuntimeException("tried to generate JKS / CER - not good.");
+/*        nativeCall("keytool", "-genkey", "-alias", alias, "-keysize",
                 "4096", "-validity", "36500", "-keyalg", "RSA", "-dname",
                 "CN=mitmProxy", "-keypass", password, "-storepass",
                 password, "-keystore", filename);
@@ -90,6 +93,8 @@ public class SelfSignedSslEngineSource {
         nativeCall("keytool", "-exportcert", "-alias", alias, "-keystore",
                 filename, "-storepass", password, "-file",
                 "mitmProxy.cer");
+
+ */
     }
 
     private void initializeSSLContext() {
@@ -167,6 +172,7 @@ public class SelfSignedSslEngineSource {
         }
     }
 
+    /*
     private String nativeCall(final String... commands) {
         logger.info("Running '{}'", Arrays.asList(commands));
         final ProcessBuilder pb = new ProcessBuilder(commands);
@@ -185,5 +191,6 @@ public class SelfSignedSslEngineSource {
             return "";
         }
     }
+     */
 
 }

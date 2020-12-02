@@ -37,20 +37,20 @@ public class KeyStoreManager {
 	private final String CERTMAP_SER_FILE = "certmap.ser";
 	private final String SUBJMAP_SER_FILE = "subjmap.ser";
 
-	//private final String EXPORTED_CERT_NAME = "cybervillainsCA.cer";
-	private final String EXPORTED_CERT_NAME = "mitmProxy.cer";
+	private final String EXPORTED_CERT_NAME = "cybervillainsCA.cer";
+	//private final String EXPORTED_CERT_NAME = "mitmProxy.cer";
 
-//	private final char[] _keypassword = "password".toCharArray();
-//	private final char[] _keystorepass = "password".toCharArray();
-//  private final String _caPrivateKeystore = "cybervillainsCA.jks";
-//	private final String _caCertAlias = "signingCert";
-//	public static final String _caPrivKeyAlias = "signingCertPrivKey";
+	private final char[] _keypassword = "password".toCharArray();
+	private final char[] _keystorepass = "password".toCharArray();
+    private final String _caPrivateKeystore = "cybervillainsCA.jks";
+	private final String _caCertAlias = "signingCert";
+	public static final String _caPrivKeyAlias = "signingCertPrivKey";
 
-	private final char[] _keypassword = "vvilma".toCharArray();
-	private final char[] _keystorepass = "vvilma".toCharArray();
-	private final String _caPrivateKeystore = "mitmProxy_keystore.jks";
-	private final String _caCertAlias = "mitmproxycert";
-	public static final String _caPrivKeyAlias = "mitmproxy";
+	//	private final char[] _keypassword = "vvilma".toCharArray();
+	//private final char[] _keystorepass = "vvilma".toCharArray();
+	//private final String _caPrivateKeystore = "mitmProxy_keystore.jks";
+	//private final String _caCertAlias = "mitmproxycert";
+	//public static final String _caPrivKeyAlias = "mitmproxy";
 
 	X509Certificate _caCert;
 	PrivateKey _caPrivKey;

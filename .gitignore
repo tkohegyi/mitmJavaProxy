@@ -9,4 +9,7 @@ bin
 release
 out
 log
+log*.txt
+config/backup/secret
+
 
