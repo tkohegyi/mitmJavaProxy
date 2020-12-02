@@ -59,6 +59,7 @@ public class Invoker extends HttpServlet
 {
     private static Log log = LogFactory.getLog(Invoker.class);
 
+    private ServletHandler _servletHandler;
     private Map.Entry _invokerEntry;
     private Map _parameters;
     private boolean _nonContextServlets;
@@ -68,6 +69,7 @@ public class Invoker extends HttpServlet
     public void init()
     {
         ServletContext config=getServletContext();
+        _servletHandler=((ServletHandler.Context)config).getServletHandler();
 
         Enumeration e = getInitParameterNames();
         while(e.hasMoreElements())
@@ -96,7 +98,111 @@ public class Invoker extends HttpServlet
     protected void service(HttpServletRequest request, HttpServletResponse response)
 	throws ServletException, IOException
     {
+        // Get the requested path and info
+        boolean included=false;
+        String servlet_path=(String)request.getAttribute(Dispatcher.__INCLUDE_SERVLET_PATH);
+        if (servlet_path==null)
+            servlet_path=request.getServletPath();
+        else
+            included=true;
+        String path_info = (String)request.getAttribute(Dispatcher.__INCLUDE_PATH_INFO);
+        if (path_info==null)
+            path_info=request.getPathInfo();
+        
+        // Get the servlet class
+        String servlet = path_info;
+        if (servlet==null || servlet.length()<=1 )
+        {
+            response.sendError(404);
+            return;
+        }
+        
+        int i0=servlet.charAt(0)=='/'?1:0;
+        int i1=servlet.indexOf('/',i0);
+        servlet=i1<0?servlet.substring(i0):servlet.substring(i0,i1);
 
+        // look for a named holder
+        ServletHolder holder=_servletHandler.getServletHolder(servlet);
+        if (holder!=null)
+        {
+            // Add named servlet mapping
+            _servletHandler.addServletHolder(holder);
+            _servletHandler.mapPathToServlet(URI.addPaths(servlet_path,servlet)+"/*", holder.getName());
+        }
+        else
+        {
+            // look for a class mapping
+            if (servlet.endsWith(".class"))
+                servlet=servlet.substring(0,servlet.length()-6);
+            if (servlet==null || servlet.length()==0)
+            {
+                response.sendError(404);
+                return;
+            }   
+        
+            synchronized(_servletHandler)
+            {
+                // find the entry for the invoker
+                if (_invokerEntry==null)
+                    _invokerEntry=_servletHandler.getHolderEntry(servlet_path);
+            
+                // Check for existing mapping (avoid threaded race).
+                String path=URI.addPaths(servlet_path,servlet);
+                Map.Entry entry = _servletHandler.getHolderEntry(path);
+
+                if (entry!=null && entry!=_invokerEntry)
+                {
+                    // Use the holder
+                    holder=(ServletHolder)entry.getValue();       
+                }
+                else
+                {
+                    // Make a holder
+                    holder=new ServletHolder(_servletHandler,servlet,servlet);
+                    
+                    if (_parameters!=null)
+                        holder.putAll(_parameters);
+                    
+                    try {holder.start();}
+                    catch (Exception e)
+                    {
+                        log.debug(LogSupport.EXCEPTION,e);
+                        throw new UnavailableException(e.toString());
+                    }
+                    
+                    // Check it is from an allowable classloader
+                    if (!_nonContextServlets)
+                    {
+                        Object s=holder.getServlet();
+                        
+                        if (_servletHandler.getClassLoader()!=
+                            s.getClass().getClassLoader())
+                        {
+                            holder.stop();
+                            log.warn("Dynamic servlet "+s+
+                                         " not loaded from context "+
+                                         request.getContextPath());
+                            throw new UnavailableException("Not in context");
+                        }
+                    }
+
+                    // Add the holder for all the possible paths
+                    if (_verbose)
+                        log("Dynamic load '"+servlet+"' at "+path);
+                    _servletHandler.addServletHolder(holder);
+                    _servletHandler.mapPathToServlet(path+"/*",holder.getName());
+                    _servletHandler.mapPathToServlet(path+".class/*",holder.getName());
+                }
+            }
+            
+        }
+        
+        if (holder!=null)
+            holder.handle(new Request(request,included,servlet,servlet_path,path_info),
+                          response);
+        else
+            response.sendError(404);
+        
     }
 
     /* ------------------------------------------------------------ */
@@ -142,6 +248,12 @@ public class Invoker extends HttpServlet
         {
             if (_included)
             {
+                if (name.equals(Dispatcher.__INCLUDE_REQUEST_URI))
+                    return URI.addPaths(URI.addPaths(getContextPath(),_servletPath),_pathInfo);
+                if (name.equals(Dispatcher.__INCLUDE_PATH_INFO))
+                    return _pathInfo;
+                if (name.equals(Dispatcher.__INCLUDE_SERVLET_PATH))
+                    return _servletPath;
             }
             return super.getAttribute(name);
         }

@@ -65,6 +65,7 @@ public abstract class AbstractProxyTool {
         LOGGER.info("*** Proxy Server started on port: {}", proxyPort);
         //and finally
         setUp();
+        LOGGER.info("*** Setup DONE - starting TEST");
     }
 
     protected abstract void setUp() throws Exception;
@@ -107,6 +108,8 @@ public abstract class AbstractProxyTool {
 
     @After
     public void runTearDown() throws Exception {
+        LOGGER.info("*** Test DONE - starting TEARDOWN");
+
         try {
             tearDown();
         } finally {

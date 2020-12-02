@@ -15,11 +15,11 @@
 
 package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
+import net.lightbody.bmp.proxy.jetty.http.HttpContext;
+import net.lightbody.bmp.proxy.jetty.http.HttpHandler;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LifeCycle;
 import org.apache.commons.logging.Log;
-import org.openqa.jetty.http.HttpContext;
-import org.openqa.jetty.http.HttpHandler;
 
 import java.io.Serializable;
 import java.util.*;

@@ -16,8 +16,6 @@
 package net.lightbody.bmp.proxy.jetty.http;
 
 import net.lightbody.bmp.proxy.jetty.util.Credential;
-import org.openqa.jetty.http.HttpRequest;
-import org.openqa.jetty.http.HttpResponse;
 
 import java.security.Principal;
 
@@ -27,6 +25,7 @@ import java.security.Principal;
  * implementation of UserRealm also implements SSORealm, then single signon
  * is supported for that realm.
  
+ * @see UserRealm
  * @version $Id: SSORealm.java,v 1.4 2004/05/09 20:31:40 gregwilkins Exp $
  * @author Greg Wilkins (gregw)
  */

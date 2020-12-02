@@ -3,17 +3,7 @@ package net.lightbody.bmp.proxy.http;
 import org.apache.http.conn.scheme.HostNameResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xbill.DNS.ARecord;
-import org.xbill.DNS.Address;
-import org.xbill.DNS.Cache;
-import org.xbill.DNS.Credibility;
-import org.xbill.DNS.ExtendedResolver;
-import org.xbill.DNS.Lookup;
-import org.xbill.DNS.Name;
-import org.xbill.DNS.Record;
-import org.xbill.DNS.Resolver;
-import org.xbill.DNS.TextParseException;
-import org.xbill.DNS.Type;
+import org.xbill.DNS.*;
 
 import java.io.IOException;
 import java.net.InetAddress;

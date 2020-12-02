@@ -16,11 +16,11 @@
 package net.lightbody.bmp.proxy.jetty.http.ajp;
 
 import net.lightbody.bmp.proxy.jetty.http.BufferedOutputStream;
+import net.lightbody.bmp.proxy.jetty.http.HttpMessage;
+import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import org.apache.commons.logging.Log;
-import org.openqa.jetty.http.HttpMessage;
-import org.openqa.jetty.http.HttpResponse;
 
 import java.io.IOException;
 import java.io.OutputStream;

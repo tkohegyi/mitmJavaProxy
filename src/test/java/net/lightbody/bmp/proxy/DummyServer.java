@@ -1,19 +1,19 @@
 package net.lightbody.bmp.proxy;
 
+import net.lightbody.bmp.proxy.jetty.http.HttpContext;
+import net.lightbody.bmp.proxy.jetty.http.HttpListener;
 import net.lightbody.bmp.proxy.jetty.http.SocketListener;
-import org.openqa.jetty.http.HttpContext;
-import org.openqa.jetty.http.HttpListener;
-import org.openqa.jetty.http.handler.ResourceHandler;
-import org.openqa.jetty.jetty.Server;
-import org.openqa.jetty.jetty.servlet.ServletHttpContext;
-import org.openqa.jetty.util.InetAddrPort;
-import org.openqa.jetty.util.Resource;
+import net.lightbody.bmp.proxy.jetty.http.handler.ResourceHandler;
+import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
+import net.lightbody.bmp.proxy.jetty.jetty.servlet.ServletHttpContext;
+import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
+import net.lightbody.bmp.proxy.jetty.util.Resource;
 
 import javax.servlet.http.HttpServlet;
 
 public class DummyServer {
     private int port;
-    private Server bmpServer = new Server();
+    private BmpServer bmpServer = new BmpServer();
     private ResourceHandler handler;
 
     public DummyServer(int port) {

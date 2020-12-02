@@ -25,7 +25,7 @@ import java.io.OutputStream;
 */
 public class ChunkingOutputStream
     extends BufferedOutputStream
-    
+    implements HttpMessage.HeaderWriter
 {
     /* ------------------------------------------------------------ */
     final static byte[]

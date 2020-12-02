@@ -33,6 +33,7 @@ import java.net.Socket;
  * handled by the ProxyHandler to setup a SSL tunnel between the client and
  * the real server.
  *
+ * @see HttpConnection
  * @version $Revision: 1.11 $
  * @author Greg Wilkins (gregw)
  */
@@ -58,7 +59,6 @@ public class HttpTunnel
     /* ------------------------------------------------------------ */
     /** Constructor. 
      * @param socket The tunnel socket.
-     * sotimer exceptions are ignored by the tunnel.
      * @param in Alternative input stream or null if using normal socket stream
      * @param out Alternative output stream or null if using normal socket stream
      * @throws IOException

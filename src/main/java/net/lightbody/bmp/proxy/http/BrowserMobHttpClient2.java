@@ -23,11 +23,19 @@ import org.apache.http.HeaderElement;
 import org.apache.http.HttpClientConnection;
 import org.apache.http.HttpConnection;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.ParseException;
 import org.apache.http.StatusLine;
+import org.apache.http.auth.AuthScheme;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.AuthState;
+import org.apache.http.auth.Credentials;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
@@ -37,6 +45,7 @@ import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -57,9 +66,9 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.cookie.BrowserCompatSpec;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
 import org.java_bandwidthlimiter.StreamManager;
-import org.openqa.jetty.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xbill.DNS.Cache;
@@ -131,7 +140,7 @@ public class BrowserMobHttpClient2 {
     private boolean captureContent;
     // if captureContent is set, default policy is to capture binary contents too
     private boolean captureBinaryContent = true;
-    private SimulatedSocketFactory2 socketFactory;
+    private SimulatedSocketFactory socketFactory;
     private TrustingSSLSocketFactory2 sslSocketFactory;
     private PoolingHttpClientConnectionManager httpClientConnMgr;
     private HttpClient httpClient;
@@ -152,7 +161,7 @@ public class BrowserMobHttpClient2 {
         this.requestTimeout = requestTimeOut;
         hostNameResolver = new BrowserMobHostNameResolver(new Cache(DClass.ANY));
 
-        socketFactory = new SimulatedSocketFactory2(hostNameResolver, streamManager, requestTimeout);
+        socketFactory = new SimulatedSocketFactory(hostNameResolver, streamManager, requestTimeout);
         try {
             sslSocketFactory = new TrustingSSLSocketFactory2(hostNameResolver, streamManager, requestTimeout);
         } catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
@@ -200,7 +209,7 @@ public class BrowserMobHttpClient2 {
                 .setConnectionManager(httpClientConnMgr)
                 .setRequestExecutor(new SimulatedRequestExecutor())
                 .setDefaultCredentialsProvider(credsProvider)
-//                .addInterceptorFirst(new PreemptiveAuth())
+                .addInterceptorFirst(new PreemptiveAuth())
                 .setRetryHandler(new DefaultHttpRequestRetryHandler(0, false))
                 .setDefaultCookieStore(new BlankCookieStore())
                 .setDefaultCookieSpecRegistry(
@@ -240,7 +249,7 @@ public class BrowserMobHttpClient2 {
         responseInterceptors.add(interceptor);
     }
 
-    public BrowserMobHttpRequest newPost(final String url, final HttpRequest proxyRequest) {
+    public BrowserMobHttpRequest newPost(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
         try {
             URI uri = makeUri(url);
             return new BrowserMobHttpRequest(new HttpPost(uri), this, -1, captureContent, proxyRequest);
@@ -249,7 +258,7 @@ public class BrowserMobHttpClient2 {
         }
     }
 
-    public BrowserMobHttpRequest newGet(final String url, final HttpRequest proxyRequest) {
+    public BrowserMobHttpRequest newGet(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
         try {
             URI uri = makeUri(url);
             return new BrowserMobHttpRequest(new HttpGet(uri), this, -1, captureContent, proxyRequest);
@@ -258,7 +267,7 @@ public class BrowserMobHttpClient2 {
         }
     }
 
-    public BrowserMobHttpRequest newPut(final String url, final HttpRequest proxyRequest) {
+    public BrowserMobHttpRequest newPut(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
         try {
             URI uri = makeUri(url);
             return new BrowserMobHttpRequest(new HttpPut(uri), this, -1, captureContent, proxyRequest);
@@ -267,7 +276,7 @@ public class BrowserMobHttpClient2 {
         }
     }
 
-    public BrowserMobHttpRequest newDelete(final String url, final HttpRequest proxyRequest) {
+    public BrowserMobHttpRequest newDelete(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
         try {
             URI uri = makeUri(url);
             return new BrowserMobHttpRequest(new HttpDelete(uri), this, -1, captureContent, proxyRequest);
@@ -276,7 +285,7 @@ public class BrowserMobHttpClient2 {
         }
     }
 
-    public BrowserMobHttpRequest newOptions(final String url, final HttpRequest proxyRequest) {
+    public BrowserMobHttpRequest newOptions(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
         try {
             URI uri = makeUri(url);
             return new BrowserMobHttpRequest(new HttpOptions(uri), this, -1, captureContent, proxyRequest);
@@ -285,7 +294,7 @@ public class BrowserMobHttpClient2 {
         }
     }
 
-    public BrowserMobHttpRequest newHead(final String url, final HttpRequest proxyRequest) {
+    public BrowserMobHttpRequest newHead(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
         try {
             URI uri = makeUri(url);
             return new BrowserMobHttpRequest(new HttpHead(uri), this, -1, captureContent, proxyRequest);
@@ -559,7 +568,7 @@ public class BrowserMobHttpClient2 {
         try {
             // set the User-Agent if it's not already set
             if (method.getHeaders("User-Agent").length == 0) {
-                method.addHeader("User-Agent", "MITM-Java-Proxy V/0.1");
+                method.addHeader("User-Agent", "MITM-Proxy V/1.0");
             }
 
             // was the request mocked out?
@@ -1048,7 +1057,6 @@ public class BrowserMobHttpClient2 {
         NTLM
     }
 
-    /*
     static class PreemptiveAuth implements HttpRequestInterceptor {
         @Override
         public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException {
@@ -1069,13 +1077,8 @@ public class BrowserMobHttpClient2 {
                 }
             }
         }
-
-        @Override
-        public void process(org.apache.http.HttpRequest request, HttpContext context) throws HttpException, IOException {
-
-        }
     }
-*/
+
     class ActiveRequest {
         HttpRequestBase request;
         BasicHttpContext ctx;

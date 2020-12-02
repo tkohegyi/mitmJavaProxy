@@ -16,16 +16,10 @@
 package net.lightbody.bmp.proxy.jetty.http;
 
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
+import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
+import net.lightbody.bmp.proxy.jetty.util.ThreadedServer;
 import org.apache.commons.logging.Log;
-import org.openqa.jetty.http.HttpConnection;
-import org.openqa.jetty.http.HttpHandler;
-import org.openqa.jetty.http.HttpMessage;
-import org.openqa.jetty.http.HttpRequest;
-import org.openqa.jetty.http.HttpServer;
-import org.openqa.jetty.util.InetAddrPort;
-import org.openqa.jetty.util.ThreadedServer;
-import org.openqa.jetty.http.HttpListener;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -53,7 +47,7 @@ public class SocketListener
 
     /* ------------------------------------------------------------------- */
     private int _lowResourcePersistTimeMs=2000;
-    private String _scheme= HttpMessage.__SCHEME;
+    private String _scheme=HttpMessage.__SCHEME;
     private String _integralScheme=HttpMessage.__SSL_SCHEME;
     private String _confidentialScheme=HttpMessage.__SSL_SCHEME;
     private int _integralPort=0;

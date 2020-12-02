@@ -36,7 +36,7 @@ apply plugin: 'maven'
 apply plugin: 'java-library'
 apply plugin: 'jacoco'
 
-version = "0.8-beta-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
+version = "0.10-beta-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
 
 repositories {
     jcenter()
@@ -77,6 +77,9 @@ jacocoTestReport {
         xml.enabled true
     }
 }
+//test {
+//    jvmArgs '-Djavax.net.debug=all' // add line
+//}
 test.finalizedBy jacocoTestReport
 
 dependencies {
@@ -91,27 +94,15 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-io', version:'1.3.2'
     compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version:'3.2'
     compile group: 'org.apache.ant', name: 'ant', version:'1.9.4'
-    compile (group: 'org.seleniumhq.selenium', name: 'selenium-server', version: '2.42.2') {
-        exclude(group: 'org.seleniumhq.selenium', module: 'selenium-safari-driver')
-        exclude(group: 'org.seleniumhq.selenium', module: 'selenium-ie-driver')
-        exclude(group: 'org.seleniumhq.selenium', module: 'selenium-htmlunit-driver')
-        exclude(group: 'org.seleniumhq.selenium', module: 'selenium-firefox-driver')
-        exclude(group: 'org.seleniumhq.selenium', module: 'selenium-chrome-driver')
-        exclude(group: 'org.seleniumhq.selenium', module: 'selenium-support')
-    }
-    compile group: 'org.eclipse.jetty', name: 'jetty-io', version: '9.4.31.v20200723'
-    //compile group: 'org.seleniumhq.selenium', name: 'selenium-server', version: '3.141.59'
-    //compile group: 'org.eclipse.jetty', name: 'jetty-server', version:'9.4.31.v20200723'
-    //compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version:'9.4.31.v20200723'
+    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:'1.67'
+    compile group: 'org.eclipse.jetty', name: 'jetty-io', version: '7.4.5.v20110725'
+    compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
     compile group: 'dnsjava', name: 'dnsjava', version: '3.3.1'
     testCompile group: 'junit', name: 'junit', version:'4.12'
     testCompile group: 'com.google.guava', name: 'guava', version: '29.0-jre'
     testCompile group: 'org.mockito', name: 'mockito-all', version:'1.9.5'
     testCompile (group: 'io.netty', name: 'netty-all', version: '4.1.51.Final')
     testCompile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.4.31.v20200723'
-    testCompile(group: 'org.testng', name: 'testng', version:'6.8.5') {
-        exclude(module: 'junit')
-    }
 }
 
 def myCopySpec = project.copySpec {

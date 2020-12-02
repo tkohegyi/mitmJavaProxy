@@ -15,9 +15,8 @@
 
 package net.lightbody.bmp.proxy.jetty.servlet;
 
-
-import org.openqa.jetty.util.IO;
-import org.openqa.jetty.util.InetAddrPort;
+import net.lightbody.bmp.proxy.jetty.util.IO;
+import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;

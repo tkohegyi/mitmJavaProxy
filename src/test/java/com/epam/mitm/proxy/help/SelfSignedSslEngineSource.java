@@ -29,7 +29,7 @@ import java.util.Arrays;
 public class SelfSignedSslEngineSource {
     private final Logger logger = LoggerFactory.getLogger(SelfSignedSslEngineSource.class);
 
-    private static final String PROTOCOL = "TLSv1.3";
+    private static final String PROTOCOL = "TLSv1.2";
 
     private final String alias;
     private final String password;
@@ -50,7 +50,8 @@ public class SelfSignedSslEngineSource {
     }
 
     public SelfSignedSslEngineSource(String keyStorePath, boolean trustAllServers, boolean sendCerts) {
-        this(keyStorePath, trustAllServers, sendCerts, "signingcert", "password");
+//        this(keyStorePath, trustAllServers, sendCerts, "mitmProxy", "vvilma");
+        this(keyStorePath, trustAllServers, sendCerts, "signingCert", "password");
     }
 
     public SelfSignedSslEngineSource(String keyStorePath) {
@@ -62,6 +63,7 @@ public class SelfSignedSslEngineSource {
     }
 
     public SelfSignedSslEngineSource(boolean trustAllServers, boolean sendCerts) {
+//        this("/sslSupport/mitmProxy_keystore.jks", trustAllServers, sendCerts);
         this("/sslSupport/cybervillainsCA.jks", trustAllServers, sendCerts);
     }
 
@@ -81,8 +83,8 @@ public class SelfSignedSslEngineSource {
         return sslContext;
     }
 
-    private void initializeKeyStore(String filename) throws IOException {
-        throw new IOException("We shall not regenerate keys here");
+    private void initializeKeyStore(String filename) {
+        throw new RuntimeException("tried to generate JKS / CER - not good.");
 /*        nativeCall("keytool", "-genkey", "-alias", alias, "-keysize",
                 "4096", "-validity", "36500", "-keyalg", "RSA", "-dname",
                 "CN=mitmProxy", "-keypass", password, "-storepass",
@@ -170,6 +172,7 @@ public class SelfSignedSslEngineSource {
         }
     }
 
+    /*
     private String nativeCall(final String... commands) {
         logger.info("Running '{}'", Arrays.asList(commands));
         final ProcessBuilder pb = new ProcessBuilder(commands);
@@ -188,5 +191,6 @@ public class SelfSignedSslEngineSource {
             return "";
         }
     }
+     */
 
 }

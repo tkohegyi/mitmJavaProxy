@@ -78,7 +78,9 @@ public interface SessionManager extends LifeCycle, Serializable
     public final static String __MaxAge=
         "net.lightbody.bmp.proxy.jetty.jetty.servlet.MaxAge";
     
-
+    /* ------------------------------------------------------------ */
+    public void initialize(ServletHandler handler);
+    
     /* ------------------------------------------------------------ */
     public HttpSession getHttpSession(String id);
     

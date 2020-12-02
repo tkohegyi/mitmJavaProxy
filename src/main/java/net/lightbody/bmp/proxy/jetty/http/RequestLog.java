@@ -16,8 +16,6 @@
 package net.lightbody.bmp.proxy.jetty.http;
 
 import net.lightbody.bmp.proxy.jetty.util.LifeCycle;
-import org.openqa.jetty.http.HttpRequest;
-import org.openqa.jetty.http.HttpResponse;
 
 import java.io.Serializable;
 

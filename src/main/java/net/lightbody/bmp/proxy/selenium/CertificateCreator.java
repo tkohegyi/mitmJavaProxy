@@ -1,7 +1,5 @@
 package net.lightbody.bmp.proxy.selenium;
 
-import org.bouncycastle.asn1.DEREncodableVector;
-import org.bouncycastle.asn1.DERObjectIdentifier;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.KeyUsage;
@@ -9,7 +7,6 @@ import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.jce.X509Principal;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.bouncycastle.x509.extension.AuthorityKeyIdentifierStructure;
-import org.bouncycastle.x509.extension.SubjectKeyIdentifierStructure;
 
 import javax.security.auth.x500.X500Principal;
 import java.math.BigInteger;
@@ -106,7 +103,6 @@ public class CertificateCreator {
 	 * @param newPubKey
 	 * @param caCert
 	 * @param caPrivateKey
-	 * @param hostname
 	 * @return
 	 * @throws CertificateParsingException
 	 * @throws SignatureException
@@ -117,88 +113,6 @@ public class CertificateCreator {
 	 * @throws NoSuchAlgorithmException
 	 * @throws NoSuchProviderException
 	 */
-	@SuppressWarnings({ "deprecation", "unused" })
-    public static X509Certificate generateStdSSLServerCertificate(
-			final PublicKey newPubKey,
-			final X509Certificate caCert,
-			final PrivateKey caPrivateKey,
-			final String subject)
-	throws 	CertificateParsingException,
-			SignatureException,
-			InvalidKeyException,
-			CertificateExpiredException,
-			CertificateNotYetValidException,
-			CertificateException,
-			NoSuchAlgorithmException,
-			NoSuchProviderException
-	{
-		X509V3CertificateGenerator v3CertGen = new X509V3CertificateGenerator();
-
-		v3CertGen.setSubjectDN(new X500Principal(subject));
-		v3CertGen.setSignatureAlgorithm(CertificateCreator.SIGN_ALGO);
-		v3CertGen.setPublicKey(newPubKey);
-		v3CertGen.setNotAfter(new Date(System.currentTimeMillis() + 30L * 60 * 60 * 24 * 30 * 12));
-		v3CertGen.setNotBefore(new Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 30 *12));
-		v3CertGen.setIssuerDN(caCert.getSubjectX500Principal());
-
-		// Firefox actually tracks serial numbers within a CA and refuses to validate if it sees duplicates
-		// This is not a secure serial number generator, (duh!) but it's good enough for our purposes.
-		v3CertGen.setSerialNumber(new BigInteger(Long.toString(System.currentTimeMillis())));
-
-		v3CertGen.addExtension(
-				X509Extensions.BasicConstraints,
-				true,
-				new BasicConstraints(false) );
-
-		v3CertGen.addExtension(
-				X509Extensions.SubjectKeyIdentifier,
-				false,
-				new SubjectKeyIdentifierStructure(newPubKey));
-
-
-		v3CertGen.addExtension(
-				X509Extensions.AuthorityKeyIdentifier,
-				false,
-				new AuthorityKeyIdentifierStructure(caCert.getPublicKey()));
-
-// 		Firefox 2 disallows these extensions in an SSL server cert.  IE7 doesn't care.
-//		v3CertGen.addExtension(
-//				X509Extensions.KeyUsage,
-//				false,
-//				new KeyUsage(KeyUsage.dataEncipherment | KeyUsage.digitalSignature ) );
-
-
-		DEREncodableVector typicalSSLServerExtendedKeyUsages = new DEREncodableVector();
-
-		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.serverAuth));
-		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.clientAuth));
-		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.netscapeServerGatedCrypto));
-		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.msServerGatedCrypto));
-
-		v3CertGen.addExtension(
-				X509Extensions.ExtendedKeyUsage,
-				false,
-				new DERSequence(typicalSSLServerExtendedKeyUsages));
-
-//  Disabled by default.  Left in comments in case this is desired.
-//
-//		v3CertGen.addExtension(
-//				X509Extensions.AuthorityInfoAccess,
-//				false,
-//				new AuthorityInformationAccess(new DERObjectIdentifier(OID_ID_AD_CAISSUERS),
-//						new GeneralName(GeneralName.uniformResourceIdentifier, "http://" + subject + "/aia")));
-
-//		v3CertGen.addExtension(
-//				X509Extensions.CRLDistributionPoints,
-//				false,
-//				new CRLDistPoint(new DistributionPoint[] {}));
-
-
-
-		X509Certificate cert = v3CertGen.generate(caPrivateKey, "BC");
-
-		return cert;
-	}
 
 	/**
 	 * This method creates an X509v3 certificate based on an an existing certificate.
@@ -273,30 +187,20 @@ public class CertificateCreator {
 
 		// get extensions returns null, not an empty set!
 		if(critExts != null) {
-			for (String oid : critExts) {
-				if(!clientCertOidsNeverToCopy.contains(oid)
-						&& !extensionOidsNotToCopy.contains(oid)) {
-					v3CertGen.copyAndAddExtension(new DERObjectIdentifier(oid), true, originalCert);
-				}
-			}
+			throw new RuntimeException("Ups has critical extensions..."); //TODO
 		}
 		Set<String> nonCritExs = originalCert.getNonCriticalExtensionOIDs();
 
 		if(nonCritExs != null) {
-			for(String oid: nonCritExs) {
-
-				if(!clientCertOidsNeverToCopy.contains(oid)
-						&& !extensionOidsNotToCopy.contains(oid)){
-					v3CertGen.copyAndAddExtension(new DERObjectIdentifier(oid), false, originalCert);
-				}
-			}
+			throw new RuntimeException("Ups has non-critical extensions..."); //TODO
 		}
 
+		/* TODO
 		v3CertGen.addExtension(
 				X509Extensions.SubjectKeyIdentifier,
 				false,
 				new SubjectKeyIdentifierStructure(newPubKey));
-
+*/
 
 		v3CertGen.addExtension(
 				X509Extensions.AuthorityKeyIdentifier,
@@ -341,69 +245,86 @@ public class CertificateCreator {
 		return mitmDuplicateCertificate(originalCert, newPubKey, caCert, caPrivateKey, clientCertDefaultOidsNotToCopy);
 	}
 
-	/**
-	 * Creates a typical Certification Authority (CA) certificate.
-	 * @param keyPair
-	 * @throws SecurityException
-	 * @throws InvalidKeyException
-	 * @throws NoSuchProviderException
-	 * @throws NoSuchAlgorithmException
-	 * @throws CertificateException
-	 */
-	@SuppressWarnings("deprecation")
-    public static X509Certificate createTypicalMasterCert(final KeyPair keyPair)
-	throws SignatureException, InvalidKeyException, SecurityException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException
+	public static X509Certificate generateStdSSLServerCertificate(
+			final PublicKey newPubKey,
+			final X509Certificate caCert,
+			final PrivateKey caPrivateKey,
+			final String subject)
+			throws 	CertificateParsingException,
+			SignatureException,
+			InvalidKeyException,
+			CertificateExpiredException,
+			CertificateNotYetValidException,
+			CertificateException,
+			NoSuchAlgorithmException,
+			NoSuchProviderException
 	{
+		X509V3CertificateGenerator v3CertGen = new X509V3CertificateGenerator();
 
-		X509V3CertificateGenerator  v3CertGen = new X509V3CertificateGenerator();
-
-		X509Principal issuer=new X509Principal("O=CyberVillians.com,OU=CyberVillians Certification Authority,C=US");
-
-		// Create
-		v3CertGen.setSerialNumber(BigInteger.valueOf(1));
-		v3CertGen.setIssuerDN(issuer);
-		v3CertGen.setSubjectDN(issuer);
-
-		//Set validity period
-		v3CertGen.setNotBefore(new Date(System.currentTimeMillis() - 12 /* months */ *(1000L * 60 * 60 * 24 * 30)));
-		v3CertGen.setNotAfter (new Date(System.currentTimeMillis() + 240 /* months */ *(1000L * 60 * 60 * 24 * 30)));
-
-		//Set signature algorithm & public key
-		v3CertGen.setPublicKey(keyPair.getPublic());
+		v3CertGen.setSubjectDN(new X500Principal(subject));
 		v3CertGen.setSignatureAlgorithm(CertificateCreator.SIGN_ALGO);
+		v3CertGen.setPublicKey(newPubKey);
+		v3CertGen.setNotAfter(new Date(System.currentTimeMillis() + 30L * 60 * 60 * 24 * 30 * 12));
+		v3CertGen.setNotBefore(new Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 30 *12));
+		v3CertGen.setIssuerDN(caCert.getSubjectX500Principal());
 
-		// Add typical extensions for signing cert
-		v3CertGen.addExtension(
-				X509Extensions.SubjectKeyIdentifier,
-				false,
-				new SubjectKeyIdentifierStructure(keyPair.getPublic()));
+		// Firefox actually tracks serial numbers within a CA and refuses to validate if it sees duplicates
+		// This is not a secure serial number generator, (duh!) but it's good enough for our purposes.
+		v3CertGen.setSerialNumber(new BigInteger(Long.toString(System.currentTimeMillis())));
 
 		v3CertGen.addExtension(
 				X509Extensions.BasicConstraints,
 				true,
-				new BasicConstraints(0));
+				new BasicConstraints(false) );
+
+		//TODO
+//		v3CertGen.addExtension(
+//				X509Extensions.SubjectKeyIdentifier,
+//				false,
+//				new SubjectKeyIdentifierStructure(newPubKey));
+
 
 		v3CertGen.addExtension(
-				X509Extensions.KeyUsage,
+				X509Extensions.AuthorityKeyIdentifier,
 				false,
-				new KeyUsage(KeyUsage.cRLSign | KeyUsage.keyCertSign) );
+				new AuthorityKeyIdentifierStructure(caCert.getPublicKey()));
 
-		DEREncodableVector typicalCAExtendedKeyUsages = new DEREncodableVector();
+// 		Firefox 2 disallows these extensions in an SSL server cert.  IE7 doesn't care.
+//		v3CertGen.addExtension(
+//				X509Extensions.KeyUsage,
+//				false,
+//				new KeyUsage(KeyUsage.dataEncipherment | KeyUsage.digitalSignature ) );
 
-		typicalCAExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.serverAuth));
-		typicalCAExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.OCSPSigning));
-		typicalCAExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.verisignUnknown));
 
-		v3CertGen.addExtension(
-				X509Extensions.ExtendedKeyUsage,
-				false,
-				new DERSequence(typicalCAExtendedKeyUsages));
+		//TODO
+//		DEREncodableVector typicalSSLServerExtendedKeyUsages = new DEREncodableVector();
 
-		X509Certificate cert = v3CertGen.generate(keyPair.getPrivate(), "BC");
+//		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.serverAuth));
+//		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.clientAuth));
+//		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.netscapeServerGatedCrypto));
+//		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.msServerGatedCrypto));
 
-		cert.checkValidity(new Date());
+//		v3CertGen.addExtension(
+//				X509Extensions.ExtendedKeyUsage,
+//				false,
+//				new DERSequence(typicalSSLServerExtendedKeyUsages));
 
-		cert.verify(keyPair.getPublic());
+//  Disabled by default.  Left in comments in case this is desired.
+//
+//		v3CertGen.addExtension(
+//				X509Extensions.AuthorityInfoAccess,
+//				false,
+//				new AuthorityInformationAccess(new DERObjectIdentifier(OID_ID_AD_CAISSUERS),
+//						new GeneralName(GeneralName.uniformResourceIdentifier, "http://" + subject + "/aia")));
+
+//		v3CertGen.addExtension(
+//				X509Extensions.CRLDistributionPoints,
+//				false,
+//				new CRLDistPoint(new DistributionPoint[] {}));
+
+
+
+		X509Certificate cert = v3CertGen.generate(caPrivateKey, "BC");
 
 		return cert;
 	}

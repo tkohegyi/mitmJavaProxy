@@ -15,20 +15,12 @@
 
 package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
+import net.lightbody.bmp.proxy.jetty.http.*;
+import net.lightbody.bmp.proxy.jetty.log.LogFactory;
+import net.lightbody.bmp.proxy.jetty.util.*;
 import org.apache.commons.logging.Log;
-import org.openqa.jetty.http.HttpContext;
-import org.openqa.jetty.http.HttpFields;
-import org.openqa.jetty.http.HttpRequest;
-import org.openqa.jetty.http.HttpResponse;
-import org.openqa.jetty.http.ResourceCache;
-import org.openqa.jetty.log.LogFactory;
-import org.openqa.jetty.util.CachedResource;
-import org.openqa.jetty.util.IO;
-import org.openqa.jetty.util.LogSupport;
-import org.openqa.jetty.util.Resource;
-import org.openqa.jetty.util.URI;
-import org.openqa.jetty.util.WriterOutputStream;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
@@ -79,6 +71,7 @@ public class Default extends HttpServlet
     private static Log log = LogFactory.getLog(Default.class);
 
     private HttpContext _httpContext;
+    private ServletHandler _servletHandler;
     private String _AllowString = "GET, POST, HEAD, OPTIONS, TRACE";
 
     private boolean _acceptRanges = true;
@@ -93,6 +86,8 @@ public class Default extends HttpServlet
     public void init() throws UnavailableException
     {
         ServletContext config = getServletContext();
+        _servletHandler = ((ServletHandler.Context) config).getServletHandler();
+        _httpContext = _servletHandler.getHttpContext();
 
         _acceptRanges = getInitBoolean("acceptRanges");
         _dirAllowed = getInitBoolean("dirAllowed");
@@ -179,6 +174,76 @@ public class Default extends HttpServlet
     /* ------------------------------------------------------------ */
     protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
+        String servletPath = (String) request.getAttribute(Dispatcher.__INCLUDE_SERVLET_PATH);
+        String pathInfo = null;
+        if (servletPath == null)
+        {
+            servletPath = request.getServletPath();
+            pathInfo = request.getPathInfo();
+        }
+        else
+            pathInfo = (String) request.getAttribute(Dispatcher.__INCLUDE_PATH_INFO);
+
+        String pathInContext = URI.addPaths(servletPath, pathInfo);
+                
+        boolean endsWithSlash = pathInContext.endsWith("/");
+        Resource resource = getResource(pathInContext);
+
+        // Is the method allowed?
+        String method = request.getMethod();
+        if (_AllowString.indexOf(method) < 0)
+        {
+            if (resource != null && resource.exists())
+            {
+                response.setHeader(HttpFields.__Allow, _AllowString);
+                response.sendError(HttpResponse.__405_Method_Not_Allowed);
+            }
+            else
+                response.sendError(HttpResponse.__404_Not_Found);
+            return;
+        }
+
+        // Handle the request
+        try
+        {
+            // handle by method.
+            if (method.equals(HttpRequest.__GET) || method.equals(HttpRequest.__POST) || method.equals(HttpRequest.__HEAD))
+                handleGet(request, response, pathInContext, resource, endsWithSlash);
+            else if (_putAllowed && method.equals(HttpRequest.__PUT))
+                handlePut(request, response, pathInContext, resource);
+            else if (_delAllowed && method.equals(HttpRequest.__DELETE))
+                handleDelete(request, response, pathInContext, resource);
+            else if (_putAllowed && _delAllowed && method.equals(HttpRequest.__MOVE))
+                handleMove(request, response, pathInContext, resource);
+            else if (method.equals(HttpRequest.__OPTIONS))
+                handleOptions(request, response);
+            else if (method.equals(HttpRequest.__TRACE))
+                _servletHandler.handleTrace(request, response);
+            else
+            {
+                // anything else...
+                try
+                {
+                    if (resource.exists())
+                        response.sendError(HttpResponse.__501_Not_Implemented);
+                    else
+                        _servletHandler.notFound(request, response);
+                }
+                catch (Exception e)
+                {
+                    LogSupport.ignore(log, e);
+                }
+            }
+        }
+        catch (IllegalArgumentException e)
+        {
+            LogSupport.ignore(log, e);
+        }
+        finally
+        {
+            if (resource != null && !(resource instanceof CachedResource))
+                resource.release();
+        }
 
     }
 
@@ -221,6 +286,8 @@ public class Default extends HttpServlet
                     else
                     {
                         // Forward to the index
+                        RequestDispatcher dispatcher = _servletHandler.getRequestDispatcher(ipath);
+                        dispatcher.forward(request, response);
                     }
                     return;
                 }
@@ -372,6 +439,48 @@ public class Default extends HttpServlet
      */
     protected boolean passConditionalHeaders(HttpServletRequest request, HttpServletResponse response, Resource resource) throws IOException
     {
+        if (!request.getMethod().equals(HttpRequest.__HEAD) && request.getAttribute(Dispatcher.__INCLUDE_REQUEST_URI) == null)
+        {
+            // If we have meta data for the file
+            // Try a direct match for most common requests. Avoids
+            // parsing the date.
+            ResourceCache.ResourceMetaData metaData = _httpContext.getResourceMetaData(resource);
+            if (metaData != null)
+            {
+                String ifms = request.getHeader(HttpFields.__IfModifiedSince);
+                String mdlm = metaData.getLastModified();
+                if (ifms != null && mdlm != null && ifms.equals(mdlm))
+                {
+                    response.reset();
+                    response.setStatus(HttpResponse.__304_Not_Modified);
+                    response.flushBuffer();
+                    return false;
+                }
+            }
+
+            long date = 0;
+            // Parse the if[un]modified dates and compare to resource
+
+            if ((date = request.getDateHeader(HttpFields.__IfUnmodifiedSince)) > 0)
+            {
+                if (resource.lastModified() / 1000 > date / 1000)
+                {
+                    response.sendError(HttpResponse.__412_Precondition_Failed);
+                    return false;
+                }
+            }
+
+            if ((date = request.getDateHeader(HttpFields.__IfModifiedSince)) > 0)
+            {
+                if (resource.lastModified() / 1000 <= date / 1000)
+                {
+                    response.reset();
+                    response.setStatus(HttpResponse.__304_Not_Modified);
+                    response.flushBuffer();
+                    return false;
+                }
+            }
+        }
         return true;
     }
 
@@ -414,6 +523,7 @@ public class Default extends HttpServlet
     {
         long resLength = resource.length();
 
+        boolean include = request.getAttribute(Dispatcher.__INCLUDE_REQUEST_URI) != null;
 
         // Get the output stream (or writer)
         OutputStream out = null;
@@ -426,6 +536,120 @@ public class Default extends HttpServlet
             out = new WriterOutputStream(response.getWriter());
         }
 
+        // see if there are any range headers
+        Enumeration reqRanges = include ? null : request.getHeaders(HttpFields.__Range);
+
+        if (reqRanges == null || !reqRanges.hasMoreElements())
+        {
+            // if there were no ranges, send entire entity
+            Resource data = resource;
+            if (!include)
+            {
+                // look for a gziped content.
+                if (_minGzipLength > 0)
+                {
+                    String accept = request.getHeader(HttpFields.__AcceptEncoding);
+                    if (accept != null && resLength > _minGzipLength && !pathInContext.endsWith(".gz"))
+                    {
+                        Resource gz = getResource(pathInContext + ".gz");
+                        if (gz.exists() && accept.indexOf("gzip") >= 0 && request.getAttribute(Dispatcher.__INCLUDE_REQUEST_URI) == null)
+                        {
+                            response.setHeader(HttpFields.__ContentEncoding, "gzip");
+                            data = gz;
+                            resLength = data.length();
+                        }
+                    }
+                }
+                writeHeaders(response, resource, resLength);
+            }
+
+            data.writeTo(out, 0, resLength);
+            return;
+        }
+
+        // Parse the satisfiable ranges
+        List ranges = InclusiveByteRange.satisfiableRanges(reqRanges, resLength);
+
+        // if there are no satisfiable ranges, send 416 response
+        if (ranges == null || ranges.size() == 0)
+        {
+            writeHeaders(response, resource, resLength);
+            response.setStatus(HttpResponse.__416_Requested_Range_Not_Satisfiable);
+            response.setHeader(HttpFields.__ContentRange, InclusiveByteRange.to416HeaderRangeString(resLength));
+            resource.writeTo(out, 0, resLength);
+            return;
+        }
+
+        // if there is only a single valid range (must be satisfiable
+        // since were here now), send that range with a 216 response
+        if (ranges.size() == 1)
+        {
+            InclusiveByteRange singleSatisfiableRange = (InclusiveByteRange) ranges.get(0);
+            long singleLength = singleSatisfiableRange.getSize(resLength);
+            writeHeaders(response, resource, singleLength);
+            response.setStatus(HttpResponse.__206_Partial_Content);
+            response.setHeader(HttpFields.__ContentRange, singleSatisfiableRange.toHeaderRangeString(resLength));
+            resource.writeTo(out, singleSatisfiableRange.getFirst(resLength), singleLength);
+            return;
+        }
+
+        // multiple non-overlapping valid ranges cause a multipart
+        // 216 response which does not require an overall
+        // content-length header
+        //
+        writeHeaders(response, resource, -1);
+        ResourceCache.ResourceMetaData metaData = _httpContext.getResourceMetaData(resource);
+        String encoding = metaData.getMimeType();
+        MultiPartResponse multi = new MultiPartResponse(response.getOutputStream());
+        response.setStatus(HttpResponse.__206_Partial_Content);
+
+        // If the request has a "Request-Range" header then we need to
+        // send an old style multipart/x-byteranges Content-Type. This
+        // keeps Netscape and acrobat happy. This is what Apache does.
+        String ctp;
+        if (request.getHeader(HttpFields.__RequestRange) != null)
+            ctp = "multipart/x-byteranges; boundary=";
+        else
+            ctp = "multipart/byteranges; boundary=";
+        response.setContentType(ctp + multi.getBoundary());
+
+        InputStream in = (resource instanceof CachedResource) ? null : resource.getInputStream();
+        long pos = 0;
+
+        for (int i = 0; i < ranges.size(); i++)
+        {
+            InclusiveByteRange ibr = (InclusiveByteRange) ranges.get(i);
+            String header = HttpFields.__ContentRange + ": " + ibr.toHeaderRangeString(resLength);
+            multi.startPart(encoding, new String[]
+            { header});
+
+            long start = ibr.getFirst(resLength);
+            long size = ibr.getSize(resLength);
+            if (in != null)
+            {
+                // Handle non cached resource
+                if (start < pos)
+                {
+                    in.close();
+                    in = resource.getInputStream();
+                    pos = 0;
+                }
+                if (pos < start)
+                {
+                    in.skip(start - pos);
+                    pos = start;
+                }
+                IO.copy(in, out, size);
+                pos += size;
+            }
+            else
+                // Handle cached resource
+                (resource).writeTo(out, start, size);
+
+        }
+        if (in != null)
+            in.close();
+        multi.close();
 
         return;
     }
@@ -438,6 +662,10 @@ public class Default extends HttpServlet
         response.setContentType(metaData.getMimeType());
         if (count != -1)
         {
+            if (count == resource.length() && response instanceof ServletHttpResponse )
+                response.setHeader(HttpFields.__ContentLength, metaData.getLength());
+            else
+                response.setContentLength((int) count);
         }
 
         response.setHeader(HttpFields.__LastModified, metaData.getLastModified());

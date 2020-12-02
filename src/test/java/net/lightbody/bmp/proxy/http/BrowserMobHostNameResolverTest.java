@@ -1,7 +1,7 @@
 package net.lightbody.bmp.proxy.http;
 
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.xbill.DNS.Address;
 import org.xbill.DNS.Cache;
 import org.xbill.DNS.DClass;

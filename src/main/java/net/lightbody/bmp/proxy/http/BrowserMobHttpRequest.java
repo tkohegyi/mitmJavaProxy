@@ -1,6 +1,7 @@
 package net.lightbody.bmp.proxy.http;
 
 import com.epam.mitm.idgenerator.TimeStampBasedIdGenerator;
+import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 import net.lightbody.bmp.proxy.util.Base64;
 import net.lightbody.bmp.proxy.util.ClonedInputStream;
 import org.apache.http.NameValuePair;
@@ -16,7 +17,6 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
-import org.openqa.jetty.http.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

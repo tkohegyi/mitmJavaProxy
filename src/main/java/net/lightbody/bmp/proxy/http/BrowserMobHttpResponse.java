@@ -1,11 +1,11 @@
 package net.lightbody.bmp.proxy.http;
 
 import net.lightbody.bmp.core.har.HarEntry;
+import net.lightbody.bmp.proxy.jetty.util.URI;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.openqa.jetty.util.URI;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
