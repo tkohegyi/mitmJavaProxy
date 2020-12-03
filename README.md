@@ -18,11 +18,14 @@ Embedded Mode
 If you're using Java, the easiest way to get started is to embed the project directly.
     
     <dependency>
-        <groupId>com.epam.wilma</groupId>
-        <artifactId>mitmJavaproxy</artifactId>
+        <groupId>com.epam.mitm</groupId>
+        <artifactId>mitmJavaProxy</artifactId>
         <version><versionToBeUsed></version>
     </dependency>
 
+The latest release is:
+
+[ ![Download](https://api.bintray.com/packages/epam/wilma/mitmJavaProxy/images/download.svg?version=V0.10-initial-beta) ](https://bintray.com/epam/wilma/mitmJavaProxy/V0.10-initial-beta/link)
 
 HTTP Request Manipulation
 -------------------
