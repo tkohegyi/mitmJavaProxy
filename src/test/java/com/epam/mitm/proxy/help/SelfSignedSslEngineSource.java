@@ -1,16 +1,9 @@
 package com.epam.mitm.proxy.help;
 
-import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +12,6 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Security;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 
 /**
  * The {@link SSLContext} uses
@@ -27,10 +19,8 @@ import java.util.Arrays;
  * file doesn't yet exist.
  */
 public class SelfSignedSslEngineSource {
-    private final Logger logger = LoggerFactory.getLogger(SelfSignedSslEngineSource.class);
-
     private static final String PROTOCOL = "TLSv1.2";
-
+    private final Logger logger = LoggerFactory.getLogger(SelfSignedSslEngineSource.class);
     private final String alias;
     private final String password;
     private final String keyStoreFile;

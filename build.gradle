@@ -1,22 +1,3 @@
-/*==========================================================================
-Copyright since 2013, EPAM Systems
-
-This file is part of Wilma.
-
-Wilma is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Wilma is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Wilma.  If not, see <http://www.gnu.org/licenses/>.
-===========================================================================*/
-
 ext.componentDescription = "MITM Java Proxy of Wilma"
 
 // Common local repository info
@@ -36,7 +17,7 @@ apply plugin: 'maven'
 apply plugin: 'java-library'
 apply plugin: 'jacoco'
 
-version = "0.10-beta-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
+version = "0.11-beta-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
 
 repositories {
     jcenter()
@@ -77,6 +58,7 @@ jacocoTestReport {
         xml.enabled true
     }
 }
+
 //test {
 //    jvmArgs '-Djavax.net.debug=all' // add line
 //}
@@ -107,9 +89,8 @@ dependencies {
 
 def myCopySpec = project.copySpec {
     from(rootProject.rootDir.absolutePath + '/') {
-        include 'sslSupport/mitmProxy.cer'
-        include 'sslSupport/mitmProxy_keystore.jks'
-        exclude 'logback.xml'
+        include 'sslSupport/cybervillainsCA.cer'
+        include 'sslSupport/cybervillainsCA.jks'
     }
 }
 
