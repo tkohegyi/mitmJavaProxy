@@ -3,7 +3,11 @@ package com.epam.mitm.proxy;
 Copyright since 2013, EPAM Systems
 ===========================================================================*/
 
-import net.lightbody.bmp.core.har.*;
+import net.lightbody.bmp.core.har.Har;
+import net.lightbody.bmp.core.har.HarEntry;
+import net.lightbody.bmp.core.har.HarLog;
+import net.lightbody.bmp.core.har.HarNameVersion;
+import net.lightbody.bmp.core.har.HarPage;
 import net.lightbody.bmp.core.util.ThreadUtils;
 import net.lightbody.bmp.proxy.BrowserMobProxyHandler;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpClient2;

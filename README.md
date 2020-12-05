@@ -1,36 +1,34 @@
 MitmJavaProxy - For Wilma
 ============================
-
 This Men-In-The-Middle Java Proxy is a derivative work that was originated from BrowserMob Proxy, then tailored for old Wilma versions, 
 then upgraded in order to be prepared for the next generation of Wilma. 
 
 WARNING!!! Under Construction !!!
 ---------------------------
-**Right now everythings seems to be working so can be used in test mode.**
+**Right now everything seems to be working so can be used in test mode.**
 
 Also please be aware that the main aim of creating this MITM Java proxy is to support the proxy need of Wilma.
 Therefore none of the original browsermob-proxy features should be expected as working, 
-because the main purpose is just proxying the messages and by intercepting them do what Wilma wants to do with the messages.
+because the main purpose is just proxying the HTTP/HTTPS messages and by intercepting them do whatever we (and Wilma) wants to do with the messages.
 
 Embedded Mode
 -------------
-
 If you're using Java, the easiest way to get started is to embed the project directly.
     
     <dependency>
         <groupId>com.epam.mitm</groupId>
         <artifactId>mitmJavaProxy</artifactId>
-        <version><versionToBeUsed></version>
+        <version>0.11-beta-wilma-2.0.DEV</version>
+        <type>pom</type>
     </dependency>
 
 The latest release is:
 
-[ ![Download](https://api.bintray.com/packages/epam/wilma/mitmJavaProxy/images/download.svg?version=V0.10-initial-beta) ](https://bintray.com/epam/wilma/mitmJavaProxy/V0.10-initial-beta/link)
+[ ![Download](https://api.bintray.com/packages/epam/wilma/mitmJavaProxy/images/download.svg?version=0.11-beta-wilma-2.0.DEV) ](https://bintray.com/epam/wilma/mitmJavaProxy/0.11-beta-wilma-2.0.DEV/link)
 
 HTTP Request Manipulation
 -------------------
-
-TODO
+TODO (Note that it works, just need to be written here...)
 
 HTTP Response Manipulation
 -------------------
@@ -44,4 +42,5 @@ Or can be set per message via ...
 SSL Support
 -----------
 While the proxy supports SSL, it requires that a Certificate Authority be installed in to the browser. 
-This allows the browser to trust all the SSL traffic coming from the proxy, which will be proxied using a classic man-in-the-middle technique. IT IS CRITICAL THAT YOU NOT INSTALL THIS CERTIFICATE AUTHORITY ON A BROWSER THAT IS USED FOR ANYTHING OTHER THAN TESTING.
+This allows the browser to trust all the SSL traffic coming from the proxy, which will be proxied using a classic man-in-the-middle technique. 
+IT IS CRITICAL THAT YOU NOT INSTALL THIS CERTIFICATE AUTHORITY ON A BROWSER THAT IS USED FOR ANYTHING OTHER THAN TESTING.
