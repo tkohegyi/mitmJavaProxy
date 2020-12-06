@@ -1,7 +1,7 @@
 package net.lightbody.bmp.proxy;
 
 import net.lightbody.bmp.proxy.http.BadURIException;
-import net.lightbody.bmp.proxy.http.BrowserMobHttpClient2;
+import net.lightbody.bmp.proxy.http.BrowserMobHttpClient;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpRequest;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpResponse;
 import net.lightbody.bmp.proxy.http.RequestCallback;
@@ -49,10 +49,10 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
 
     private BmpServer jettyBmpServer;
     private int headerBufferMultiplier = HEADER_BUFFER_DEFAULT;
-    private BrowserMobHttpClient2 httpClient;
+    private BrowserMobHttpClient httpClient;
 
     public BrowserMobProxyHandler() {
-        super(true, "", "", false, false);
+        super(true, false, false);
         setShutdownLock(new Object());
 
         // set the tunnel timeout to something larger than the default 30 seconds
@@ -398,7 +398,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
         }
     }
 
-    public void setHttpClient(final BrowserMobHttpClient2 httpClient) {
+    public void setHttpClient(final BrowserMobHttpClient httpClient) {
         this.httpClient = httpClient;
     }
 

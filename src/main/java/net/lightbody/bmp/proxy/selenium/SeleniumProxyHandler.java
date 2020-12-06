@@ -33,13 +33,11 @@ import java.util.*;
 public class SeleniumProxyHandler extends AbstractHttpHandler {
     private final Logger log = LoggerFactory.getLogger(SeleniumProxyHandler.class);
     private final Map<String, SslRelay> _sslMap = new LinkedHashMap<String, SslRelay>();
-    private final String dontInjectRegex;
-    private final String debugURL;
     private final boolean proxyInjectionMode;
     private final boolean forceProxyChain;
     protected Set<String> _proxyHostsWhiteList;
     protected Set<String> _proxyHostsBlackList;
-    protected int _tunnelTimeoutMs = 250;
+    protected int _tunnelTimeoutMs = 60000;
     /**
      * Map of leg by leg headers (not end to end). Should be a set, but more efficient string map is
      * used instead.
@@ -55,10 +53,6 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
      * instead.
      */
     protected StringMap _ProxySchemes = new StringMap();
-    /**
-     * Set of allowed CONNECT ports.
-     */
-    protected HashSet<Integer> _allowedConnectPorts = new HashSet<Integer>();
     private boolean _anonymous = false;
     private transient boolean _chained = false;
     @SuppressWarnings("unused")
@@ -103,21 +97,9 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
         _ProxySchemes.put("ftp", o);
     }
 
-    {
-        _allowedConnectPorts.add(80);
-        _allowedConnectPorts.add(4444);
-        _allowedConnectPorts.add(8000);
-        _allowedConnectPorts.add(8080);
-        _allowedConnectPorts.add(8888);
-        _allowedConnectPorts.add(443);
-        _allowedConnectPorts.add(8443);
-    }
-
-    public SeleniumProxyHandler(boolean trustAllSSLCertificates, String dontInjectRegex, String debugURL, boolean proxyInjectionMode, boolean forceProxyChain) {
+    public SeleniumProxyHandler(boolean trustAllSSLCertificates, boolean proxyInjectionMode, boolean forceProxyChain) {
         super();
         this.trustAllSSLCertificates = trustAllSSLCertificates;
-        this.dontInjectRegex = dontInjectRegex;
-        this.debugURL = debugURL;
         this.proxyInjectionMode = proxyInjectionMode;
         this.forceProxyChain = forceProxyChain;
     }
@@ -663,14 +645,6 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
      * @return True if the request to the scheme,host and port is not forbidden.
      */
     protected boolean isForbidden(String scheme, String host, int port, boolean openNonPrivPorts) {
-        // Check port
-        if (false) { // DGF Don't check the port, SRC-354
-            if (port > 0 && !_allowedConnectPorts.contains(new Integer(port))) {
-                if (!openNonPrivPorts || port <= 1024)
-                    return true;
-            }
-        }
-
         // Must be a scheme that can be proxied.
         if (scheme == null || !_ProxySchemes.containsKey(scheme))
             return true;

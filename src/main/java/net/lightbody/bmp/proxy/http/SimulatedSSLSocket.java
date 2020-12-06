@@ -11,144 +11,33 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 import java.util.Date;
 
-public class SimulatedSSLSocket extends SSLSocket {
-    private SSLSocket socket;
+public class SimulatedSSLSocket extends Socket {
+    private Socket socket;
     private StreamManager streamManager;
     private Date handshakeStart;
     private int timeout;
 
-    public SimulatedSSLSocket(SSLSocket socket, StreamManager streamManager, int timeout) {
+    public SimulatedSSLSocket(Socket socket, StreamManager streamManager, int timeout) {
         this.socket = socket;
         this.streamManager = streamManager;
         this.timeout = timeout;
     }
 
-    @Override
-    public String[] getSupportedCipherSuites() {
-        return socket.getSupportedCipherSuites();
-    }
-
-    @Override
-    public String[] getEnabledCipherSuites() {
-        return socket.getEnabledCipherSuites();
-    }
-
-    @Override
-    public void setEnabledCipherSuites(String[] strings) {
-        socket.setEnabledCipherSuites(strings);
-    }
-
-    @Override
-    public String[] getSupportedProtocols() {
-        return socket.getSupportedProtocols();
-    }
-
-    @Override
-    public String[] getEnabledProtocols() {
-        return socket.getEnabledProtocols();
-    }
-
-    @Override
-    public void setEnabledProtocols(String[] strings) {
-        socket.setEnabledProtocols(strings);
-    }
-
-    @Override
-    public SSLSession getSession() {
-        return socket.getSession();
-    }
-
-    @Override
-    public void addHandshakeCompletedListener(HandshakeCompletedListener handshakeCompletedListener) {
-        socket.addHandshakeCompletedListener(handshakeCompletedListener);
-    }
-
-    @Override
-    public void removeHandshakeCompletedListener(HandshakeCompletedListener handshakeCompletedListener) {
-        socket.removeHandshakeCompletedListener(handshakeCompletedListener);
-    }
-
-    @Override
-    public void startHandshake() throws IOException {
-        socket.startHandshake();
-    }
-
-    @Override
-    public void setUseClientMode(boolean b) {
-        socket.setUseClientMode(b);
-    }
-
-    @Override
-    public boolean getUseClientMode() {
-        return socket.getUseClientMode();
-    }
-
-    @Override
-    public void setNeedClientAuth(boolean b) {
-        socket.setNeedClientAuth(b);
-    }
-
-    @Override
-    public boolean getNeedClientAuth() {
-        return socket.getNeedClientAuth();
-    }
-
-    @Override
-    public void setWantClientAuth(boolean b) {
-        socket.setWantClientAuth(b);
-    }
-
-    @Override
-    public boolean getWantClientAuth() {
-        return socket.getWantClientAuth();
-    }
-
-    @Override
-    public void setEnableSessionCreation(boolean b) {
-        socket.setEnableSessionCreation(b);
-    }
-
-    @Override
-    public boolean getEnableSessionCreation() {
-        return socket.getEnableSessionCreation();
-    }
-
-    @Override
-    public SSLParameters getSSLParameters() {
-        return socket.getSSLParameters();
-    }
-
-    @Override
-    public void setSSLParameters(SSLParameters sslParameters) {
-        socket.setSSLParameters(sslParameters);
-    }
 
     @Override
     public void connect(SocketAddress endpoint) throws IOException {
-        this.connect(endpoint, timeout);
+        socket.connect(endpoint, timeout);
     }
 
     @Override
     public void connect(SocketAddress endpoint, int timeout) throws IOException {
-        Date start = new Date();
         socket.connect(endpoint, timeout);
-        Date end = new Date();
-        RequestInfo.get().connect(start, end);
-        handshakeStart = new Date();
-        startHandshake();
-        this.addHandshakeCompletedListener(new HandshakeCompletedListener() {
-            @Override
-            public void handshakeCompleted(HandshakeCompletedEvent handshakeCompletedEvent) {
-                if (handshakeStart != null) {
-                    RequestInfo.get().ssl(handshakeStart, new Date());
-                }
-            }
-        });
     }
 
     @Override

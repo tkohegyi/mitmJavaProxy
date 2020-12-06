@@ -14,14 +14,14 @@ import java.security.UnrecoverableKeyException;
 
 import static org.junit.Assert.assertNotNull;
 
-public class TrustingSSLSocketFactory2Test {
-    private TrustingSSLSocketFactory2 underTest;
+public class TrustingSSLSocketFactoryTest {
+    private TrustingSSLSocketFactory underTest;
 
     @Before
     public void setUp() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         StreamManager streamManager = new StreamManager(100 * BandwidthLimiter.OneMbps);
         BrowserMobHostNameResolver hostNameResolver = new BrowserMobHostNameResolver(new Cache(DClass.ANY));
-        underTest = new TrustingSSLSocketFactory2(hostNameResolver, streamManager, 60000);
+        underTest = new TrustingSSLSocketFactory(hostNameResolver, streamManager, 60000);
     }
 
     @Test

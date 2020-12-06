@@ -10,7 +10,7 @@ import net.lightbody.bmp.core.har.HarNameVersion;
 import net.lightbody.bmp.core.har.HarPage;
 import net.lightbody.bmp.core.util.ThreadUtils;
 import net.lightbody.bmp.proxy.BrowserMobProxyHandler;
-import net.lightbody.bmp.proxy.http.BrowserMobHttpClient2;
+import net.lightbody.bmp.proxy.http.BrowserMobHttpClient;
 import net.lightbody.bmp.proxy.http.RequestInterceptor;
 import net.lightbody.bmp.proxy.http.ResponseInterceptor;
 import net.lightbody.bmp.proxy.jetty.http.HttpContext;
@@ -37,7 +37,7 @@ public class ProxyServer {
     private final AtomicInteger requestCounter = new AtomicInteger(0);
     private BmpServer bmpServer;
     private int port = -1;
-    private BrowserMobHttpClient2 client;
+    private BrowserMobHttpClient client;
     private StreamManager streamManager;
     private HarPage currentPage;
     private BrowserMobProxyHandler handler;
@@ -86,7 +86,7 @@ public class ProxyServer {
         handler = new BrowserMobProxyHandler();
         handler.setJettyServer(bmpServer);
         handler.setShutdownLock(new Object());
-        client = new BrowserMobHttpClient2(streamManager, requestCounter, requestTimeOut);
+        client = new BrowserMobHttpClient(streamManager, requestCounter, requestTimeOut);
         client.prepareForBrowser();
         handler.setHttpClient(client);
 

@@ -106,8 +106,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
-public class BrowserMobHttpClient2 {
-    private final static Logger LOGGER = LoggerFactory.getLogger(BrowserMobHttpClient2.class);
+public class BrowserMobHttpClient {
+    private final static Logger LOGGER = LoggerFactory.getLogger(BrowserMobHttpClient.class);
     private static final int MAX_BUFFER_SIZE = 1024 * 1024; // MOB-216 don't buffer more than 1 MB
     private static final int BUFFER = 4096;
     private static final int MAX_REDIRECT = 10;
@@ -141,7 +141,7 @@ public class BrowserMobHttpClient2 {
     // if captureContent is set, default policy is to capture binary contents too
     private boolean captureBinaryContent = true;
     private SimulatedSocketFactory socketFactory;
-    private TrustingSSLSocketFactory2 sslSocketFactory;
+    private TrustingSSLSocketFactory sslSocketFactory;
     private PoolingHttpClientConnectionManager httpClientConnMgr;
     private HttpClient httpClient;
     private List<BlacklistEntry> blacklistEntries = null;
@@ -156,14 +156,14 @@ public class BrowserMobHttpClient2 {
     private boolean followRedirects = true;
     private AtomicInteger requestCounter;
 
-    public BrowserMobHttpClient2(final StreamManager streamManager, final AtomicInteger requestCounter, final int requestTimeOut) {
+    public BrowserMobHttpClient(final StreamManager streamManager, final AtomicInteger requestCounter, final int requestTimeOut) {
         this.requestCounter = requestCounter;
         this.requestTimeout = requestTimeOut;
         hostNameResolver = new BrowserMobHostNameResolver(new Cache(DClass.ANY));
 
         socketFactory = new SimulatedSocketFactory(hostNameResolver, streamManager, requestTimeout);
         try {
-            sslSocketFactory = new TrustingSSLSocketFactory2(hostNameResolver, streamManager, requestTimeout);
+            sslSocketFactory = new TrustingSSLSocketFactory(hostNameResolver, streamManager, requestTimeout);
         } catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
             throw new RuntimeException(e);
         }

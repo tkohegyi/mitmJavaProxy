@@ -32,7 +32,7 @@ public class BrowserMobHttpRequest {
     public static final TimeStampBasedIdGenerator TIME_STAMP_BASED_ID_GENERATOR = new TimeStampBasedIdGenerator();
     protected static final Logger logger = LoggerFactory.getLogger(BrowserMobHttpRequest.class);
     private final HttpRequestBase method;
-    private final BrowserMobHttpClient2 client;
+    private final BrowserMobHttpClient client;
     private final List<NameValuePair> nvps = new ArrayList<NameValuePair>();
     private final boolean collectAdditionalInfo;
     private final HttpRequest proxyRequest;
@@ -51,7 +51,7 @@ public class BrowserMobHttpRequest {
     private String wilmaMessageId = TIME_STAMP_BASED_ID_GENERATOR.nextIdentifier();
     private boolean responseVolatile = false;
 
-    protected BrowserMobHttpRequest(final HttpRequestBase method, final BrowserMobHttpClient2 client, final int expectedStatusCode,
+    protected BrowserMobHttpRequest(final HttpRequestBase method, final BrowserMobHttpClient client, final int expectedStatusCode,
                                     final boolean collectAdditionalInfo, final HttpRequest proxyRequest) {
         this.method = method;
         this.client = client;
