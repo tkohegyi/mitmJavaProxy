@@ -17,48 +17,53 @@ package net.lightbody.bmp.proxy.jetty.html;
 
 
 /* ------------------------------------------------------------ */
-/** CSS Style LINK.
+
+/**
+ * CSS Style LINK.
  *
- * @version $Id: StyleLink.java,v 1.3 2004/05/09 20:31:28 gregwilkins Exp $
  * @author Greg Wilkins (gregw)
+ * @version $Id: StyleLink.java,v 1.3 2004/05/09 20:31:28 gregwilkins Exp $
  */
-public class StyleLink extends Tag
-{
+public class StyleLink extends Tag {
     public final static String
-        REL="rel",
-        HREF="href",
-        TYPE=Style.TYPE,
-        MEDIA=Style.MEDIA;
-    
+            REL = "rel",
+            HREF = "href",
+            TYPE = Style.TYPE,
+            MEDIA = Style.MEDIA;
+
     /* ------------------------------------------------------------ */
-    /** Constructor. 
+
+    /**
+     * Constructor.
+     *
      * @param href The URL of the style sheet
      */
-    public StyleLink(String href)
-    {
+    public StyleLink(String href) {
         super("link");
-        attribute(REL,Style.StyleSheet);
-        attribute(HREF,href);
-        attribute(TYPE,Style.text_css);
+        attribute(REL, Style.StyleSheet);
+        attribute(HREF, href);
+        attribute(TYPE, Style.text_css);
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** Full Constructor. 
-     * @param rel Style Relationship, default StyleSheet if null.
-     * @param href The URL of the style sheet
-     * @param type The type, default text/css if null
+
+    /**
+     * Full Constructor.
+     *
+     * @param rel   Style Relationship, default StyleSheet if null.
+     * @param href  The URL of the style sheet
+     * @param type  The type, default text/css if null
      * @param media The media, not specified if null
      */
-    public StyleLink(String rel, String href, String type, String media)
-    {
+    public StyleLink(String rel, String href, String type, String media) {
         super("link");
-        attribute(REL,rel==null?Style.StyleSheet:rel);
-        attribute(HREF,href);
-        attribute(TYPE,type==null?Style.text_css:type);
-        if (media!=null)
-            attribute(MEDIA,media);
+        attribute(REL, rel == null ? Style.StyleSheet : rel);
+        attribute(HREF, href);
+        attribute(TYPE, type == null ? Style.text_css : type);
+        if (media != null)
+            attribute(MEDIA, media);
     }
-    
+
 };
 
 

@@ -16,34 +16,39 @@
 package net.lightbody.bmp.proxy.jetty.html;
 
 /* -------------------------------------------------------------------- */
-/** A Text Area within a form.
+
+/**
+ * A Text Area within a form.
  * <p> The text in the textarea is handled by the super class, Text
+ *
  * @see net.lightbody.bmp.proxy.jetty.html.Text
  */
-public class TextArea extends Block
-{
+public class TextArea extends Block {
     /* ----------------------------------------------------------------- */
-    /** @param name The name of the TextArea within the form */
-    public TextArea(String name)
-    {
+
+    /**
+     * @param name The name of the TextArea within the form
+     */
+    public TextArea(String name) {
         super("textarea");
-        attribute("name",name);
+        attribute("name", name);
     }
 
     /* ----------------------------------------------------------------- */
-    /** @param name The name of the TextArea within the form
-     * @param s The string in the text area */
-    public TextArea(String name, String s)
-    {
+
+    /**
+     * @param name The name of the TextArea within the form
+     * @param s    The string in the text area
+     */
+    public TextArea(String name, String s) {
         this(name);
         add(s);
     }
 
     /* ----------------------------------------------------------------- */
-    public TextArea setSize(int cols,int lines)
-    {
-        attribute("rows",lines);
-        attribute("cols",cols);
+    public TextArea setSize(int cols, int lines) {
+        attribute("rows", lines);
+        attribute("cols", cols);
         return this;
     }
 }

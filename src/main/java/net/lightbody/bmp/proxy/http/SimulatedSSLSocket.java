@@ -2,11 +2,6 @@ package net.lightbody.bmp.proxy.http;
 
 import org.java_bandwidthlimiter.StreamManager;
 
-import javax.net.ssl.HandshakeCompletedEvent;
-import javax.net.ssl.HandshakeCompletedListener;
-import javax.net.ssl.SSLParameters;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -91,13 +86,13 @@ public class SimulatedSSLSocket extends Socket {
     }
 
     @Override
-    public void setTcpNoDelay(boolean on) throws SocketException {
-        socket.setTcpNoDelay(on);
+    public boolean getTcpNoDelay() throws SocketException {
+        return socket.getTcpNoDelay();
     }
 
     @Override
-    public boolean getTcpNoDelay() throws SocketException {
-        return socket.getTcpNoDelay();
+    public void setTcpNoDelay(boolean on) throws SocketException {
+        socket.setTcpNoDelay(on);
     }
 
     @Override
@@ -116,18 +111,13 @@ public class SimulatedSSLSocket extends Socket {
     }
 
     @Override
-    public void setOOBInline(boolean on) throws SocketException {
-        socket.setOOBInline(on);
-    }
-
-    @Override
     public boolean getOOBInline() throws SocketException {
         return socket.getOOBInline();
     }
 
     @Override
-    public void setSoTimeout(int timeout) throws SocketException {
-        socket.setSoTimeout(timeout);
+    public void setOOBInline(boolean on) throws SocketException {
+        socket.setOOBInline(on);
     }
 
     @Override
@@ -136,8 +126,8 @@ public class SimulatedSSLSocket extends Socket {
     }
 
     @Override
-    public void setSendBufferSize(int size) throws SocketException {
-        socket.setSendBufferSize(size);
+    public void setSoTimeout(int timeout) throws SocketException {
+        socket.setSoTimeout(timeout);
     }
 
     @Override
@@ -146,8 +136,8 @@ public class SimulatedSSLSocket extends Socket {
     }
 
     @Override
-    public void setReceiveBufferSize(int size) throws SocketException {
-        socket.setReceiveBufferSize(size);
+    public void setSendBufferSize(int size) throws SocketException {
+        socket.setSendBufferSize(size);
     }
 
     @Override
@@ -156,8 +146,8 @@ public class SimulatedSSLSocket extends Socket {
     }
 
     @Override
-    public void setKeepAlive(boolean on) throws SocketException {
-        socket.setKeepAlive(on);
+    public void setReceiveBufferSize(int size) throws SocketException {
+        socket.setReceiveBufferSize(size);
     }
 
     @Override
@@ -166,8 +156,8 @@ public class SimulatedSSLSocket extends Socket {
     }
 
     @Override
-    public void setTrafficClass(int tc) throws SocketException {
-        socket.setTrafficClass(tc);
+    public void setKeepAlive(boolean on) throws SocketException {
+        socket.setKeepAlive(on);
     }
 
     @Override
@@ -176,13 +166,18 @@ public class SimulatedSSLSocket extends Socket {
     }
 
     @Override
-    public void setReuseAddress(boolean on) throws SocketException {
-        socket.setReuseAddress(on);
+    public void setTrafficClass(int tc) throws SocketException {
+        socket.setTrafficClass(tc);
     }
 
     @Override
     public boolean getReuseAddress() throws SocketException {
         return socket.getReuseAddress();
+    }
+
+    @Override
+    public void setReuseAddress(boolean on) throws SocketException {
+        socket.setReuseAddress(on);
     }
 
     @Override

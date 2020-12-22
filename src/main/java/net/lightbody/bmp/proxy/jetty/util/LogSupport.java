@@ -18,22 +18,23 @@ package net.lightbody.bmp.proxy.jetty.util;
 import org.apache.commons.logging.Log;
 
 /*-----------------------------------------------------------------------*/
-/** Log Support class.
+
+/**
+ * Log Support class.
  */
-public class LogSupport 
-{    
-    public final static String IGNORED= "IGNORED ";
-    public final static String EXCEPTION= "EXCEPTION ";
-    public final static String NOT_IMPLEMENTED= "NOT IMPLEMENTED ";
+public class LogSupport {
+    public final static String IGNORED = "IGNORED ";
+    public final static String EXCEPTION = "EXCEPTION ";
+    public final static String NOT_IMPLEMENTED = "NOT IMPLEMENTED ";
 
     /* ------------------------------------------------------------ */
+
     /**
      * Ignore an exception unless trace is enabled.
      * This works around the problem that log4j does not support the trace level.
      */
-    public static void ignore(Log log,Throwable th)
-    {
-        if (log.isTraceEnabled()) log.trace(IGNORED,th);
+    public static void ignore(Log log, Throwable th) {
+        if (log.isTraceEnabled()) log.trace(IGNORED, th);
     }
 
 

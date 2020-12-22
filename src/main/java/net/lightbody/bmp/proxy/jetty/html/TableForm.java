@@ -14,19 +14,21 @@
 // ========================================================================
 
 package net.lightbody.bmp.proxy.jetty.html;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Enumeration;
 
 // =======================================================================
-/** A form laid out in a Table.
+
+/**
+ * A form laid out in a Table.
  * <p> This class creates a form and lays out all the elements within a
  * table. Each element added has a label part and a element part. The label
  * is displayed in the form beside the element. All buttons are shown at the
  * bottom.
  */
-public class TableForm extends Form
-{
+public class TableForm extends Form {
 
     /* ----------------------------------------------------------- */
     private Table table = null;
@@ -37,186 +39,203 @@ public class TableForm extends Form
     private Composite bottomButtons = null;
     private String fieldAttributes = null;
     private boolean extendRow = false;
-    
+
     /* ----------------------------------------------------------- */
-    /** Create a new TableForm.
+
+    /**
+     * Create a new TableForm.
+     *
      * @param target The target url to send the form contents to
      */
-    public TableForm(String target)
-    {
+    public TableForm(String target) {
         super(target);
         newTable();
         super.add(hidden);
     }
 
     /* ----------------------------------------------------------- */
-    /** Add an informational section.
+
+    /**
+     * Add an informational section.
      */
     public void addText(String label,
-                        String value)
-    {
+                        String value) {
         Composite c = new Composite();
         c.add(value);
-        addField(label,c);
+        addField(label, c);
     }
 
     /* ----------------------------------------------------------- */
-    /** Add a Text Entry Field.
-     * @param tag The form name of the element
+
+    /**
+     * Add a Text Entry Field.
+     *
+     * @param tag   The form name of the element
      * @param label The label for the element in the table.
      */
-    public Input addTextField(String tag, 
+    public Input addTextField(String tag,
                               String label,
                               int length,
-                              String value)
-    {
-        Input i = new Input(Input.Text,tag,value);
+                              String value) {
+        Input i = new Input(Input.Text, tag, value);
         i.setSize(length);
-        addField(label,i);
+        addField(label, i);
         return i;
     }
 
     /* ----------------------------------------------------------- */
-    /** Add a Text Area.
-     * @param tag The form name of the element
+
+    /**
+     * Add a Text Area.
+     *
+     * @param tag   The form name of the element
      * @param label The label for the element in the table.
      */
-    public TextArea addTextArea(String tag, 
+    public TextArea addTextArea(String tag,
                                 String label,
                                 int width,
                                 int height,
-                                String value)
-    {
-        TextArea ta = new TextArea(tag,value);
-        ta.setSize(width,height);
-        addField(label,ta);
+                                String value) {
+        TextArea ta = new TextArea(tag, value);
+        ta.setSize(width, height);
+        addField(label, ta);
         return ta;
     }
 
     /* ----------------------------------------------------------- */
-    /** Add a File Entry Field.
-     * @param tag The form name of the element
+
+    /**
+     * Add a File Entry Field.
+     *
+     * @param tag   The form name of the element
      * @param label The label for the element in the table.
      */
-    public Input addFileField(String tag, 
-                              String label)
-    {
-        Input i = new Input(Input.File,tag);
-        addField(label,i);
+    public Input addFileField(String tag,
+                              String label) {
+        Input i = new Input(Input.File, tag);
+        addField(label, i);
         return i;
-    }
-    
-    /* ----------------------------------------------------------- */
-    /** Add an informational field which also passes the data as hidden.
-     * @param tag The form name of the element
-     * @param label The label for the element in the table.
-     */
-    public void addInfoField(String tag, 
-                             String label,
-                             String value)
-    {
-        addText(label,value);
-        addHiddenField(tag,value);
     }
 
     /* ----------------------------------------------------------- */
-    /** Add a hidden field.
+
+    /**
+     * Add an informational field which also passes the data as hidden.
+     *
+     * @param tag   The form name of the element
+     * @param label The label for the element in the table.
+     */
+    public void addInfoField(String tag,
+                             String label,
+                             String value) {
+        addText(label, value);
+        addHiddenField(tag, value);
+    }
+
+    /* ----------------------------------------------------------- */
+
+    /**
+     * Add a hidden field.
+     *
      * @param tag The form name of the element
      */
-    public void addHiddenField(String tag, 
-                               String value)
-    {
-        Element e = new Input(Input.Hidden,tag,value);
+    public void addHiddenField(String tag,
+                               String value) {
+        Element e = new Input(Input.Hidden, tag, value);
         hidden.add(e);
     }
 
     /* ----------------------------------------------------------- */
-    /** Add a password field.
-     * @param tag The form name of the element
+
+    /**
+     * Add a password field.
+     *
+     * @param tag   The form name of the element
      * @param label The label for the element in the table.
      */
     public void addPassword(String tag,
                             String label,
-                            int length)
-    {
-        Input i = new Input(Input.Password,tag);
+                            int length) {
+        Input i = new Input(Input.Password, tag);
         i.setSize(length);
-        addField(label,i);
+        addField(label, i);
     }
 
     /* ----------------------------------------------------------- */
+
     /**
-     * @param tag The form name of the element
+     * @param tag   The form name of the element
      * @param label The label for the element in the table.
      */
     public void addCheckbox(String tag,
                             String label,
-                            boolean checked)
-    {
-        Input cb = new Input(Input.Checkbox,tag);
-        addField(label,cb);
+                            boolean checked) {
+        Input cb = new Input(Input.Checkbox, tag);
+        addField(label, cb);
         if (checked)
             cb.check();
     }
 
     /* ----------------------------------------------------------- */
-    /** Add a Select field.
-     * @param tag The form name of the element
+
+    /**
+     * Add a Select field.
+     *
+     * @param tag   The form name of the element
      * @param label The label for the element in the table.
      */
     public Select addSelect(String tag,
                             String label,
                             boolean multiple,
-                            int size)
-    {
-        Select s = new Select(tag,multiple);
+                            int size) {
+        Select s = new Select(tag, multiple);
         s.setSize(size);
-        addField(label,s);
+        addField(label, s);
         return s;
     }
 
     /* ----------------------------------------------------------- */
-    /** Add a Select field initialised with fields.
-     * @param tag The form name of the element
+
+    /**
+     * Add a Select field initialised with fields.
+     *
+     * @param tag   The form name of the element
      * @param label The label for the element in the table.
      */
     public Select addSelect(String tag,
                             String label,
                             boolean multiple,
                             int size,
-                            Enumeration values)
-    {
-        Select s = addSelect(tag,label,multiple,size);
+                            Enumeration values) {
+        Select s = addSelect(tag, label, multiple, size);
         s.setSize(size);
         while (values.hasMoreElements())
             s.add(values.nextElement().toString());
         return s;
     }
-    
+
     /* ----------------------------------------------------------- */
     /* add a new button area.
      * A button area is a line of a column in a table form where multiple
      * buttons can be placed.  Subsequent calls to addButton will
      * add buttons to this area.
      */
-    public void addButtonArea(String label)
-    {
-        buttons=new Composite();
-        addField(label,buttons);
+    public void addButtonArea(String label) {
+        buttons = new Composite();
+        addField(label, buttons);
     }
-    
+
     /* ----------------------------------------------------------- */
     /* add a new button area.
      * A button area is a line of a column in a table form where multiple
      * buttons can be placed.  Subsequent calls to addButton will
      * add buttons to this area.
      */
-    public void addButtonArea()
-    {
-        buttons=new Composite();
-        addField(null,buttons);
+    public void addButtonArea() {
+        buttons = new Composite();
+        addField(null, buttons);
     }
-    
+
     /* ----------------------------------------------------------- */
     /* add a new button row.
      * A button row is a line of a column in a table form where multiple
@@ -224,19 +243,17 @@ public class TableForm extends Form
      * TableForm Subsequent calls to addButton will
      * add buttons to this area.
      */
-    public void addButtonRow()
-    {
-        buttons=new Composite();
-        
-        if (!extendRow)
-        {
+    public void addButtonRow() {
+        buttons = new Composite();
+
+        if (!extendRow) {
             column.newRow();
             column.addCell(buttons).left().middle();
-            column.cell().attribute("colspan","2");
+            column.cell().attribute("colspan", "2");
         }
-        extendRow=false;
+        extendRow = false;
     }
-    
+
     /* ----------------------------------------------------------- */
     /* add a new button area to bottom of multicolumn form.
      * A button area is a line of a table form where multiple
@@ -244,141 +261,154 @@ public class TableForm extends Form
      * add buttons to this area.
      * This is the default if no call is made to newButtonArea.
      */
-    public void buttonsAtBottom()
-    {
-        if (bottomButtons!=null)
-            buttons=bottomButtons;
-        else
-        {
-            buttons=new Composite();
-            bottomButtons=buttons;
+    public void buttonsAtBottom() {
+        if (bottomButtons != null)
+            buttons = bottomButtons;
+        else {
+            buttons = new Composite();
+            bottomButtons = buttons;
         }
     }
 
     /* ----------------------------------------------------------- */
-    /** Add a Submit Button.
-     * @param tag The form name of the element
+
+    /**
+     * Add a Submit Button.
+     *
+     * @param tag   The form name of the element
      * @param label The label for the Button
      */
     public Input addButton(String tag,
-                           String label)
-    {
-        if (buttons==null)
+                           String label) {
+        if (buttons == null)
             buttonsAtBottom();
-        Input e = new Input(Input.Submit,tag,label);
+        Input e = new Input(Input.Submit, tag, label);
 
         if (extendRow)
-            addField(null,e);
+            addField(null, e);
         else
             buttons.add(e);
         return e;
     }
 
     /* ----------------------------------------------------------- */
-    /** Add a reset button.
+
+    /**
+     * Add a reset button.
+     *
      * @param label The label for the element in the table.
      */
-    public void addReset(String label)
-    {
-        if (buttons==null)
+    public void addReset(String label) {
+        if (buttons == null)
             buttonsAtBottom();
-        Element e = new Input(Input.Reset,"Reset",label);
+        Element e = new Input(Input.Reset, "Reset", label);
         if (extendRow)
-            addField(null,e);
+            addField(null, e);
         else
             buttons.add(e);
     }
 
     // ------------------------------------------------------------
-    /** Use the given attributes on the next addXXX */
-    public void useAttributes(String attr){
+
+    /**
+     * Use the given attributes on the next addXXX
+     */
+    public void useAttributes(String attr) {
         fieldAttributes = attr;
     }
-    
+
     // ------------------------------------------------------------
-    /** Get the internal table */
-    public Table table(){
+
+    /**
+     * Get the internal table
+     */
+    public Table table() {
         return column;
     }
-    
+
     // ------------------------------------------------------------
-    /** Get the internal table */
-    public Table outerTable(){
+
+    /**
+     * Get the internal table
+     */
+    public Table outerTable() {
         return table;
     }
 
     /* ----------------------------------------------------------- */
-    /** Extend the usage of the current row in the form.  The next
+
+    /**
+     * Extend the usage of the current row in the form.  The next
      * element added will be added to the same row as the form and
      * not have a label of it's own.
+     *
      * @return TableForm, the this pointer so that users can write:<pre>
      *                    tableForm.extendRow().addField(...)</pre>
      */
-    public TableForm extendRow()
-    {
-        extendRow=true;
+    public TableForm extendRow() {
+        extendRow = true;
         return this;
     }
 
     /* ----------------------------------------------------------- */
-    /** Add an arbitrary element to the table.
+
+    /**
+     * Add an arbitrary element to the table.
+     *
      * @param label The label for the element in the table.
      */
-    public void addField(String label,Element field)
-    {
-        if (label==null)
-            label="&nbsp;";
+    public void addField(String label, Element field) {
+        if (label == null)
+            label = "&nbsp;";
         else
-            label="<b>"+label+":</b>";
+            label = "<b>" + label + ":</b>";
 
-        if (extendRow)
-        {
+        if (extendRow) {
             column.add(field);
-            extendRow=false;
-        }
-        else
-        {
+            extendRow = false;
+        } else {
             column.newRow();
             column.addCell(label);
             column.cell().right();
-        
-            if (fieldAttributes != null)
-            {
-                column.addCell(field,fieldAttributes);
+
+            if (fieldAttributes != null) {
+                column.addCell(field, fieldAttributes);
                 fieldAttributes = null;
-            }
-            else
+            } else
                 column.addCell(field);
         }
     }
-    
+
     /* ----------------------------------------------------------- */
-    /** Create a new column in the form.
+
+    /**
+     * Create a new column in the form.
      */
-    public void addColumn()
-    {
+    public void addColumn() {
         column = new Table(0);
         table.addCell(column).top();
         columns++;
     }
-    
+
     /* ----------------------------------------------------------- */
-    /** Create a new column in the form.
+
+    /**
+     * Create a new column in the form.
      */
-    public void addColumn(int spacing)
-    {
-        table.addCell("&nbsp","width="+spacing);
+    public void addColumn(int spacing) {
+        table.addCell("&nbsp", "width=" + spacing);
         column = new Table(0);
         table.addCell(column);
         table.cell().top();
         columns++;
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** Add a new sections of columns.
+
+    /**
+     * Add a new sections of columns.
      */
-    public void newColumns()
-    {
+    public void newColumns() {
         column = new Table(0);
         columns = 1;
         table.newRow();
@@ -387,41 +417,43 @@ public class TableForm extends Form
     }
 
     /* ------------------------------------------------------------ */
-    /** Set the column span of the current column.
+
+    /**
+     * Set the column span of the current column.
      * This call is needed for forms that have varying numbers
      * of columns in different sections. NB. and column spacing
      * counts as a column.
-     * @param span 
+     *
+     * @param span
      */
-    public void setColumnSpan(int span)
-    {
-        table.cell().attribute("colspan",""+span);
+    public void setColumnSpan(int span) {
+        table.cell().attribute("colspan", "" + span);
     }
-    
+
     /* ----------------------------------------------------------- */
-    /** Start using a new Table.
+
+    /**
+     * Start using a new Table.
      * Anything added to the Composite parent of
      * this object before this is called will be added between the two
-     * tables. */
-    public void newTable()
-    {
+     * tables.
+     */
+    public void newTable() {
         table = new Table(0);
         column = new Table(0);
         columns = 1;
         super.add(table);
         table.newRow();
-        table.addCell(column).top();    
+        table.addCell(column).top();
     }
-    
+
     /* ----------------------------------------------------------- */
     public void write(Writer out)
-        throws IOException
-    {
-        if (bottomButtons!=null)
-        {
+            throws IOException {
+        if (bottomButtons != null) {
             table.newRow();
-            table.addCell(bottomButtons).attribute("colspan",columns);
+            table.addCell(bottomButtons).attribute("colspan", columns);
         }
         super.write(out);
-    } 
+    }
 }

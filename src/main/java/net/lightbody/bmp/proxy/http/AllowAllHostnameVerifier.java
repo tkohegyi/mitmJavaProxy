@@ -11,7 +11,7 @@ import java.security.cert.X509Certificate;
 /**
  * Our own implementation of the AllowAllHostnameVerifier class.  The one that ships with HttpClient doesn't actually
  * allow all host names.  In particular, it fails to work when an upstream proxy is present.
- *
+ * <p>
  * http://javaskeleton.blogspot.com/2010/07/avoiding-peer-not-authenticated-with.html was a very helpful resource in
  * tracking down SSL problems with HttpClient.
  */

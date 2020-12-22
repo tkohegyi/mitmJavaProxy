@@ -19,27 +19,31 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /* ------------------------------------------------------------ */
-/** Observer output events.
+
+/**
+ * Observer output events.
  *
- * @see net.lightbody.bmp.proxy.jetty.http.HttpOutputStream
- * @version $Id: OutputObserver.java,v 1.3 2004/05/09 20:32:49 gregwilkins Exp $
  * @author Greg Wilkins (gregw)
+ * @version $Id: OutputObserver.java,v 1.3 2004/05/09 20:32:49 gregwilkins Exp $
+ * @see net.lightbody.bmp.proxy.jetty.http.HttpOutputStream
  */
-public interface OutputObserver
-{
+public interface OutputObserver {
     public final static int
-        __FIRST_WRITE=0,
-        __RESET_BUFFER=1,
-        __COMMITING=2,
-        __CLOSING=4,
-        __CLOSED=5;
-    
+            __FIRST_WRITE = 0,
+            __RESET_BUFFER = 1,
+            __COMMITING = 2,
+            __CLOSING = 4,
+            __CLOSED = 5;
+
     /* ------------------------------------------------------------ */
-    /** Notify an output action.
-     * @param out The OutputStream that caused the event
+
+    /**
+     * Notify an output action.
+     *
+     * @param out    The OutputStream that caused the event
      * @param action The action taken
-     * @param data Data associated with the event.
+     * @param data   Data associated with the event.
      */
     void outputNotify(OutputStream out, int action, Object data)
-        throws IOException;
+            throws IOException;
 }

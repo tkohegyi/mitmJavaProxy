@@ -4,7 +4,11 @@ import net.lightbody.bmp.proxy.selenium.LauncherUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.tools.ant.util.FileUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -14,8 +18,8 @@ import java.util.zip.ZipFile;
 
 public class ResourceExtractor {
 
-    static org.apache.commons.logging.Log log = LogFactory.getLog(ResourceExtractor.class);
     private static final int BUF_SIZE = 8192;
+    static org.apache.commons.logging.Log log = LogFactory.getLog(ResourceExtractor.class);
 
     public static File extractResourcePath(String resourcePath, File dest) throws IOException {
         return extractResourcePath(ResourceExtractor.class, resourcePath, dest);
@@ -53,10 +57,10 @@ public class ResourceExtractor {
         ZipFile z = new ZipFile(jarFile, ZipFile.OPEN_READ);
         String zipStyleResourcePath = resourcePath.substring(1) + "/";
         ZipEntry ze = z.getEntry(zipStyleResourcePath);
-        log.debug( "Extracting "+resourcePath+" to " + dest.getAbsolutePath() );
+        log.debug("Extracting " + resourcePath + " to " + dest.getAbsolutePath());
         if (ze != null) {
             // DGF If it's a directory, then we need to look at all the entries
-            for (Enumeration entries = z.entries(); entries.hasMoreElements();) {
+            for (Enumeration entries = z.entries(); entries.hasMoreElements(); ) {
                 ze = (ZipEntry) entries.nextElement();
                 if (ze.getName().startsWith(zipStyleResourcePath)) {
                     String relativePath = ze.getName().substring(zipStyleResourcePath.length());
@@ -97,7 +101,6 @@ public class ResourceExtractor {
     }
 
 
-
     private static void copyStream(InputStream in, OutputStream out) throws IOException {
         try {
 
@@ -111,12 +114,14 @@ public class ResourceExtractor {
             if (out != null) {
                 try {
                     out.close();
-                } catch (IOException e) {}
+                } catch (IOException e) {
+                }
             }
             if (in != null) {
                 try {
                     in.close();
-                } catch (IOException e) {}
+                } catch (IOException e) {
+                }
             }
         }
 

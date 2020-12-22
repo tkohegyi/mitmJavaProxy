@@ -1,7 +1,15 @@
 package net.lightbody.bmp.proxy.selenium;
 
 import com.epam.mitm.proxy.ProxyServer;
-import net.lightbody.bmp.proxy.jetty.http.*;
+import net.lightbody.bmp.proxy.jetty.http.HttpConnection;
+import net.lightbody.bmp.proxy.jetty.http.HttpException;
+import net.lightbody.bmp.proxy.jetty.http.HttpFields;
+import net.lightbody.bmp.proxy.jetty.http.HttpMessage;
+import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
+import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
+import net.lightbody.bmp.proxy.jetty.http.HttpServer;
+import net.lightbody.bmp.proxy.jetty.http.HttpTunnel;
+import net.lightbody.bmp.proxy.jetty.http.SslListener;
 import net.lightbody.bmp.proxy.jetty.http.handler.AbstractHttpHandler;
 import net.lightbody.bmp.proxy.jetty.util.IO;
 import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
@@ -14,9 +22,25 @@ import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLHandshakeException;
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.Proxy;
+import java.net.Socket;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /* ------------------------------------------------------------ */
 
@@ -58,16 +82,16 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
     @SuppressWarnings("unused")
     private String sslKeystorePath;
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
     private boolean useCyberVillains = true;
     private boolean trustAllSSLCertificates = false;
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
     private boolean fakeCertsGenerated;
     // see docs for the lock object on SeleniumServer for information on this and why it is IMPORTANT!
     private Object shutdownLock;
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
 
     {
         Object o = new Object();
@@ -87,7 +111,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
         _ProxyAuthHeaders.put(HttpFields.__ProxyAuthenticate, o);
     }
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
 
     {
         Object o = new Object();
@@ -105,20 +129,20 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
     }
 
     /* ------------------------------------------------------------ */
-      /*
-       */
+    /*
+     */
     public void start() throws Exception {
         _chained = System.getProperty("http.proxyHost") != null || forceProxyChain;
         super.start();
     }
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
 
     public int getTunnelTimeoutMs() {
         return _tunnelTimeoutMs;
     }
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
 
     /**
      * Tunnel timeout. IE on win2000 has connections issues with normal timeout handling. This
@@ -583,7 +607,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
         }
     }
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
 
     /**
      * Customize proxy Socket connection for CONNECT. Method to allow derived handlers to customize
@@ -592,7 +616,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
     protected void customizeConnection(String pathInContext, String pathParams, HttpRequest request, Socket socket) {
     }
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
 
     /**
      * Customize proxy URL connection. Method to allow derived handlers to customize the connection.
@@ -600,7 +624,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
     protected void customizeConnection(String pathInContext, String pathParams, HttpRequest request, URLConnection connection) {
     }
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
 
     /**
      * Is URL Proxied. Method to allow derived handlers to select which URIs are proxied and to
@@ -619,7 +643,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
         return new URL(uri.toString());
     }
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
 
     /**
      * Is URL Forbidden.
@@ -633,7 +657,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
         return isForbidden(scheme, host, port, true);
     }
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
 
     /**
      * Is scheme,host & port Forbidden.
@@ -658,7 +682,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
 
     }
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
 
     /**
      * Send Forbidden. Method called to send forbidden response. Default implementation calls
@@ -676,7 +700,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
         response.sendError(HttpResponse.__404_Not_Found, "Not found");
     }
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
 
     /**
      * @return Returns the anonymous.
@@ -685,7 +709,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
         return _anonymous;
     }
 
-      /* ------------------------------------------------------------ */
+    /* ------------------------------------------------------------ */
 
     /**
      * @param anonymous The anonymous to set.

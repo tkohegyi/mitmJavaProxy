@@ -30,7 +30,7 @@ public final class HarNameValuePair {
 
     // TODO: Perhaps these should be done the right way
     public boolean equals(Object o) {
-        HarNameValuePair obj = (HarNameValuePair)o;
+        HarNameValuePair obj = (HarNameValuePair) o;
         return obj.getName().equals(this.getName()) && obj.getValue().equals(this.getValue());
 
     }

@@ -22,7 +22,7 @@ public class DummyServer {
 
     public void start() throws Exception {
         HttpListener listener = new SocketListener(new InetAddrPort(port));
-        
+
         bmpServer.addListener(listener);
         addServlet("/jsonrpc/", JsonServlet.class);
         addServlet("/cookie/", SetCookieServlet.class);

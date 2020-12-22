@@ -7,104 +7,104 @@ import cz.mallat.uasparser.fileparser.Section;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * User agent parser.
- * 
+ *
  * @author oli
- * 
  */
 public class UASparser {
 
+    static final String INFO_URL = "http://user-agent-string.info";
     private ReentrantLock lock = new ReentrantLock();
+    private Map<String, RobotEntry> robotsMap;
+    private Map<Long, OsEntry> osMap;
+    private Map<Long, BrowserEntry> browserMap;
+    private Map<Long, String> browserTypeMap;
+    private Map<String, Long> browserRegMap;
+    private Map<Long, Long> browserOsMap;
+    private Map<Pattern, Long> osRegMap;
 
-	static final String INFO_URL = "http://user-agent-string.info";
+    /**
+     * Use the given filename to load the definition file from the local filesystem
+     *
+     * @param localDefinitionFilename
+     * @throws IOException
+     */
+    public UASparser(String localDefinitionFilename) throws IOException {
+        loadDataFromFile(new File(localDefinitionFilename));
+    }
 
-	private Map<String, RobotEntry> robotsMap;
-	private Map<Long, OsEntry> osMap;
-	private Map<Long, BrowserEntry> browserMap;
-	private Map<Long, String> browserTypeMap;
-	private Map<String, Long> browserRegMap;
-	private Map<Long, Long> browserOsMap;
-	private Map<Pattern, Long> osRegMap;
+    /**
+     * Use the given inputstream to load the definition file from the local filesystem
+     *
+     * @param inputStreamToDefinitionFile
+     * @throws IOException
+     */
+    public UASparser(InputStream inputStreamToDefinitionFile) throws IOException {
+        loadDataFromFile(inputStreamToDefinitionFile);
+    }
 
-	/**
-	 * Use the given filename to load the definition file from the local filesystem
-	 * 
-	 * @param localDefinitionFilename
-	 * @throws IOException
-	 */
-	public UASparser(String localDefinitionFilename) throws IOException {
-		loadDataFromFile(new File(localDefinitionFilename));
-	}
+    /**
+     * Constructor for inherented classes
+     */
+    public UASparser() {
+        // empty
+    }
 
-	/**
-	 * Use the given inputstream to load the definition file from the local filesystem
-	 * 
-	 * @param inputStreamToDefinitionFile
-	 * @throws IOException
-	 */
-	public UASparser(InputStream inputStreamToDefinitionFile) throws IOException {
-		loadDataFromFile(inputStreamToDefinitionFile);
-	}
+    /**
+     * When a class inherents from this class, it probably has to override this method
+     */
+    protected void checkDataMaps() throws IOException {
+        // empty for this base class
+    }
 
-	/**
-	 * Constructor for inherented classes
-	 */
-	public UASparser() {
-		// empty
-	}
+    /**
+     * Parse the given user agent string and returns a UserAgentInfo object with the related data
+     *
+     * @param useragent
+     * @return
+     * @throws IOException may happen when the retrieval of the data file fails
+     */
+    public UserAgentInfo parse(String useragent) throws IOException {
+        UserAgentInfo retObj = new UserAgentInfo();
 
-	/**
-	 * When a class inherents from this class, it probably has to override this method
-	 */
-	protected void checkDataMaps() throws IOException {
-		// empty for this base class
-	}
+        if (useragent == null) {
+            return retObj;
+        }
+        useragent = useragent.trim();
 
-	/**
-	 * Parse the given user agent string and returns a UserAgentInfo object with the related data
-	 * 
-	 * @param useragent
-	 * @throws IOException
-	 *             may happen when the retrieval of the data file fails
-	 * @return
-	 */
-	public UserAgentInfo parse(String useragent) throws IOException {
-		UserAgentInfo retObj = new UserAgentInfo();
+        // check that the data maps are up-to-date
+        checkDataMaps();
 
-		if (useragent == null) {
-			return retObj;
-		}
-		useragent = useragent.trim();
+        // first check if it's a robot
+        if (!processRobot(useragent, retObj)) {
+            // search for a browser on the browser regex patterns
+            boolean osFound = processBrowserRegex(useragent, retObj);
 
-		// check that the data maps are up-to-date
-		checkDataMaps();
+            if (!osFound) {
+                // search the OS regex patterns for the used OS
+                processOsRegex(useragent, retObj);
+            }
+        }
+        return retObj;
+    }
 
-		// first check if it's a robot
-		if (!processRobot(useragent, retObj)) {
-			// search for a browser on the browser regex patterns
-			boolean osFound = processBrowserRegex(useragent, retObj);
-
-			if (!osFound) {
-				// search the OS regex patterns for the used OS
-				processOsRegex(useragent, retObj);
-			}
-		}
-		return retObj;
-	}
-
-	/**
-	 * Searches in the os regex table. if found a match copies the os data
-	 * 
-	 * @param useragent
-	 * @param retObj
-	 */
-	private void processOsRegex(String useragent, UserAgentInfo retObj) {
+    /**
+     * Searches in the os regex table. if found a match copies the os data
+     *
+     * @param useragent
+     * @param retObj
+     */
+    private void processOsRegex(String useragent, UserAgentInfo retObj) {
         try {
             lock.lock();
 
@@ -173,13 +173,13 @@ public class UASparser {
         }
     }
 
-	/**
-	 * Sets the source type, if possible
-	 * 
-	 * @param retObj
-	 * @param idBrowser
-	 */
-	private void copyType(UserAgentInfo retObj, Long idBrowser) {
+    /**
+     * Sets the source type, if possible
+     *
+     * @param retObj
+     * @param idBrowser
+     */
+    private void copyType(UserAgentInfo retObj, Long idBrowser) {
         try {
             lock.lock();
 
@@ -198,14 +198,14 @@ public class UASparser {
         }
     }
 
-	/**
-	 * Checks if the useragent comes from a robot. if yes copies all the data to the result object
-	 * 
-	 * @param useragent
-	 * @param retObj
-	 * @return true if the useragent belongs to a robot, else false
-	 */
-	private boolean processRobot(String useragent, UserAgentInfo retObj) {
+    /**
+     * Checks if the useragent comes from a robot. if yes copies all the data to the result object
+     *
+     * @param useragent
+     * @param retObj
+     * @return true if the useragent belongs to a robot, else false
+     */
+    private boolean processRobot(String useragent, UserAgentInfo retObj) {
         try {
             lock.lock();
 
@@ -225,36 +225,36 @@ public class UASparser {
             lock.unlock();
         }
         return false;
-	}
+    }
 
-	/**
-	 * loads the data file and creates all internal data structs
-	 * 
-	 * @param definitionFile
-	 * @throws IOException
-	 */
-	protected void loadDataFromFile(File definitionFile) throws IOException {
-		PHPFileParser fp = new PHPFileParser(definitionFile);
-		createInternalDataStructre(fp.getSections());
-	}
+    /**
+     * loads the data file and creates all internal data structs
+     *
+     * @param definitionFile
+     * @throws IOException
+     */
+    protected void loadDataFromFile(File definitionFile) throws IOException {
+        PHPFileParser fp = new PHPFileParser(definitionFile);
+        createInternalDataStructre(fp.getSections());
+    }
 
-	/**
-	 * loads the data file and creates all internal data structs
-	 * 
-	 * @param is
-	 * @throws IOException
-	 */
-	protected void loadDataFromFile(InputStream is) throws IOException {
-		PHPFileParser fp = new PHPFileParser(is);
-		createInternalDataStructre(fp.getSections());
-	}
+    /**
+     * loads the data file and creates all internal data structs
+     *
+     * @param is
+     * @throws IOException
+     */
+    protected void loadDataFromFile(InputStream is) throws IOException {
+        PHPFileParser fp = new PHPFileParser(is);
+        createInternalDataStructre(fp.getSections());
+    }
 
-	/**
-	 * Creates the internal data structes from the seciontList
-	 * 
-	 * @param sectionList
-	 */
-	protected void createInternalDataStructre(List<Section> sectionList) {
+    /**
+     * Creates the internal data structes from the seciontList
+     *
+     * @param sectionList
+     */
+    protected void createInternalDataStructre(List<Section> sectionList) {
         try {
             lock.lock();
 
@@ -314,17 +314,17 @@ public class UASparser {
         }
     }
 
-	/**
-	 * Converts a PERL style regex into the Java style. That means in removes the leading and the last / and removes the modifiers
-	 * 
-	 * @param regex
-	 * @return
-	 */
-	private String convertPerlToJavaRegex(String regex) {
-		regex = regex.substring(1);
-		int lastIndex = regex.lastIndexOf('/');
-		regex = regex.substring(0, lastIndex);
-		return regex;
-	}
+    /**
+     * Converts a PERL style regex into the Java style. That means in removes the leading and the last / and removes the modifiers
+     *
+     * @param regex
+     * @return
+     */
+    private String convertPerlToJavaRegex(String regex) {
+        regex = regex.substring(1);
+        int lastIndex = regex.lastIndexOf('/');
+        regex = regex.substring(0, lastIndex);
+        return regex;
+    }
 
 }

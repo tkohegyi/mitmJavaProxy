@@ -18,17 +18,15 @@ package net.lightbody.bmp.proxy.jetty.util;
 import java.util.EventObject;
 
 
-public class ComponentEvent extends EventObject
-{
+public class ComponentEvent extends EventObject {
     private Object component;
-    
-    public ComponentEvent(Object container, Object component)
-    {
+
+    public ComponentEvent(Object container, Object component) {
         super(container);
-        this.component=component;
+        this.component = component;
     }
-    public Object getComponent()
-    {
+
+    public Object getComponent() {
         return component;
     }
 }

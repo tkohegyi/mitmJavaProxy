@@ -4,7 +4,7 @@ import org.codehaus.jackson.annotate.JsonWriteNullProperties;
 
 import java.util.List;
 
-@JsonWriteNullProperties(value=false)
+@JsonWriteNullProperties(value = false)
 public class HarPostData {
     private String mimeType;
     private List<HarPostDataParam> params;

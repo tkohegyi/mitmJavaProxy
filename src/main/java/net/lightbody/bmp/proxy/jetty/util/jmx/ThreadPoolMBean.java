@@ -21,31 +21,27 @@ import javax.management.MBeanException;
 
 
 /* ------------------------------------------------------------ */
-/** 
- *
- * @version $Revision: 1.7 $
+
+/**
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.7 $
  */
-public class ThreadPoolMBean extends LifeCycleMBean
-{
+public class ThreadPoolMBean extends LifeCycleMBean {
     /* ------------------------------------------------------------ */
     public ThreadPoolMBean()
-        throws MBeanException
-    {
+            throws MBeanException {
         super();
     }
-    
+
     /* ------------------------------------------------------------ */
     public ThreadPoolMBean(ThreadPool object)
-        throws MBeanException
-    {
+            throws MBeanException {
         super(object);
     }
-    
-    
+
+
     /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
+    protected void defineManagedResource() {
         super.defineManagedResource();
         defineAttribute("name");
         defineAttribute("poolName");
@@ -55,5 +51,5 @@ public class ThreadPoolMBean extends LifeCycleMBean
         defineAttribute("maxThreads");
         defineAttribute("maxIdleTimeMs");
         defineAttribute("threadsPriority");
-    }    
+    }
 }

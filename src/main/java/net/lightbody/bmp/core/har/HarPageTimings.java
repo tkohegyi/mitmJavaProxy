@@ -2,7 +2,7 @@ package net.lightbody.bmp.core.har;
 
 import org.codehaus.jackson.annotate.JsonWriteNullProperties;
 
-@JsonWriteNullProperties(value=false)
+@JsonWriteNullProperties(value = false)
 public class HarPageTimings {
     private Long onContentLoad;
     private Long onLoad;

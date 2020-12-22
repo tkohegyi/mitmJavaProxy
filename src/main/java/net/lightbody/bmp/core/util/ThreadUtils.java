@@ -15,15 +15,10 @@ public class ThreadUtils {
         return out.toString();
     }
 
-    public static interface WaitCondition {
-        public boolean checkCondition(long elapsedTimeInMs);
-    }
-
     public static void sleep(TimeUnit timeUnit, long duration) {
         try {
             timeUnit.sleep(duration);
-        }
-        catch (InterruptedException ex) {
+        } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
         }
     }
@@ -36,8 +31,7 @@ public class ThreadUtils {
             while (!(result = condition.checkCondition(System.currentTimeMillis() - startTime))) {
                 try {
                     Thread.sleep(100);
-                }
-                catch (InterruptedException ex) {
+                } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                 }
             }
@@ -57,8 +51,7 @@ public class ThreadUtils {
             while (!(result = condition.checkCondition(curTime - startTime)) && (curTime - startTime < timeout)) {
                 try {
                     Thread.sleep(100);
-                }
-                catch (InterruptedException ex) {
+                } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                 }
                 curTime = System.currentTimeMillis();
@@ -80,8 +73,7 @@ public class ThreadUtils {
             while (!(result = condition.checkCondition(curTime - startTime)) && (curTime - startTime < timeout)) {
                 try {
                     Thread.sleep(sleepBetween);
-                }
-                catch (InterruptedException ex) {
+                } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                 }
                 curTime = System.currentTimeMillis();
@@ -89,5 +81,9 @@ public class ThreadUtils {
         }
 
         return result;
+    }
+
+    public static interface WaitCondition {
+        public boolean checkCondition(long elapsedTimeInMs);
     }
 }

@@ -14,84 +14,83 @@
 // ========================================================================
 
 package net.lightbody.bmp.proxy.jetty.html;
+
 import java.io.IOException;
 import java.io.Writer;
 
-/** FrameSet.
- * @version $Id: Frame.java,v 1.3 2004/05/09 20:31:28 gregwilkins Exp $
+/**
+ * FrameSet.
+ *
  * @author Greg Wilkins
-*/
-public class Frame
-{
-    String src=null;
-    String name=null;
-    
-    String scrolling="auto";
-    String resize="";
-    String border="";
-    
+ * @version $Id: Frame.java,v 1.3 2004/05/09 20:31:28 gregwilkins Exp $
+ */
+public class Frame {
+    String src = null;
+    String name = null;
+
+    String scrolling = "auto";
+    String resize = "";
+    String border = "";
+
     /* ------------------------------------------------------------ */
-    /** Frame constructor.
+
+    /**
+     * Frame constructor.
      */
-    Frame(){}
-    
-    /* ------------------------------------------------------------ */
-    public Frame border(boolean threeD, int width, String color)
-    {
-        border=" frameborder=\""+(threeD?"yes":"no")+"\"";
-        if (width>=0)
-            border+=" border=\""+width+"\"";
+    Frame() {
+    }
 
-        if (color!=null)
-            border+=" BORDERCOLOR=\""+color+"\"";
-        return this;
-    }
     /* ------------------------------------------------------------ */
-    public Frame name(String name,String src)
-    {
-        this.name=name;
-        this.src=src;
-        return this;
-    }
-    
-    /* ------------------------------------------------------------ */
-    public Frame src(String s)
-    {
-        src=s;
-        return this;
-    }
-    
-    /* ------------------------------------------------------------ */
-    public Frame name(String n)
-    {
-        name=n;
+    public Frame border(boolean threeD, int width, String color) {
+        border = " frameborder=\"" + (threeD ? "yes" : "no") + "\"";
+        if (width >= 0)
+            border += " border=\"" + width + "\"";
+
+        if (color != null)
+            border += " BORDERCOLOR=\"" + color + "\"";
         return this;
     }
 
     /* ------------------------------------------------------------ */
-    public Frame scrolling(boolean s)
-    {
-        scrolling=s?"yes":"no";
+    public Frame name(String name, String src) {
+        this.name = name;
+        this.src = src;
         return this;
     }
-    
+
     /* ------------------------------------------------------------ */
-    public Frame resize(boolean r)
-    {
-        resize=r?"":" noresize";
+    public Frame src(String s) {
+        src = s;
         return this;
     }
-    
+
+    /* ------------------------------------------------------------ */
+    public Frame name(String n) {
+        name = n;
+        return this;
+    }
+
+    /* ------------------------------------------------------------ */
+    public Frame scrolling(boolean s) {
+        scrolling = s ? "yes" : "no";
+        return this;
+    }
+
+    /* ------------------------------------------------------------ */
+    public Frame resize(boolean r) {
+        resize = r ? "" : " noresize";
+        return this;
+    }
+
     /* ----------------------------------------------------------------- */
     void write(Writer out)
-         throws IOException
-    {
-        out.write("<frame scrolling=\""+scrolling+"\""+resize+border);
-        
-        if(src!=null)
-            out.write(" src=\""+src+"\"");
-        if(name!=null)
-            out.write(" name=\""+name+"\"");
+            throws IOException {
+        out.write("<frame scrolling=\"" + scrolling + "\"" + resize + border);
+
+        if (src != null)
+            out.write(" src=\"" + src + "\"");
+        if (name != null)
+            out.write(" name=\"" + name + "\"");
         out.write(">");
     }
 };

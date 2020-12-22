@@ -6,7 +6,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import java.util.Date;
 
-@JsonWriteNullProperties(value=false)
+@JsonWriteNullProperties(value = false)
 public class HarCookie {
     private String name;
     private String value;

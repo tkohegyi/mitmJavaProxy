@@ -14,6 +14,7 @@
 // ========================================================================
 
 package net.lightbody.bmp.proxy.jetty.html;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Enumeration;
@@ -21,7 +22,9 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 /* ---------------------------------------------------------------- */
-/** FrameSet.
+
+/**
+ * FrameSet.
  * <p>
  * Usage
  * <pre>
@@ -32,124 +35,121 @@ import java.util.Vector;
  *      set.frame(1,1).name("Frame4",req.getRequestPath()+"?Frame=4");
  *      set.write(new Writer(res.getOutputStream()));
  * </pre>
- * @version $Id: FrameSet.java,v 1.4 2004/11/20 13:32:33 gregwilkins Exp $
+ *
  * @author Greg Wilkins
-*/
-public class FrameSet extends Page
-{
-    Frame[][] frames=null;
-    String colSpec=null;
-    String rowSpec=null;
+ * @version $Id: FrameSet.java,v 1.4 2004/11/20 13:32:33 gregwilkins Exp $
+ */
+public class FrameSet extends Page {
+    Frame[][] frames = null;
+    String colSpec = null;
+    String rowSpec = null;
     int cols;
     int rows;
-    String border="";
-    Vector frameNames=null;
-    Hashtable frameMap=null;
-    
+    String border = "";
+    Vector frameNames = null;
+    Hashtable frameMap = null;
+
     /* ------------------------------------------------------------ */
-    /** FrameSet constructor.
+
+    /**
+     * FrameSet constructor.
+     *
      * @param colSpec Comma separated list of column widths specified
      *                as pixels, percentage or '*' for variable
      */
-    public FrameSet(String title, String colSpec, String rowSpec)
-    {
+    public FrameSet(String title, String colSpec, String rowSpec) {
         super(title);
 
-        this.colSpec=colSpec;
-        this.rowSpec=rowSpec;
-        
-        cols=1;
-        rows=1;
+        this.colSpec = colSpec;
+        this.rowSpec = rowSpec;
 
-        int i=-1;
-        while(colSpec != null && (i=colSpec.indexOf(",",i+1))>=0)
+        cols = 1;
+        rows = 1;
+
+        int i = -1;
+        while (colSpec != null && (i = colSpec.indexOf(",", i + 1)) >= 0)
             cols++;
-        
-        i=-1;
-        while(rowSpec != null && (i=rowSpec.indexOf(",",i+1))>=0)
+
+        i = -1;
+        while (rowSpec != null && (i = rowSpec.indexOf(",", i + 1)) >= 0)
             rows++;
-        
-        frames=new Frame[cols][rows];
-        for(int c=0;c<cols;c++)
-            for(int r=0;r<rows;r++)
-                frames[c][r]=new Frame();
+
+        frames = new Frame[cols][rows];
+        for (int c = 0; c < cols; c++)
+            for (int r = 0; r < rows; r++)
+                frames[c][r] = new Frame();
     }
-    
+
     /* ------------------------------------------------------------ */
-    public Frame frame(int col, int row)
-    {
+    public Frame frame(int col, int row) {
         return frames[col][row];
     }
 
     /* ------------------------------------------------------------ */
-    public FrameSet border(boolean threeD, int width, String color)
-    {
-        border=" frameborder=\""+(threeD?"yes":"no")+"\"";
-        if (width>=0)
-            border+=" border=\""+width+"\"";
+    public FrameSet border(boolean threeD, int width, String color) {
+        border = " frameborder=\"" + (threeD ? "yes" : "no") + "\"";
+        if (width >= 0)
+            border += " border=\"" + width + "\"";
 
-        if (color!=null)
-            border+=" bordercolor=\""+color+"\"";
+        if (color != null)
+            border += " bordercolor=\"" + color + "\"";
         return this;
     }
-    
+
     /* ----------------------------------------------------------------- */
-    public Enumeration namedFrames()
-    {
-        if (frameNames==null)
+    public Enumeration namedFrames() {
+        if (frameNames == null)
             return new Vector().elements();
         return frameNames.elements();
     }
-    
+
     /* ----------------------------------------------------------------- */
-    public Frame frame(String name)
-    {
-        if (frameMap==null)
+    public Frame frame(String name) {
+        if (frameMap == null)
             return null;
         return (Frame) frameMap.get(name);
     }
-    
+
     /* ----------------------------------------------------------------- */
-    /** Name a frame.
+
+    /**
+     * Name a frame.
      * By convention, frame names match Page section names
      */
-    public Frame nameFrame(String name,int col, int row)
-    {
-        if (frameMap==null)
-        {
-            frameMap=new Hashtable(10);
-            frameNames=new Vector(10);
+    public Frame nameFrame(String name, int col, int row) {
+        if (frameMap == null) {
+            frameMap = new Hashtable(10);
+            frameNames = new Vector(10);
         }
-        
+
         Frame frame = frames[col][row];
-        if (frame==null)
+        if (frame == null)
             frame = frames[col][row] = new Frame();
-        
-        if (frameMap.get(name)==null)
+
+        if (frameMap.get(name) == null)
             frameNames.addElement(name);
-        frameMap.put(name,frame);
+        frameMap.put(name, frame);
         frame.name(name);
 
         return frame;
     }
-    
-    
+
+
     /* ----------------------------------------------------------------- */
     public void write(Writer out)
-         throws IOException
-    {
+            throws IOException {
         writeHtmlHead(out);
-        
-        out.write("<frameset "+border);
-        
-        if(colSpec!=null)
-            out.write(" cols=\""+colSpec+"\"");
-        if(rowSpec!=null)
-            out.write(" rows=\""+rowSpec+"\"");
+
+        out.write("<frameset " + border);
+
+        if (colSpec != null)
+            out.write(" cols=\"" + colSpec + "\"");
+        if (rowSpec != null)
+            out.write(" rows=\"" + rowSpec + "\"");
         out.write(">");
 
-        for(int r=0;r<rows;r++)
-            for(int c=0;c<cols;c++)
+        for (int r = 0; r < rows; r++)
+            for (int c = 0; c < cols; c++)
                 frames[c][r].write(out);
 
         out.write("<noframes>");

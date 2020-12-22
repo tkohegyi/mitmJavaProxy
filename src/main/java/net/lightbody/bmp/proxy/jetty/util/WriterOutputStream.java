@@ -21,73 +21,68 @@ import java.io.Writer;
 
 
 /* ------------------------------------------------------------ */
-/** Wrap a Writer as an OutputStream.
+
+/**
+ * Wrap a Writer as an OutputStream.
  * When all you have is a Writer and only an OutputStream will do.
  * Try not to use this as it indicates that your design is a dogs
  * breakfast (JSP made me write it).
- * @version $Id: WriterOutputStream.java,v 1.3 2004/05/09 20:33:05 gregwilkins Exp $
+ *
  * @author Greg Wilkins (gregw)
+ * @version $Id: WriterOutputStream.java,v 1.3 2004/05/09 20:33:05 gregwilkins Exp $
  */
-public class WriterOutputStream extends OutputStream
-{
+public class WriterOutputStream extends OutputStream {
     protected Writer _writer;
     protected String _encoding;
-    private byte[] _buf=new byte[1];
-    
+    private byte[] _buf = new byte[1];
+
     /* ------------------------------------------------------------ */
-    public WriterOutputStream(Writer writer, String encoding)
-    {
-        _writer=writer;
-        _encoding=encoding;
+    public WriterOutputStream(Writer writer, String encoding) {
+        _writer = writer;
+        _encoding = encoding;
     }
-    
+
     /* ------------------------------------------------------------ */
-    public WriterOutputStream(Writer writer)
-    {
-        _writer=writer;
+    public WriterOutputStream(Writer writer) {
+        _writer = writer;
     }
 
     /* ------------------------------------------------------------ */
     public void close()
-        throws IOException
-    {
+            throws IOException {
         _writer.close();
-        _writer=null;
-        _encoding=null;
+        _writer = null;
+        _encoding = null;
     }
-    
+
     /* ------------------------------------------------------------ */
     public void flush()
-        throws IOException
-    {
+            throws IOException {
         _writer.flush();
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void write(byte[] b) 
-        throws IOException
-    {
-        if (_encoding==null)
+    public void write(byte[] b)
+            throws IOException {
+        if (_encoding == null)
             _writer.write(new String(b));
         else
-            _writer.write(new String(b,_encoding));
+            _writer.write(new String(b, _encoding));
     }
-    
+
     /* ------------------------------------------------------------ */
     public void write(byte[] b, int off, int len)
-        throws IOException
-    {
-        if (_encoding==null)
-            _writer.write(new String(b,off,len));
+            throws IOException {
+        if (_encoding == null)
+            _writer.write(new String(b, off, len));
         else
-            _writer.write(new String(b,off,len,_encoding));
+            _writer.write(new String(b, off, len, _encoding));
     }
-    
+
     /* ------------------------------------------------------------ */
     public synchronized void write(int b)
-        throws IOException
-    {
-        _buf[0]=(byte)b;
+            throws IOException {
+        _buf[0] = (byte) b;
         write(_buf);
     }
 }

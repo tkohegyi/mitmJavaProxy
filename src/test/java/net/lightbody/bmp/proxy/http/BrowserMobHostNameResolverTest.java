@@ -39,7 +39,7 @@ public class BrowserMobHostNameResolverTest {
         BrowserMobHostNameResolver browserMobHostNameResolver = new BrowserMobHostNameResolver(new Cache(DClass.ANY));
         InetAddress addr = browserMobHostNameResolver.resolve("localhost");
         Assert.assertNotNull(addr);
-        Assert.assertEquals("127.0.0.1",addr.getHostName());
+        Assert.assertEquals("127.0.0.1", addr.getHostName());
     }
 
     @Test

@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class BrowserMobHttpResponse {
+    private final boolean responseVolatile;
     private HarEntry entry;
     private HttpRequestBase method;
     private URI proxyRequestURI;
@@ -25,7 +26,6 @@ public class BrowserMobHttpResponse {
     private int status;
     private ByteArrayOutputStream bos;
     private OutputStream os;
-    private final boolean responseVolatile;
 
     public BrowserMobHttpResponse(int status, HarEntry entry, HttpRequestBase method, URI proxyRequestURI, HttpResponse response,
                                   boolean contentMatched, String verificationText, String errorMessage,
@@ -83,6 +83,7 @@ public class BrowserMobHttpResponse {
     public Header[] getRequestHeaders() {
         return method.getAllHeaders();
     }
+
     public int getStatus() {
         return status;
     }

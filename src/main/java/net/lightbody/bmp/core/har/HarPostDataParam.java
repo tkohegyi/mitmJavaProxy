@@ -2,7 +2,7 @@ package net.lightbody.bmp.core.har;
 
 import org.codehaus.jackson.annotate.JsonWriteNullProperties;
 
-@JsonWriteNullProperties(value=false)
+@JsonWriteNullProperties(value = false)
 public class HarPostDataParam {
     private String name;
     private String value;

@@ -17,43 +17,50 @@ package net.lightbody.bmp.proxy.jetty.html;
 
 
 /* -------------------------------------------------------------------- */
-/** HTML Link Block.
+
+/**
+ * HTML Link Block.
  * This is a HTML reference (not a CSS Link).
+ *
  * @see StyleLink
  */
-public class Link extends Block
-{
+public class Link extends Block {
 
     /* ----------------------------------------------------------------- */
-    /** Construct Link.
+
+    /**
+     * Construct Link.
+     *
      * @param href The target URL of the link
      */
-    public Link(String href)
-    {
+    public Link(String href) {
         super("a");
-        attribute("href",href);
+        attribute("href", href);
     }
 
     /* ----------------------------------------------------------------- */
-    /** Construct Link.
+
+    /**
+     * Construct Link.
+     *
      * @param href The target URL of the link
      * @param link Link Element
      */
-    public Link(String href,Object link)
-    {
+    public Link(String href, Object link) {
         this(href);
         add(link);
     }
-    
+
     /* ----------------------------------------------------------------- */
-    /** Set the link target frame.
+
+    /**
+     * Set the link target frame.
      */
-    public Link target(String t)
-    {
-        if (t!=null && t.length()>0)
-            attribute("target",t);
+    public Link target(String t) {
+        if (t != null && t.length() > 0)
+            attribute("target", t);
         return this;
-    }    
+    }
 }
 
 

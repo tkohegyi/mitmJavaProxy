@@ -93,7 +93,11 @@ public class HarEntry {
         this.serverIPAddress = serverIPAddress;
     }
 
-    public void setWilmaEntryId(final String wilmaEntryId) { this.wilmaEntryId = wilmaEntryId; }
+    public String getWilmaEntryId() {
+        return wilmaEntryId;
+    }
 
-    public String getWilmaEntryId() { return wilmaEntryId; }
+    public void setWilmaEntryId(final String wilmaEntryId) {
+        this.wilmaEntryId = wilmaEntryId;
+    }
 }

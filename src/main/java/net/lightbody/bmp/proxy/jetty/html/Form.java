@@ -21,74 +21,84 @@ import java.io.IOException;
 import java.io.Writer;
 
 /* -------------------------------------------------------------------- */
-/** HTML Form.
+
+/**
+ * HTML Form.
  * The specialized Block can contain HTML Form elements as well as
  * any other HTML elements
  */
-public class Form extends Block
-{
+public class Form extends Block {
     public static final String encodingWWWURL = HttpFields.__WwwFormUrlEncode;
     public static final String encodingMultipartForm = "multipart/form-data";
-    private String method="POST";
-    
+    private String method = "POST";
+
     /* ----------------------------------------------------------------- */
-    /** Constructor.
+
+    /**
+     * Constructor.
      */
-    public Form()
-    {
+    public Form() {
         super("form");
     }
 
     /* ----------------------------------------------------------------- */
-    /** Constructor.
+
+    /**
+     * Constructor.
+     *
      * @param submitURL The URL to submit the form to
      */
-    public Form(String submitURL)
-    {
+    public Form(String submitURL) {
         super("form");
         action(submitURL);
     }
 
     /* ----------------------------------------------------------------- */
-    /** Constructor.
+
+    /**
+     * Constructor.
+     *
      * @param submitURL The URL to submit the form to
      */
-    public Form action(String submitURL)
-    {
-        attribute("action",submitURL);
+    public Form action(String submitURL) {
+        attribute("action", submitURL);
         return this;
     }
-    
+
     /* ----------------------------------------------------------------- */
-    /** Set the form target.
+
+    /**
+     * Set the form target.
      */
-    public Form target(String t)
-    {
-        attribute("target",t);
+    public Form target(String t) {
+        attribute("target", t);
         return this;
     }
-    
+
     /* ----------------------------------------------------------------- */
-    /** Set the form method.
+
+    /**
+     * Set the form method.
      */
-    public Form method(String m)
-    {
-        method=m;
+    public Form method(String m) {
+        method = m;
         return this;
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** Set the form encoding type.
+
+    /**
+     * Set the form encoding type.
      */
-    public Form encoding(String encoding){
+    public Form encoding(String encoding) {
         attribute("enctype", encoding);
         return this;
     }
+
     /* ----------------------------------------------------------------- */
     public void write(Writer out)
-         throws IOException
-    {
-        attribute("method",method);
+            throws IOException {
+        attribute("method", method);
         super.write(out);
     }
 }

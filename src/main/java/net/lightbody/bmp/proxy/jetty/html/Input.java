@@ -16,86 +16,82 @@
 package net.lightbody.bmp.proxy.jetty.html;
 
 /* -------------------------------------------------------------------- */
-/** HTML Form Input Tag.
+
+/**
+ * HTML Form Input Tag.
  * <p>
+ *
+ * @author Greg Wilkins
+ * @version $Id: Input.java,v 1.3 2004/05/09 20:31:28 gregwilkins Exp $
  * @see Tag
  * @see Form
- * @version $Id: Input.java,v 1.3 2004/05/09 20:31:28 gregwilkins Exp $
- * @author Greg Wilkins
  */
-public class Input extends Tag
-{
+public class Input extends Tag {
     /* ----------------------------------------------------------------- */
-    /** Input types */
-    public final static String Text="text";
-    public final static String Password="password";
-    public final static String Checkbox="checkbox";
-    public final static String Radio="radio";
-    public final static String Submit="submit";
-    public final static String Reset="reset";
-    public final static String Hidden="hidden";
-    public final static String File="file";
-    public final static String Image="image";
+    /**
+     * Input types
+     */
+    public final static String Text = "text";
+    public final static String Password = "password";
+    public final static String Checkbox = "checkbox";
+    public final static String Radio = "radio";
+    public final static String Submit = "submit";
+    public final static String Reset = "reset";
+    public final static String Hidden = "hidden";
+    public final static String File = "file";
+    public final static String Image = "image";
 
     /* ----------------------------------------------------------------- */
-    public Input(String type,String name)
-    {
+    public Input(String type, String name) {
         super("input");
-        attribute("type",type);
-        attribute("name",name);
+        attribute("type", type);
+        attribute("name", name);
     }
 
     /* ----------------------------------------------------------------- */
-    public Input(String type,String name, String value)
-    {
-        this(type,name);
-        attribute("value",value);
+    public Input(String type, String name, String value) {
+        this(type, name);
+        attribute("value", value);
     }
 
     /* ----------------------------------------------------------------- */
-    public Input(Image image,String name, String value)
-    {
+    public Input(Image image, String name, String value) {
         super("input");
-        attribute("type","image");
-        attribute("name",name);
-        if (value!=null)
-            attribute("value",value);
-        attribute(image.attributes());
-    }
-    
-    /* ----------------------------------------------------------------- */
-    public Input(Image image,String name)
-    {
-        super("input");
-        attribute("type","image");
-        attribute("name",name);
+        attribute("type", "image");
+        attribute("name", name);
+        if (value != null)
+            attribute("value", value);
         attribute(image.attributes());
     }
 
     /* ----------------------------------------------------------------- */
-    public Input check()
-    {
+    public Input(Image image, String name) {
+        super("input");
+        attribute("type", "image");
+        attribute("name", name);
+        attribute(image.attributes());
+    }
+
+    /* ----------------------------------------------------------------- */
+    public Input check() {
         attribute("checked");
         return this;
     }
 
     /* ----------------------------------------------------------------- */
-    public Input setSize(int size)
-    {
+    public Input setSize(int size) {
         size(size);
         return this;
     }
 
     /* ----------------------------------------------------------------- */
-    public Input setMaxSize(int size)
-    {
-        attribute("maxlength",size);
+    public Input setMaxSize(int size) {
+        attribute("maxlength", size);
         return this;
     }
 
     /* ----------------------------------------------------------------- */
-    public Input fixed()
-    {
+    public Input fixed() {
         setMaxSize(size());
         return this;
     }

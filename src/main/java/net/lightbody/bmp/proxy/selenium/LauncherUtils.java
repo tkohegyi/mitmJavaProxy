@@ -37,16 +37,16 @@ public class LauncherUtils {
     }
 
     /**
-	 * Delete a directory and all subdirectories
-	 */
-	public static void recursivelyDeleteDir(File customProfileDir) {
-		if (customProfileDir == null || !customProfileDir.exists()) {
-			return;
-		}
-		Delete delete = new Delete();
-		delete.setProject(new Project());
-		delete.setDir(customProfileDir);
-		delete.setFailOnError(true);
-		delete.execute();
-	}
+     * Delete a directory and all subdirectories
+     */
+    public static void recursivelyDeleteDir(File customProfileDir) {
+        if (customProfileDir == null || !customProfileDir.exists()) {
+            return;
+        }
+        Delete delete = new Delete();
+        delete.setProject(new Project());
+        delete.setDir(customProfileDir);
+        delete.setFailOnError(true);
+        delete.execute();
+    }
 }

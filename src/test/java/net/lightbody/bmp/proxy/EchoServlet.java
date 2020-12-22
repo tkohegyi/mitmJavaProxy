@@ -23,7 +23,7 @@ public class EchoServlet extends HttpServlet {
             String hdr = (String) headerNames.nextElement();
             Enumeration headers = req.getHeaders(hdr);
             while (headers.hasMoreElements()) {
-                String val  = (String) headers.nextElement();
+                String val = (String) headers.nextElement();
                 writer.println(hdr + ": " + val);
             }
         }

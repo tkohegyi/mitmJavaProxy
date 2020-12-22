@@ -19,14 +19,17 @@ import java.util.EventListener;
 
 /**
  * Listener for LifeCycleEvents.
+ *
  * @author gregw
- * 
  */
-public interface LifeCycleListener extends EventListener
-{
+public interface LifeCycleListener extends EventListener {
     public void lifeCycleStarting(LifeCycleEvent event);
+
     public void lifeCycleStarted(LifeCycleEvent event);
+
     public void lifeCycleFailure(LifeCycleEvent event);
+
     public void lifeCycleStopping(LifeCycleEvent event);
+
     public void lifeCycleStopped(LifeCycleEvent event);
 }

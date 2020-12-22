@@ -4,12 +4,11 @@ public class BandwidthSimulator {
     // Too large and the instantaneous bandwidth varies too much.
     // Too small and we don't reach the target fast enough.
     private static final float DAMPING_FACTOR = 0.5f;
-
+    private final int targetBps;
+    private final int bufferIncrement;
     private long startTime;
     private int sleepTime;
     private float damping;
-    private final int targetBps;
-    private final int bufferIncrement;
 
     public BandwidthSimulator(int targetBPS) {
         targetBps = targetBPS;

@@ -2,7 +2,11 @@ package net.lightbody.bmp.proxy.selenium;
 
 import net.lightbody.bmp.proxy.jetty.util.IO;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
 
 public class ModifiedIO {
     /**

@@ -1,21 +1,19 @@
 package net.lightbody.bmp.proxy;
 
-import java.io.IOException;
-
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarCookie;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.proxy.util.IOUtils;
-
 import org.apache.http.HttpHost;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.IOException;
 
 public class CookieTest extends DummyServerTest {
 

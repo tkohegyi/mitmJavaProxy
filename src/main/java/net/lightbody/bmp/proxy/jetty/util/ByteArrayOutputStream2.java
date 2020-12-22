@@ -14,18 +14,31 @@
 // ========================================================================
 
 package net.lightbody.bmp.proxy.jetty.util;
+
 import java.io.ByteArrayOutputStream;
 
 /* ------------------------------------------------------------ */
-/** ByteArrayOutputStream with public internals
 
- * @version $Revision: 1.2 $
+/**
+ * ByteArrayOutputStream with public internals
+ *
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.2 $
  */
-public class ByteArrayOutputStream2 extends ByteArrayOutputStream
-{
-    public ByteArrayOutputStream2(){super();}
-    public ByteArrayOutputStream2(int size){super(size);}
-    public byte[] getBuf(){return buf;}
-    public int getCount(){return count;}
+public class ByteArrayOutputStream2 extends ByteArrayOutputStream {
+    public ByteArrayOutputStream2() {
+        super();
+    }
+
+    public ByteArrayOutputStream2(int size) {
+        super(size);
+    }
+
+    public byte[] getBuf() {
+        return buf;
+    }
+
+    public int getCount() {
+        return count;
+    }
 }

@@ -16,11 +16,12 @@
 package net.lightbody.bmp.proxy.jetty.html;
 
 /* --------------------------------------------------------------------- */
-/** Composite Factory.
+
+/**
+ * Composite Factory.
  * Abstract interface for production of composites
  */
-public interface CompositeFactory
-{
+public interface CompositeFactory {
     public Composite newComposite();
 }
 

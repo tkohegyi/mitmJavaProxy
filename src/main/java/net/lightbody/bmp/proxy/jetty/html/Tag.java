@@ -14,30 +14,31 @@
 // ========================================================================
 
 package net.lightbody.bmp.proxy.jetty.html;
+
 import java.io.IOException;
 import java.io.Writer;
 
 /* -------------------------------------------------------------------- */
-/** HTML Tag Element.
+
+/**
+ * HTML Tag Element.
  * A Tag element is of the generic form &lt;TAG attributes... &gt;
- * @see  net.lightbody.bmp.proxy.jetty.html.Element
+ *
+ * @see net.lightbody.bmp.proxy.jetty.html.Element
  */
-public class Tag extends Element
-{
+public class Tag extends Element {
     /* ---------------------------------------------------------------- */
     protected String tag;
 
     /* ---------------------------------------------------------------- */
-    public Tag(String tag)
-    {
-        this.tag=tag;
+    public Tag(String tag) {
+        this.tag = tag;
     }
-    
+
     /* ---------------------------------------------------------------- */
     public void write(Writer out)
-         throws IOException
-    {
-        out.write('<'+tag+attributes()+'>');
+            throws IOException {
+        out.write('<' + tag + attributes() + '>');
     }
 }
 

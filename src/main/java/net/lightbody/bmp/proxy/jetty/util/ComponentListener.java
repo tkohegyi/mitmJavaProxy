@@ -18,8 +18,8 @@ package net.lightbody.bmp.proxy.jetty.util;
 import java.util.EventListener;
 
 
-public interface ComponentListener extends EventListener
-{
+public interface ComponentListener extends EventListener {
     public void addComponent(ComponentEvent event);
+
     public void removeComponent(ComponentEvent event);
 }

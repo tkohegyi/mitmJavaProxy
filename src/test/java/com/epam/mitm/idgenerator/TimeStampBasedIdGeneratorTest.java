@@ -10,7 +10,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.internal.util.reflection.Whitebox;
-import org.slf4j.Logger;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -26,11 +25,9 @@ import static org.mockito.Mockito.verify;
  */
 public class TimeStampBasedIdGeneratorTest {
 
+    String nowDateString;
     @InjectMocks
     private TimeStampBasedIdGenerator underTest;
-
-    String nowDateString;
-
     @Mock
     private CurrentDateProvider currentDateProvider;
 

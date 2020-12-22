@@ -8,8 +8,8 @@ import org.junit.After;
 import org.junit.Before;
 
 public class DummyServerTest {
-    private static final int DUMMY_SERVER_PORT = 4510;
     public static final int PROXY_TIMEOUT = 60000; //1 minute
+    private static final int DUMMY_SERVER_PORT = 4510;
     public static final String BASE_URL = "http://127.0.0.1:" + DUMMY_SERVER_PORT;
 
     protected DummyServer dummy = new DummyServer(DUMMY_SERVER_PORT);
