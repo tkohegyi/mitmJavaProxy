@@ -1,14 +1,10 @@
 package net.lightbody.bmp.proxy.http;
 
 import com.epam.mitm.proxy.ProxyServer;
-import cz.mallat.uasparser.CachingOnlineUpdateUASparser;
-import cz.mallat.uasparser.UASparser;
-import cz.mallat.uasparser.UserAgentInfo;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarCookie;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarNameValuePair;
-import net.lightbody.bmp.core.har.HarNameVersion;
 import net.lightbody.bmp.core.har.HarPostData;
 import net.lightbody.bmp.core.har.HarPostDataParam;
 import net.lightbody.bmp.core.har.HarRequest;
@@ -111,20 +107,6 @@ public class BrowserMobHttpClient {
     private static final int MAX_BUFFER_SIZE = 1024 * 1024; // MOB-216 don't buffer more than 1 MB
     private static final int BUFFER = 4096;
     private static final int MAX_REDIRECT = 10;
-    public static UASparser PARSER = null;
-
-    static {
-        try {
-            PARSER = new CachingOnlineUpdateUASparser();
-        } catch (IOException e) {
-            LOGGER.error("Unable to create User-Agent parser, falling back but proxy is in damaged state and should be restarted", e);
-            try {
-                PARSER = new UASparser();
-            } catch (Exception e1) {
-                // ignore
-            }
-        }
-    }
 
     private final List<RewriteRule> rewriteRules = new CopyOnWriteArrayList<RewriteRule>();
     private final List<RequestInterceptor> requestInterceptors = new CopyOnWriteArrayList<RequestInterceptor>();
@@ -231,10 +213,6 @@ public class BrowserMobHttpClient {
 
 
         HttpClientInterrupter.watch(this);
-    }
-
-    public static void setUserAgentParser(final UASparser parser) {
-        PARSER = parser;
     }
 
     public void remapHost(final String source, final String target) {
@@ -426,27 +404,6 @@ public class BrowserMobHttpClient {
         HttpRequestBase method = req.getMethod();
         String verificationText = req.getVerificationText();
         String url = method.getURI().toString();
-
-        // save the browser and version if it's not yet been set
-        if (har != null && har.getLog().getBrowser() == null) {
-            Header[] uaHeaders = method.getHeaders("User-Agent");
-            if (uaHeaders != null && uaHeaders.length > 0) {
-                String userAgent = uaHeaders[0].getValue();
-                try {
-                    // note: this doesn't work for 'Fandango/4.5.1 CFNetwork/548.1.4 Darwin/11.0.0'
-                    UserAgentInfo uai = PARSER.parse(userAgent);
-                    String name = uai.getUaName();
-                    int lastSpace = name.lastIndexOf(' ');
-                    String browser = name.substring(0, lastSpace);
-                    String version = name.substring(lastSpace + 1);
-                    har.getLog().setBrowser(new HarNameVersion(browser, version));
-                } catch (IOException e) {
-                    // ignore it, it's fine
-                } catch (Exception e) {
-                    LOGGER.warn("Failed to parse user agent string", e);
-                }
-            }
-        }
 
         // process any rewrite requests
         boolean rewrote = false;

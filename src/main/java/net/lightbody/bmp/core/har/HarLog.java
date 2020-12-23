@@ -13,16 +13,13 @@ public class HarLog {
     private List<HarPage> pages = new CopyOnWriteArrayList<HarPage>();
     private List<HarEntry> entries = new CopyOnWriteArrayList<HarEntry>();
 
-    public HarLog() {
-    }
-
     public HarLog(HarNameVersion creator) {
         this.creator = creator;
     }
 
     public void addPage(HarPage page) {
         if (pages == null) {
-            pages = new CopyOnWriteArrayList<HarPage>();
+            pages = new CopyOnWriteArrayList<>();
         }
 
         pages.add(page);
@@ -30,7 +27,7 @@ public class HarLog {
 
     public void addEntry(HarEntry entry) {
         if (entries == null) {
-            entries = new CopyOnWriteArrayList<HarEntry>();
+            entries = new CopyOnWriteArrayList<>();
         }
 
         entries.add(entry);
@@ -42,14 +39,6 @@ public class HarLog {
 
     public void setVersion(String version) {
         this.version = version;
-    }
-
-    public HarNameVersion getCreator() {
-        return creator;
-    }
-
-    public void setCreator(HarNameVersion creator) {
-        this.creator = creator;
     }
 
     public HarNameVersion getBrowser() {
