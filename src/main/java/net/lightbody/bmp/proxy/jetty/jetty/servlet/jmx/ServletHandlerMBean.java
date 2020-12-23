@@ -26,63 +26,60 @@ import javax.management.ObjectName;
 import java.util.HashMap;
 
 /* ------------------------------------------------------------ */
-/** 
- *
- * @version $Revision: 1.8 $
+
+/**
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.8 $
  */
-public class ServletHandlerMBean extends HttpHandlerMBean  
-{
+public class ServletHandlerMBean extends HttpHandlerMBean {
     /* ------------------------------------------------------------ */
     private static final Log log = LogFactory.getLog(ServletHandlerMBean.class);
     private ServletHandler _servletHandler;
     private HashMap _servletMap = new HashMap();
-    
+
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @exception MBeanException 
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
      */
     public ServletHandlerMBean()
-        throws MBeanException
-    {}
-    
-    /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
-        super.defineManagedResource();
-        defineAttribute("usingCookies"); 
-        defineAttribute("servlets",READ_ONLY,ON_MBEAN);
-        defineAttribute("sessionManager",READ_ONLY,ON_MBEAN);
-        _servletHandler=(ServletHandler)getManagedResource();
+            throws MBeanException {
     }
 
     /* ------------------------------------------------------------ */
-    public ObjectName getSessionManager()
-    {
-        SessionManager sm=_servletHandler.getSessionManager();
-        if (sm==null)
+    protected void defineManagedResource() {
+        super.defineManagedResource();
+        defineAttribute("usingCookies");
+        defineAttribute("servlets", READ_ONLY, ON_MBEAN);
+        defineAttribute("sessionManager", READ_ONLY, ON_MBEAN);
+        _servletHandler = (ServletHandler) getManagedResource();
+    }
+
+    /* ------------------------------------------------------------ */
+    public ObjectName getSessionManager() {
+        SessionManager sm = _servletHandler.getSessionManager();
+        if (sm == null)
             return null;
-        ObjectName[] on=getComponentMBeans(new Object[]{sm},null);
+        ObjectName[] on = getComponentMBeans(new Object[]{sm}, null);
         return on[0];
     }
 
-    
+
     /* ------------------------------------------------------------ */
-    public ObjectName[] getServlets()
-    {
-        return getComponentMBeans(_servletHandler.getServlets(), _servletMap);   
+    public ObjectName[] getServlets() {
+        return getComponentMBeans(_servletHandler.getServlets(), _servletMap);
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void postRegister(Boolean ok)
-    {
+    public void postRegister(Boolean ok) {
         super.postRegister(ok);
         if (ok.booleanValue())
             getSessionManager();
     }
-    
-    public void postDeregister ()
-    {
+
+    public void postDeregister() {
         destroyComponentMBeans(_servletMap);
         super.postDeregister();
     }

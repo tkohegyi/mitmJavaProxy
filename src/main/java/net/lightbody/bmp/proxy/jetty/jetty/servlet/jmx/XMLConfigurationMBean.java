@@ -19,23 +19,19 @@ import javax.management.MBeanException;
 
 
 /**
- * 
  * XMLConfigurationMBean
  *
  * @author janb
  * @version $Revision: 1.1 $ $Date: 2004/09/27 14:33:59 $
- *
  */
-public class XMLConfigurationMBean extends net.lightbody.bmp.proxy.jetty.jetty.servlet.jmx.ConfigurationMBean
-{
+public class XMLConfigurationMBean extends net.lightbody.bmp.proxy.jetty.jetty.servlet.jmx.ConfigurationMBean {
     public XMLConfigurationMBean()
-    throws MBeanException
-    {}
-    
-    protected void defineManagedResource()
-    {
+            throws MBeanException {
+    }
+
+    protected void defineManagedResource() {
         super.defineManagedResource();
     }
-    
- 
+
+
 }

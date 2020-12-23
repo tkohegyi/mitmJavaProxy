@@ -17,7 +17,17 @@ package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
 import net.lightbody.bmp.proxy.jetty.util.LazyList;
 
-import javax.servlet.*;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletRequestAttributeEvent;
+import javax.servlet.ServletRequestAttributeListener;
+import javax.servlet.ServletRequestEvent;
+import javax.servlet.ServletRequestListener;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
@@ -25,7 +35,9 @@ import javax.servlet.http.HttpServletResponseWrapper;
 import java.io.IOException;
 
 /* ------------------------------------------------------------ */
-/** JSR 154 Stupidness filter.
+
+/**
+ * JSR 154 Stupidness filter.
  * This filter contains the elements of the JSR154 servlet 2.4 specification
  * that are too objectionable to include in the core of Jetty.  Thus they have
  * been added as a filter that can be removed from the defaultweb.xml file if
@@ -37,141 +49,131 @@ import java.io.IOException;
  * response. See xxx
  * to find out why this is stupid.</li>
  * </ul>
- * 
+ * <p>
  * The boolean init parameter "unwrappedDispatched"
- * 
  */
-public class JSR154Filter implements Filter
-{
-    private static ThreadLocal __states=new ThreadLocal();
+public class JSR154Filter implements Filter {
+    private static ThreadLocal __states = new ThreadLocal();
     private ServletContext _servletContext;
     private Object _requestListeners;
     private Object _requestAttributeListeners;
     private boolean _unwrappedDispatchSupported;
-    
+
+    /* ------------------------------------------------------------ */
+    private static ThreadState state() {
+        ThreadState state = (ThreadState) __states.get();
+        if (state == null) {
+            state = new ThreadState();
+            __states.set(state);
+        }
+        return state;
+    }
+
     /* ------------------------------------------------------------ */
     public void init(FilterConfig filterConfig)
-        throws ServletException
-    {
-        _servletContext=filterConfig.getServletContext();
-        _unwrappedDispatchSupported=Boolean.valueOf(filterConfig.getInitParameter("unwrappedDispatch")).booleanValue();
+            throws ServletException {
+        _servletContext = filterConfig.getServletContext();
+        _unwrappedDispatchSupported = Boolean.valueOf(filterConfig.getInitParameter("unwrappedDispatch")).booleanValue();
     }
 
     /* ------------------------------------------------------------ */
-    protected void setRequestAttributeListeners(Object list)
-    {
-        _requestAttributeListeners=list;
-    }
-    
-    /* ------------------------------------------------------------ */
-    protected void setRequestListeners(Object list)
-    {
-        _requestListeners=list;
+    protected void setRequestAttributeListeners(Object list) {
+        _requestAttributeListeners = list;
     }
 
     /* ------------------------------------------------------------ */
-    public boolean isUnwrappedDispatchSupported()
-    {
+    protected void setRequestListeners(Object list) {
+        _requestListeners = list;
+    }
+
+    /* ------------------------------------------------------------ */
+
+    /* ------------------------------------------------------------ */
+    public boolean isUnwrappedDispatchSupported() {
         return _unwrappedDispatchSupported;
     }
 
-    /* ------------------------------------------------------------ */
     /**
      * @param supportUnwrappedDispatch The supportUnwrappedDispatch to set.
      */
-    public void setUnwrappedDispatchSupported(boolean supportUnwrappedDispatch)
-    {
+    public void setUnwrappedDispatchSupported(boolean supportUnwrappedDispatch) {
         _unwrappedDispatchSupported = supportUnwrappedDispatch;
-    }
-    
-    /* ------------------------------------------------------------ */
-    public void setDispatch(Dispatcher.DispatcherRequest request, Dispatcher.DispatcherResponse response)
-    {
-        ThreadState state=state();
-        state.dispatchRequest=request;
-        state.dispatchResponse=response;
     }
 
     /* ------------------------------------------------------------ */
-    public Dispatcher.DispatcherRequest getDispatchRequest()
-    {
-        ThreadState state=state();
+    public void setDispatch(Dispatcher.DispatcherRequest request, Dispatcher.DispatcherResponse response) {
+        ThreadState state = state();
+        state.dispatchRequest = request;
+        state.dispatchResponse = response;
+    }
+
+    /* ------------------------------------------------------------ */
+    public Dispatcher.DispatcherRequest getDispatchRequest() {
+        ThreadState state = state();
         return state.dispatchRequest;
     }
-    
+
     /* ------------------------------------------------------------ */
     public void doFilter(ServletRequest request,
                          ServletResponse response,
                          FilterChain chain)
-	throws IOException, ServletException
-    {
-        HttpServletRequest  srequest  = (HttpServletRequest)request;
-        HttpServletResponse sresponse = (HttpServletResponse)response;
-        Request requestWrapper=null;
-        Response responseWrapper=null;
-        boolean root_filter=false;
-        
+            throws IOException, ServletException {
+        HttpServletRequest srequest = (HttpServletRequest) request;
+        HttpServletResponse sresponse = (HttpServletResponse) response;
+        Request requestWrapper = null;
+        Response responseWrapper = null;
+        boolean root_filter = false;
+
 
         // Do we need a root wrapper?
         ThreadState state = state();
-        if (_unwrappedDispatchSupported || LazyList.size(_requestAttributeListeners)>0 )
-        {
-            if (srequest instanceof ServletHttpRequest)
-            {
-                request=state.rootRequest=requestWrapper=new Request(srequest);
-                response=state.rootResponse=responseWrapper=new Response(sresponse);
-                root_filter=true;
-            }
-            else
-            {
-                requestWrapper=state.rootRequest;
-                responseWrapper=state.rootResponse;
+        if (_unwrappedDispatchSupported || LazyList.size(_requestAttributeListeners) > 0) {
+            if (srequest instanceof ServletHttpRequest) {
+                request = state.rootRequest = requestWrapper = new Request(srequest);
+                response = state.rootResponse = responseWrapper = new Response(sresponse);
+                root_filter = true;
+            } else {
+                requestWrapper = state.rootRequest;
+                responseWrapper = state.rootResponse;
             }
         }
-        
+
         // Is this the first time this request has been in this _context?
-        boolean first_in_context=root_filter ||
-        	requestWrapper!=null && 
-        	requestWrapper.getRequest()!=null && requestWrapper.getRequest() instanceof Dispatcher.DispatcherRequest &&
-        	((Dispatcher.DispatcherRequest)requestWrapper.getRequest()).crossContext();
-        
-        if (first_in_context)
-        {
+        boolean first_in_context = root_filter ||
+                requestWrapper != null &&
+                        requestWrapper.getRequest() != null && requestWrapper.getRequest() instanceof Dispatcher.DispatcherRequest &&
+                        ((Dispatcher.DispatcherRequest) requestWrapper.getRequest()).crossContext();
+
+        if (first_in_context) {
             requestInitialized(request);
-            
-            if (requestWrapper!=null && LazyList.size(_requestAttributeListeners)>0)
+
+            if (requestWrapper != null && LazyList.size(_requestAttributeListeners) > 0)
                 requestWrapper.addContextFilter(this);
         }
-        
+
         // setup dispatch
-        boolean dispatch=false;
-        if (_unwrappedDispatchSupported && state.dispatchRequest!=null)
-        {
-            dispatch=true;
+        boolean dispatch = false;
+        if (_unwrappedDispatchSupported && state.dispatchRequest != null) {
+            dispatch = true;
             requestWrapper.pushWrapper(state.dispatchRequest);
             responseWrapper.pushWrapper(state.dispatchResponse);
-            state.dispatchRequest=null;
-            state.dispatchResponse=null;
+            state.dispatchRequest = null;
+            state.dispatchResponse = null;
         }
-        
-        try
-        {
-            chain.doFilter(request, response);   
-        }
-        finally
-        {
-            if (first_in_context)
-            {
+
+        try {
+            chain.doFilter(request, response);
+        } finally {
+            if (first_in_context) {
                 requestDestroyed(request);
-                if (requestWrapper!=null && LazyList.size(_requestAttributeListeners)>0)
+                if (requestWrapper != null && LazyList.size(_requestAttributeListeners) > 0)
                     requestWrapper.delContextFilter(this);
             }
-            
+
             if (root_filter)
                 state.clear();
-            
-            if (dispatch)
-            {
+
+            if (dispatch) {
                 requestWrapper.popWrapper();
                 responseWrapper.popWrapper();
             }
@@ -179,40 +181,35 @@ public class JSR154Filter implements Filter
     }
 
     /* ------------------------------------------------------------ */
-    public void destroy()
-    {
+    public void destroy() {
     }
-    
+
     /* ------------------------------------------------------------ */
-    private void requestInitialized(ServletRequest request)
-    {
-        ServletRequestEvent event = new ServletRequestEvent(_servletContext,request);
-        for (int i=0;i<LazyList.size(_requestListeners);i++)
-            ((ServletRequestListener)LazyList.get(_requestListeners,i))
-                        .requestInitialized(event);
+    private void requestInitialized(ServletRequest request) {
+        ServletRequestEvent event = new ServletRequestEvent(_servletContext, request);
+        for (int i = 0; i < LazyList.size(_requestListeners); i++)
+            ((ServletRequestListener) LazyList.get(_requestListeners, i))
+                    .requestInitialized(event);
     }
-    
+
     /* ------------------------------------------------------------ */
-    private void requestDestroyed(ServletRequest request)
-    {
-        ServletRequestEvent event = new ServletRequestEvent(_servletContext,request);
-        for (int i=LazyList.size(_requestListeners);i-->0;)
-            ((ServletRequestListener)LazyList.get(_requestListeners,i))
-                        .requestDestroyed(event);
+    private void requestDestroyed(ServletRequest request) {
+        ServletRequestEvent event = new ServletRequestEvent(_servletContext, request);
+        for (int i = LazyList.size(_requestListeners); i-- > 0; )
+            ((ServletRequestListener) LazyList.get(_requestListeners, i))
+                    .requestDestroyed(event);
     }
-    
+
     /* ------------------------------------------------------------ */
-    private void attributeNotify(ServletRequest request,String name,Object oldValue,Object newValue)
-    {
+    private void attributeNotify(ServletRequest request, String name, Object oldValue, Object newValue) {
         ServletRequestAttributeEvent event =
-            new ServletRequestAttributeEvent(_servletContext,request,name,oldValue==null?newValue:oldValue);
-        for (int i=0;i<LazyList.size(_requestAttributeListeners);i++)
-        {
-            ServletRequestAttributeListener listener = 
-                ((ServletRequestAttributeListener)LazyList.get(_requestAttributeListeners,i));
-            if (oldValue==null)
+                new ServletRequestAttributeEvent(_servletContext, request, name, oldValue == null ? newValue : oldValue);
+        for (int i = 0; i < LazyList.size(_requestAttributeListeners); i++) {
+            ServletRequestAttributeListener listener =
+                    ((ServletRequestAttributeListener) LazyList.get(_requestAttributeListeners, i));
+            if (oldValue == null)
                 listener.attributeAdded(event);
-            else if (newValue==null)
+            else if (newValue == null)
                 listener.attributeRemoved(event);
             else
                 listener.attributeReplaced(event);
@@ -220,126 +217,102 @@ public class JSR154Filter implements Filter
     }
 
     /* ------------------------------------------------------------ */
-    private static ThreadState state()
-    {
-        ThreadState state=(ThreadState)__states.get();
-        if (state==null)
-        {
-            state=new ThreadState();
-            __states.set(state);
-        }
-        return state;
-    }
-
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    private static class ThreadState
-    {
+    private static class ThreadState {
         Request rootRequest;
         Response rootResponse;
-        Dispatcher.DispatcherRequest dispatchRequest; 
+        Dispatcher.DispatcherRequest dispatchRequest;
         Dispatcher.DispatcherResponse dispatchResponse;
-        
-        void clear()
-        {
-            rootRequest=null;
-            rootResponse=null;
-            dispatchRequest=null;
-            dispatchResponse=null;
+
+        void clear() {
+            rootRequest = null;
+            rootResponse = null;
+            dispatchRequest = null;
+            dispatchResponse = null;
         }
     }
-    
+
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    private static class Request extends HttpServletRequestWrapper
-    {
+    private static class Request extends HttpServletRequestWrapper {
         Object contextFilters;
-        
+
         /* ------------------------------------------------------------ */
-        Request(HttpServletRequest httpServletRequest)
-        {
+        Request(HttpServletRequest httpServletRequest) {
             super(httpServletRequest);
         }
-        
+
 
         /* ------------------------------------------------------------ */
+
         /**
          * @param filter
          */
-        public void delContextFilter(JSR154Filter filter)
-        {
-            contextFilters=LazyList.remove(contextFilters,filter);
+        public void delContextFilter(JSR154Filter filter) {
+            contextFilters = LazyList.remove(contextFilters, filter);
         }
 
 
         /* ------------------------------------------------------------ */
+
         /**
          * @param filter
          */
-        public void addContextFilter(JSR154Filter filter)
-        {
-            contextFilters=LazyList.add(contextFilters,filter);
+        public void addContextFilter(JSR154Filter filter) {
+            contextFilters = LazyList.add(contextFilters, filter);
         }
 
         /* ------------------------------------------------------------ */
-        public void setAttribute(String name, Object value)
-        {
-            Object old=getAttribute(name);
-            super.setAttribute(name,value);
-            for (int i=LazyList.size(contextFilters);i-->0;)
-                ((JSR154Filter)LazyList.get(contextFilters, i)).attributeNotify(this,name,old,value);
+        public void setAttribute(String name, Object value) {
+            Object old = getAttribute(name);
+            super.setAttribute(name, value);
+            for (int i = LazyList.size(contextFilters); i-- > 0; )
+                ((JSR154Filter) LazyList.get(contextFilters, i)).attributeNotify(this, name, old, value);
         }
-        
+
         /* ------------------------------------------------------------ */
-        public void removeAttribute(String name)
-        {   
-            Object old=getAttribute(name);
+        public void removeAttribute(String name) {
+            Object old = getAttribute(name);
             super.removeAttribute(name);
-            for (int i=LazyList.size(contextFilters);i-->0;)
-                ((JSR154Filter)LazyList.get(contextFilters, i)).attributeNotify(this,name,old,null);
+            for (int i = LazyList.size(contextFilters); i-- > 0; )
+                ((JSR154Filter) LazyList.get(contextFilters, i)).attributeNotify(this, name, old, null);
         }
 
         /* ------------------------------------------------------------ */
-        public void pushWrapper(HttpServletRequestWrapper wrapper)
-        {
+        public void pushWrapper(HttpServletRequestWrapper wrapper) {
             wrapper.setRequest(getRequest());
             setRequest(wrapper);
         }
-        
+
         /* ------------------------------------------------------------ */
-        public void popWrapper()
-        {
-            HttpServletRequestWrapper wrapper=(HttpServletRequestWrapper)getRequest();
-            HttpServletRequest request=(HttpServletRequest)wrapper.getRequest();
+        public void popWrapper() {
+            HttpServletRequestWrapper wrapper = (HttpServletRequestWrapper) getRequest();
+            HttpServletRequest request = (HttpServletRequest) wrapper.getRequest();
             setRequest(request);
         }
     }
-    
+
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    private static class Response extends HttpServletResponseWrapper
-    {
+    private static class Response extends HttpServletResponseWrapper {
         /* ------------------------------------------------------------ */
-        Response(HttpServletResponse httpServletResponse)
-        {
+        Response(HttpServletResponse httpServletResponse) {
             super(httpServletResponse);
         }
-        
+
         /* ------------------------------------------------------------ */
-        public void pushWrapper(HttpServletResponseWrapper wrapper)
-        {
+        public void pushWrapper(HttpServletResponseWrapper wrapper) {
             wrapper.setResponse(getResponse());
             setResponse(wrapper);
         }
-        
+
         /* ------------------------------------------------------------ */
-        public void popWrapper()
-        {
-            HttpServletResponseWrapper wrapper=(HttpServletResponseWrapper)getResponse();
-            HttpServletResponse response=(HttpServletResponse)wrapper.getResponse();
+        public void popWrapper() {
+            HttpServletResponseWrapper wrapper = (HttpServletResponseWrapper) getResponse();
+            HttpServletResponse response = (HttpServletResponse) wrapper.getResponse();
             setResponse(response);
         }
     }

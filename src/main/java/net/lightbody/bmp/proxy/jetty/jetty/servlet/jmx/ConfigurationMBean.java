@@ -27,61 +27,64 @@ import javax.management.ObjectName;
 
 
 /**
- * 
  * ConfigurationMBean
- * 
+ * <p>
  * MBean proxy for a WebApplicationContext.Configuration object.
  *
  * @author janb
  * @version $Revision: 1.2 $ $Date: 2005/08/13 00:01:27 $
- *
  */
-public class ConfigurationMBean extends ModelMBeanImpl
-{
+public class ConfigurationMBean extends ModelMBeanImpl {
     private static final Log log = LogFactory.getLog(ConfigurationMBean.class);
     protected Configuration _config = null;
-    
-    public ConfigurationMBean()
-    throws MBeanException
-    {}
 
-    /**defineManagedResource
+    public ConfigurationMBean()
+            throws MBeanException {
+    }
+
+    /**
+     * defineManagedResource
      * Grab the object which this mbean is proxying for, which in
      * this case is an org.mortbay.jetty.servlet.WebApplicationContext.Configuration
+     *
      * @see net.lightbody.bmp.proxy.jetty.util.jmx.ModelMBeanImpl#defineManagedResource()
      */
-    protected void defineManagedResource()
-    {
+    protected void defineManagedResource() {
         super.defineManagedResource();
-       defineAttribute("name", READ_ONLY, ON_MBEAN);
-        _config=(Configuration)getManagedResource();
+        defineAttribute("name", READ_ONLY, ON_MBEAN);
+        _config = (Configuration) getManagedResource();
     }
-    
-    /**getName
+
+    /**
+     * getName
      * This method is only defined to satisfy JMX: it is non-compliant
      * to have an mbean with no methods on it, so this method has been
-     * added as a workaround. 
+     * added as a workaround.
+     *
      * @return classname of the Configuration instance
      */
-    public String getName ()
-    {
-        if (null==_config)
+    public String getName() {
+        if (null == _config)
             return null;
-        
+
         return _config.getClass().getName();
     }
-    
-    /**uniqueObjectName
+
+    /**
+     * uniqueObjectName
      * Make a unique jmx name for this configuration object
+     *
      * @see net.lightbody.bmp.proxy.jetty.util.jmx.ModelMBeanImpl#uniqueObjectName(javax.management.MBeanServer, java.lang.String)
      */
-    public synchronized ObjectName uniqueObjectName(MBeanServer server, String on)
-    {
-        ObjectName oName=null;
-        try{oName=new ObjectName(on+",config="+_config.getClass().getName());}
-        catch(Exception e){log.warn(LogSupport.EXCEPTION,e);}
-        
+    public synchronized ObjectName uniqueObjectName(MBeanServer server, String on) {
+        ObjectName oName = null;
+        try {
+            oName = new ObjectName(on + ",config=" + _config.getClass().getName());
+        } catch (Exception e) {
+            log.warn(LogSupport.EXCEPTION, e);
+        }
+
         return oName;
     }
-    
+
 }

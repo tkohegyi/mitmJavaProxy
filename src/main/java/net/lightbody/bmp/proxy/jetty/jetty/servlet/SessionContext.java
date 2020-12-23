@@ -21,34 +21,36 @@ import java.util.Collections;
 import java.util.Enumeration;
 
 /* ------------------------------------------------------------ */
-/** 
+
+/**
  * Null returning implementation of HttpSessionContext
- * @version $Id: SessionContext.java,v 1.4 2004/05/09 20:32:27 gregwilkins Exp $
+ *
  * @author Greg Wilkins (gregw)
+ * @version $Id: SessionContext.java,v 1.4 2004/05/09 20:32:27 gregwilkins Exp $
  */
-public class SessionContext implements HttpSessionContext
-{
+public class SessionContext implements HttpSessionContext {
     /* ------------------------------------------------------------ */
     public static final HttpSessionContext NULL_IMPL = new SessionContext();
 
     /* ------------------------------------------------------------ */
-    private SessionContext(){}
-    
+    private SessionContext() {
+    }
+
     /* ------------------------------------------------------------ */
+
     /**
      * @deprecated From HttpSessionContext
      */
-    public Enumeration getIds()
-    {
+    public Enumeration getIds() {
         return Collections.enumeration(Collections.EMPTY_LIST);
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * @deprecated From HttpSessionContext
      */
-    public HttpSession getSession(String id)
-    {
+    public HttpSession getSession(String id) {
         return null;
     }
 }

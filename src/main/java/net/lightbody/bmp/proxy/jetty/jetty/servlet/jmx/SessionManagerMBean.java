@@ -22,22 +22,20 @@ import javax.management.MBeanException;
 
 
 /* ------------------------------------------------------------ */
-/** 
- *
- * @version $Revision: 1.4 $
+
+/**
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.4 $
  */
-public class SessionManagerMBean extends LifeCycleMBean
-{
+public class SessionManagerMBean extends LifeCycleMBean {
     /* ------------------------------------------------------------ */
     public SessionManagerMBean()
-        throws MBeanException
-    {}
-    
+            throws MBeanException {
+    }
+
     /* ------------------------------------------------------------ */
     public SessionManagerMBean(SessionManager object)
-        throws MBeanException
-    {
+            throws MBeanException {
         super(object);
     }
 }

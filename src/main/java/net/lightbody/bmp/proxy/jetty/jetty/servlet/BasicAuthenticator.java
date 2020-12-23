@@ -22,23 +22,23 @@ import net.lightbody.bmp.proxy.jetty.http.UserRealm;
 import java.io.IOException;
 
 /* ------------------------------------------------------------ */
-/** BasicAuthenticator.
- * @author gregw
+
+/**
+ * BasicAuthenticator.
  *
+ * @author gregw
  */
-public class BasicAuthenticator extends net.lightbody.bmp.proxy.jetty.http.BasicAuthenticator
-{
+public class BasicAuthenticator extends net.lightbody.bmp.proxy.jetty.http.BasicAuthenticator {
 
     /* ------------------------------------------------------------ */
-    /* 
+    /*
      * @see net.lightbody.bmp.proxy.jetty.http.BasicAuthenticator#sendChallenge(net.lightbody.bmp.proxy.jetty.http.UserRealm, net.lightbody.bmp.proxy.jetty.http.HttpResponse)
      */
-    public void sendChallenge(UserRealm realm, HttpResponse response) throws IOException
-    {
-        response.setField(HttpFields.__WwwAuthenticate,"basic realm=\""+realm.getName()+'"');
+    public void sendChallenge(UserRealm realm, HttpResponse response) throws IOException {
+        response.setField(HttpFields.__WwwAuthenticate, "basic realm=\"" + realm.getName() + '"');
 
         ServletHttpResponse sresponse = (ServletHttpResponse) response.getWrapper();
-        if (sresponse!=null)
+        if (sresponse != null)
             sresponse.sendError(HttpResponse.__401_Unauthorized);
         else
             response.sendError(HttpResponse.__401_Unauthorized);

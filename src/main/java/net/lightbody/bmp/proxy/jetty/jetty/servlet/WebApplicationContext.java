@@ -15,10 +15,18 @@
 
 package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
-import net.lightbody.bmp.proxy.jetty.http.*;
+import net.lightbody.bmp.proxy.jetty.http.HttpException;
+import net.lightbody.bmp.proxy.jetty.http.HttpHandler;
+import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
+import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
+import net.lightbody.bmp.proxy.jetty.http.UserRealm;
 import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import net.lightbody.bmp.proxy.jetty.util.*;
+import net.lightbody.bmp.proxy.jetty.util.JarResource;
+import net.lightbody.bmp.proxy.jetty.util.LazyList;
+import net.lightbody.bmp.proxy.jetty.util.Loader;
+import net.lightbody.bmp.proxy.jetty.util.MultiException;
+import net.lightbody.bmp.proxy.jetty.util.Resource;
 import org.apache.commons.logging.Log;
 
 import javax.servlet.ServletContextEvent;
@@ -34,29 +42,30 @@ import java.util.HashMap;
 import java.util.Map;
 
 /* ------------------------------------------------------------ */
-/** Standard web.xml configured HttpContext.
- *
+
+/**
+ * Standard web.xml configured HttpContext.
+ * <p>
  * This specialization of HttpContext uses the standardized web.xml
  * to describe a web application and configure the handlers for the
  * HttpContext.
- *
+ * <p>
  * If a file named web-jetty.xml or jetty-web.xml is found in the
  * WEB-INF directory it is applied to the context using the
  * XmlConfiguration format.
- *
+ * <p>
  * A single WebApplicationHandler instance is used to provide
  * security, filter, sevlet and resource handling.
  *
- * @see net.lightbody.bmp.proxy.jetty.jetty.servlet.WebApplicationHandler
- * @version $Id: WebApplicationContext.java,v 1.136 2005/10/26 08:11:04 gregwilkins Exp $
  * @author Greg Wilkins (gregw)
+ * @version $Id: WebApplicationContext.java,v 1.136 2005/10/26 08:11:04 gregwilkins Exp $
+ * @see net.lightbody.bmp.proxy.jetty.jetty.servlet.WebApplicationHandler
  */
-public class WebApplicationContext extends ServletHttpContext implements Externalizable
-{
-    private static Log log= LogFactory.getLog(WebApplicationContext.class);
+public class WebApplicationContext extends ServletHttpContext implements Externalizable {
+    private static Log log = LogFactory.getLog(WebApplicationContext.class);
 
     /* ------------------------------------------------------------ */
-    private String _defaultsDescriptor= "net/lightbody/bmp/proxy/jetty/jetty/servlet/webdefault.xml";
+    private String _defaultsDescriptor = "net/lightbody/bmp/proxy/jetty/jetty/servlet/webdefault.xml";
     private String _war;
     private boolean _extract;
     private boolean _ignorewebjetty;
@@ -72,29 +81,30 @@ public class WebApplicationContext extends ServletHttpContext implements Externa
     private transient Map _errorPages;
 
     /* ------------------------------------------------------------ */
-    /** Constructor. 
+
+    /**
+     * Constructor.
      */
-    public WebApplicationContext()
-    {
+    public WebApplicationContext() {
     }
 
     /* ------------------------------------------------------------ */
-    /** Constructor. 
+
+    /**
+     * Constructor.
+     *
      * @param webApp The Web application directory or WAR file.
      */
-    public WebApplicationContext(String webApp)
-    {
-        _war= webApp;
+    public WebApplicationContext(String webApp) {
+        _war = webApp;
     }
 
     /* ------------------------------------------------------------ */
-    public void writeExternal(java.io.ObjectOutput out) throws java.io.IOException
-    {
+    public void writeExternal(java.io.ObjectOutput out) throws java.io.IOException {
         out.writeObject(getContextPath());
         out.writeObject(getVirtualHosts());
-        HttpHandler[] handlers= getHandlers();
-        for (int i= 0; i < handlers.length; i++)
-        {
+        HttpHandler[] handlers = getHandlers();
+        for (int i = 0; i < handlers.length; i++) {
             if (handlers[i] instanceof WebApplicationHandler)
                 break;
             out.writeObject(handlers[i]);
@@ -112,147 +122,131 @@ public class WebApplicationContext extends ServletHttpContext implements Externa
         out.writeBoolean(_extract);
         out.writeBoolean(_ignorewebjetty);
         out.writeBoolean(_distributable);
-        
+
         out.writeObject(_configurationClassNames);
     }
 
     /* ------------------------------------------------------------ */
-    public void readExternal(java.io.ObjectInput in) throws java.io.IOException, ClassNotFoundException
-    {
-        setContextPath((String)in.readObject());
-        setVirtualHosts((String[])in.readObject());
-        Object o= in.readObject();
+    public void readExternal(java.io.ObjectInput in) throws java.io.IOException, ClassNotFoundException {
+        setContextPath((String) in.readObject());
+        setVirtualHosts((String[]) in.readObject());
+        Object o = in.readObject();
 
-        while (o instanceof HttpHandler)
-        {
-            addHandler((HttpHandler)o);
-            o= in.readObject();
+        while (o instanceof HttpHandler) {
+            addHandler((HttpHandler) o);
+            o = in.readObject();
         }
-        setAttributes((Map)o);
+        setAttributes((Map) o);
         setRedirectNullPath(in.readBoolean());
         setMaxCachedFileSize(in.readInt());
         setMaxCacheSize(in.readInt());
         setStatsOn(in.readBoolean());
-        setPermissions((PermissionCollection)in.readObject());
+        setPermissions((PermissionCollection) in.readObject());
         setClassLoaderJava2Compliant(in.readBoolean());
 
-        _defaultsDescriptor= (String)in.readObject();
-        _war= (String)in.readObject();
-        _extract= in.readBoolean();
-        _ignorewebjetty= in.readBoolean();
-        _distributable= in.readBoolean();
-        _configurationClassNames=(String[])in.readObject();
+        _defaultsDescriptor = (String) in.readObject();
+        _war = (String) in.readObject();
+        _extract = in.readBoolean();
+        _ignorewebjetty = in.readBoolean();
+        _distributable = in.readBoolean();
+        _configurationClassNames = (String[]) in.readObject();
     }
 
-    
+    /* ------------------------------------------------------------ */
+    public String[] getConfigurationClassNames() {
+        return _configurationClassNames;
+    }
 
     /* ------------------------------------------------------------ */
-    public void setConfigurationClassNames (String[] configurationClassNames)
-    {
-        if (null != configurationClassNames)
-        {
+    public void setConfigurationClassNames(String[] configurationClassNames) {
+        if (null != configurationClassNames) {
             _configurationClassNames = new String[configurationClassNames.length];
-            System.arraycopy (configurationClassNames, 0, _configurationClassNames, 0, configurationClassNames.length);
+            System.arraycopy(configurationClassNames, 0, _configurationClassNames, 0, configurationClassNames.length);
         }
     }
 
     /* ------------------------------------------------------------ */
-    public String[] getConfigurationClassNames ()
-    {
-        return _configurationClassNames;
-    }
-    
-    /* ------------------------------------------------------------ */
-    /** 
-     * @param war Filename or URL of the web application directory or WAR file. 
-     */
-    public void setWAR(String war)
-    {
-        _war= war;
-    }
 
     /* ------------------------------------------------------------ */
-    public String getWAR()
-    {
+    public String getWAR() {
         return _war;
     }
 
+    /**
+     * @param war Filename or URL of the web application directory or WAR file.
+     */
+    public void setWAR(String war) {
+        _war = war;
+    }
+
     /* ------------------------------------------------------------ */
-    public WebApplicationHandler getWebApplicationHandler()
-    {
+    public WebApplicationHandler getWebApplicationHandler() {
         if (_webAppHandler == null)
             getServletHandler();
         return _webAppHandler;
     }
 
     /* ------------------------------------------------------------ */
-    private void resolveWebApp() throws IOException
-    {
-        if (_webApp == null && _war != null && _war.length() > 0)
-        {
+    private void resolveWebApp() throws IOException {
+        if (_webApp == null && _war != null && _war.length() > 0) {
             // Set dir or WAR
-            _webApp= Resource.newResource(_war);
+            _webApp = Resource.newResource(_war);
 
             // Accept aliases for WAR files
-            if (_webApp.getAlias() != null)
-            {
+            if (_webApp.getAlias() != null) {
                 log.info(_webApp + " anti-aliased to " + _webApp.getAlias());
-                _webApp= Resource.newResource(_webApp.getAlias());
+                _webApp = Resource.newResource(_webApp.getAlias());
             }
 
             if (log.isDebugEnabled())
                 log.debug(
-                    "Try webapp=" + _webApp + ", exists=" + _webApp.exists() + ", directory=" + _webApp.isDirectory());
+                        "Try webapp=" + _webApp + ", exists=" + _webApp.exists() + ", directory=" + _webApp.isDirectory());
 
             // Is the WAR usable directly?
-            if (_webApp.exists() && !_webApp.isDirectory() && !_webApp.toString().startsWith("jar:"))
-            {
+            if (_webApp.exists() && !_webApp.isDirectory() && !_webApp.toString().startsWith("jar:")) {
                 // No - then lets see if it can be turned into a jar URL.
-                Resource jarWebApp= Resource.newResource("jar:" + _webApp + "!/");
-                if (jarWebApp.exists() && jarWebApp.isDirectory())
-                {
-                    _webApp= jarWebApp;
-                    _war= _webApp.toString();
+                Resource jarWebApp = Resource.newResource("jar:" + _webApp + "!/");
+                if (jarWebApp.exists() && jarWebApp.isDirectory()) {
+                    _webApp = jarWebApp;
+                    _war = _webApp.toString();
                     if (log.isDebugEnabled())
                         log.debug(
-                            "Try webapp="
-                                + _webApp
-                                + ", exists="
-                                + _webApp.exists()
-                                + ", directory="
-                                + _webApp.isDirectory());
+                                "Try webapp="
+                                        + _webApp
+                                        + ", exists="
+                                        + _webApp.exists()
+                                        + ", directory="
+                                        + _webApp.isDirectory());
                 }
             }
 
             // If we should extract or the URL is still not usable
             if (_webApp.exists()
-                && (!_webApp.isDirectory()
+                    && (!_webApp.isDirectory()
                     || (_extract && _webApp.getFile() == null)
-                    || (_extract && _webApp.getFile() != null && !_webApp.getFile().isDirectory())))
-            {
+                    || (_extract && _webApp.getFile() != null && !_webApp.getFile().isDirectory()))) {
                 // Then extract it.
-                File tempDir= new File(getTempDirectory(), "webapp");
+                File tempDir = new File(getTempDirectory(), "webapp");
                 if (tempDir.exists())
                     tempDir.delete();
                 tempDir.mkdir();
                 tempDir.deleteOnExit();
                 log.info("Extract " + _war + " to " + tempDir);
                 JarResource.extract(_webApp, tempDir, true);
-                _webApp= Resource.newResource(tempDir.getCanonicalPath());
+                _webApp = Resource.newResource(tempDir.getCanonicalPath());
 
                 if (log.isDebugEnabled())
                     log.debug(
-                        "Try webapp="
-                            + _webApp
-                            + ", exists="
-                            + _webApp.exists()
-                            + ", directory="
-                            + _webApp.isDirectory());
+                            "Try webapp="
+                                    + _webApp
+                                    + ", exists="
+                                    + _webApp.exists()
+                                    + ", directory="
+                                    + _webApp.isDirectory());
             }
 
             // Now do we have something usable?
-            if (!_webApp.exists() || !_webApp.isDirectory())
-            {
+            if (!_webApp.exists() || !_webApp.isDirectory()) {
                 log.warn("Web application not found " + _war);
                 throw new java.io.FileNotFoundException(_war);
             }
@@ -261,18 +255,17 @@ public class WebApplicationContext extends ServletHttpContext implements Externa
                 log.debug("webapp=" + _webApp);
 
             // Iw there a WEB-INF directory?
-            _webInf= _webApp.addPath("WEB-INF/");
+            _webInf = _webApp.addPath("WEB-INF/");
             if (!_webInf.exists() || !_webInf.isDirectory())
-                _webInf= null;
-            else
-            {
+                _webInf = null;
+            else {
                 // Is there a WEB-INF work directory
-                Resource work= _webInf.addPath("work");
+                Resource work = _webInf.addPath("work");
                 if (work.exists()
-                    && work.isDirectory()
-                    && work.getFile() != null
-                    && work.getFile().canWrite()
-                    && getAttribute("javax.servlet.context.tempdir") == null)
+                        && work.isDirectory()
+                        && work.getFile() != null
+                        && work.getFile().canWrite()
+                        && getAttribute("javax.servlet.context.tempdir") == null)
                     setAttribute("javax.servlet.context.tempdir", work.getFile());
             }
 
@@ -283,30 +276,29 @@ public class WebApplicationContext extends ServletHttpContext implements Externa
 
 
     /* ------------------------------------------------------------ */
-    public Resource getWebInf() throws IOException
-    {
-        if (_webInf==null)
+    public Resource getWebInf() throws IOException {
+        if (_webInf == null)
             resolveWebApp();
         return _webInf;
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** Get the context ServletHandler.
+
+    /**
+     * Get the context ServletHandler.
      * Conveniance method. If no ServletHandler exists, a new one is added to
      * the context.  This derivation of the method creates a
      * WebApplicationHandler extension of ServletHandler.
+     *
      * @return WebApplicationHandler
      */
-    public synchronized ServletHandler getServletHandler()
-    {
-        if (_webAppHandler == null)
-        {
-            _webAppHandler= (WebApplicationHandler)getHandler(WebApplicationHandler.class);
-            if (_webAppHandler == null)
-            {
+    public synchronized ServletHandler getServletHandler() {
+        if (_webAppHandler == null) {
+            _webAppHandler = (WebApplicationHandler) getHandler(WebApplicationHandler.class);
+            if (_webAppHandler == null) {
                 if (getHandler(ServletHandler.class) != null)
                     throw new IllegalStateException("Cannot have ServletHandler in WebApplicationContext");
-                _webAppHandler= new WebApplicationHandler();
+                _webAppHandler = new WebApplicationHandler();
                 addHandler(_webAppHandler);
             }
         }
@@ -314,157 +306,144 @@ public class WebApplicationContext extends ServletHttpContext implements Externa
     }
 
     /* ------------------------------------------------------------ */
-    public void setPermissions(PermissionCollection permissions)
-    {
+    public void setPermissions(PermissionCollection permissions) {
         if (!_ignorewebjetty)
             log.warn("Permissions set with web-jetty.xml enabled");
         super.setPermissions(permissions);
     }
 
     /* ------------------------------------------------------------ */
-    public boolean isIgnoreWebJetty()
-    {
+    public boolean isIgnoreWebJetty() {
         return _ignorewebjetty;
     }
 
     /* ------------------------------------------------------------ */
-    /** 
+
+    /**
      * @param b If TRUE, web-jetty.xml and jetty-web.xml configuration
-     * files are ignored. 
+     *          files are ignored.
      */
-    public void setIgnoreWebJetty(boolean b)
-    {
-        _ignorewebjetty= b;
+    public void setIgnoreWebJetty(boolean b) {
+        _ignorewebjetty = b;
         if (b && getPermissions() != null)
             log.warn("Permissions set with web-jetty.xml enabled");
     }
 
     /* ------------------------------------------------------------ */
-    public boolean isDistributable()
-    {
+    public boolean isDistributable() {
         return _distributable;
     }
 
     /* ------------------------------------------------------------ */
-    public void setDistributable(boolean distributable)
-    {
-        _distributable=distributable;
+    public void setDistributable(boolean distributable) {
+        _distributable = distributable;
     }
 
     /* ------------------------------------------------------------ */
-    public Configuration[] getConfigurations ()
-    {
+    public Configuration[] getConfigurations() {
         return _configurations;
     }
 
     /* ------------------------------------------------------------ */
-    protected Configuration[] loadConfigurations() throws Exception
-    {
+    protected Configuration[] loadConfigurations() throws Exception {
         String[] names = _configurationClassNames;
-        
+
         //if this webapp does not have its own set of configurators, use the defaults
-        if (null==names)
-            names = ((BmpServer)getHttpServer()).getWebApplicationConfigurationClassNames();
-        
-        if (null!=names)
-        {
+        if (null == names)
+            names = ((BmpServer) getHttpServer()).getWebApplicationConfigurationClassNames();
+
+        if (null != names) {
             //instantiate instances for each
             Object[] nullArgs = new Object[0];
             Configuration[] configurations = new Configuration[names.length];
-            for (int i=0; i< names.length; i++)
-            {
+            for (int i = 0; i < names.length; i++) {
                 configurations[i] =
-                    (Configuration)Loader.loadClass(WebApplicationContext.class, names[i]).getConstructors()[0].newInstance(nullArgs);
-                if (log.isDebugEnabled()){log.debug("Loaded instance of "+names[i]);};
+                        (Configuration) Loader.loadClass(WebApplicationContext.class, names[i]).getConstructors()[0].newInstance(nullArgs);
+                if (log.isDebugEnabled()) {
+                    log.debug("Loaded instance of " + names[i]);
+                }
+                ;
             }
             return configurations;
-        }
-        else
+        } else
             return new Configuration[0];
     }
 
     /* ------------------------------------------------------------ */
-    protected void configureClassPath() throws Exception
-    {
+    protected void configureClassPath() throws Exception {
         //call each of the instances
         // first, configure the classpaths
-        for (int i=0; i<_configurations.length;i++)
-        {
+        for (int i = 0; i < _configurations.length; i++) {
             _configurations[i].setWebApplicationContext(this);
             _configurations[i].configureClassPath();
         }
     }
 
     /* ------------------------------------------------------------ */
-    protected void configureDefaults() throws Exception
-    {
+    protected void configureDefaults() throws Exception {
         //next, configure default settings
-        for (int i=0;i<_configurations.length;i++)
-        {
+        for (int i = 0; i < _configurations.length; i++) {
             _configurations[i].setWebApplicationContext(this);
             _configurations[i].configureDefaults();
         }
     }
 
     /* ------------------------------------------------------------ */
-    protected void configureWebApp () throws Exception
-    {
+    protected void configureWebApp() throws Exception {
         //finally, finish configuring the webapp
-        for (int i=0;i<_configurations.length;i++)
-        {
+        for (int i = 0; i < _configurations.length; i++) {
             _configurations[i].setWebApplicationContext(this);
             _configurations[i].configureWebApp();
         }
-        
+
     }
- 
+
     /* ------------------------------------------------------------ */
-    /** Start the Web Application.
-     * @exception IOException 
+
+    /**
+     * Start the Web Application.
+     *
+     * @throws IOException
      */
-    protected void doStart() throws Exception
-    {
+    protected void doStart() throws Exception {
         if (isStarted())
             return;
 
         // save context classloader
-        Thread thread= Thread.currentThread();
-        ClassLoader lastContextLoader= thread.getContextClassLoader();
+        Thread thread = Thread.currentThread();
+        ClassLoader lastContextLoader = thread.getContextClassLoader();
 
-        MultiException mex= null;
-        try
-        {
+        MultiException mex = null;
+        try {
             // Find the webapp
             resolveWebApp();
 
             // Get the handler
             getServletHandler();
-          
-            _configurations=loadConfigurations();
-            
+
+            _configurations = loadConfigurations();
+
             // initialize the classloader            
             configureClassPath();
             initClassLoader(true);
             thread.setContextClassLoader(getClassLoader());
             initialize();
-            
+
             // Do the default configuration
             configureDefaults();
 
             // Set classpath for Jasper.
-            Map.Entry entry= _webAppHandler.getHolderEntry("test.jsp");
-            if (entry != null)
-            {
-                ServletHolder jspHolder= (ServletHolder)entry.getValue();
-                if (jspHolder != null && jspHolder.getInitParameter("classpath") == null)
-                {
-                    String fileClassPath= getFileClassPath();
+            Map.Entry entry = _webAppHandler.getHolderEntry("test.jsp");
+            if (entry != null) {
+                ServletHolder jspHolder = (ServletHolder) entry.getValue();
+                if (jspHolder != null && jspHolder.getInitParameter("classpath") == null) {
+                    String fileClassPath = getFileClassPath();
                     jspHolder.setInitParameter("classpath", fileClassPath);
                     if (log.isDebugEnabled())
                         log.debug("Set classpath=" + fileClassPath + " for " + jspHolder);
                 }
             }
-            
+
             // configure webapp
             configureWebApp();
 
@@ -474,44 +453,31 @@ public class WebApplicationContext extends ServletHttpContext implements Externa
             // Start handlers
             super.doStart();
 
-            mex= new MultiException();
+            mex = new MultiException();
             // Context listeners
-            if (_contextListeners != null && _webAppHandler != null)
-            {
-                ServletContextEvent event= new ServletContextEvent(getServletContext());
-                for (int i= 0; i < LazyList.size(_contextListeners); i++)
-                {
-                    try
-                    {
-                        ((ServletContextListener)LazyList.get(_contextListeners, i)).contextInitialized(event);
-                    }
-                    catch (Exception ex)
-                    {
+            if (_contextListeners != null && _webAppHandler != null) {
+                ServletContextEvent event = new ServletContextEvent(getServletContext());
+                for (int i = 0; i < LazyList.size(_contextListeners); i++) {
+                    try {
+                        ((ServletContextListener) LazyList.get(_contextListeners, i)).contextInitialized(event);
+                    } catch (Exception ex) {
                         mex.add(ex);
                     }
                 }
             }
 
             // OK to Initialize servlets now
-            if (_webAppHandler != null && _webAppHandler.isStarted())
-            {
-                try
-                {
+            if (_webAppHandler != null && _webAppHandler.isStarted()) {
+                try {
                     _webAppHandler.initializeServlets();
-                }
-                catch (Exception ex)
-                {
+                } catch (Exception ex) {
                     mex.add(ex);
                 }
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             log.warn("Configuration error on " + _war, e);
             throw e;
-        }
-        finally
-        {
+        } finally {
             thread.setContextClassLoader(lastContextLoader);
         }
 
@@ -520,116 +486,100 @@ public class WebApplicationContext extends ServletHttpContext implements Externa
     }
 
     /* ------------------------------------------------------------ */
-    /** Stop the web application.
+
+    /**
+     * Stop the web application.
      * Handlers for resource, servlet, filter and security are removed
      * as they are recreated and configured by any subsequent call to start().
-     * @exception InterruptedException 
+     *
+     * @throws InterruptedException
      */
-    protected void doStop() throws Exception
-    {
-        MultiException mex=new MultiException();
-        
-        
-        Thread thread= Thread.currentThread();
-        ClassLoader lastContextLoader= thread.getContextClassLoader();
-        
-        try
-        {
+    protected void doStop() throws Exception {
+        MultiException mex = new MultiException();
+
+
+        Thread thread = Thread.currentThread();
+        ClassLoader lastContextLoader = thread.getContextClassLoader();
+
+        try {
             // Context listeners
-            if (_contextListeners != null)
-            {
-                if (_webAppHandler != null)
-                {
-                    ServletContextEvent event= new ServletContextEvent(getServletContext());
-                    
-                    for (int i= LazyList.size(_contextListeners); i-- > 0;)
-                    {
-                        try 
-                        {
-                            ((ServletContextListener)LazyList.get(_contextListeners, i)).contextDestroyed(event);
-                        }
-                        catch (Exception e)
-                        {
+            if (_contextListeners != null) {
+                if (_webAppHandler != null) {
+                    ServletContextEvent event = new ServletContextEvent(getServletContext());
+
+                    for (int i = LazyList.size(_contextListeners); i-- > 0; ) {
+                        try {
+                            ((ServletContextListener) LazyList.get(_contextListeners, i)).contextDestroyed(event);
+                        } catch (Exception e) {
                             mex.add(e);
                         }
                     }
                 }
             }
-            _contextListeners= null;
-            
+            _contextListeners = null;
+
             // Stop the context
-            try
-            {
+            try {
                 super.doStop();
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 mex.add(e);
             }
-            
+
             // clean up
             clearSecurityConstraints();
-            
+
             if (_webAppHandler != null)
                 removeHandler(_webAppHandler);
-            _webAppHandler= null;
-            
+            _webAppHandler = null;
+
             if (_errorPages != null)
                 _errorPages.clear();
-            _errorPages= null;
-            
-            _webApp=null;
-            _webInf=null;
-            
-            _configurations=null;
-            
-        }
-        finally
-        {
+            _errorPages = null;
+
+            _webApp = null;
+            _webInf = null;
+
+            _configurations = null;
+
+        } finally {
             thread.setContextClassLoader(lastContextLoader);
         }
-        
-        if (mex!=null)
+
+        if (mex != null)
             mex.ifExceptionThrow();
     }
-    
+
 
     /* ------------------------------------------------------------ */
-    public void destroy()
-    {
+    public void destroy() {
         super.destroy();
         if (isStarted())
             throw new IllegalStateException();
 
-        _defaultsDescriptor=null;
-        _war=null;
-        _configurationClassNames=null;
-        if (_resourceAliases!=null)
+        _defaultsDescriptor = null;
+        _war = null;
+        _configurationClassNames = null;
+        if (_resourceAliases != null)
             _resourceAliases.clear();
-        _resourceAliases=null;
-        _contextListeners=null;
-        if (_errorPages!=null)
+        _resourceAliases = null;
+        _contextListeners = null;
+        if (_errorPages != null)
             _errorPages.clear();
-        _errorPages=null;
+        _errorPages = null;
     }
 
     /* ------------------------------------------------------------ */
     public void handle(String pathInContext, String pathParams, HttpRequest httpRequest, HttpResponse httpResponse)
-        throws HttpException, IOException
-    {
+            throws HttpException, IOException {
         if (!isStarted())
             return;
-        try
-        {
+        try {
             super.handle(pathInContext, pathParams, httpRequest, httpResponse);
-        }
-        finally
-        {
+        } finally {
             if (!httpRequest.isHandled())
                 httpResponse.sendError(HttpResponse.__404_Not_Found);
             httpRequest.setHandled(true);
-            if (!httpResponse.isCommitted())
-            {
+            if (!httpResponse.isCommitted()) {
                 httpResponse.completing();
                 httpResponse.commit();
             }
@@ -637,152 +587,140 @@ public class WebApplicationContext extends ServletHttpContext implements Externa
     }
 
     /* ------------------------------------------------------------ */
-    public synchronized void addEventListener(EventListener listener) throws IllegalArgumentException
-    {
-        if (listener instanceof ServletContextListener)
-        {
-            _contextListeners= LazyList.add(_contextListeners, listener);
+    public synchronized void addEventListener(EventListener listener) throws IllegalArgumentException {
+        if (listener instanceof ServletContextListener) {
+            _contextListeners = LazyList.add(_contextListeners, listener);
         }
- 
+
         super.addEventListener(listener);
     }
 
     /* ------------------------------------------------------------ */
-    public synchronized void removeEventListener(EventListener listener)
-    {
-        _contextListeners= LazyList.remove(_contextListeners, listener);
+    public synchronized void removeEventListener(EventListener listener) {
+        _contextListeners = LazyList.remove(_contextListeners, listener);
         super.removeEventListener(listener);
     }
 
     /* ------------------------------------------------------------ */
-    public String getDisplayName()
-    {
+    public String getDisplayName() {
         return getHttpContextName();
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void setDisplayName(String name)
-    {
+    public void setDisplayName(String name) {
         setHttpContextName(name);
     }
 
     /* ------------------------------------------------------------ */
-    /** Set the defaults web.xml file.
+
+    /* ------------------------------------------------------------ */
+    public String getDefaultsDescriptor() {
+        return _defaultsDescriptor;
+    }
+
+    /**
+     * Set the defaults web.xml file.
      * The default web.xml is used to configure all webapplications
      * before the WEB-INF/web.xml file is applied.  By default the
      * net/lightbody/bmp/proxy/jetty/jetty/servlet/webdefault.xml resource from the
      * org.mortbay.jetty.jar is used.
+     *
      * @param defaults File, Resource, URL or null.
      */
-    public void setDefaultsDescriptor(String defaults)
-    {
-        _defaultsDescriptor= defaults;
+    public void setDefaultsDescriptor(String defaults) {
+        _defaultsDescriptor = defaults;
     }
 
     /* ------------------------------------------------------------ */
-    public String getDefaultsDescriptor()
-    {
-        return _defaultsDescriptor;
-    }
 
     /* ------------------------------------------------------------ */
-    /** 
-     * @param extract If true, a WAR is extracted to a temporary
-     * directory before being deployed. 
-     */
-    public void setExtractWAR(boolean extract)
-    {
-        _extract= extract;
-    }
-
-    /* ------------------------------------------------------------ */
-    public boolean getExtractWAR()
-    {
+    public boolean getExtractWAR() {
         return _extract;
     }
 
+    /**
+     * @param extract If true, a WAR is extracted to a temporary
+     *                directory before being deployed.
+     */
+    public void setExtractWAR(boolean extract) {
+        _extract = extract;
+    }
+
     /* ------------------------------------------------------------ */
+
     /**
      * Initialize is called by the start method after the contexts classloader
      * has been initialied, but before the defaults descriptor has been applied.
      * The default implementation does nothing.
      *
-     * @exception Exception if an error occurs
+     * @throws Exception if an error occurs
      */
-    protected void initialize() throws Exception
-    {
+    protected void initialize() throws Exception {
     }
 
 
     /* ------------------------------------------------------------ */
-    protected UserRealm getUserRealm(String name)
-    {
+    protected UserRealm getUserRealm(String name) {
         return getHttpServer().getRealm(name);
     }
 
     /* ------------------------------------------------------------ */
-    public String toString()
-    {
+    public String toString() {
         String name = getDisplayName();
         return "WebApplicationContext[" + getContextPath() + "," + (name == null ? _war : name) + "]";
     }
 
     /* ------------------------------------------------------------ */
-    /** Set Resource Alias.
+
+    /**
+     * Set Resource Alias.
      * Resource aliases map resource uri's within a context.
      * They may optionally be used by a handler when looking for
-     * a resource.  
-     * @param alias 
-     * @param uri 
+     * a resource.
+     *
+     * @param alias
+     * @param uri
      */
-    public void setResourceAlias(String alias, String uri)
-    {
+    public void setResourceAlias(String alias, String uri) {
         if (_resourceAliases == null)
-            _resourceAliases= new HashMap(5);
+            _resourceAliases = new HashMap(5);
         _resourceAliases.put(alias, uri);
     }
 
     /* ------------------------------------------------------------ */
-    public Map getResourceAliases()
-    {
+    public Map getResourceAliases() {
         if (_resourceAliases == null)
             return null;
         return Collections.unmodifiableMap(_resourceAliases);
     }
-    
+
     /* ------------------------------------------------------------ */
-    public String getResourceAlias(String alias)
-    {
+    public String getResourceAlias(String alias) {
         if (_resourceAliases == null)
             return null;
-        return (String)_resourceAliases.get(alias);
+        return (String) _resourceAliases.get(alias);
     }
 
     /* ------------------------------------------------------------ */
-    public String removeResourceAlias(String alias)
-    {
+    public String removeResourceAlias(String alias) {
         if (_resourceAliases == null)
             return null;
-        return (String)_resourceAliases.remove(alias);
+        return (String) _resourceAliases.remove(alias);
     }
 
     /* ------------------------------------------------------------ */
-    public Resource getResource(String uriInContext) throws IOException
-    {
-        IOException ioe= null;
-        Resource resource= null;
-        try
-        {
-            resource= super.getResource(uriInContext);
+    public Resource getResource(String uriInContext) throws IOException {
+        IOException ioe = null;
+        Resource resource = null;
+        try {
+            resource = super.getResource(uriInContext);
             if (resource != null && resource.exists())
                 return resource;
-        }
-        catch (IOException e)
-        {
-            ioe= e;
+        } catch (IOException e) {
+            ioe = e;
         }
 
-        String aliasedUri= getResourceAlias(uriInContext);
+        String aliasedUri = getResourceAlias(uriInContext);
         if (aliasedUri != null)
             return super.getResource(aliasedUri);
 
@@ -793,95 +731,114 @@ public class WebApplicationContext extends ServletHttpContext implements Externa
     }
 
     /* ------------------------------------------------------------ */
-    /** set error page URI.
-     * @param error A string representing an error code or a
-     * exception classname
+
+    /**
+     * set error page URI.
+     *
+     * @param error        A string representing an error code or a
+     *                     exception classname
      * @param uriInContext
      */
-    public void setErrorPage(String error, String uriInContext)
-    {
+    public void setErrorPage(String error, String uriInContext) {
         if (_errorPages == null)
-            _errorPages= new HashMap();
+            _errorPages = new HashMap();
         _errorPages.put(error, uriInContext);
     }
 
     /* ------------------------------------------------------------ */
-    /** get error page URI.
+
+    /**
+     * get error page URI.
+     *
      * @param error A string representing an error code or a
-     * exception classname
+     *              exception classname
      * @return URI within context
      */
-    public String getErrorPage(String error)
-    {
+    public String getErrorPage(String error) {
         if (_errorPages == null)
             return null;
-        return (String)_errorPages.get(error);
+        return (String) _errorPages.get(error);
     }
 
     /* ------------------------------------------------------------ */
-    public String removeErrorPage(String error)
-    {
+    public String removeErrorPage(String error) {
         if (_errorPages == null)
             return null;
-        return (String)_errorPages.remove(error);
+        return (String) _errorPages.remove(error);
     }
-    
- 
-    
+
+
+
     /* ------------------------------------------------------------------------------- */
-    /** Base Class for WebApplicationContext Configuration.
+
+    /**
+     * Base Class for WebApplicationContext Configuration.
      * This class can be extended to customize or extend the configuration
      * of the WebApplicationContext.  If WebApplicationContext.setConfiguration is not
      * called, then an XMLConfiguration instance is created.
-     * 
-     * @version $Revision: 1.136 $
+     *
      * @author gregw
+     * @version $Revision: 1.136 $
      */
-    public static interface Configuration extends Serializable
-    {
+    public static interface Configuration extends Serializable {
         /* ------------------------------------------------------------------------------- */
-        /** Set up a context on which to perform the configuration.
-         * @param context
-         */
-        public void setWebApplicationContext (WebApplicationContext context);
 
-        /* ------------------------------------------------------------------------------- */
-        /** Get the context on which the configuration is performed.
+        /**
+         * Get the context on which the configuration is performed.
+         *
          * @return
          */
-        public WebApplicationContext getWebApplicationContext ();
-        
+        public WebApplicationContext getWebApplicationContext();
+
         /* ------------------------------------------------------------------------------- */
-        /** Configure ClassPath.
-         * This method is called before the context ClassLoader is created.  
+
+        /**
+         * Set up a context on which to perform the configuration.
+         *
+         * @param context
+         */
+        public void setWebApplicationContext(WebApplicationContext context);
+
+        /* ------------------------------------------------------------------------------- */
+
+        /**
+         * Configure ClassPath.
+         * This method is called before the context ClassLoader is created.
          * Paths and libraries should be added to the context using the setClassPath,
          * addClassPath and addClassPaths methods.  The default implementation looks
          * for WEB-INF/classes, WEB-INF/lib/*.zip and WEB-INF/lib/*.jar
+         *
          * @throws Exception
          */
-        public  void configureClassPath()
-        throws Exception;
+        public void configureClassPath()
+                throws Exception;
 
         /* ------------------------------------------------------------------------------- */
-        /** Configure Defaults.
+
+        /**
+         * Configure Defaults.
          * This method is called to intialize the context to the containers default configuration.
-         * Typically this would mean application of the webdefault.xml file.  The default 
+         * Typically this would mean application of the webdefault.xml file.  The default
          * implementation does nothing.
+         *
          * @throws Exception
          */
-        public  void configureDefaults()
-        throws Exception;
-        
+        public void configureDefaults()
+                throws Exception;
+
 
         /* ------------------------------------------------------------------------------- */
-        /** Configure WebApp.
+
+        /**
+         * Configure WebApp.
          * This method is called to apply the standard and vendor deployment descriptors.
          * Typically this is web.xml and jetty-web.xml.  The default implementation does nothing.
+         *
          * @throws Exception
          */
-        public  void configureWebApp()
-        throws Exception;
-        
+        public void configureWebApp()
+                throws Exception;
+
     }
 
 }

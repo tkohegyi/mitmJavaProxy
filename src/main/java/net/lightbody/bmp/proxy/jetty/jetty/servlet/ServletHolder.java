@@ -20,7 +20,13 @@ import net.lightbody.bmp.proxy.jetty.http.UserRealm;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import org.apache.commons.logging.Log;
 
-import javax.servlet.*;
+import javax.servlet.Servlet;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.UnavailableException;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.Enumeration;
@@ -30,452 +36,420 @@ import java.util.Stack;
 
 
 /* --------------------------------------------------------------------- */
-/** Servlet Instance and Context Holder.
+
+/**
+ * Servlet Instance and Context Holder.
  * Holds the name, params and some state of a javax.servlet.Servlet
  * instance. It implements the ServletConfig interface.
  * This class will organise the loading of the servlet when needed or
  * requested.
  *
- * @version $Id: ServletHolder.java,v 1.53 2005/11/03 08:52:48 gregwilkins Exp $
  * @author Greg Wilkins
+ * @version $Id: ServletHolder.java,v 1.53 2005/11/03 08:52:48 gregwilkins Exp $
  */
 public class ServletHolder extends Holder
-    implements Comparable
-{
+        implements Comparable {
     private static Log log = LogFactory.getLog(ServletHolder.class);
 
     /* ---------------------------------------------------------------- */
-    
+
     private int _initOrder;
-    private boolean _initOnStartup=false;
+    private boolean _initOnStartup = false;
     private Map _roleMap;
     private String _forcedPath;
     private String _runAs;
     private UserRealm _realm;
 
-    
+
     private transient Stack _servlets;
     private transient Servlet _servlet;
     private transient Config _config;
     private transient long _unavailable;
     private transient UnavailableException _unavailableEx;
 
-    
-    /* ---------------------------------------------------------------- */
-    /** Constructor for Serialization.
-     */
-    public ServletHolder()
-    {}
-    
 
     /* ---------------------------------------------------------------- */
-    /** Constructor.
-     * @param handler The ServletHandler instance for this servlet.
-     * @param name The name of the servlet.
+
+    /**
+     * Constructor for Serialization.
+     */
+    public ServletHolder() {
+    }
+
+
+    /* ---------------------------------------------------------------- */
+
+    /**
+     * Constructor.
+     *
+     * @param handler   The ServletHandler instance for this servlet.
+     * @param name      The name of the servlet.
      * @param className The class name of the servlet.
      */
     public ServletHolder(ServletHandler handler,
                          String name,
-                         String className)
-    {
-        super(handler,(name==null)?className:name,className);
+                         String className) {
+        super(handler, (name == null) ? className : name, className);
     }
 
     /* ---------------------------------------------------------------- */
-    /** Constructor. 
-     * @param handler The ServletHandler instance for this servlet.
-     * @param name The name of the servlet.
-     * @param className The class name of the servlet.
+
+    /**
+     * Constructor.
+     *
+     * @param handler    The ServletHandler instance for this servlet.
+     * @param name       The name of the servlet.
+     * @param className  The class name of the servlet.
      * @param forcedPath If non null, the request attribute
-     * javax.servlet.include.servlet_path will be set to this path before
-     * service is called.
+     *                   javax.servlet.include.servlet_path will be set to this path before
+     *                   service is called.
      */
     public ServletHolder(ServletHandler handler,
                          String name,
                          String className,
-                         String forcedPath)
-    {
-        this(handler,(name==null)?className:name,className);
-        _forcedPath=forcedPath;
+                         String forcedPath) {
+        this(handler, (name == null) ? className : name, className);
+        _forcedPath = forcedPath;
     }
 
-    
+
     /* ------------------------------------------------------------ */
-    public int getInitOrder()
-    {
+    public int getInitOrder() {
         return _initOrder;
     }
 
     /* ------------------------------------------------------------ */
-    /** Set the initialize order.
+
+    /**
+     * Set the initialize order.
      * Holders with order<0, are initialized on use. Those with
      * order>=0 are initialized in increasing order when the handler
      * is started.
      */
-    public void setInitOrder(int order)
-    {
-        _initOnStartup=true;
+    public void setInitOrder(int order) {
+        _initOnStartup = true;
         _initOrder = order;
     }
 
     /* ------------------------------------------------------------ */
-    /** Comparitor by init order.
+
+    /**
+     * Comparitor by init order.
      */
-    public int compareTo(Object o)
-    {
-        if (o instanceof ServletHolder)
-        {
-            ServletHolder sh= (ServletHolder)o;
-            if (sh==this)
+    public int compareTo(Object o) {
+        if (o instanceof ServletHolder) {
+            ServletHolder sh = (ServletHolder) o;
+            if (sh == this)
                 return 0;
-            if (sh._initOrder<_initOrder)
+            if (sh._initOrder < _initOrder)
                 return 1;
-            if (sh._initOrder>_initOrder)
+            if (sh._initOrder > _initOrder)
                 return -1;
-            int c=_className.compareTo(sh._className);
-            if (c==0)
-                c=_name.compareTo(sh._name);
-            if (c==0)
-                c=this.hashCode()>o.hashCode()?1:-1;
+            int c = _className.compareTo(sh._className);
+            if (c == 0)
+                c = _name.compareTo(sh._name);
+            if (c == 0)
+                c = this.hashCode() > o.hashCode() ? 1 : -1;
             return c;
         }
         return 1;
     }
 
     /* ------------------------------------------------------------ */
-    public boolean equals(Object o)
-    {
-        return compareTo(o)==0;
+    public boolean equals(Object o) {
+        return compareTo(o) == 0;
     }
 
     /* ------------------------------------------------------------ */
-    public int hashCode()
-    {
+    public int hashCode() {
         return _name.hashCode();
     }
 
     /* ---------------------------------------------------------------- */
-    public ServletContext getServletContext()
-    {
-        return ((ServletHandler)_httpHandler).getServletContext();
+    public ServletContext getServletContext() {
+        return ((ServletHandler) _httpHandler).getServletContext();
     }
 
     /* ------------------------------------------------------------ */
-    /** Link a user role.
+
+    /**
+     * Link a user role.
      * Translate the role name used by a servlet, to the link name
      * used by the container.
+     *
      * @param name The role name as used by the servlet
      * @param link The role name as used by the container.
      */
-    public synchronized void setUserRoleLink(String name,String link)
-    {
-        if (_roleMap==null)
-            _roleMap=new HashMap();
-        _roleMap.put(name,link);
+    public synchronized void setUserRoleLink(String name, String link) {
+        if (_roleMap == null)
+            _roleMap = new HashMap();
+        _roleMap.put(name, link);
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** get a user role link.
+
+    /**
+     * get a user role link.
+     *
      * @param name The name of the role
      * @return The name as translated by the link. If no link exists,
      * the name is returned.
      */
-    public String getUserRoleLink(String name)
-    {
-        if (_roleMap==null)
+    public String getUserRoleLink(String name) {
+        if (_roleMap == null)
             return name;
-        String link=(String)_roleMap.get(name);
-        return (link==null)?name:link;
+        String link = (String) _roleMap.get(name);
+        return (link == null) ? name : link;
     }
 
     /* ------------------------------------------------------------ */
-    /** 
-     * @param role Role name that is added to UserPrincipal when this servlet
-     * is called. 
-     */
-    public void setRunAs(String role)
-    {
-        _runAs=role;
-    }
-    
+
     /* ------------------------------------------------------------ */
-    public String getRunAs()
-    {
+    public String getRunAs() {
         return _runAs;
     }
-    
+
+    /**
+     * @param role Role name that is added to UserPrincipal when this servlet
+     *             is called.
+     */
+    public void setRunAs(String role) {
+        _runAs = role;
+    }
+
     /* ------------------------------------------------------------ */
     public void start()
-        throws Exception
-    {
-        _unavailable=0;
+            throws Exception {
+        _unavailable = 0;
         super.start();
-        
+
         if (!javax.servlet.Servlet.class
-            .isAssignableFrom(_class))
-        {
-            Exception ex = new IllegalStateException("Servlet "+_class+
-                                            " is not a javax.servlet.Servlet");
+                .isAssignableFrom(_class)) {
+            Exception ex = new IllegalStateException("Servlet " + _class +
+                    " is not a javax.servlet.Servlet");
             super.stop();
             throw ex;
-        }        
+        }
 
-        _config=new Config();
-        if (_runAs!=null)
-            _realm=_httpHandler.getHttpContext().getRealm();
+        _config = new Config();
+        if (_runAs != null)
+            _realm = _httpHandler.getHttpContext().getRealm();
 
         if (javax.servlet.SingleThreadModel.class
-            .isAssignableFrom(_class))
-            _servlets=new Stack();
+                .isAssignableFrom(_class))
+            _servlets = new Stack();
 
-        if (_initOnStartup)
-        {
-            _servlet=(Servlet)newInstance();
-            try
-            {
-                initServlet(_servlet,_config);
-            }
-            catch(Throwable e)
-            {
-                _servlet=null;
-                _config=null;
+        if (_initOnStartup) {
+            _servlet = (Servlet) newInstance();
+            try {
+                initServlet(_servlet, _config);
+            } catch (Throwable e) {
+                _servlet = null;
+                _config = null;
                 if (e instanceof Exception)
                     throw (Exception) e;
                 else if (e instanceof Error)
-                    throw (Error)e;
+                    throw (Error) e;
                 else
                     throw new ServletException(e);
-            }            
-        }  
+            }
+        }
     }
 
     /* ------------------------------------------------------------ */
-    public void stop()
-    {
-        Principal user=null;
-        try
-        {
+    public void stop() {
+        Principal user = null;
+        try {
             // Handle run as
-            if (_runAs!=null && _realm!=null)
-                user=_realm.pushRole(null,_runAs);
-                
-            if (_servlet!=null)
+            if (_runAs != null && _realm != null)
+                user = _realm.pushRole(null, _runAs);
+
+            if (_servlet != null)
                 _servlet.destroy();
-            _servlet=null;
-            
-            while (_servlets!=null && _servlets.size()>0)
-            {
-                Servlet s = (Servlet)_servlets.pop();
+            _servlet = null;
+
+            while (_servlets != null && _servlets.size() > 0) {
+                Servlet s = (Servlet) _servlets.pop();
                 s.destroy();
             }
-            _config=null;
-        }
-        finally
-        {
+            _config = null;
+        } finally {
             super.stop();
             // pop run-as role
-            if (_runAs!=null && _realm!=null && user!=null)
+            if (_runAs != null && _realm != null && user != null)
                 _realm.popRole(user);
         }
     }
-    
+
 
     /* ------------------------------------------------------------ */
-    /** Get the servlet.
+
+    /**
+     * Get the servlet.
+     *
      * @return The servlet
      */
     public synchronized Servlet getServlet()
-        throws ServletException
-    {
+            throws ServletException {
         // Handle previous unavailability
-        if (_unavailable!=0)
-        {
-            if (_unavailable<0 || _unavailable>0 && System.currentTimeMillis()<_unavailable)
+        if (_unavailable != 0) {
+            if (_unavailable < 0 || _unavailable > 0 && System.currentTimeMillis() < _unavailable)
                 throw _unavailableEx;
-            _unavailable=0;
-            _unavailableEx=null;
+            _unavailable = 0;
+            _unavailableEx = null;
         }
-        
-        try
-        {
-            if (_servlets!=null)
-            {
-                Servlet servlet=null;
-                if (_servlets.size()==0)
-                {
-                    servlet= (Servlet)newInstance();
-                    if (_config==null)
-                    	_config=new Config();
-                    initServlet(servlet,_config);
-                }
-                else
-                    servlet = (Servlet)_servlets.pop();
+
+        try {
+            if (_servlets != null) {
+                Servlet servlet = null;
+                if (_servlets.size() == 0) {
+                    servlet = (Servlet) newInstance();
+                    if (_config == null)
+                        _config = new Config();
+                    initServlet(servlet, _config);
+                } else
+                    servlet = (Servlet) _servlets.pop();
 
                 return servlet;
             }
-            
-            if (_servlet==null)
-            {
-                _servlet=(Servlet)newInstance();
-                if (_config==null)
-                	_config=new Config();
-                initServlet(_servlet,_config);
+
+            if (_servlet == null) {
+                _servlet = (Servlet) newInstance();
+                if (_config == null)
+                    _config = new Config();
+                initServlet(_servlet, _config);
             }
-        
+
             return _servlet;
-        }
-        catch(UnavailableException e)
-        {
-            _servlet=null;
-            _config=null;
+        } catch (UnavailableException e) {
+            _servlet = null;
+            _config = null;
             return makeUnavailable(e);
-        }
-        catch(ServletException e)
-        {
-            _servlet=null;
-            _config=null;
+        } catch (ServletException e) {
+            _servlet = null;
+            _config = null;
             throw e;
+        } catch (Throwable e) {
+            _servlet = null;
+            _config = null;
+            throw new ServletException("init", e);
         }
-        catch(Throwable e)
-        {
-            _servlet=null;
-            _config=null;
-            throw new ServletException("init",e);
-        }    
     }
 
     /* ------------------------------------------------------------ */
-    private Servlet makeUnavailable(UnavailableException e) 
-      throws UnavailableException 
-    {
-        _unavailableEx=e;
-        _unavailable=-1;
-        if (e.isPermanent())   
-            _unavailable=-1;
-        else
-	{
-            if (_unavailableEx.getUnavailableSeconds()>0)
-                _unavailable=System.currentTimeMillis()+1000*_unavailableEx.getUnavailableSeconds();
+    private Servlet makeUnavailable(UnavailableException e)
+            throws UnavailableException {
+        _unavailableEx = e;
+        _unavailable = -1;
+        if (e.isPermanent())
+            _unavailable = -1;
+        else {
+            if (_unavailableEx.getUnavailableSeconds() > 0)
+                _unavailable = System.currentTimeMillis() + 1000 * _unavailableEx.getUnavailableSeconds();
             else
-                _unavailable=System.currentTimeMillis()+5000; // TODO configure
-	}
-   
+                _unavailable = System.currentTimeMillis() + 5000; // TODO configure
+        }
+
         throw _unavailableEx;
     }
 
     /* ------------------------------------------------------------ */
-    private void initServlet(Servlet servlet, ServletConfig config) 
-    	throws ServletException
-    {
-        Principal user=null;
-        try
-        {
+    private void initServlet(Servlet servlet, ServletConfig config)
+            throws ServletException {
+        Principal user = null;
+        try {
             // Handle run as
-            if (_runAs!=null && _realm!=null)
-                user=_realm.pushRole(null,_runAs);
+            if (_runAs != null && _realm != null)
+                user = _realm.pushRole(null, _runAs);
             servlet.init(config);
-        }
-        finally
-        {
+        } finally {
             // pop run-as role
-            if (_runAs!=null && _realm!=null && user!=null)
+            if (_runAs != null && _realm != null && user != null)
                 _realm.popRole(user);
         }
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** Service a request with this servlet.
+
+    /**
+     * Service a request with this servlet.
      */
     public void handle(ServletRequest request,
                        ServletResponse response)
-        throws ServletException,
-               UnavailableException,
-               IOException
-    {
-        if (_class==null)
+            throws ServletException,
+            UnavailableException,
+            IOException {
+        if (_class == null)
             throw new UnavailableException("Servlet Not Initialized");
-        
-        Servlet servlet=(!_initOnStartup||_servlets!=null)?getServlet():_servlet;
-        if (servlet==null)
-            throw new UnavailableException("Could not instantiate "+_class);
+
+        Servlet servlet = (!_initOnStartup || _servlets != null) ? getServlet() : _servlet;
+        if (servlet == null)
+            throw new UnavailableException("Could not instantiate " + _class);
 
         // Service the request
-        boolean servlet_error=true;
-        Principal user=null;
-        HttpRequest http_request=null;
-        try
-        {
+        boolean servlet_error = true;
+        Principal user = null;
+        HttpRequest http_request = null;
+        try {
             // Handle aliased path
-            if (_forcedPath!=null)
+            if (_forcedPath != null)
                 // TODO complain about poor naming to the Jasper folks
-                request.setAttribute("org.apache.catalina.jsp_file",_forcedPath);
+                request.setAttribute("org.apache.catalina.jsp_file", _forcedPath);
 
             // Handle run as
-            if (_runAs!=null && _realm!=null)
-            {
-                http_request=getHttpContext().getHttpConnection().getRequest();
-                user=_realm.pushRole(http_request.getUserPrincipal(),_runAs);
+            if (_runAs != null && _realm != null) {
+                http_request = getHttpContext().getHttpConnection().getRequest();
+                user = _realm.pushRole(http_request.getUserPrincipal(), _runAs);
                 http_request.setUserPrincipal(user);
             }
-            
-            servlet.service(request,response);
-            servlet_error=false;
-        }
-        catch(UnavailableException e)
-        {
-            if (_servlets!=null && servlet!=null)
+
+            servlet.service(request, response);
+            servlet_error = false;
+        } catch (UnavailableException e) {
+            if (_servlets != null && servlet != null)
                 stop();
             makeUnavailable(e);
-        }
-        finally
-        {
+        } finally {
             // pop run-as role
-            if (_runAs!=null && _realm!=null && user!=null)
-            {
-                user=_realm.popRole(user);
+            if (_runAs != null && _realm != null && user != null) {
+                user = _realm.popRole(user);
                 http_request.setUserPrincipal(user);
             }
 
             // Handle error params.
             if (servlet_error)
-                request.setAttribute("javax.servlet.error.servlet_name",getName());
+                request.setAttribute("javax.servlet.error.servlet_name", getName());
 
             // Return to singleThreaded pool
-            synchronized(this)
-            {
-                if (_servlets!=null && servlet!=null)
+            synchronized (this) {
+                if (_servlets != null && servlet != null)
                     _servlets.push(servlet);
             }
         }
     }
 
- 
+
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    class Config implements ServletConfig
-    {   
+    class Config implements ServletConfig {
         /* -------------------------------------------------------- */
-        public String getServletName()
-        {
+        public String getServletName() {
             return getName();
-        }
-        
-        /* -------------------------------------------------------- */
-        public ServletContext getServletContext()
-        {
-            return ((ServletHandler)_httpHandler).getServletContext();
         }
 
         /* -------------------------------------------------------- */
-        public String getInitParameter(String param)
-        {
+        public ServletContext getServletContext() {
+            return ((ServletHandler) _httpHandler).getServletContext();
+        }
+
+        /* -------------------------------------------------------- */
+        public String getInitParameter(String param) {
             return ServletHolder.this.getInitParameter(param);
         }
-    
+
         /* -------------------------------------------------------- */
-        public Enumeration getInitParameterNames()
-        {
+        public Enumeration getInitParameterNames() {
             return ServletHolder.this.getInitParameterNames();
         }
     }

@@ -19,21 +19,17 @@ import javax.management.MBeanException;
 
 
 /**
- * 
  * JettyWebConfiguration
  *
  * @author janb
  * @version $Revision: 1.1 $ $Date: 2004/09/27 14:33:58 $
- *
  */
-public class JettyWebConfigurationMBean extends net.lightbody.bmp.proxy.jetty.jetty.servlet.jmx.ConfigurationMBean
-{
-    public JettyWebConfigurationMBean ()
-    throws MBeanException
-    {}
-    
-    protected void defineManagedResource ()
-    {
+public class JettyWebConfigurationMBean extends net.lightbody.bmp.proxy.jetty.jetty.servlet.jmx.ConfigurationMBean {
+    public JettyWebConfigurationMBean()
+            throws MBeanException {
+    }
+
+    protected void defineManagedResource() {
         super.defineManagedResource();
     }
 

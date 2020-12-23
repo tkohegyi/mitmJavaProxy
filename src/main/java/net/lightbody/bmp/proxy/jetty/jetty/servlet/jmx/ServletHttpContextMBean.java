@@ -21,30 +21,33 @@ import javax.management.MBeanException;
 
 
 /* ------------------------------------------------------------ */
-/** Web Application MBean.
+
+/**
+ * Web Application MBean.
  * Note that while Web Applications are HttpContexts, the MBean is
  * not derived from HttpContextMBean as they are managed differently.
  *
- * @version $Revision: 1.6 $
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.6 $
  */
-public class ServletHttpContextMBean extends HttpContextMBean
-{
+public class ServletHttpContextMBean extends HttpContextMBean {
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @exception MBeanException 
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
      */
     public ServletHttpContextMBean()
-        throws MBeanException
-    {}
+            throws MBeanException {
+    }
 
     /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
+    protected void defineManagedResource() {
         super.defineManagedResource();
 
         defineOperation("addServlet",
-                        new String[] {STRING,STRING,STRING},
-                        IMPACT_ACTION);
+                new String[]{STRING, STRING, STRING},
+                IMPACT_ACTION);
     }
 }

@@ -22,47 +22,42 @@ import java.util.Random;
 
 
 /* ------------------------------------------------------------ */
-/** An in-memory implementation of SessionManager.
+
+/**
+ * An in-memory implementation of SessionManager.
  *
- * @version $Id: HashSessionManager.java,v 1.16 2004/05/09 20:32:27 gregwilkins Exp $
  * @author Greg Wilkins (gregw)
+ * @version $Id: HashSessionManager.java,v 1.16 2004/05/09 20:32:27 gregwilkins Exp $
  */
-public class HashSessionManager extends AbstractSessionManager
-{
+public class HashSessionManager extends AbstractSessionManager {
     /* ------------------------------------------------------------ */
-    public HashSessionManager()
-    {
+    public HashSessionManager() {
         super();
     }
-    
+
     /* ------------------------------------------------------------ */
-    public HashSessionManager(Random random)
-    {
+    public HashSessionManager(Random random) {
         super(random);
     }
 
     /* ------------------------------------------------------------ */
-    protected AbstractSessionManager.Session newSession(HttpServletRequest request)
-    {
+    protected AbstractSessionManager.Session newSession(HttpServletRequest request) {
         return new Session(request);
     }
-    
+
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    protected class Session extends AbstractSessionManager.Session
-    {
+    protected class Session extends AbstractSessionManager.Session {
         /* ------------------------------------------------------------- */
-        protected Session(HttpServletRequest request)
-        {
+        protected Session(HttpServletRequest request) {
             super(request);
         }
-        
+
         /* ------------------------------------------------------------ */
-        protected Map newAttributeMap()
-        {
+        protected Map newAttributeMap() {
             return new HashMap(3);
         }
     }
-    
+
 }

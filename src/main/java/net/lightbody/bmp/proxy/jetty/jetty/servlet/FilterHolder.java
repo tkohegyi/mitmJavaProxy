@@ -23,105 +23,94 @@ import javax.servlet.ServletContext;
 import java.util.Enumeration;
 
 /* --------------------------------------------------------------------- */
-/** 
- * @version $Id: FilterHolder.java,v 1.31 2005/04/07 09:15:33 gregwilkins Exp $
+
+/**
  * @author Greg Wilkins
+ * @version $Id: FilterHolder.java,v 1.31 2005/04/07 09:15:33 gregwilkins Exp $
  */
 public class FilterHolder
-    extends Holder
-{
+        extends Holder {
     /* ------------------------------------------------------------ */
 
     private transient Filter _filter;
     private transient Config _config;
-        
+
     /* ---------------------------------------------------------------- */
-    /** Constructor for Serialization.
+
+    /**
+     * Constructor for Serialization.
      */
-    public FilterHolder()
-    {}
-    
+    public FilterHolder() {
+    }
+
     /* ---------------------------------------------------------------- */
     public FilterHolder(HttpHandler httpHandler,
                         String name,
-                        String className)
-    {
-        super(httpHandler,name,className);
+                        String className) {
+        super(httpHandler, name, className);
     }
 
 
-    
-
     /* ------------------------------------------------------------ */
     public void start()
-        throws Exception
-    {
+            throws Exception {
         super.start();
-        
+
         if (!javax.servlet.Filter.class
-            .isAssignableFrom(_class))
-        {
+                .isAssignableFrom(_class)) {
             super.stop();
-            throw new IllegalStateException(_class+" is not a javax.servlet.Filter");
+            throw new IllegalStateException(_class + " is not a javax.servlet.Filter");
         }
 
-        _filter=(Filter)newInstance();
-        _config=new Config();
+        _filter = (Filter) newInstance();
+        _config = new Config();
         _filter.init(_config);
     }
 
     /* ------------------------------------------------------------ */
-    public void stop()
-    {
-        if (_filter!=null)
+    public void stop() {
+        if (_filter != null)
             _filter.destroy();
-        _filter=null;
-        _config=null;
-        super.stop();   
+        _filter = null;
+        _config = null;
+        super.stop();
     }
-    
+
     /* ------------------------------------------------------------ */
-    public Filter getFilter()
-    {
+    public Filter getFilter() {
         return _filter;
     }
 
     /* ------------------------------------------------------------ */
-    public String toString()
-    {
+    public String toString() {
         return getName();
     }
-    
+
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    class Config implements FilterConfig
-    {
+    class Config implements FilterConfig {
         /* ------------------------------------------------------------ */
-        public String getFilterName()
-        {
+        public String getFilterName() {
             return FilterHolder.this.getName();
         }
 
         /* ------------------------------------------------------------ */
-        public ServletContext getServletContext()
-        {
-            return ((WebApplicationHandler)_httpHandler).getServletContext();
+        public ServletContext getServletContext() {
+            return ((WebApplicationHandler) _httpHandler).getServletContext();
         }
-        
+
         /* -------------------------------------------------------- */
-        public String getInitParameter(String param)
-        {
+        public String getInitParameter(String param) {
             return FilterHolder.this.getInitParameter(param);
         }
-    
+
         /* -------------------------------------------------------- */
-        public Enumeration getInitParameterNames()
-        {
+        public Enumeration getInitParameterNames() {
             return FilterHolder.this.getInitParameterNames();
         }
     }
-    
+
 }
 
 

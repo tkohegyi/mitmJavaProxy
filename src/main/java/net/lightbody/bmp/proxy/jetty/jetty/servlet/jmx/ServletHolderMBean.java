@@ -25,50 +25,48 @@ import java.util.Map;
 
 
 /* ------------------------------------------------------------ */
-/** 
- *
- * @version $Revision: 1.7 $
+
+/**
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.7 $
  */
-public class ServletHolderMBean extends HolderMBean 
-{
+public class ServletHolderMBean extends HolderMBean {
     /* ------------------------------------------------------------ */
     private ServletHolder _holder;
-    
+
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @exception MBeanException 
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
      */
     public ServletHolderMBean()
-        throws MBeanException
-    {}
-    
-    /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
-        super.defineManagedResource();
-        defineAttribute("initOrder");
-        defineAttribute("paths",READ_ONLY,ON_MBEAN);
-
-        _holder=(ServletHolder)getManagedResource();
+            throws MBeanException {
     }
 
     /* ------------------------------------------------------------ */
-    public String[] getPaths()
-    {
-        ServletHandler handler = (ServletHandler)_holder.getHttpHandler();
+    protected void defineManagedResource() {
+        super.defineManagedResource();
+        defineAttribute("initOrder");
+        defineAttribute("paths", READ_ONLY, ON_MBEAN);
+
+        _holder = (ServletHolder) getManagedResource();
+    }
+
+    /* ------------------------------------------------------------ */
+    public String[] getPaths() {
+        ServletHandler handler = (ServletHandler) _holder.getHttpHandler();
         Map servletMap = handler.getServletMap();
         ArrayList paths = new ArrayList(servletMap.size());
         Iterator iter = servletMap.entrySet().iterator();
-        while (iter.hasNext())
-        {
-            Map.Entry entry =(Map.Entry)iter.next();
-            if (entry.getValue()==_holder)
+        while (iter.hasNext()) {
+            Map.Entry entry = (Map.Entry) iter.next();
+            if (entry.getValue() == _holder)
                 paths.add(entry.getKey());
         }
-        return (String[])paths.toArray(new String[paths.size()]);
+        return (String[]) paths.toArray(new String[paths.size()]);
     }
-    
-    
+
 
 }

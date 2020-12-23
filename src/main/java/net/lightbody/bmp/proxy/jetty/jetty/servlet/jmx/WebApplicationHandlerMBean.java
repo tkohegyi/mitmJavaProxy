@@ -27,46 +27,45 @@ import java.util.Map;
 
 
 /* ------------------------------------------------------------ */
-/** 
- *
- * @version $Revision: 1.9 $
+
+/**
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.9 $
  */
-public class WebApplicationHandlerMBean extends ServletHandlerMBean
-{
+public class WebApplicationHandlerMBean extends ServletHandlerMBean {
     /* ------------------------------------------------------------ */
-    private static final Log log = LogFactory.getLog (WebApplicationHandlerMBean.class);
+    private static final Log log = LogFactory.getLog(WebApplicationHandlerMBean.class);
     private WebApplicationHandler _webappHandler;
     private Map _filters = new HashMap();
-    
+
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @exception MBeanException 
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
      */
     public WebApplicationHandlerMBean()
-        throws MBeanException
-    {}
-    
-    /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
-        super.defineManagedResource();
-        defineAttribute("acceptRanges"); 
-        defineAttribute("filterChainsCached"); 
-        defineAttribute("filters",READ_ONLY,ON_MBEAN);
-        _webappHandler=(WebApplicationHandler)getManagedResource();
+            throws MBeanException {
     }
 
     /* ------------------------------------------------------------ */
-    public ObjectName[] getFilters()
-    {
-        List l=_webappHandler.getFilters();
-        return getComponentMBeans(l.toArray(),_filters);  
+    protected void defineManagedResource() {
+        super.defineManagedResource();
+        defineAttribute("acceptRanges");
+        defineAttribute("filterChainsCached");
+        defineAttribute("filters", READ_ONLY, ON_MBEAN);
+        _webappHandler = (WebApplicationHandler) getManagedResource();
     }
-    
-    public void postDeregister ()
-    {
-       destroyComponentMBeans(_filters);
+
+    /* ------------------------------------------------------------ */
+    public ObjectName[] getFilters() {
+        List l = _webappHandler.getFilters();
+        return getComponentMBeans(l.toArray(), _filters);
+    }
+
+    public void postDeregister() {
+        destroyComponentMBeans(_filters);
         super.postDeregister();
     }
 }

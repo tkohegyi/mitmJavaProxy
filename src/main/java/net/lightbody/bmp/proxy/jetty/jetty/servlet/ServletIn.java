@@ -21,74 +21,63 @@ import javax.servlet.ServletInputStream;
 import java.io.IOException;
 
 
-class ServletIn extends ServletInputStream
-{
+class ServletIn extends ServletInputStream {
     HttpInputStream _in;
 
     /* ------------------------------------------------------------ */
-    ServletIn(HttpInputStream in)
-    {
-        _in=in;
+    ServletIn(HttpInputStream in) {
+        _in = in;
     }
-    
+
     /* ------------------------------------------------------------ */
     public int read()
-        throws IOException
-    {
+            throws IOException {
         return _in.read();
     }
-    
+
     /* ------------------------------------------------------------ */
-    public int read(byte b[]) throws IOException
-    {
+    public int read(byte b[]) throws IOException {
         return _in.read(b);
     }
-    
+
     /* ------------------------------------------------------------ */
-    public int read(byte b[], int off, int len) throws IOException
-    {    
-        return _in.read(b,off,len);
+    public int read(byte b[], int off, int len) throws IOException {
+        return _in.read(b, off, len);
     }
-    
+
     /* ------------------------------------------------------------ */
-    public long skip(long len) throws IOException
-    {
+    public long skip(long len) throws IOException {
         return _in.skip(len);
     }
-    
+
     /* ------------------------------------------------------------ */
     public int available()
-        throws IOException
-    {
+            throws IOException {
         return _in.available();
     }
-    
+
     /* ------------------------------------------------------------ */
     public void close()
-        throws IOException
-    {
+            throws IOException {
         _in.close();
     }
-    
+
     /* ------------------------------------------------------------ */
-    public boolean markSupported()
-    {
+    public boolean markSupported() {
         return _in.markSupported();
     }
-    
+
     /* ------------------------------------------------------------ */
     public void reset()
-        throws IOException
-    {
+            throws IOException {
         _in.reset();
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void mark(int readlimit)
-    {
+    public void mark(int readlimit) {
         _in.mark(readlimit);
     }
-    
+
 }
 
 

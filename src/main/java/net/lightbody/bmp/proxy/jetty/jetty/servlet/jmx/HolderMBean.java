@@ -27,60 +27,56 @@ import javax.management.ObjectName;
 
 
 /* ------------------------------------------------------------ */
-/** 
- *
- * @version $Revision: 1.5 $
+
+/**
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.5 $
  */
-public class HolderMBean extends LifeCycleMBean  
-{
+public class HolderMBean extends LifeCycleMBean {
     private static Log log = LogFactory.getLog(HolderMBean.class);
 
     /* ------------------------------------------------------------ */
     private Holder _holder;
-    
+
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @exception MBeanException 
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
      */
     public HolderMBean()
-        throws MBeanException
-    {}
-    
+            throws MBeanException {
+    }
+
     /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
+    protected void defineManagedResource() {
         super.defineManagedResource();
-        
+
         defineAttribute("name");
         defineAttribute("displayName");
         defineAttribute("className");
-        defineAttribute("initParameters",READ_ONLY,ON_MBEAN);
-        
-        _holder=(Holder)getManagedResource();
+        defineAttribute("initParameters", READ_ONLY, ON_MBEAN);
+
+        _holder = (Holder) getManagedResource();
     }
-    
+
     /* ---------------------------------------------------------------- */
-    public String getInitParameters()
-    {
-        return ""+_holder.getInitParameters();
+    public String getInitParameters() {
+        return "" + _holder.getInitParameters();
     }
-    
+
     /* ------------------------------------------------------------ */
     public synchronized ObjectName uniqueObjectName(MBeanServer server,
-                                                    String objectName)
-    {
-        try
-        {
-            String name=_holder.getDisplayName();
-            if (name==null || name.length()==0)
-                name=_holder.getClassName();
-            return new ObjectName(objectName+",name="+name);
-        }
-        catch(Exception e)
-        {
-            log.warn(LogSupport.EXCEPTION,e);
-            return super.uniqueObjectName(server,objectName);
+                                                    String objectName) {
+        try {
+            String name = _holder.getDisplayName();
+            if (name == null || name.length() == 0)
+                name = _holder.getClassName();
+            return new ObjectName(objectName + ",name=" + name);
+        } catch (Exception e) {
+            log.warn(LogSupport.EXCEPTION, e);
+            return super.uniqueObjectName(server, objectName);
         }
     }
 }

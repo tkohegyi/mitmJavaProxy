@@ -15,9 +15,20 @@
 
 package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
-import net.lightbody.bmp.proxy.jetty.http.*;
+import net.lightbody.bmp.proxy.jetty.http.HttpContext;
+import net.lightbody.bmp.proxy.jetty.http.HttpFields;
+import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
+import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
+import net.lightbody.bmp.proxy.jetty.http.InclusiveByteRange;
+import net.lightbody.bmp.proxy.jetty.http.MultiPartResponse;
+import net.lightbody.bmp.proxy.jetty.http.ResourceCache;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import net.lightbody.bmp.proxy.jetty.util.*;
+import net.lightbody.bmp.proxy.jetty.util.CachedResource;
+import net.lightbody.bmp.proxy.jetty.util.IO;
+import net.lightbody.bmp.proxy.jetty.util.LogSupport;
+import net.lightbody.bmp.proxy.jetty.util.Resource;
+import net.lightbody.bmp.proxy.jetty.util.URI;
+import net.lightbody.bmp.proxy.jetty.util.WriterOutputStream;
 import org.apache.commons.logging.Log;
 
 import javax.servlet.RequestDispatcher;
@@ -34,40 +45,40 @@ import java.util.Enumeration;
 import java.util.List;
 
 /* ------------------------------------------------------------ */
+
 /**
  * The default servlet. This servlet, normally mapped to /, provides the handling for static
  * content, OPTION and TRACE methods for the context. The following initParameters are supported:
- * 
+ *
  * <PRE>
- * 
+ * <p>
  * acceptRanges If true, range requests and responses are supported
- * 
+ * <p>
  * dirAllowed If true, directory listings are returned if no welcome file is found. Else 403
  * Forbidden.
- * 
+ * <p>
  * putAllowed If true, the PUT method is allowed
- * 
+ * <p>
  * delAllowed If true, the DELETE method is allowed
- * 
+ * <p>
  * redirectWelcome If true, welcome files are redirected rather than forwarded to.
- * 
+ * <p>
  * minGzipLength If set to a positive integer, then static content larger than this will be served
  * as gzip content encoded if a matching resource is found ending with ".gz"
- * 
+ * <p>
  * resourceBase Set to replace the context resource base
- * 
+ * <p>
  * relativeResourceBase Set with a pathname relative to the base of the servlet context root. Useful
  * for only serving static content out of only specific subdirectories.
- * 
+ *
  * </PRE>
- * 
+ * <p>
  * The MOVE method is allowed if PUT and DELETE are allowed
- * 
- * @version $Id: Default.java,v 1.51 2006/10/08 14:13:18 gregwilkins Exp $
+ *
  * @author Greg Wilkins (gregw)
+ * @version $Id: Default.java,v 1.51 2006/10/08 14:13:18 gregwilkins Exp $
  */
-public class Default extends HttpServlet
-{
+public class Default extends HttpServlet {
     private static Log log = LogFactory.getLog(Default.class);
 
     private HttpContext _httpContext;
@@ -83,8 +94,7 @@ public class Default extends HttpServlet
     private Resource _resourceBase;
 
     /* ------------------------------------------------------------ */
-    public void init() throws UnavailableException
-    {
+    public void init() throws UnavailableException {
         ServletContext config = getServletContext();
         _servletHandler = ((ServletHandler.Context) config).getServletHandler();
         _httpContext = _servletHandler.getHttpContext();
@@ -97,14 +107,10 @@ public class Default extends HttpServlet
         _minGzipLength = getInitInt("minGzipLength");
 
         String rrb = getInitParameter("relativeResourceBase");
-        if (rrb != null)
-        {
-            try
-            {
+        if (rrb != null) {
+            try {
                 _resourceBase = _httpContext.getBaseResource().addPath(rrb);
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 log.warn(LogSupport.EXCEPTION, e);
                 throw new UnavailableException(e.toString());
             }
@@ -115,14 +121,10 @@ public class Default extends HttpServlet
         if (rrb != null && rb != null)
             throw new UnavailableException("resourceBase & relativeResourceBase");
 
-        if (rb != null)
-        {
-            try
-            {
+        if (rb != null) {
+            try {
                 _resourceBase = Resource.newResource(rb);
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 log.warn(LogSupport.EXCEPTION, e);
                 throw new UnavailableException(e.toString());
             }
@@ -139,15 +141,13 @@ public class Default extends HttpServlet
     }
 
     /* ------------------------------------------------------------ */
-    private boolean getInitBoolean(String name)
-    {
+    private boolean getInitBoolean(String name) {
         String value = getInitParameter(name);
         return value != null && value.length() > 0 && (value.startsWith("t") || value.startsWith("T") || value.startsWith("y") || value.startsWith("Y") || value.startsWith("1"));
     }
 
     /* ------------------------------------------------------------ */
-    private int getInitInt(String name)
-    {
+    private int getInitInt(String name) {
         String value = getInitParameter(name);
         if (value != null && value.length() > 0)
             return Integer.parseInt(value);
@@ -155,57 +155,50 @@ public class Default extends HttpServlet
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * get Resource to serve. Map a path to a resource. The default implementation calls
      * HttpContext.getResource but derived servlets may provide their own mapping.
-     * 
+     *
      * @param pathInContext The path to find a resource for.
      * @return The resource to serve.
      */
-    protected Resource getResource(String pathInContext) throws IOException
-    {
+    protected Resource getResource(String pathInContext) throws IOException {
         Resource r = (_resourceBase == null) ? _httpContext.getResource(pathInContext) : _resourceBase.addPath(pathInContext);
-        
+
         if (log.isDebugEnabled())
             log.debug("RESOURCE=" + r);
         return r;
     }
 
     /* ------------------------------------------------------------ */
-    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
-    {
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String servletPath = (String) request.getAttribute(Dispatcher.__INCLUDE_SERVLET_PATH);
         String pathInfo = null;
-        if (servletPath == null)
-        {
+        if (servletPath == null) {
             servletPath = request.getServletPath();
             pathInfo = request.getPathInfo();
-        }
-        else
+        } else
             pathInfo = (String) request.getAttribute(Dispatcher.__INCLUDE_PATH_INFO);
 
         String pathInContext = URI.addPaths(servletPath, pathInfo);
-                
+
         boolean endsWithSlash = pathInContext.endsWith("/");
         Resource resource = getResource(pathInContext);
 
         // Is the method allowed?
         String method = request.getMethod();
-        if (_AllowString.indexOf(method) < 0)
-        {
-            if (resource != null && resource.exists())
-            {
+        if (_AllowString.indexOf(method) < 0) {
+            if (resource != null && resource.exists()) {
                 response.setHeader(HttpFields.__Allow, _AllowString);
                 response.sendError(HttpResponse.__405_Method_Not_Allowed);
-            }
-            else
+            } else
                 response.sendError(HttpResponse.__404_Not_Found);
             return;
         }
 
         // Handle the request
-        try
-        {
+        try {
             // handle by method.
             if (method.equals(HttpRequest.__GET) || method.equals(HttpRequest.__POST) || method.equals(HttpRequest.__HEAD))
                 handleGet(request, response, pathInContext, resource, endsWithSlash);
@@ -219,28 +212,20 @@ public class Default extends HttpServlet
                 handleOptions(request, response);
             else if (method.equals(HttpRequest.__TRACE))
                 _servletHandler.handleTrace(request, response);
-            else
-            {
+            else {
                 // anything else...
-                try
-                {
+                try {
                     if (resource.exists())
                         response.sendError(HttpResponse.__501_Not_Implemented);
                     else
                         _servletHandler.notFound(request, response);
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     LogSupport.ignore(log, e);
                 }
             }
-        }
-        catch (IllegalArgumentException e)
-        {
+        } catch (IllegalArgumentException e) {
             LogSupport.ignore(log, e);
-        }
-        finally
-        {
+        } finally {
             if (resource != null && !(resource instanceof CachedResource))
                 resource.release();
         }
@@ -248,22 +233,17 @@ public class Default extends HttpServlet
     }
 
     /* ------------------------------------------------------------------- */
-    public void handleGet(HttpServletRequest request, HttpServletResponse response, String pathInContext, Resource resource, boolean endsWithSlash) throws ServletException, IOException
-    {
+    public void handleGet(HttpServletRequest request, HttpServletResponse response, String pathInContext, Resource resource, boolean endsWithSlash) throws ServletException, IOException {
         if (resource == null || !resource.exists())
             response.sendError(HttpResponse.__404_Not_Found);
-        else
-        {
+        else {
 
             // check if directory
-            if (resource.isDirectory())
-            {
-                if (!endsWithSlash && !pathInContext.equals("/"))
-                {
+            if (resource.isDirectory()) {
+                if (!endsWithSlash && !pathInContext.equals("/")) {
                     String q = request.getQueryString();
                     StringBuffer buf = request.getRequestURL();
-                    if (q != null && q.length() != 0)
-                    {
+                    if (q != null && q.length() != 0) {
                         buf.append('?');
                         buf.append(q);
                     }
@@ -274,17 +254,13 @@ public class Default extends HttpServlet
 
                 // See if index file exists
                 String welcome = _httpContext.getWelcomeFile(resource);
-                if (welcome != null)
-                {
+                if (welcome != null) {
                     String ipath = URI.addPaths(pathInContext, welcome);
-                    if (_redirectWelcomeFiles)
-                    {
+                    if (_redirectWelcomeFiles) {
                         // Redirect to the index
                         response.setContentLength(0);
                         response.sendRedirect(URI.addPaths(_httpContext.getContextPath(), ipath));
-                    }
-                    else
-                    {
+                    } else {
                         // Forward to the index
                         RequestDispatcher dispatcher = _servletHandler.getRequestDispatcher(ipath);
                         dispatcher.forward(request, response);
@@ -298,9 +274,7 @@ public class Default extends HttpServlet
 
                 // If we got here, no forward to index took place
                 sendDirectory(request, response, resource, pathInContext.length() > 1);
-            }
-            else
-            {
+            } else {
                 // Check modified dates
                 if (!passConditionalHeaders(request, response, resource))
                     return;
@@ -312,34 +286,25 @@ public class Default extends HttpServlet
     }
 
     /* ------------------------------------------------------------------- */
-    public void handlePut(HttpServletRequest request, HttpServletResponse response, String pathInContext, Resource resource) throws ServletException, IOException
-    {
+    public void handlePut(HttpServletRequest request, HttpServletResponse response, String pathInContext, Resource resource) throws ServletException, IOException {
         boolean exists = resource != null && resource.exists();
         if (exists && !passConditionalHeaders(request, response, resource))
             return;
 
-        if (pathInContext.endsWith("/"))
-        {
-            if (!exists)
-            {
+        if (pathInContext.endsWith("/")) {
+            if (!exists) {
                 if (!resource.getFile().mkdirs())
                     response.sendError(HttpResponse.__403_Forbidden, "Directories could not be created");
-                else
-                {
+                else {
                     response.setStatus(HttpResponse.__201_Created);
                     response.flushBuffer();
                 }
-            }
-            else
-            {
+            } else {
                 response.setStatus(HttpResponse.__200_OK);
                 response.flushBuffer();
             }
-        }
-        else
-        {
-            try
-            {
+        } else {
+            try {
                 int toRead = request.getContentLength();
                 InputStream in = request.getInputStream();
                 OutputStream out = resource.getOutputStream();
@@ -351,9 +316,7 @@ public class Default extends HttpServlet
 
                 response.setStatus(exists ? HttpResponse.__200_OK : HttpResponse.__201_Created);
                 response.flushBuffer();
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 log.warn(LogSupport.EXCEPTION, ex);
                 response.sendError(HttpResponse.__403_Forbidden, ex.getMessage());
             }
@@ -361,50 +324,40 @@ public class Default extends HttpServlet
     }
 
     /* ------------------------------------------------------------------- */
-    public void handleDelete(HttpServletRequest request, HttpServletResponse response, String pathInContext, Resource resource) throws ServletException, IOException
-    {
+    public void handleDelete(HttpServletRequest request, HttpServletResponse response, String pathInContext, Resource resource) throws ServletException, IOException {
         if (!resource.exists() || !passConditionalHeaders(request, response, resource))
             return;
-        try
-        {
+        try {
             // delete the file
-            if (resource.delete())
-            {
+            if (resource.delete()) {
                 response.setStatus(HttpResponse.__204_No_Content);
                 response.flushBuffer();
-            }
-            else
+            } else
                 response.sendError(HttpResponse.__403_Forbidden);
-        }
-        catch (SecurityException sex)
-        {
+        } catch (SecurityException sex) {
             log.warn(LogSupport.EXCEPTION, sex);
             response.sendError(HttpResponse.__403_Forbidden, sex.getMessage());
         }
     }
 
     /* ------------------------------------------------------------------- */
-    public void handleMove(HttpServletRequest request, HttpServletResponse response, String pathInContext, Resource resource) throws ServletException, IOException
-    {
+    public void handleMove(HttpServletRequest request, HttpServletResponse response, String pathInContext, Resource resource) throws ServletException, IOException {
         if (!resource.exists() || !passConditionalHeaders(request, response, resource))
             return;
 
         String newPath = URI.canonicalPath(request.getHeader("new-uri"));
-        if (newPath == null)
-        {
+        if (newPath == null) {
             response.sendError(HttpResponse.__400_Bad_Request, "No new-uri");
             return;
         }
 
         String contextPath = _httpContext.getContextPath();
-        if (contextPath != null && !newPath.startsWith(contextPath))
-        {
+        if (contextPath != null && !newPath.startsWith(contextPath)) {
             response.sendError(HttpResponse.__405_Method_Not_Allowed, "Not in context");
             return;
         }
 
-        try
-        {
+        try {
             String newInfo = newPath;
             if (contextPath != null)
                 newInfo = newInfo.substring(contextPath.length());
@@ -413,9 +366,7 @@ public class Default extends HttpServlet
             resource.renameTo(newFile);
             response.setStatus(HttpResponse.__204_No_Content);
             response.flushBuffer();
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             log.warn(LogSupport.EXCEPTION, ex);
             response.sendError(HttpResponse.__500_Internal_Server_Error, "Error:" + ex);
             return;
@@ -424,8 +375,7 @@ public class Default extends HttpServlet
     }
 
     /* ------------------------------------------------------------ */
-    public void handleOptions(HttpServletRequest request, HttpServletResponse response) throws IOException
-    {
+    public void handleOptions(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // Handle OPTIONS request for entire server
         // 9.2
         response.setIntHeader(HttpFields.__ContentLength, 0);
@@ -437,20 +387,16 @@ public class Default extends HttpServlet
     /*
      * Check modification date headers.
      */
-    protected boolean passConditionalHeaders(HttpServletRequest request, HttpServletResponse response, Resource resource) throws IOException
-    {
-        if (!request.getMethod().equals(HttpRequest.__HEAD) && request.getAttribute(Dispatcher.__INCLUDE_REQUEST_URI) == null)
-        {
+    protected boolean passConditionalHeaders(HttpServletRequest request, HttpServletResponse response, Resource resource) throws IOException {
+        if (!request.getMethod().equals(HttpRequest.__HEAD) && request.getAttribute(Dispatcher.__INCLUDE_REQUEST_URI) == null) {
             // If we have meta data for the file
             // Try a direct match for most common requests. Avoids
             // parsing the date.
             ResourceCache.ResourceMetaData metaData = _httpContext.getResourceMetaData(resource);
-            if (metaData != null)
-            {
+            if (metaData != null) {
                 String ifms = request.getHeader(HttpFields.__IfModifiedSince);
                 String mdlm = metaData.getLastModified();
-                if (ifms != null && mdlm != null && ifms.equals(mdlm))
-                {
+                if (ifms != null && mdlm != null && ifms.equals(mdlm)) {
                     response.reset();
                     response.setStatus(HttpResponse.__304_Not_Modified);
                     response.flushBuffer();
@@ -461,19 +407,15 @@ public class Default extends HttpServlet
             long date = 0;
             // Parse the if[un]modified dates and compare to resource
 
-            if ((date = request.getDateHeader(HttpFields.__IfUnmodifiedSince)) > 0)
-            {
-                if (resource.lastModified() / 1000 > date / 1000)
-                {
+            if ((date = request.getDateHeader(HttpFields.__IfUnmodifiedSince)) > 0) {
+                if (resource.lastModified() / 1000 > date / 1000) {
                     response.sendError(HttpResponse.__412_Precondition_Failed);
                     return false;
                 }
             }
 
-            if ((date = request.getDateHeader(HttpFields.__IfModifiedSince)) > 0)
-            {
-                if (resource.lastModified() / 1000 <= date / 1000)
-                {
+            if ((date = request.getDateHeader(HttpFields.__IfModifiedSince)) > 0) {
+                if (resource.lastModified() / 1000 <= date / 1000) {
                     response.reset();
                     response.setStatus(HttpResponse.__304_Not_Modified);
                     response.flushBuffer();
@@ -485,10 +427,8 @@ public class Default extends HttpServlet
     }
 
     /* ------------------------------------------------------------------- */
-    protected void sendDirectory(HttpServletRequest request, HttpServletResponse response, Resource resource, boolean parent) throws IOException
-    {
-        if (!_dirAllowed)
-        {
+    protected void sendDirectory(HttpServletRequest request, HttpServletResponse response, Resource resource, boolean parent) throws IOException {
+        if (!_dirAllowed) {
             response.sendError(HttpResponse.__403_Forbidden);
             return;
         }
@@ -497,12 +437,10 @@ public class Default extends HttpServlet
         if (resource instanceof CachedResource)
             data = ((CachedResource) resource).getCachedData();
 
-        if (data == null)
-        {
+        if (data == null) {
             String base = URI.addPaths(request.getRequestURI(), "/");
             String dir = resource.getListHTML(base, parent);
-            if (dir == null)
-            {
+            if (dir == null) {
                 response.sendError(HttpResponse.__403_Forbidden, "No directory");
                 return;
             }
@@ -519,41 +457,32 @@ public class Default extends HttpServlet
     }
 
     /* ------------------------------------------------------------ */
-    protected void sendData(HttpServletRequest request, HttpServletResponse response, String pathInContext, Resource resource) throws IOException
-    {
+    protected void sendData(HttpServletRequest request, HttpServletResponse response, String pathInContext, Resource resource) throws IOException {
         long resLength = resource.length();
 
         boolean include = request.getAttribute(Dispatcher.__INCLUDE_REQUEST_URI) != null;
 
         // Get the output stream (or writer)
         OutputStream out = null;
-        try
-        {
+        try {
             out = response.getOutputStream();
-        }
-        catch (IllegalStateException e)
-        {
+        } catch (IllegalStateException e) {
             out = new WriterOutputStream(response.getWriter());
         }
 
         // see if there are any range headers
         Enumeration reqRanges = include ? null : request.getHeaders(HttpFields.__Range);
 
-        if (reqRanges == null || !reqRanges.hasMoreElements())
-        {
+        if (reqRanges == null || !reqRanges.hasMoreElements()) {
             // if there were no ranges, send entire entity
             Resource data = resource;
-            if (!include)
-            {
+            if (!include) {
                 // look for a gziped content.
-                if (_minGzipLength > 0)
-                {
+                if (_minGzipLength > 0) {
                     String accept = request.getHeader(HttpFields.__AcceptEncoding);
-                    if (accept != null && resLength > _minGzipLength && !pathInContext.endsWith(".gz"))
-                    {
+                    if (accept != null && resLength > _minGzipLength && !pathInContext.endsWith(".gz")) {
                         Resource gz = getResource(pathInContext + ".gz");
-                        if (gz.exists() && accept.indexOf("gzip") >= 0 && request.getAttribute(Dispatcher.__INCLUDE_REQUEST_URI) == null)
-                        {
+                        if (gz.exists() && accept.indexOf("gzip") >= 0 && request.getAttribute(Dispatcher.__INCLUDE_REQUEST_URI) == null) {
                             response.setHeader(HttpFields.__ContentEncoding, "gzip");
                             data = gz;
                             resLength = data.length();
@@ -571,8 +500,7 @@ public class Default extends HttpServlet
         List ranges = InclusiveByteRange.satisfiableRanges(reqRanges, resLength);
 
         // if there are no satisfiable ranges, send 416 response
-        if (ranges == null || ranges.size() == 0)
-        {
+        if (ranges == null || ranges.size() == 0) {
             writeHeaders(response, resource, resLength);
             response.setStatus(HttpResponse.__416_Requested_Range_Not_Satisfiable);
             response.setHeader(HttpFields.__ContentRange, InclusiveByteRange.to416HeaderRangeString(resLength));
@@ -582,8 +510,7 @@ public class Default extends HttpServlet
 
         // if there is only a single valid range (must be satisfiable
         // since were here now), send that range with a 216 response
-        if (ranges.size() == 1)
-        {
+        if (ranges.size() == 1) {
             InclusiveByteRange singleSatisfiableRange = (InclusiveByteRange) ranges.get(0);
             long singleLength = singleSatisfiableRange.getSize(resLength);
             writeHeaders(response, resource, singleLength);
@@ -616,33 +543,28 @@ public class Default extends HttpServlet
         InputStream in = (resource instanceof CachedResource) ? null : resource.getInputStream();
         long pos = 0;
 
-        for (int i = 0; i < ranges.size(); i++)
-        {
+        for (int i = 0; i < ranges.size(); i++) {
             InclusiveByteRange ibr = (InclusiveByteRange) ranges.get(i);
             String header = HttpFields.__ContentRange + ": " + ibr.toHeaderRangeString(resLength);
             multi.startPart(encoding, new String[]
-            { header});
+                    {header});
 
             long start = ibr.getFirst(resLength);
             long size = ibr.getSize(resLength);
-            if (in != null)
-            {
+            if (in != null) {
                 // Handle non cached resource
-                if (start < pos)
-                {
+                if (start < pos) {
                     in.close();
                     in = resource.getInputStream();
                     pos = 0;
                 }
-                if (pos < start)
-                {
+                if (pos < start) {
                     in.skip(start - pos);
                     pos = start;
                 }
                 IO.copy(in, out, size);
                 pos += size;
-            }
-            else
+            } else
                 // Handle cached resource
                 (resource).writeTo(out, start, size);
 
@@ -655,14 +577,12 @@ public class Default extends HttpServlet
     }
 
     /* ------------------------------------------------------------ */
-    protected void writeHeaders(HttpServletResponse response, Resource resource, long count) throws IOException
-    {
+    protected void writeHeaders(HttpServletResponse response, Resource resource, long count) throws IOException {
         ResourceCache.ResourceMetaData metaData = _httpContext.getResourceMetaData(resource);
 
         response.setContentType(metaData.getMimeType());
-        if (count != -1)
-        {
-            if (count == resource.length() && response instanceof ServletHttpResponse )
+        if (count != -1) {
+            if (count == resource.length() && response instanceof ServletHttpResponse)
                 response.setHeader(HttpFields.__ContentLength, metaData.getLength());
             else
                 response.setContentLength((int) count);

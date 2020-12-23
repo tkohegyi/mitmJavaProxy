@@ -28,133 +28,127 @@ import javax.management.ObjectName;
 import java.io.IOException;
 
 /* ------------------------------------------------------------ */
-/** JettyServer MBean.
+
+/**
+ * JettyServer MBean.
  * This Model MBean class provides the mapping for HttpServer
  * management methods. It also registers itself as a membership
  * listener of the HttpServer, so it can create and destroy MBean
  * wrappers for listeners and contexts.
  *
- * @version $Revision: 1.12 $
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.12 $
  */
-public class ServerMBean extends HttpServerMBean
-{
+public class ServerMBean extends HttpServerMBean {
     private static Log log = LogFactory.getLog(ServerMBean.class);
 
     private BmpServer _jettyBmpServer;
     private String _configuration;
 
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @exception MBeanException 
-     * @exception InstanceNotFoundException 
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
+     * @throws InstanceNotFoundException
      */
     public ServerMBean(BmpServer jettyBmpServer)
-        throws MBeanException, InstanceNotFoundException
-    {
+            throws MBeanException, InstanceNotFoundException {
         super(jettyBmpServer);
     }
 
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @exception MBeanException 
-     * @exception InstanceNotFoundException 
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
+     * @throws InstanceNotFoundException
      */
     public ServerMBean()
-        throws MBeanException, InstanceNotFoundException
-    {
+            throws MBeanException, InstanceNotFoundException {
         this(new BmpServer());
     }
 
     /* ------------------------------------------------------------ */
-    /** Constructor. 
+
+    /**
+     * Constructor.
+     *
      * @param configuration URL or File to jetty.xml style configuration file
-     * @exception IOException 
-     * @exception MBeanException 
-     * @exception InstanceNotFoundException 
+     * @throws IOException
+     * @throws MBeanException
+     * @throws InstanceNotFoundException
      */
     public ServerMBean(String configuration)
-        throws IOException,MBeanException, InstanceNotFoundException
-    {
+            throws IOException, MBeanException, InstanceNotFoundException {
         this(new BmpServer());
-        _configuration=configuration;
+        _configuration = configuration;
     }
 
     /* ------------------------------------------------------------ */
-    protected ObjectName newObjectName(MBeanServer server)
-    {
-        return uniqueObjectName(server, getDefaultDomain()+":Server=");
+    protected ObjectName newObjectName(MBeanServer server) {
+        return uniqueObjectName(server, getDefaultDomain() + ":Server=");
     }
 
     /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
+    protected void defineManagedResource() {
         super.defineManagedResource();
-        
+
         defineAttribute("configuration");
         defineAttribute("rootWebApp");
         defineAttribute("webApplicationConfigurationClassNames");
         defineOperation("addWebApplication",
-                        new String[]{"java.lang.String",
-                                     "java.lang.String"},
-                        IMPACT_ACTION);
+                new String[]{"java.lang.String",
+                        "java.lang.String"},
+                IMPACT_ACTION);
 
         defineOperation("addWebApplication",
-                        new String[]{"java.lang.String",
-                                     "java.lang.String",
-                                     "java.lang.String"},
-                        IMPACT_ACTION);
+                new String[]{"java.lang.String",
+                        "java.lang.String",
+                        "java.lang.String"},
+                IMPACT_ACTION);
         defineOperation("addWebApplications",
-                        new String[]{"java.lang.String",
-                                     "java.lang.String"},
-                        IMPACT_ACTION);
-        _jettyBmpServer =(BmpServer)getManagedResource();
+                new String[]{"java.lang.String",
+                        "java.lang.String"},
+                IMPACT_ACTION);
+        _jettyBmpServer = (BmpServer) getManagedResource();
     }
-    
-    
-    
+
+
+
     /* ------------------------------------------------------------ */
-    /** 
-     * @param ok 
+
+    /**
+     * @param ok
      */
-    public void postRegister(Boolean ok)
-    {
+    public void postRegister(Boolean ok) {
         super.postRegister(ok);
-        
-        if (ok.booleanValue())
-        {
-            if (_configuration!=null)
-            {
-                try
-                {
+
+        if (ok.booleanValue()) {
+            if (_configuration != null) {
+                try {
                     _jettyBmpServer.configure(_configuration);
                     _jettyBmpServer.start();
-                }
-                catch(Exception e)
-                {
-                    log.warn(LogSupport.EXCEPTION,e);
+                } catch (Exception e) {
+                    log.warn(LogSupport.EXCEPTION, e);
                 }
             }
         }
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void postDeregister()
-    {
-        _configuration=null;   
-        try
-        {
-            if (null!= _jettyBmpServer)
+    public void postDeregister() {
+        _configuration = null;
+        try {
+            if (null != _jettyBmpServer)
                 _jettyBmpServer.stop();
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             log.warn(e);
-        }
-        finally
-        {
+        } finally {
             super.postDeregister();
         }
-        
+
     }
 }

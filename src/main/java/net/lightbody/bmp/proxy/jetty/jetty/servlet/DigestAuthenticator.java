@@ -23,30 +23,30 @@ import net.lightbody.bmp.proxy.jetty.http.UserRealm;
 import java.io.IOException;
 
 /* ------------------------------------------------------------ */
-/** DigestAuthenticator.
- * @author gregw
+
+/**
+ * DigestAuthenticator.
  *
+ * @author gregw
  */
-public class DigestAuthenticator extends net.lightbody.bmp.proxy.jetty.http.DigestAuthenticator
-{
+public class DigestAuthenticator extends net.lightbody.bmp.proxy.jetty.http.DigestAuthenticator {
 
     /* ------------------------------------------------------------ */
     public void sendChallenge(UserRealm realm,
                               HttpRequest request,
                               HttpResponse response,
                               boolean stale)
-        throws IOException
-    {
+            throws IOException {
         response.setField(HttpFields.__WwwAuthenticate,
-			    "Digest realm=\""+realm.getName()+
-			    "\", domain=\""+
-			    response.getHttpContext().getContextPath() +
-			    "\", nonce=\""+newNonce(request)+
-			    "\", algorithm=MD5, qop=\"auth\"" + (useStale?(" stale="+stale):"")
-                          );
+                "Digest realm=\"" + realm.getName() +
+                        "\", domain=\"" +
+                        response.getHttpContext().getContextPath() +
+                        "\", nonce=\"" + newNonce(request) +
+                        "\", algorithm=MD5, qop=\"auth\"" + (useStale ? (" stale=" + stale) : "")
+        );
 
         ServletHttpResponse sresponse = (ServletHttpResponse) response.getWrapper();
-        if (sresponse!=null)
+        if (sresponse != null)
             sresponse.sendError(HttpResponse.__401_Unauthorized);
         else
             response.sendError(HttpResponse.__401_Unauthorized);

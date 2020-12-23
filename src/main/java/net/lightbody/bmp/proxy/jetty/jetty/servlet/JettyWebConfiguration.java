@@ -23,98 +23,92 @@ import org.apache.commons.logging.Log;
 
 
 /**
- * 
  * JettyWebConfiguration
  *
  * @author janb
  * @version $Revision: 1.4 $ $Date: 2005/11/18 17:54:05 $
- *
  */
-public class JettyWebConfiguration implements Configuration
-{
-    private static Log log= LogFactory.getLog(JettyWebConfiguration.class);
+public class JettyWebConfiguration implements Configuration {
+    private static Log log = LogFactory.getLog(JettyWebConfiguration.class);
     private WebApplicationContext _context;
 
-    
+    public WebApplicationContext getWebApplicationContext() {
+        return _context;
+    }
+
     /**
      * @see net.lightbody.bmp.proxy.jetty.jetty.servlet.WebApplicationContext.Configuration#setWebApplicationContext(net.lightbody.bmp.proxy.jetty.jetty.servlet.WebApplicationContext)
      */
-    public void setWebApplicationContext (WebApplicationContext context)
-    {
-       _context = context;
+    public void setWebApplicationContext(WebApplicationContext context) {
+        _context = context;
     }
 
-    public WebApplicationContext getWebApplicationContext ()
-    {
-        return _context;
-    }
-    
-    /** configureClassPath
+    /**
+     * configureClassPath
      * Not used.
+     *
      * @see net.lightbody.bmp.proxy.jetty.jetty.servlet.WebApplicationContext.Configuration#configureClassPath()
      */
-    public void configureClassPath () throws Exception
-    {
+    public void configureClassPath() throws Exception {
     }
 
-    /** configureDefaults
+    /**
+     * configureDefaults
      * Not used.
+     *
      * @see net.lightbody.bmp.proxy.jetty.jetty.servlet.WebApplicationContext.Configuration#configureDefaults()
      */
-    public void configureDefaults () throws Exception
-    {
+    public void configureDefaults() throws Exception {
     }
 
-    /** configureWebApp
+    /**
+     * configureWebApp
      * Apply web-jetty.xml configuration
+     *
      * @see net.lightbody.bmp.proxy.jetty.jetty.servlet.WebApplicationContext.Configuration#configureWebApp()
      */
-    public void configureWebApp () throws Exception
-    {
+    public void configureWebApp() throws Exception {
         //cannot configure if the _context is already started
-        if (_context.isStarted())
-        {
-            if (log.isDebugEnabled()){log.debug("Cannot configure webapp after it is started");};
+        if (_context.isStarted()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Cannot configure webapp after it is started");
+            }
+            ;
             return;
         }
-        
-        if(log.isDebugEnabled())
+
+        if (log.isDebugEnabled())
             log.debug("Configuring web-jetty.xml");
-        
-        Resource webInf=getWebApplicationContext().getWebInf();
+
+        Resource webInf = getWebApplicationContext().getWebInf();
         // handle any WEB-INF descriptors
-        if(webInf!=null&&webInf.isDirectory())
-        {
+        if (webInf != null && webInf.isDirectory()) {
             // do jetty.xml file
-            Resource jetty=webInf.addPath("web-jetty.xml");
-            if(!jetty.exists())
-                jetty=webInf.addPath("jetty-web.xml");
-            if(!getWebApplicationContext().isIgnoreWebJetty()&&jetty.exists())
-            {
-                
+            Resource jetty = webInf.addPath("web-jetty.xml");
+            if (!jetty.exists())
+                jetty = webInf.addPath("jetty-web.xml");
+            if (!getWebApplicationContext().isIgnoreWebJetty() && jetty.exists()) {
+
                 // Give permission to see Jetty classes
                 String[] old_server_classes = _context.getServerClasses();
-                String[] server_classes = new String[1+(old_server_classes==null?0:old_server_classes.length)];
-                server_classes[0]="-net.lightbody.bmp.proxy.jetty.";
-                if (server_classes!=null)
+                String[] server_classes = new String[1 + (old_server_classes == null ? 0 : old_server_classes.length)];
+                server_classes[0] = "-net.lightbody.bmp.proxy.jetty.";
+                if (server_classes != null)
                     System.arraycopy(old_server_classes, 0, server_classes, 1, old_server_classes.length);
-                
-                try
-                {
+
+                try {
                     _context.setServerClasses(server_classes);
-                    if(log.isDebugEnabled())
-                        log.debug("Configure: "+jetty);
-                    
-                    XmlConfiguration jetty_config=new XmlConfiguration(jetty.getURL());
+                    if (log.isDebugEnabled())
+                        log.debug("Configure: " + jetty);
+
+                    XmlConfiguration jetty_config = new XmlConfiguration(jetty.getURL());
                     jetty_config.configure(getWebApplicationContext());
-                }
-                finally
-                {
-                    if (_context.getServerClasses()==server_classes)
+                } finally {
+                    if (_context.getServerClasses() == server_classes)
                         _context.setServerClasses(old_server_classes);
                 }
             }
         }
-        
+
     }
 }

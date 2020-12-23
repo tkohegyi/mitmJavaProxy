@@ -22,69 +22,59 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 
-class ServletOut extends ServletOutputStream
-{
+class ServletOut extends ServletOutputStream {
     OutputStream _out;
 
     /* ------------------------------------------------------------ */
-    ServletOut(OutputStream out)
-    {
-        _out=out;
+    ServletOut(OutputStream out) {
+        _out = out;
     }
-    
+
     /* ------------------------------------------------------------ */
     public void write(int ch)
-        throws IOException
-    {
+            throws IOException {
         _out.write(ch);
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void write(byte[]b)
-        throws IOException
-    {
+    public void write(byte[] b)
+            throws IOException {
         _out.write(b);
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void write(byte[]b,int o,int l)
-        throws IOException
-    {
-        _out.write(b,o,l);
+    public void write(byte[] b, int o, int l)
+            throws IOException {
+        _out.write(b, o, l);
     }
 
     /* ------------------------------------------------------------ */
     public void flush()
-        throws IOException
-    {
+            throws IOException {
         _out.flush();
     }
-    
+
     /* ------------------------------------------------------------ */
     public void close()
-        throws IOException
-    {
+            throws IOException {
         super.close();
         _out.close();
     }
-    
+
     /* ------------------------------------------------------------ */
     public void disable()
-        throws IOException
-    {
-        _out=IO.getNullStream();
+            throws IOException {
+        _out = IO.getNullStream();
     }
 
     /* ------------------------------------------------------------ */
-    public void print(String s) throws IOException 
-    {
-         if (s!=null) write(s.getBytes());
+    public void print(String s) throws IOException {
+        if (s != null) write(s.getBytes());
     }
 
     /* ------------------------------------------------------------ */
-    public void println(String s) throws IOException 
-    {
-         if (s!=null) write(s.getBytes());     
-         write(IO.CRLF_BYTES);
+    public void println(String s) throws IOException {
+        if (s != null) write(s.getBytes());
+        write(IO.CRLF_BYTES);
     }
 }

@@ -21,37 +21,34 @@ import javax.management.MBeanException;
 
 
 /* ------------------------------------------------------------ */
-/** 
- *
- * @version $Revision: 1.5 $
+
+/**
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.5 $
  */
-public class AbstractSessionManagerMBean extends SessionManagerMBean
-{
+public class AbstractSessionManagerMBean extends SessionManagerMBean {
     /* ------------------------------------------------------------ */
     public AbstractSessionManagerMBean()
-        throws MBeanException
-    {}
-    
+            throws MBeanException {
+    }
+
     /* ------------------------------------------------------------ */
     public AbstractSessionManagerMBean(SessionManager object)
-        throws MBeanException
-    {
+            throws MBeanException {
         super(object);
     }
-    
+
     /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
+    protected void defineManagedResource() {
         super.defineManagedResource();
-        defineAttribute("maxInactiveInterval"); 
-        defineAttribute("scavengePeriod"); 
-        defineAttribute("useRequestedId"); 
-        defineAttribute("workerName");  
-        defineAttribute("sessions"); 
-        defineAttribute ("minSessions");
-        defineAttribute ("maxSessions");
-        defineOperation ("resetStats",IMPACT_ACTION);
+        defineAttribute("maxInactiveInterval");
+        defineAttribute("scavengePeriod");
+        defineAttribute("useRequestedId");
+        defineAttribute("workerName");
+        defineAttribute("sessions");
+        defineAttribute("minSessions");
+        defineAttribute("maxSessions");
+        defineOperation("resetStats", IMPACT_ACTION);
     }
 
 }
