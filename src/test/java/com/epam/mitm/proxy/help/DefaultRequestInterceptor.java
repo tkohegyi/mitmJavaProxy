@@ -33,6 +33,12 @@ public class DefaultRequestInterceptor implements RequestInterceptor {
         }
     }
 
+    public DefaultRequestInterceptor(AtomicInteger requestCount) {
+        this.requestCount = requestCount;
+        this.stubRequestPattern = null;
+        this.stubUri = null;
+    }
+
 
     public void process(final BrowserMobHttpRequest request) {
         requestCount.incrementAndGet();

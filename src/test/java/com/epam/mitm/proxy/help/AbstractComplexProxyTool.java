@@ -22,15 +22,18 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * Base for tests that test the proxy. This base class encapsulates all of the
- * testing infrastructure.
+ * testing infrastructure, so has:
+ * - the proxy itself with default request/response interceptors, that is able to select between servers (server or stub)
+ * - server that answers to the client (SERVER_BACKEND)
+ * - a stub server that answers to the client (STUB_BACKEND)
  */
-public abstract class AbstractProxyTool {
+public abstract class AbstractComplexProxyTool {
 
     /**
      * The server used by the tests.
      */
     public static final int PROXY_TIMEOUT = 1200000; //20 minute - giving time to debug
-    protected final static Logger LOGGER = LoggerFactory.getLogger(AbstractProxyTool.class);
+    protected final static Logger LOGGER = LoggerFactory.getLogger(AbstractComplexProxyTool.class);
     protected static final String NO_NEED_STUB_RESPONSE = "/getServer";
     protected static final String NEED_STUB_RESPONSE = "/getStub";
     protected static final String SERVER_BACKEND = "server-backend";

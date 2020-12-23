@@ -15,7 +15,6 @@ import java.util.Date;
 public class SimulatedSSLSocket extends Socket {
     private Socket socket;
     private StreamManager streamManager;
-    private Date handshakeStart;
     private int timeout;
 
     public SimulatedSSLSocket(Socket socket, StreamManager streamManager, int timeout) {

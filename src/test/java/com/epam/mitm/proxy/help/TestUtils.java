@@ -58,6 +58,19 @@ public class TestUtils {
                     }
                 }
                 LOGGER.info("Done reading # of bytes: {}", numberOfBytesRead);
+
+                //slow response handling
+                if (request.getRequestURI().contains("SlowResponse")) {
+                    //requesting timeout - 10 sec response time
+                    LOGGER.info("Requesting 10 sec delay in Server answer");
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        LOGGER.warn("Thread Interrupt arrived");
+                    }
+                }
+
+                //finish response
                 response.setStatus(HttpServletResponse.SC_OK);
                 baseRequest.setHandled(true);
 
@@ -132,43 +145,6 @@ public class TestUtils {
      * @return instance of DefaultHttpClient
      */
     public static CloseableHttpClient buildHttpClient(boolean isProxied, int port) throws Exception {
-        /*DefaultHttpClient httpClient = new DefaultHttpClient();
-        SSLSocketFactory sf = new SSLSocketFactory(
-                new TrustSelfSignedStrategy(), new X509HostnameVerifier() {
-            public boolean verify(String arg0, SSLSession arg1) {
-                return true;
-            }
-
-            public void verify(String host, String[] cns,
-                               String[] subjectAlts) {
-            }
-
-            public void verify(String host, X509Certificate cert) {
-            }
-
-            public void verify(String host, SSLSocket ssl) {
-            }
-        });
-        Scheme scheme = new Scheme("https", 443, sf);
-        httpClient.getConnectionManager().getSchemeRegistry().register(scheme);
-*/
-        /*
-        SSLContext sslContext = SSLContextBuilder
-                .create()
-                .loadTrustMaterial(new TrustSelfSignedStrategy())
-                .build();
-
-        HostnameVerifier allowAllHosts = new NoopHostnameVerifier();
-        SSLConnectionSocketFactory connectionFactory = new SSLConnectionSocketFactory(sslContext, allowAllHosts);
-
-        HttpClientBuilder httpClientBuilder = HttpClientBuilder.create()
-                .disableRedirectHandling()
-                .setSSLSocketFactory(connectionFactory)
-                .setConnectionTimeToLive(60000, TimeUnit.MILLISECONDS);
-
-
-         */
-
         TrustStrategy acceptingTrustStrategy = (cert, authType) -> true;
         SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(null, acceptingTrustStrategy).build();
         SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext,

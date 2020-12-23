@@ -1,6 +1,6 @@
 package com.epam.mitm.proxy;
 
-import com.epam.mitm.proxy.help.AbstractProxyTool;
+import com.epam.mitm.proxy.help.AbstractComplexProxyTool;
 import com.epam.mitm.proxy.help.DefaultRequestInterceptor;
 import com.epam.mitm.proxy.help.DefaultResponseInterceptor;
 import com.epam.mitm.proxy.help.ResponseInfo;
@@ -12,7 +12,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Tests that DNS resolution works properly inside the proxy.
  */
-public class DNSUsageOfProxyTest extends AbstractProxyTool {
+public class DNSUsageOfComplexProxyTest extends AbstractComplexProxyTool {
 
     @Override
     protected void setUp() {

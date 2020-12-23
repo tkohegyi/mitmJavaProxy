@@ -45,6 +45,7 @@ import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.apache.http.conn.ConnectionRequest;
 import org.apache.http.conn.params.ConnRoutePNames;
@@ -525,7 +526,7 @@ public class BrowserMobHttpClient {
         try {
             // set the User-Agent if it's not already set
             if (method.getHeaders("User-Agent").length == 0) {
-                method.addHeader("User-Agent", "MITM-Proxy V/1.0");
+                method.addHeader("User-Agent", "MITM-JavaProxy V/1.0");
             }
 
             // was the request mocked out?
@@ -606,6 +607,9 @@ public class BrowserMobHttpClient {
             errorMessage = e.toString();
 
             if (callback != null) {
+                if (activeRequest.wasTimeout) {
+                    e = new ConnectTimeoutException();
+                }
                 callback.reportError(e);
             }
 
@@ -916,11 +920,11 @@ public class BrowserMobHttpClient {
     }
 
     public void setSocketOperationTimeout(final int readTimeout) {
-        httpClient.getParams().setIntParameter(CoreConnectionPNames.SO_TIMEOUT, readTimeout);
+        throw new UnsupportedOperationException("setSocketTimeout does not work");
     }
 
     public void setConnectionTimeout(final int connectionTimeout) {
-        httpClient.getParams().setIntParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, connectionTimeout);
+        throw new UnsupportedOperationException("setConnectionTimeout does not work");
     }
 
     public boolean isFollowRedirects() {
@@ -1040,17 +1044,20 @@ public class BrowserMobHttpClient {
         HttpRequestBase request;
         BasicHttpContext ctx;
         Date start;
+        boolean wasTimeout;
 
         ActiveRequest(final HttpRequestBase request, final BasicHttpContext ctx, final Date start) {
             this.request = request;
             this.ctx = ctx;
             this.start = start;
+            this.wasTimeout = false;
         }
 
         void checkTimeout() {
             if (requestTimeout != -1) {
                 if (request != null && start != null && new Date(System.currentTimeMillis() - requestTimeout).after(start)) {
                     LOGGER.info("Aborting request to {} after it failed to complete in {} ms", request.getURI().toString(), requestTimeout);
+                    wasTimeout = true;
                     abort();
                 }
             }

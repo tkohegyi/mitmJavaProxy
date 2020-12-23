@@ -1,6 +1,6 @@
 package com.epam.mitm.proxy;
 
-import com.epam.mitm.proxy.help.AbstractProxyTool;
+import com.epam.mitm.proxy.help.AbstractComplexProxyTool;
 import com.epam.mitm.proxy.help.DefaultRequestInterceptor;
 import com.epam.mitm.proxy.help.DefaultResponseInterceptor;
 import com.epam.mitm.proxy.help.ResponseInfo;
@@ -13,7 +13,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Tests just a single basic proxy running as a man in the middle.
  */
-public class MitmProxyWithExternalServerTest extends AbstractProxyTool {
+public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxyTool {
 
     @Override
     protected void setUp() {

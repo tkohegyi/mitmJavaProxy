@@ -1,6 +1,6 @@
 package com.epam.mitm.proxy;
 
-import com.epam.mitm.proxy.help.AbstractProxyTool;
+import com.epam.mitm.proxy.help.AbstractComplexProxyTool;
 import com.epam.mitm.proxy.help.DefaultRequestInterceptor;
 import com.epam.mitm.proxy.help.DefaultResponseInterceptor;
 import com.epam.mitm.proxy.help.ResponseInfo;
@@ -11,7 +11,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Tests just a single basic proxy running as a man in the middle.
  */
-public class SimpleServerWithoutProxyTest extends AbstractProxyTool {
+public class ComplexMitmComplexProxyTest extends AbstractComplexProxyTool {
 
     @Override
     protected void setUp() {
@@ -21,80 +21,82 @@ public class SimpleServerWithoutProxyTest extends AbstractProxyTool {
         DefaultResponseInterceptor defaultResponseInterceptor = new DefaultResponseInterceptor(responseCount);
         proxyServer.addRequestInterceptor(defaultRequestInterceptor);
         proxyServer.addResponseInterceptor(defaultResponseInterceptor);
-        proxyServer.setCaptureBinaryContent(true);
-        proxyServer.setCaptureContent(true);
+        proxyServer.setCaptureBinaryContent(false);
+        proxyServer.setCaptureContent(false);
+        ProxyServer.setResponseVolatile(true);
+        ProxyServer.setShouldKeepSslConnectionAlive(true);
     }
 
     @Test
     public void testSimpleGetRequest() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, false, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true, false);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
-        assertEquals(0, responseCount.get());
-        assertEquals(0, requestCount.get());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
     }
 
     @Test
     public void testSimpleGetRequestOverHTTPS() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, false, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true, false);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
-        assertEquals(0, responseCount.get());
-        assertEquals(0, requestCount.get());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
     }
 
     @Test
     public void testSimplePostRequest() throws Exception {
-        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, false);
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
-        assertEquals(0, responseCount.get());
-        assertEquals(0, requestCount.get());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
     }
 
     @Test
     public void testSimplePostRequestOverHTTPS() throws Exception {
-        ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, false);
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
-        assertEquals(0, responseCount.get());
-        assertEquals(0, requestCount.get());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
     }
 
     @Test
     public void testSimpleGetRequestToStub() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(stubHost, NEED_STUB_RESPONSE, false, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NEED_STUB_RESPONSE, true, false);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
-        assertEquals(0, responseCount.get());
-        assertEquals(0, requestCount.get());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
     }
 
     @Test
     public void testSimpleGetRequestOverHTTPSToStub() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(stubHost, NEED_STUB_RESPONSE, false, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true, false);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
-        assertEquals(0, responseCount.get());
-        assertEquals(0, requestCount.get());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
     }
 
     @Test
     public void testSimplePostRequestToStub() throws Exception {
-        ResponseInfo proxiedResponse = httpPostWithApacheClient(stubHost, NEED_STUB_RESPONSE, false);
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NEED_STUB_RESPONSE, true);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
-        assertEquals(0, responseCount.get());
-        assertEquals(0, requestCount.get());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
     }
 
     @Test
     public void testSimplePostRequestOverHTTPSToStub() throws Exception {
-        ResponseInfo proxiedResponse = httpPostWithApacheClient(stubHost, NEED_STUB_RESPONSE, false);
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
-        assertEquals(0, responseCount.get());
-        assertEquals(0, requestCount.get());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
     }
 
 }
