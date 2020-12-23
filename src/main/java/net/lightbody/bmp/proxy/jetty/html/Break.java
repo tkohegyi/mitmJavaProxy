@@ -52,12 +52,14 @@ public class Break extends Tag {
      * Static instance of paragraph break
      */
     public final static Break para = new Break(Para);
+
     /**
      * Default constructor (Line Break).
      */
     public Break() {
         this(Line);
     }
+
     /**
      * Constructor.
      *

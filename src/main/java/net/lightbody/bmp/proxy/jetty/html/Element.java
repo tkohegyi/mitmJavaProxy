@@ -64,8 +64,6 @@ public abstract class Element {
             ID = "id";
     private static Log log = LogFactory.getLog(Element.class);
 
-
-
     /* ----------------------------------------------------------------- */
     protected Hashtable attributeMap = null;
     /**
