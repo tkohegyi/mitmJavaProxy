@@ -22,7 +22,7 @@ apply plugin: 'maven'
 apply plugin: 'java-library'
 apply plugin: 'jacoco'
 
-version = "0.13-beta-wilma-" + "$wilmaVersion"+'.'+"$buildNumber"
+version = "MITMJavaProxy-W" + "$wilmaVersion" + "-0.14." + "$buildNumber"
 
 repositories {
     jcenter()
