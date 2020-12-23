@@ -31,52 +31,46 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /* ------------------------------------------------------------ */
-/** Dump Servlet Request.
- * 
+
+/**
+ * Dump Servlet Request.
  */
-public class SendRedirect extends HttpServlet
-{
+public class SendRedirect extends HttpServlet {
     private static Log log = LogFactory.getLog(SendRedirect.class);
 
     /* ------------------------------------------------------------ */
-    public void doGet(HttpServletRequest request, HttpServletResponse response) 
-        throws ServletException, IOException
-    {
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         response.setContentType("text/html");
         response.setHeader("Pragma", "no-cache");
         response.setHeader("Cache-Control", "no-cache,no-store");
 
-        String url=request.getParameter("URL");
-        if (url!=null && url.length()>0)
-        {
+        String url = request.getParameter("URL");
+        if (url != null && url.length() > 0) {
             response.sendRedirect(url);
-        }
-        else
-        {
+        } else {
             PrintWriter pout = response.getWriter();
-            Page page=null;
-            
-            try{
+            Page page = null;
+
+            try {
                 page = new Page();
-                page.title("SendRedirect Servlet");     
-                
-                page.add(new Heading(1,"SendRedirect Servlet"));
-                
-                page.add(new Heading(1,"Form to generate Dump content"));
+                page.title("SendRedirect Servlet");
+
+                page.add(new Heading(1, "SendRedirect Servlet"));
+
+                page.add(new Heading(1, "Form to generate Dump content"));
                 TableForm tf = new TableForm
-                    (response.encodeURL(URI.addPaths(request.getContextPath(),
-                                                     request.getServletPath())+
-                                        "/action"));
+                        (response.encodeURL(URI.addPaths(request.getContextPath(),
+                                request.getServletPath()) +
+                                "/action"));
                 tf.method("GET");
-                tf.addTextField("URL","URL",40,request.getContextPath()+"/dump");
-                tf.addButton("Redirect","Redirect");
+                tf.addTextField("URL", "URL", 40, request.getContextPath() + "/dump");
+                tf.addButton("Redirect", "Redirect");
                 page.add(tf);
                 page.write(pout);
                 pout.close();
-            }
-            catch (Exception e)
-            {
-                log.warn(LogSupport.EXCEPTION,e);
+            } catch (Exception e) {
+                log.warn(LogSupport.EXCEPTION, e);
             }
         }
     }

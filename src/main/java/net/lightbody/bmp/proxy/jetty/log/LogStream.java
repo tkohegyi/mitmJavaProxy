@@ -24,154 +24,149 @@ import java.io.PrintStream;
  * Divert a PrintStream to commons logging.
  * The stderr and stdout streams can be diverted to logs named "stderr" and "stdout" using this
  * class.
- * 
  */
-public class LogStream extends PrintStream
-{
-    public static class STDERR extends LogStream
-    {STDERR() {super("STDERR ",LogFactory.getLog("stderr"));}}
-
-    public static class STDOUT extends LogStream
-    {STDOUT() {super("STDOUT ",LogFactory.getLog("stdout"));}} 
-
+public class LogStream extends PrintStream {
     /*-------------------------------------------------------------------*/
-    final static PrintStream STDERR_STREAM=System.err;
-    final static PrintStream STDOUT_STREAM=System.out;
-    
-    /* ------------------------------------------------------------ */
-    /** Log standard error stream.
-     * If set to true, output to stderr will be directed to an instance
-     * of LogStream and logged.  Beware of log loops from logs that write to stderr.
-     */
-    public static void setLogStdErr(boolean log)
-    {
-        if (log)
-        {
-            if (!(System.err instanceof LogStream))
-                System.setErr(new LogStream.STDERR());
-        }
-        else
-            System.setErr(STDERR_STREAM);
-    }
-
-    /* ------------------------------------------------------------ */
-    public static boolean getLogStdErr()
-    {
-        return System.err instanceof LogStream;
-    }
-    
-    /* ------------------------------------------------------------ */
-    /** Log standard output stream.
-     * If set to true, output to stdout will be directed to an instance
-     * of LogStream and logged.  Beware of log loops from logs that write to stdout.
-     */
-    public static void setLogStdOut(boolean log)
-    {
-        if (log)
-        {
-            if (!(System.out instanceof LogStream))
-                System.setOut(new LogStream.STDOUT());
-        }
-        else
-            System.setOut(STDOUT_STREAM);
-    }
-
-    /* ------------------------------------------------------------ */
-    public static boolean getLogStdOut()
-    {
-        return System.out instanceof LogStream;
-    }
-
+    final static PrintStream STDERR_STREAM = System.err;
+    final static PrintStream STDOUT_STREAM = System.out;
     /* ------------------------------------------------------------ */
     private String tag;
     private Log log;
+
+    /* ------------------------------------------------------------ */
     private ByteArrayOutputStream2 bout;
-    
-    /* 
-     */
-    public void flush()
-    {
-        super.flush();
-        if (bout.size()>0)
-        {
-            String s=new String(bout.getBuf(),0,bout.size()).trim();
-            if (s.length()>0 && log!=null)
-                log.info(tag+": "+s);
-        }
-        bout.reset();
-    }
- 
+
     /**
      * @param out
      * @param autoflush
      */
-    public LogStream(String tag, Log log)
-    {
+    public LogStream(String tag, Log log) {
         super(new ByteArrayOutputStream2(128), true);
-        bout=(ByteArrayOutputStream2)this.out;
-        this.tag=tag;
-        this.log=log;
+        bout = (ByteArrayOutputStream2) this.out;
+        this.tag = tag;
+        this.log = log;
     }
-    
-    public void close()
-    {
+
+    /* ------------------------------------------------------------ */
+
+    /* ------------------------------------------------------------ */
+    public static boolean getLogStdErr() {
+        return System.err instanceof LogStream;
+    }
+
+    /**
+     * Log standard error stream.
+     * If set to true, output to stderr will be directed to an instance
+     * of LogStream and logged.  Beware of log loops from logs that write to stderr.
+     */
+    public static void setLogStdErr(boolean log) {
+        if (log) {
+            if (!(System.err instanceof LogStream))
+                System.setErr(new LogStream.STDERR());
+        } else
+            System.setErr(STDERR_STREAM);
+    }
+
+    /* ------------------------------------------------------------ */
+    public static boolean getLogStdOut() {
+        return System.out instanceof LogStream;
+    }
+
+    /**
+     * Log standard output stream.
+     * If set to true, output to stdout will be directed to an instance
+     * of LogStream and logged.  Beware of log loops from logs that write to stdout.
+     */
+    public static void setLogStdOut(boolean log) {
+        if (log) {
+            if (!(System.out instanceof LogStream))
+                System.setOut(new LogStream.STDOUT());
+        } else
+            System.setOut(STDOUT_STREAM);
+    }
+
+    /*
+     */
+    public void flush() {
+        super.flush();
+        if (bout.size() > 0) {
+            String s = new String(bout.getBuf(), 0, bout.size()).trim();
+            if (s.length() > 0 && log != null)
+                log.info(tag + ": " + s);
+        }
+        bout.reset();
+    }
+
+    public void close() {
         flush();
         super.close();
     }
-    public void println()
-    {
+
+    public void println() {
         super.println();
         flush();
     }
-    public void println(boolean arg0)
-    {
+
+    public void println(boolean arg0) {
         super.println(arg0);
         flush();
     }
-    public void println(char arg0)
-    {
+
+    public void println(char arg0) {
         super.println(arg0);
         flush();
     }
-    public void println(char[] arg0)
-    {
+
+    public void println(char[] arg0) {
         super.println(arg0);
         flush();
     }
-    public void println(double arg0)
-    {
+
+    public void println(double arg0) {
         super.println(arg0);
         flush();
     }
-    public void println(float arg0)
-    {
+
+    public void println(float arg0) {
         super.println(arg0);
         flush();
     }
-    public void println(int arg0)
-    {
+
+    public void println(int arg0) {
         super.println(arg0);
         flush();
     }
-    public void println(long arg0)
-    {
+
+    public void println(long arg0) {
         super.println(arg0);
         flush();
     }
-    public void println(Object arg0)
-    {
+
+    public void println(Object arg0) {
         super.println(arg0);
         flush();
     }
-    public void println(String arg0)
-    {
+
+    public void println(String arg0) {
         super.println(arg0);
         flush();
     }
-    public void write(byte[] arg0, int arg1, int arg2)
-    {
+
+    public void write(byte[] arg0, int arg1, int arg2) {
         super.write(arg0, arg1, arg2);
         flush();
+    }
+
+    public static class STDERR extends LogStream {
+        STDERR() {
+            super("STDERR ", LogFactory.getLog("stderr"));
+        }
+    }
+
+    public static class STDOUT extends LogStream {
+        STDOUT() {
+            super("STDOUT ", LogFactory.getLog("stdout"));
+        }
     }
 
 }

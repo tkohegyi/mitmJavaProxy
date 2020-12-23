@@ -31,77 +31,71 @@ import java.util.HashMap;
 import java.util.Map;
 
 /* ------------------------------------------------------------ */
-/** Forward Servlet Request.
+
+/**
+ * Forward Servlet Request.
  * This servlet can be configured with init parameters to use
  * a RequestDispatcher to forward requests.
- *
+ * <p>
  * The servlet path of a request is used to look for a initparameter
  * of that name. If a parameter is found, it's value is used to get a
  * RequestDispatcher.
  *
- * @version $Id: Forward.java,v 1.9 2005/08/13 00:01:28 gregwilkins Exp $
  * @author Greg Wilkins (gregw)
+ * @version $Id: Forward.java,v 1.9 2005/08/13 00:01:28 gregwilkins Exp $
  */
-public class Forward extends HttpServlet
-{
+public class Forward extends HttpServlet {
     private static Log log = LogFactory.getLog(Forward.class);
 
     /* ------------------------------------------------------------ */
-    Map _forwardMap= new HashMap();
+    Map _forwardMap = new HashMap();
 
     /* ------------------------------------------------------------ */
     public void init(ServletConfig config)
-         throws ServletException
-    {
+            throws ServletException {
         super.init(config);
 
         Enumeration enm = config.getInitParameterNames();
-        while (enm.hasMoreElements())
-        {
-            String path=(String)enm.nextElement();
-            String forward=config.getInitParameter(path);
-            _forwardMap.put(path,forward);
+        while (enm.hasMoreElements()) {
+            String path = (String) enm.nextElement();
+            String forward = config.getInitParameter(path);
+            _forwardMap.put(path, forward);
         }
 
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void doPost(HttpServletRequest sreq, HttpServletResponse sres) 
-        throws ServletException, IOException
-    {
-        doGet(sreq,sres);
+    public void doPost(HttpServletRequest sreq, HttpServletResponse sres)
+            throws ServletException, IOException {
+        doGet(sreq, sres);
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void doGet(HttpServletRequest sreq, HttpServletResponse sres) 
-        throws ServletException, IOException
-    {
+    public void doGet(HttpServletRequest sreq, HttpServletResponse sres)
+            throws ServletException, IOException {
         String path = (String)
-            sreq.getAttribute("javax.servlet.include.servlet_path");
-        if (path==null)
-            path=sreq.getServletPath();
-        if (path.length()==0)
-        {
-            path=(String)sreq.getAttribute("javax.servlet.include.path_info");
-            if (path==null)
-                path=sreq.getPathInfo();
+                sreq.getAttribute("javax.servlet.include.servlet_path");
+        if (path == null)
+            path = sreq.getServletPath();
+        if (path.length() == 0) {
+            path = (String) sreq.getAttribute("javax.servlet.include.path_info");
+            if (path == null)
+                path = sreq.getPathInfo();
         }
 
-        String forward=(String)_forwardMap.get(path);
-        if(log.isDebugEnabled())log.debug("Forward "+path+" to "+forward);
-        if (forward!=null)
-        {            
+        String forward = (String) _forwardMap.get(path);
+        if (log.isDebugEnabled()) log.debug("Forward " + path + " to " + forward);
+        if (forward != null) {
             ServletContext context =
-                getServletContext().getContext(forward);
-            String contextPath=sreq.getContextPath();
-            if (contextPath.length()>1)
-                forward=forward.substring(contextPath.length());
-            
+                    getServletContext().getContext(forward);
+            String contextPath = sreq.getContextPath();
+            if (contextPath.length() > 1)
+                forward = forward.substring(contextPath.length());
+
             RequestDispatcher dispatch =
-                context.getRequestDispatcher(forward);
-            if (dispatch!=null)
-            {
-                dispatch.forward(sreq,sres);
+                    context.getRequestDispatcher(forward);
+            if (dispatch != null) {
+                dispatch.forward(sreq, sres);
                 return;
             }
         }
@@ -110,15 +104,13 @@ public class Forward extends HttpServlet
     }
 
     /* ------------------------------------------------------------ */
-    public String getServletInfo()
-    {
+    public String getServletInfo() {
         return "Forward Servlet";
     }
 
     /* ------------------------------------------------------------ */
-    public synchronized void destroy()
-    {
+    public synchronized void destroy() {
         log.debug("Destroyed");
     }
-    
+
 }

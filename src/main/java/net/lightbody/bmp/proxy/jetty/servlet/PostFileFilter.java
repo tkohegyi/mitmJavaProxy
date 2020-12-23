@@ -15,7 +15,13 @@
 
 package net.lightbody.bmp.proxy.jetty.servlet;
 
-import javax.servlet.*;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -24,109 +30,100 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /* ------------------------------------------------------------ */
-/** PostFileFilter.
- * 
+
+/**
+ * PostFileFilter.
+ * <p>
  * Filter to accept file content from a POST request.
  * The translated path is used as the file name to store the content from POST requests.
- * 
+ * <p>
  * Configuration init parameters:<ul>
- *   <li>bufferSize - The size of the buffer used to copy content
- *   <li>response - The response after the file is received:<ul>
- *       <li>ok - an empty response with an OK status
- *       <li>nocontent - an empty response with a NO_CONTENT status (the default)
- *       <li>chain - pass the request down the filter chain for normal response. 
- *       <li>redirect - redirect for a GET request to the same URI
- *     </ul>
+ * <li>bufferSize - The size of the buffer used to copy content
+ * <li>response - The response after the file is received:<ul>
+ * <li>ok - an empty response with an OK status
+ * <li>nocontent - an empty response with a NO_CONTENT status (the default)
+ * <li>chain - pass the request down the filter chain for normal response.
+ * <li>redirect - redirect for a GET request to the same URI
  * </ul>
- * 
- * @author gregw@mortbay.com
+ * </ul>
  *
+ * @author gregw@mortbay.com
  */
-public class PostFileFilter implements Filter
-{
+public class PostFileFilter implements Filter {
     ServletContext _context;
-    int _bufferSize=8092;
-    String _response="nocontent";
-    
-    public void init(FilterConfig filterConfig) 
-        throws ServletException
-    {
-        _context=filterConfig.getServletContext();
-        String tmp=filterConfig.getInitParameter("bufferSize");
-        if (tmp!=null)
-            _bufferSize=Integer.parseInt(tmp);
-        tmp=filterConfig.getInitParameter("response");
-        if (tmp!=null)
-            _response=tmp;
+    int _bufferSize = 8092;
+    String _response = "nocontent";
+
+    public void init(FilterConfig filterConfig)
+            throws ServletException {
+        _context = filterConfig.getServletContext();
+        String tmp = filterConfig.getInitParameter("bufferSize");
+        if (tmp != null)
+            _bufferSize = Integer.parseInt(tmp);
+        tmp = filterConfig.getInitParameter("response");
+        if (tmp != null)
+            _response = tmp;
     }
 
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
-        throws IOException, ServletException
-    {
-        HttpServletRequest srequest = (HttpServletRequest)request;
-        HttpServletResponse sresponse = (HttpServletResponse)response;
-        
-        if ("POST".equalsIgnoreCase(srequest.getMethod()))
-        {
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
+        HttpServletRequest srequest = (HttpServletRequest) request;
+        HttpServletResponse sresponse = (HttpServletResponse) response;
+
+        if ("POST".equalsIgnoreCase(srequest.getMethod())) {
             String filename = srequest.getPathTranslated();
-            if (filename==null)
-            {
-                if (srequest.getPathInfo()==null)
-                    filename=_context.getRealPath(srequest.getServletPath());
+            if (filename == null) {
+                if (srequest.getPathInfo() == null)
+                    filename = _context.getRealPath(srequest.getServletPath());
                 else
-                    filename=_context.getRealPath(srequest.getServletPath()+srequest.getPathInfo());
+                    filename = _context.getRealPath(srequest.getServletPath() + srequest.getPathInfo());
             }
-            if (filename==null)
-            {
+            if (filename == null) {
                 sresponse.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
-            
-            if (srequest.getContentLength()==0)
-            {
+
+            if (srequest.getContentLength() == 0) {
                 sresponse.sendError(HttpServletResponse.SC_LENGTH_REQUIRED);
                 return;
             }
-            
+
             File file = new File(filename);
-            
+
             if (file.exists() && (!file.canWrite() ||
-                                  file.isDirectory()) || 
-               !file.exists() && ( !file.getParentFile().exists() ||
-                                   !file.getParentFile().isDirectory() || 
-                                   !file.getParentFile().canWrite()))
-            {
+                    file.isDirectory()) ||
+                    !file.exists() && (!file.getParentFile().exists() ||
+                            !file.getParentFile().isDirectory() ||
+                            !file.getParentFile().canWrite())) {
                 sresponse.sendError(HttpServletResponse.SC_FORBIDDEN, "No write permission");
                 return;
             }
-            
+
             InputStream in = srequest.getInputStream();
-            FileOutputStream out = new FileOutputStream(file,false);
+            FileOutputStream out = new FileOutputStream(file, false);
             byte[] buf = new byte[_bufferSize];
-            while (true)
-            {
-                int len=in.read(buf);
-                if (len<0)
+            while (true) {
+                int len = in.read(buf);
+                if (len < 0)
                     break;
-                out.write(buf,0,len);
+                out.write(buf, 0, len);
             }
             out.close();
-            
+
             if ("redirect".equalsIgnoreCase(_response))
-                sresponse.sendRedirect(srequest.getRequestURI()); 
+                sresponse.sendRedirect(srequest.getRequestURI());
             else if ("chain".equalsIgnoreCase(_response))
                 chain.doFilter(request, response);
             else if ("ok".equalsIgnoreCase(_response))
-                sresponse.setStatus(HttpServletResponse.SC_OK);  
+                sresponse.setStatus(HttpServletResponse.SC_OK);
             else
                 sresponse.setStatus(HttpServletResponse.SC_NO_CONTENT);
-        }
-        else
+        } else
             chain.doFilter(request, response);
-       
+
     }
 
-    public void destroy()
-    {}
+    public void destroy() {
+    }
 
 }

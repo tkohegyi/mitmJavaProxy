@@ -21,27 +21,29 @@ import java.io.IOException;
 
 
 /* ================================================================ */
-/** Handle a multipart MIME response.
+
+/**
+ * Handle a multipart MIME response.
  *
- *
- * @version $Id: MultiPartResponse.java,v 1.6 2004/05/09 20:32:41 gregwilkins Exp $
  * @author Greg Wilkins
  * @author Jim Crossley
-*/
-public class MultiPartResponse extends net.lightbody.bmp.proxy.jetty.http.MultiPartResponse
-{
+ * @version $Id: MultiPartResponse.java,v 1.6 2004/05/09 20:32:41 gregwilkins Exp $
+ */
+public class MultiPartResponse extends net.lightbody.bmp.proxy.jetty.http.MultiPartResponse {
     /* ------------------------------------------------------------ */
-    /** MultiPartResponse constructor.
+
+    /**
+     * MultiPartResponse constructor.
+     *
      * @param response The ServletResponse to which this multipart
      *                 response will be sent.
      */
     public MultiPartResponse(HttpServletResponse response)
-         throws IOException
-    {
+            throws IOException {
         super(response.getOutputStream());
-        response.setContentType("multipart/mixed;boundary="+getBoundary());
+        response.setContentType("multipart/mixed;boundary=" + getBoundary());
     }
-    
+
 };
 
 

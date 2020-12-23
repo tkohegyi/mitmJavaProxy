@@ -15,33 +15,36 @@
 
 package net.lightbody.bmp.proxy.jetty.servlet;
 
-import javax.servlet.*;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
 /* ------------------------------------------------------------ */
-public  class WelcomeFilter implements Filter
-{
+public class WelcomeFilter implements Filter {
     private String welcome;
-    
-    public void init(FilterConfig filterConfig)
-    {
-        welcome=filterConfig.getInitParameter("welcome");
+
+    public void init(FilterConfig filterConfig) {
+        welcome = filterConfig.getInitParameter("welcome");
     }
 
     /* ------------------------------------------------------------ */
     public void doFilter(ServletRequest request,
                          ServletResponse response,
                          FilterChain chain)
-	throws IOException, ServletException
-    {
-        String path=((HttpServletRequest)request).getServletPath();
-        if (welcome!=null && path.endsWith("/"))
-            request.getRequestDispatcher(path+welcome).forward(request,response);
+            throws IOException, ServletException {
+        String path = ((HttpServletRequest) request).getServletPath();
+        if (welcome != null && path.endsWith("/"))
+            request.getRequestDispatcher(path + welcome).forward(request, response);
         else
             chain.doFilter(request, response);
     }
 
-    public void destroy() {}
+    public void destroy() {
+    }
 }
 

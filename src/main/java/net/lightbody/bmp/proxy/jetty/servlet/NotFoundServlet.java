@@ -22,25 +22,24 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /* ------------------------------------------------------------ */
-/** Not Found Servlet.
+
+/**
+ * Not Found Servlet.
  * Utility servlet to protect a URI by always responding with 404.
  *
- * @version $Revision: 1.4 $
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.4 $
  */
-public class NotFoundServlet extends HttpServlet
-{
+public class NotFoundServlet extends HttpServlet {
     /* ------------------------------------------------------------ */
-    public void doPost(HttpServletRequest req, HttpServletResponse res) 
-        throws ServletException, IOException
-    {
+    public void doPost(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
         res.sendError(404);
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void doGet(HttpServletRequest req, HttpServletResponse res) 
-        throws ServletException, IOException
-    {
+    public void doGet(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
         res.sendError(404);
     }
 }

@@ -15,8 +15,25 @@
 
 package net.lightbody.bmp.proxy.jetty.servlet;
 
-import net.lightbody.bmp.proxy.jetty.html.*;
-import net.lightbody.bmp.proxy.jetty.http.*;
+import net.lightbody.bmp.proxy.jetty.html.Block;
+import net.lightbody.bmp.proxy.jetty.html.Break;
+import net.lightbody.bmp.proxy.jetty.html.Composite;
+import net.lightbody.bmp.proxy.jetty.html.Element;
+import net.lightbody.bmp.proxy.jetty.html.Font;
+import net.lightbody.bmp.proxy.jetty.html.Form;
+import net.lightbody.bmp.proxy.jetty.html.Heading;
+import net.lightbody.bmp.proxy.jetty.html.Input;
+import net.lightbody.bmp.proxy.jetty.html.Link;
+import net.lightbody.bmp.proxy.jetty.html.List;
+import net.lightbody.bmp.proxy.jetty.html.Page;
+import net.lightbody.bmp.proxy.jetty.html.Target;
+import net.lightbody.bmp.proxy.jetty.http.HttpContext;
+import net.lightbody.bmp.proxy.jetty.http.HttpException;
+import net.lightbody.bmp.proxy.jetty.http.HttpHandler;
+import net.lightbody.bmp.proxy.jetty.http.HttpListener;
+import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
+import net.lightbody.bmp.proxy.jetty.http.HttpServer;
+import net.lightbody.bmp.proxy.jetty.http.PathMap;
 import net.lightbody.bmp.proxy.jetty.jetty.servlet.ServletHandler;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LifeCycle;
@@ -39,264 +56,242 @@ import java.util.StringTokenizer;
 
 
 /* ------------------------------------------------------------ */
-/** Jetty Administration Servlet.
- *
+
+/**
+ * Jetty Administration Servlet.
+ * <p>
  * This is a minimal start to a administration servlet that allows
  * start/stop of server components and control of debug parameters.
  *
- * @version $Id: AdminServlet.java,v 1.13 2005/08/13 00:01:28 gregwilkins Exp $
  * @author Greg Wilkins (gregw)
+ * @version $Id: AdminServlet.java,v 1.13 2005/08/13 00:01:28 gregwilkins Exp $
  */
-public class AdminServlet extends HttpServlet
-{
+public class AdminServlet extends HttpServlet {
     static Log log = LogFactory.getLog(AdminServlet.class);
 
     private Collection _servers;
-    
+
     /* ------------------------------------------------------------ */
     public void init(ServletConfig config)
-         throws ServletException
-    {
+            throws ServletException {
         super.init(config);
-        _servers =HttpServer.getHttpServers();
+        _servers = HttpServer.getHttpServers();
     }
-    
+
     /* ------------------------------------------------------------ */
     private String doAction(HttpServletRequest request)
-        throws IOException
-    {
-        String action=request.getParameter("A");
-        if ("exit all servers".equalsIgnoreCase(action))
-        {
-            new Thread(new Runnable()
-                {
-                    public void run()
-                    {
-                        try{Thread.sleep(1000);}
-                        catch(Exception e){LogSupport.ignore(log,e);}
-                        log.info("Stopping All servers");
-                        Iterator s=_servers.iterator();
-                        while(s.hasNext())
-                        {
-                            HttpServer server=(HttpServer)s.next();
-                            try{server.stop();}
-                            catch(Exception e){LogSupport.ignore(log,e);}
-                        }
-                        log.info("Exiting JVM");
-                        System.exit(1);
+            throws IOException {
+        String action = request.getParameter("A");
+        if ("exit all servers".equalsIgnoreCase(action)) {
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+                        LogSupport.ignore(log, e);
                     }
-                }).start();
-            
+                    log.info("Stopping All servers");
+                    Iterator s = _servers.iterator();
+                    while (s.hasNext()) {
+                        HttpServer server = (HttpServer) s.next();
+                        try {
+                            server.stop();
+                        } catch (Exception e) {
+                            LogSupport.ignore(log, e);
+                        }
+                    }
+                    log.info("Exiting JVM");
+                    System.exit(1);
+                }
+            }).start();
+
             throw new HttpException(HttpResponse.__503_Service_Unavailable);
         }
-        
-        boolean start="start".equalsIgnoreCase(action);
-        String id=request.getParameter("ID");
 
-        StringTokenizer tok=new StringTokenizer(id,":");
-        int tokens=tok.countTokens();
-        String target=null;
-        
-        try{
-            target=tok.nextToken();
-            int t=Integer.parseInt(target);
-            Iterator s=_servers.iterator();
-            HttpServer server=null;
-            while(s.hasNext() && t>=0)
-                if (t--==0)
-                    server=(HttpServer)s.next();
+        boolean start = "start".equalsIgnoreCase(action);
+        String id = request.getParameter("ID");
+
+        StringTokenizer tok = new StringTokenizer(id, ":");
+        int tokens = tok.countTokens();
+        String target = null;
+
+        try {
+            target = tok.nextToken();
+            int t = Integer.parseInt(target);
+            Iterator s = _servers.iterator();
+            HttpServer server = null;
+            while (s.hasNext() && t >= 0)
+                if (t-- == 0)
+                    server = (HttpServer) s.next();
                 else
                     s.next();
-            
-            if (tokens==1)
-            {
+
+            if (tokens == 1) {
                 // Server stop/start
                 if (start) server.start();
                 else server.stop();
-            }
-            else if (tokens==3)
-            {
+            } else if (tokens == 3) {
                 // Listener stop/start
-                String l=tok.nextToken()+":"+tok.nextToken();
+                String l = tok.nextToken() + ":" + tok.nextToken();
 
-                HttpListener[] listeners=server.getListeners();
-                for (int i2=0;i2<listeners.length;i2++)
-                {
+                HttpListener[] listeners = server.getListeners();
+                for (int i2 = 0; i2 < listeners.length; i2++) {
                     HttpListener listener = listeners[i2];
-                    if (listener.toString().indexOf(l)>=0)
-                    {
+                    if (listener.toString().indexOf(l) >= 0) {
                         if (start) listener.start();
                         else listener.stop();
                     }
                 }
-            }
-            else
-            {
-                String host=tok.nextToken();
+            } else {
+                String host = tok.nextToken();
                 if ("null".equals(host))
-                    host=null;
-                
-                String contextPath=tok.nextToken();
-                target+=":"+host+":"+contextPath;
-                if (contextPath.length()>1)
-                    contextPath+="/*";
-                int contextIndex=Integer.parseInt(tok.nextToken());
-                target+=":"+contextIndex;
+                    host = null;
+
+                String contextPath = tok.nextToken();
+                target += ":" + host + ":" + contextPath;
+                if (contextPath.length() > 1)
+                    contextPath += "/*";
+                int contextIndex = Integer.parseInt(tok.nextToken());
+                target += ":" + contextIndex;
                 HttpContext
-                    context=server.getContext(host,contextPath,contextIndex);
-                
-                if (tokens==4)
-                {
+                        context = server.getContext(host, contextPath, contextIndex);
+
+                if (tokens == 4) {
                     // Context stop/start
                     if (start) context.start();
                     else context.stop();
-                }
-                else if (tokens==5)
-                {
+                } else if (tokens == 5) {
                     // Handler stop/start
-                    int handlerIndex=Integer.parseInt(tok.nextToken());
-                    HttpHandler handler=context.getHandlers()[handlerIndex];
-                    
+                    int handlerIndex = Integer.parseInt(tok.nextToken());
+                    HttpHandler handler = context.getHandlers()[handlerIndex];
+
                     if (start) handler.start();
                     else handler.stop();
                 }
             }
+        } catch (Exception e) {
+            log.warn(LogSupport.EXCEPTION, e);
+        } catch (Error e) {
+            log.warn(LogSupport.EXCEPTION, e);
         }
-        catch(Exception e)
-        {
-            log.warn(LogSupport.EXCEPTION,e);
-        }
-        catch(Error e)
-        {
-            log.warn(LogSupport.EXCEPTION,e);
-        }
-        
+
         return target;
     }
-    
+
     /* ------------------------------------------------------------ */
     public void doGet(HttpServletRequest request,
-                      HttpServletResponse response) 
-        throws ServletException, IOException
-    {
-        if (request.getQueryString()!=null &&
-            request.getQueryString().length()>0)
-        {
-            String target=doAction(request);
-            response.sendRedirect(request.getContextPath()+
-                                  request.getServletPath()+
-                                  (request.getPathInfo()!=null
-                                   ?request.getPathInfo():"")+
-                                  (target!=null?("#"+target):""));
+                      HttpServletResponse response)
+            throws ServletException, IOException {
+        if (request.getQueryString() != null &&
+                request.getQueryString().length() > 0) {
+            String target = doAction(request);
+            response.sendRedirect(request.getContextPath() +
+                    request.getServletPath() +
+                    (request.getPathInfo() != null
+                            ? request.getPathInfo() : "") +
+                    (target != null ? ("#" + target) : ""));
             return;
         }
-        
-        Page page= new Page();
+
+        Page page = new Page();
         page.title(getServletInfo());
         page.addHeader("");
-        page.attribute("text","#000000");
-        page.attribute(Page.BGCOLOR,"#FFFFFF");
-        page.attribute("link","#606CC0");
-        page.attribute("vlink","#606CC0");
-        page.attribute("alink","#606CC0");
+        page.attribute("text", "#000000");
+        page.attribute(Page.BGCOLOR, "#FFFFFF");
+        page.attribute("link", "#606CC0");
+        page.attribute("vlink", "#606CC0");
+        page.attribute("alink", "#606CC0");
 
-        page.add(new Block(Block.Bold).add(new Font(3,true).add(getServletInfo())));
+        page.add(new Block(Block.Bold).add(new Font(3, true).add(getServletInfo())));
         page.add(Break.rule);
-        Form form=new Form(request.getContextPath()+
-                           request.getServletPath()+
-                           "?A=exit");
+        Form form = new Form(request.getContextPath() +
+                request.getServletPath() +
+                "?A=exit");
         form.method("GET");
-        form.add(new Input(Input.Submit,"A","Exit All Servers"));
+        form.add(new Input(Input.Submit, "A", "Exit All Servers"));
         page.add(form);
         page.add(Break.rule);
-        page.add(new Heading(3,"Components:"));
+        page.add(new Heading(3, "Components:"));
 
-        List sList=new List(List.Ordered);
+        List sList = new List(List.Ordered);
         page.add(sList);
-        
+
         String id1;
-        int i1=0;
-        Iterator s=_servers.iterator();
-        while(s.hasNext())
-        {
-            id1=""+i1++;
-            HttpServer server=(HttpServer)s.next();            
+        int i1 = 0;
+        Iterator s = _servers.iterator();
+        while (s.hasNext()) {
+            id1 = "" + i1++;
+            HttpServer server = (HttpServer) s.next();
             Composite sItem = sList.newItem();
             sItem.add("<B>HttpServer&nbsp;");
-            sItem.add(lifeCycle(request,id1,server));
+            sItem.add(lifeCycle(request, id1, server));
             sItem.add("</B>");
             sItem.add(Break.line);
             sItem.add("<B>Listeners:</B>");
-            List lList=new List(List.Unordered);
+            List lList = new List(List.Unordered);
             sItem.add(lList);
 
-            HttpListener[] listeners=server.getListeners();
-            for (int i2=0;i2<listeners.length;i2++)
-            {
+            HttpListener[] listeners = server.getListeners();
+            for (int i2 = 0; i2 < listeners.length; i2++) {
                 HttpListener listener = listeners[i2];
-                String id2=id1+":"+listener;
-                lList.add(lifeCycle(request,id2,listener));
+                String id2 = id1 + ":" + listener;
+                lList.add(lifeCycle(request, id2, listener));
             }
 
             Map hostMap = server.getHostMap();
-            
+
             sItem.add("<B>Contexts:</B>");
-            List hcList=new List(List.Unordered);
+            List hcList = new List(List.Unordered);
             sItem.add(hcList);
-            Iterator i2=hostMap.entrySet().iterator();
-            while(i2.hasNext())
-            {
-                Map.Entry hEntry=(Map.Entry)(i2.next());
-                String host=(String)hEntry.getKey();
+            Iterator i2 = hostMap.entrySet().iterator();
+            while (i2.hasNext()) {
+                Map.Entry hEntry = (Map.Entry) (i2.next());
+                String host = (String) hEntry.getKey();
 
-                PathMap contexts=(PathMap)hEntry.getValue();
-                Iterator i3=contexts.entrySet().iterator();
-                while(i3.hasNext())
-                {
-                    Map.Entry cEntry=(Map.Entry)(i3.next());
-                    String contextPath=(String)cEntry.getKey();
-                    java.util.List contextList=(java.util.List)cEntry.getValue();
-                    
+                PathMap contexts = (PathMap) hEntry.getValue();
+                Iterator i3 = contexts.entrySet().iterator();
+                while (i3.hasNext()) {
+                    Map.Entry cEntry = (Map.Entry) (i3.next());
+                    String contextPath = (String) cEntry.getKey();
+                    java.util.List contextList = (java.util.List) cEntry.getValue();
+
                     Composite hcItem = hcList.newItem();
-                    if (host!=null)
-                        hcItem.add("Host="+host+":");
-                    hcItem.add("ContextPath="+contextPath);
-                    
-                    String id3=id1+":"+host+":"+
-                        (contextPath.length()>2
-                         ?contextPath.substring(0,contextPath.length()-2)
-                         :contextPath);
-                    
-                    List cList=new List(List.Ordered);
-                    hcItem.add(cList);
-                    for (int i4=0;i4<contextList.size();i4++)
-                    {
-                        String id4=id3+":"+i4;
-                        Composite cItem = cList.newItem();
-                        HttpContext hc=
-                            (HttpContext)contextList.get(i4);
-                        cItem.add(lifeCycle(request,id4,hc));
-                        cItem.add("<BR>ResourceBase="+hc.getResourceBase());
-                        cItem.add("<BR>ClassPath="+hc.getClassPath());
+                    if (host != null)
+                        hcItem.add("Host=" + host + ":");
+                    hcItem.add("ContextPath=" + contextPath);
 
-                    
-                        List hList=new List(List.Ordered);
+                    String id3 = id1 + ":" + host + ":" +
+                            (contextPath.length() > 2
+                                    ? contextPath.substring(0, contextPath.length() - 2)
+                                    : contextPath);
+
+                    List cList = new List(List.Ordered);
+                    hcItem.add(cList);
+                    for (int i4 = 0; i4 < contextList.size(); i4++) {
+                        String id4 = id3 + ":" + i4;
+                        Composite cItem = cList.newItem();
+                        HttpContext hc =
+                                (HttpContext) contextList.get(i4);
+                        cItem.add(lifeCycle(request, id4, hc));
+                        cItem.add("<BR>ResourceBase=" + hc.getResourceBase());
+                        cItem.add("<BR>ClassPath=" + hc.getClassPath());
+
+
+                        List hList = new List(List.Ordered);
                         cItem.add(hList);
                         int handlers = hc.getHandlers().length;
-                        for(int i5=0;i5<handlers;i5++)
-                        {
-                            String id5=id4+":"+i5;
+                        for (int i5 = 0; i5 < handlers; i5++) {
+                            String id5 = id4 + ":" + i5;
                             HttpHandler handler = hc.getHandlers()[i5];
-                            Composite hItem=hList.newItem();
+                            Composite hItem = hList.newItem();
                             hItem.add(lifeCycle(request,
-                                                id5,
-                                                handler,
-                                                handler.getName()));
-                            if (handler instanceof ServletHandler)
-                            {
-                                hItem.add("<BR>"+
-                                          ((ServletHandler)handler)
-                                          .getServletMap());
+                                    id5,
+                                    handler,
+                                    handler.getName()));
+                            if (handler instanceof ServletHandler) {
+                                hItem.add("<BR>" +
+                                        ((ServletHandler) handler)
+                                                .getServletMap());
                             }
                         }
                     }
@@ -309,60 +304,56 @@ public class AdminServlet extends HttpServlet
         response.setContentType("text/html");
         response.setHeader("Pragma", "no-cache");
         response.setHeader("Cache-Control", "no-cache,no-store");
-        Writer writer=response.getWriter();
+        Writer writer = response.getWriter();
         page.write(writer);
         writer.flush();
     }
 
     /* ------------------------------------------------------------ */
     public void doPost(HttpServletRequest request,
-                        HttpServletResponse response) 
-        throws ServletException, IOException
-    {
-        String target=null;
-        response.sendRedirect(request.getContextPath()+
-                              request.getServletPath()+"/"+
-                              Long.toString(System.currentTimeMillis(),36)+
-                              (target!=null?("#"+target):""));
+                       HttpServletResponse response)
+            throws ServletException, IOException {
+        String target = null;
+        response.sendRedirect(request.getContextPath() +
+                request.getServletPath() + "/" +
+                Long.toString(System.currentTimeMillis(), 36) +
+                (target != null ? ("#" + target) : ""));
     }
-    
+
     /* ------------------------------------------------------------ */
     private Element lifeCycle(HttpServletRequest request,
                               String id,
-                              LifeCycle lc)
-    {
-        return lifeCycle(request,id,lc,lc.toString());
+                              LifeCycle lc) {
+        return lifeCycle(request, id, lc, lc.toString());
     }
-    
+
     /* ------------------------------------------------------------ */
     private Element lifeCycle(HttpServletRequest request,
                               String id,
                               LifeCycle lc,
-                              String name)
-    {
-        Composite comp=new Composite();
+                              String name) {
+        Composite comp = new Composite();
         comp.add(new Target(id));
         Font font = new Font();
         comp.add(font);
-        font.color(lc.isStarted()?"green":"red");
+        font.color(lc.isStarted() ? "green" : "red");
         font.add(name);
 
-        String action=lc.isStarted()?"Stop":"Start";
-        
+        String action = lc.isStarted() ? "Stop" : "Start";
+
         comp.add("&nbsp;[");
-        comp.add(new Link(URI.addPaths(request.getContextPath(),request.getServletPath())+
-                          "?T="+Long.toString(System.currentTimeMillis(),36)+
-                          "&A="+action+
-                          "&ID="+UrlEncoded.encodeString(id),
-                          action));
+        comp.add(new Link(URI.addPaths(request.getContextPath(), request.getServletPath()) +
+                "?T=" + Long.toString(System.currentTimeMillis(), 36) +
+                "&A=" + action +
+                "&ID=" + UrlEncoded.encodeString(id),
+                action));
         comp.add("]");
         return comp;
     }
-    
-    
+
+
     /* ------------------------------------------------------------ */
-    public String getServletInfo()
-    {
+    public String getServletInfo() {
         return "HTTP Admin";
     }
 }
