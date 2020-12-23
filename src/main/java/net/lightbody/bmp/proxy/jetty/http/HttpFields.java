@@ -16,7 +16,14 @@
 package net.lightbody.bmp.proxy.jetty.http;
 
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import net.lightbody.bmp.proxy.jetty.util.*;
+import net.lightbody.bmp.proxy.jetty.util.DateCache;
+import net.lightbody.bmp.proxy.jetty.util.LazyList;
+import net.lightbody.bmp.proxy.jetty.util.LineInput;
+import net.lightbody.bmp.proxy.jetty.util.LogSupport;
+import net.lightbody.bmp.proxy.jetty.util.QuotedStringTokenizer;
+import net.lightbody.bmp.proxy.jetty.util.StringMap;
+import net.lightbody.bmp.proxy.jetty.util.StringUtil;
+import net.lightbody.bmp.proxy.jetty.util.URI;
 import org.apache.commons.logging.Log;
 
 import javax.servlet.http.Cookie;
@@ -24,7 +31,21 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
+import java.util.TimeZone;
 
 /* ------------------------------------------------------------ */
 /** HTTP Fields.
@@ -142,30 +163,30 @@ public class HttpFields
         {
             synchronized(FieldInfo.class)
             {
-                _name=name;
-                _lname=StringUtil.asciiToLowerCase(name);
-                _inlineValues=inline;
+                _name = name;
+                _lname = StringUtil.asciiToLowerCase(name);
+                _inlineValues = inline;
                 
-                _hashCode=__hashCode++;
+                _hashCode = __hashCode++;
                 
-                if (__hashCode < __maxCacheSize)
-                {
+                if (__hashCode < __maxCacheSize) {
                     FieldInfo oldInfo = (FieldInfo)__info.get(name);
-                    if (oldInfo == null)
-                    {
+                    if (oldInfo == null) {
                         __info.put(name, this);
-                        if (!name.equals(_lname))
+                        if (!name.equals(_lname)) {
                             __info.put(_lname, this);
+                        }
                     }
-                    else
+                    else {
                         _hashCode = oldInfo._hashCode;
+                    }
                 }
             }
         }
 
         public String toString()
         {
-            return "["+_name+","+_hashCode+","+_inlineValues+"]";
+            return "[" + _name + "," + _hashCode + "," + _inlineValues + "]";
         }
 
         public int hashCode()
@@ -175,12 +196,13 @@ public class HttpFields
 
         public boolean equals(Object o)
         {
-            if (o==null || !(o instanceof FieldInfo))
+            if (o == null || !(o instanceof FieldInfo)) {
                 return false;
+            }
             FieldInfo fi = (FieldInfo)o;
             return
-                fi==this ||
-                fi._hashCode==_hashCode ||
+                fi == this ||
+                fi._hashCode == _hashCode ||
                 fi._name.equals(_name);
         }
     }
@@ -188,7 +210,7 @@ public class HttpFields
     /* ------------------------------------------------------------ */
     private static final StringMap __info = new StringMap(true);
     private static final StringMap __values = new StringMap(true);
-    private static final int __maxCacheSize=128;
+    private static final int __maxCacheSize = 128;
     
     /* ------------------------------------------------------------ */
     static
@@ -247,16 +269,15 @@ public class HttpFields
         new FieldInfo(__Age,false);
         new FieldInfo(__ETag,false);
         new FieldInfo(__RetryAfter,false);
-
-        
     }
     
     /* ------------------------------------------------------------ */
     private static FieldInfo getFieldInfo(String name)
     {
         FieldInfo info = (FieldInfo)__info.get(name);
-        if (info==null)
-            info = new FieldInfo(name,false);
+        if (info == null) {
+            info = new FieldInfo(name, false);
+        }
         return info;
     }
     
@@ -264,9 +285,9 @@ public class HttpFields
     private static FieldInfo getFieldInfo(char[] name,int offset,int length)
     {
         Map.Entry entry = __info.getEntry(name,offset,length);
-        if (entry==null)
-            return new FieldInfo(new String(name,offset,length),false);
-
+        if (entry == null) {
+            return new FieldInfo(new String(name, offset, length), false);
+        }
         return (FieldInfo) entry.getValue();
     }
     
@@ -277,49 +298,45 @@ public class HttpFields
     public final static String __Close = "close";
     public final static String __TextHtml = "text/html";
     public final static String __MessageHttp = "message/http";
-    public final static String __WwwFormUrlEncode =
-        "application/x-www-form-urlencoded";
+    public final static String __WwwFormUrlEncode = "application/x-www-form-urlencoded";
     public static final String __ExpectContinue="100-continue";
 
-    static
-    {
-        __values.put(__KeepAlive,__KeepAlive);
-        __values.put(__Chunked,__Chunked);
-        __values.put(__Close,__Close);
-        __values.put(__TextHtml,__TextHtml);
-        __values.put(__MessageHttp,__MessageHttp);
-        __values.put(__WwwFormUrlEncode,__WwwFormUrlEncode);
-        __values.put(__ExpectContinue,__ExpectContinue);
-        __values.put("max-age=0","max-age=0");
-        __values.put("no-cache","no-cache");
-        __values.put("300","300");
-        __values.put("ISO-8859-1, utf-8;q=0.66, *;q=0.66","ISO-8859-1, utf-8;q=0.66, *;q=0.66");
+    static {
+        __values.put(__KeepAlive, __KeepAlive);
+        __values.put(__Chunked, __Chunked);
+        __values.put(__Close, __Close);
+        __values.put(__TextHtml, __TextHtml);
+        __values.put(__MessageHttp, __MessageHttp);
+        __values.put(__WwwFormUrlEncode, __WwwFormUrlEncode);
+        __values.put(__ExpectContinue, __ExpectContinue);
+        __values.put("max-age=0", "max-age=0");
+        __values.put("no-cache", "no-cache");
+        __values.put("300", "300");
+        __values.put("ISO-8859-1, utf-8;q=0.66, *;q=0.66", "ISO-8859-1, utf-8;q=0.66, *;q=0.66");
     }
     
     /* ------------------------------------------------------------ */
     public final static String __separators = ", \t";    
 
     /* ------------------------------------------------------------ */
-    public final static char[] __CRLF = {'\015','\012'};
-    public final static char[] __COLON = {':',' '};
+    public final static char[] __CRLF = {'\015', '\012'};
+    public final static char[] __COLON = {':', ' '};
 
     /* ------------------------------------------------------------ */
-    private static String[] DAYS= { "Sat","Sun","Mon","Tue","Wed","Thu","Fri","Sat" };
-    private static String[] MONTHS= { "Jan","Feb","Mar","Apr","May","Jun",
-                                      "Jul","Aug","Sep","Oct","Nov","Dec","Jan" };
-
+    private static String[] DAYS= { "Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+    private static String[] MONTHS= { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan" };
 
     /* ------------------------------------------------------------ */
     /** Format HTTP date
      * "EEE, dd MMM yyyy HH:mm:ss 'GMT'" or 
      * "EEE, dd-MMM-yy HH:mm:ss 'GMT'"for cookies
      */
-    public static String formatDate(long date, boolean cookie)
-    {
+    public static String formatDate(long date, boolean cookie) {
         StringBuffer buf = new StringBuffer(32);
         HttpCal gc = new HttpCal();
         gc.setTimeInMillis(date);
-        formatDate(buf,gc,cookie);
+        formatDate(buf, gc, cookie);
         return buf.toString();
     } 
 
@@ -328,10 +345,9 @@ public class HttpFields
      * "EEE, dd MMM yyyy HH:mm:ss 'GMT'" or 
      * "EEE, dd-MMM-yy HH:mm:ss 'GMT'"for cookies
      */
-    public static String formatDate(Calendar calendar, boolean cookie)
-    {
+    public static String formatDate(Calendar calendar, boolean cookie) {
         StringBuffer buf = new StringBuffer(32);
-        formatDate(buf,calendar,cookie);
+        formatDate(buf, calendar, cookie);
         return buf.toString();
     }
 
@@ -340,11 +356,10 @@ public class HttpFields
      * "EEE, dd MMM yyyy HH:mm:ss 'GMT'" or 
      * "EEE, dd-MMM-yy HH:mm:ss 'GMT'"for cookies
      */
-    public static String formatDate(StringBuffer buf, long date, boolean cookie)
-    {
+    public static String formatDate(StringBuffer buf, long date, boolean cookie) {
         HttpCal gc = new HttpCal();
         gc.setTimeInMillis(date);
-        formatDate(buf,gc,cookie);
+        formatDate(buf, gc, cookie);
         return buf.toString();
     } 
 
@@ -353,8 +368,7 @@ public class HttpFields
      * "EEE, dd MMM yyyy HH:mm:ss 'GMT'" or 
      * "EEE, dd-MMM-yy HH:mm:ss 'GMT'"for cookies
      */
-    public static void formatDate(StringBuffer buf,Calendar calendar, boolean cookie)
-    {
+    public static void formatDate(StringBuffer buf, Calendar calendar, boolean cookie) {
         // "EEE, dd MMM yyyy HH:mm:ss 'GMT'"
         // "EEE, dd-MMM-yy HH:mm:ss 'GMT'",     cookie
         
@@ -362,54 +376,48 @@ public class HttpFields
         int day_of_month = calendar.get(Calendar.DAY_OF_MONTH);
         int month = calendar.get(Calendar.MONTH);
         int year = calendar.get(Calendar.YEAR);
-        int century = year/100;
-        year=year%100;
+        int century = year / 100;
+        year = year % 100;
 
-        long tm = (calendar instanceof HttpCal)?(((HttpCal)calendar).getTimeInMillis()):calendar.getTime().getTime();
-        int epoch=(int)((tm/1000) % (60*60*24));
-        int seconds=epoch%60;
-        epoch=epoch/60;
-        int minutes=epoch%60;
-        int hours=epoch/60;
+        long tm = (calendar instanceof HttpCal) ? (((HttpCal)calendar).getTimeInMillis()):calendar.getTime().getTime();
+        int epoch = (int)((tm / 1000) % (60 * 60 * 24));
+        int seconds = epoch % 60;
+        epoch = epoch / 60;
+        int minutes = epoch % 60;
+        int hours = epoch / 60;
         
         buf.append(DAYS[day_of_week]);
         buf.append(',');
         buf.append(' ');
-        StringUtil.append2digits(buf,day_of_month);
+        StringUtil.append2digits(buf, day_of_month);
         
-        if (cookie)
-        {
+        if (cookie) {
             buf.append('-');
             buf.append(MONTHS[month]);
             buf.append('-');
-            StringUtil.append2digits(buf,year);
-        }
-        else
-        {
+            StringUtil.append2digits(buf, year);
+        } else {
             buf.append(' ');
             buf.append(MONTHS[month]);
             buf.append(' ');
-            StringUtil.append2digits(buf,century);
-            StringUtil.append2digits(buf,year);
+            StringUtil.append2digits(buf, century);
+            StringUtil.append2digits(buf, year);
         }
         buf.append(' ');
-        StringUtil.append2digits(buf,hours);
+        StringUtil.append2digits(buf, hours);
         buf.append(':');
-        StringUtil.append2digits(buf,minutes);
+        StringUtil.append2digits(buf, minutes);
         buf.append(':');
-        StringUtil.append2digits(buf,seconds);
+        StringUtil.append2digits(buf, seconds);
         buf.append(" GMT");
     }    
 
     /* -------------------------------------------------------------- */
     private static TimeZone __GMT = TimeZone.getTimeZone("GMT");
-    public final static DateCache __dateCache = 
-        new DateCache("EEE, dd MMM yyyy HH:mm:ss 'GMT'",
-                      Locale.US);     
+    public final static DateCache __dateCache = new DateCache("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US);
     
     /* ------------------------------------------------------------ */
-    private final static String __dateReceiveFmt[] =
-    {
+    private final static String __dateReceiveFmt[] = {
         "EEE, dd MMM yyyy HH:mm:ss zzz",
         "EEE, dd-MMM-yy HH:mm:ss zzz",
         "EEE MMM dd HH:mm:ss yyyy",
@@ -419,28 +427,25 @@ public class HttpFields
         "dd-MMM-yy HH:mm:ss",
     };
     public static SimpleDateFormat __dateReceiveSource[];
-    public static final ThreadLocal __dateReceiveCache=new ThreadLocal();
-    static
-    {
+    public static final ThreadLocal __dateReceiveCache = new ThreadLocal();
+    static {
         __GMT.setID("GMT");
         __dateCache.setTimeZone(__GMT); 
         __dateReceiveSource = new SimpleDateFormat[__dateReceiveFmt.length];
-        for(int i=0;i<__dateReceiveSource.length;i++)
+        for(int i = 0; i < __dateReceiveSource.length; i++)
         {
-            __dateReceiveSource[i] =
-                new SimpleDateFormat(__dateReceiveFmt[i],Locale.US);
+            __dateReceiveSource[i] = new SimpleDateFormat(__dateReceiveFmt[i], Locale.US);
             __dateReceiveSource[i].setTimeZone(__GMT);
         }
     }                 
     
-    public final static String __01Jan1970=HttpFields.formatDate(0,false);
+    public final static String __01Jan1970 = HttpFields.formatDate(0,false);
 
 
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    private static final class Field
-    {
+    private static final class Field {
         FieldInfo _info;
         String _value;
         Field _next;
@@ -448,8 +453,7 @@ public class HttpFields
         int _version;
 
         /* ------------------------------------------------------------ */
-        Field(FieldInfo info, String value, int version)
-        {
+        Field(FieldInfo info, String value, int version) {
             _info=info;
             _value=value;
             _next=null;
@@ -460,55 +464,50 @@ public class HttpFields
         /* ------------------------------------------------------------ */
         Field(FieldInfo info, char[] buf, int offset, int length, int version)
         {
-            Map.Entry valueEntry=__values.getEntry(buf,offset,length);
-            String value=null;
-            if (valueEntry!=null)
-                value=(String)valueEntry.getKey();
-            else
-                value=new String(buf,offset,length);
-            
-            _info=info;
-            _value=value;
-            _next=null;
-            _prev=null;
-            _version=version;
+            Map.Entry valueEntry = __values.getEntry(buf, offset, length);
+            String value = null;
+            if (valueEntry != null) {
+                value = (String) valueEntry.getKey();
+            } else {
+                value = new String(buf, offset, length);
+            }
+            _info = info;
+            _value = value;
+            _next = null;
+            _prev = null;
+            _version = version;
         }
         
         /* ------------------------------------------------------------ */
-        public boolean equals(Object o)
-        {
+        public boolean equals(Object o) {
             return (o instanceof Field) &&
-                o==this &&
-                _version==((Field)o)._version;
+                o == this &&
+                _version == ((Field)o)._version;
         }
 
         /* ------------------------------------------------------------ */
-        public int hashCode()
-        {
-            return _info.hashCode()*_version;
+        public int hashCode() {
+            return _info.hashCode() * _version;
         }
         
         /* ------------------------------------------------------------ */
-        void clear()
-        {
+        void clear() {
             _version=-1;
         }
         
         /* ------------------------------------------------------------ */
-        void destroy()
-        {
-            _info=null;
-            _value=null;
-            _next=null;
-            _prev=null;
-            _version=-1;
+        void destroy() {
+            _info = null;
+            _value = null;
+            _next = null;
+            _prev = null;
+            _version = -1;
         }
         
         /* ------------------------------------------------------------ */
-        void reset(String value,int version)
-        {
-            _value=value;
-            _version=version;
+        void reset(String value, int version) {
+            _value = value;
+            _version = version;
         }
         
         /* ------------------------------------------------------------ */
@@ -516,47 +515,44 @@ public class HttpFields
          * Checks if the value is the same as that in the char array, if so
          * then just reuse existing value.
          */
-        void reset(char[] buf, int offset, int length, int version)
-        {  
-            _version=version;
-            if (!StringUtil.equals(_value,buf,offset,length))
+        void reset(char[] buf, int offset, int length, int version) {
+            _version = version;
+            if (!StringUtil.equals(_value, buf, offset, length))
             {
-                Map.Entry valueEntry=__values.getEntry(buf,offset,length);
-                String value=null;
-                if (valueEntry!=null)
-                    value=(String)valueEntry.getKey();
-                else
-                    value=new String(buf,offset,length);
+                Map.Entry valueEntry = __values.getEntry(buf, offset, length);
+                String value = null;
+                if (valueEntry != null) {
+                    value = (String) valueEntry.getKey();
+                } else {
+                    value = new String(buf, offset, length);
+                }
                 _value=value;
             }
         }
 
         
         /* ------------------------------------------------------------ */
-        void write(Writer writer, int version)
-            throws IOException
-        {
-            if (_info==null || _version!=version)
+        void write(Writer writer, int version) throws IOException {
+            if (_info == null || _version != version) {
                 return;
-            if (_info._inlineValues)
-            {
-                if (_prev!=null)
+            }
+            if (_info._inlineValues) {
+                if (_prev != null) {
                     return;
+                }
                 writer.write(_info._name);
                 writer.write(__COLON);
-                Field f=this;
-                while (true)
-                {
+                Field f = this;
+                while (true) {
                     writer.write(QuotedStringTokenizer.quote(f._value,", \t"));
-                    f=f._next;
-                    if (f==null)
+                    f = f._next;
+                    if (f == null) {
                         break;
+                    }
                     writer.write(",");
                 }
                 writer.write(__CRLF);
-            }
-            else
-            {
+            } else {
                 writer.write(_info._name);
                 writer.write(__COLON);
                 writer.write(_value);
@@ -573,10 +569,10 @@ public class HttpFields
         /* ------------------------------------------------------------ */
         public String toString()
         {
-            return ("["+
-                (_prev==null?"":"<-")+
-                getDisplayName()+"="+_value+
-                (_next==null?"":"->")+
+            return ("[" +
+                (_prev == null?"":"<-") +
+                getDisplayName() + "=" + _value +
+                (_next == null ? "" : "->") +
                 "]");
         }
     }
@@ -584,31 +580,29 @@ public class HttpFields
     /* ------------------------------------------------------------ */
     private static Float __one = new Float("1.0");
     private static Float __zero = new Float("0.0");
-    private static StringMap __qualities=new StringMap();
-    static
-    {
-        __qualities.put(null,__one);
-        __qualities.put("1.0",__one);
-        __qualities.put("1",__one);
-        __qualities.put("0.9",new Float("0.9"));
-        __qualities.put("0.8",new Float("0.8"));
-        __qualities.put("0.7",new Float("0.7"));
-        __qualities.put("0.66",new Float("0.66"));
-        __qualities.put("0.6",new Float("0.6"));
-        __qualities.put("0.5",new Float("0.5"));
-        __qualities.put("0.4",new Float("0.4"));
-        __qualities.put("0.33",new Float("0.33"));
-        __qualities.put("0.3",new Float("0.3"));
-        __qualities.put("0.2",new Float("0.2"));
-        __qualities.put("0.1",new Float("0.1"));
-        __qualities.put("0",__zero);
-        __qualities.put("0.0",__zero);
+    private static StringMap __qualities = new StringMap();
+    static {
+        __qualities.put(null, __one);
+        __qualities.put("1.0", __one);
+        __qualities.put("1", __one);
+        __qualities.put("0.9", new Float("0.9"));
+        __qualities.put("0.8", new Float("0.8"));
+        __qualities.put("0.7", new Float("0.7"));
+        __qualities.put("0.66", new Float("0.66"));
+        __qualities.put("0.6", new Float("0.6"));
+        __qualities.put("0.5", new Float("0.5"));
+        __qualities.put("0.4", new Float("0.4"));
+        __qualities.put("0.33", new Float("0.33"));
+        __qualities.put("0.3", new Float("0.3"));
+        __qualities.put("0.2", new Float("0.2"));
+        __qualities.put("0.1", new Float("0.1"));
+        __qualities.put("0", __zero);
+        __qualities.put("0.0", __zero);
     }
     
-    
     /* -------------------------------------------------------------- */
-    private ArrayList _fields=new ArrayList(15);
-    private int[] _index=new int[__maxCacheSize];
+    private ArrayList _fields = new ArrayList(15);
+    private int[] _index = new int[__maxCacheSize];
     private int _version;
     private SimpleDateFormat _dateReceive[]; 
     private StringBuffer _dateBuffer;
@@ -617,15 +611,13 @@ public class HttpFields
     /* ------------------------------------------------------------ */
     /** Constructor. 
      */
-    public HttpFields()
-    {
+    public HttpFields() {
         Arrays.fill(_index,-1);
     }
 
     
     /* ------------------------------------------------------------ */
-    public int size()
-    {
+    public int size() {
         return _fields.size();
     }
     
@@ -634,36 +626,31 @@ public class HttpFields
      * Returns an enumeration of strings representing the header _names
      * for this request. 
      */
-    public Enumeration getFieldNames()
-    {
+    public Enumeration getFieldNames() {
         return new Enumeration()
             {
-                int i=0;
-                Field field=null;
+                int i = 0;
+                Field field = null;
 
                 public boolean hasMoreElements()
                 {
-                    if (field!=null)
+                    if (field != null) {
                         return true;
-                    while (i<_fields.size())
-                    {
-                        Field f=(Field)_fields.get(i++);
-                        if (f!=null && f._version==_version && f._prev==null)
-                        {
-                            field=f;
+                    }
+                    while (i < _fields.size()) {
+                        Field f = (Field)_fields.get(i++);
+                        if (f != null && f._version == _version && f._prev == null) {
+                            field = f;
                             return true;
                         }
                     }
                     return false;
                 }
 
-                public Object nextElement()
-                    throws NoSuchElementException
-                {
-                    if (field!=null || hasMoreElements())
-                    {
-                        String n=field._info._name;
-                        field=null;
+                public Object nextElement() throws NoSuchElementException {
+                    if (field != null || hasMoreElements()) {
+                        String n = field._info._name;
+                        field = null;
                         return n;
                     }
                     throw new NoSuchElementException();
@@ -672,32 +659,25 @@ public class HttpFields
     }
     
     /* ------------------------------------------------------------ */
-    Field getField(String name)
-    {       
-        FieldInfo info=getFieldInfo(name);
+    Field getField(String name) {
+        FieldInfo info = getFieldInfo(name);
         return getField(info,true);
     }
         
     /* ------------------------------------------------------------ */
-    Field getField(FieldInfo info, boolean getValid)
-    {
-        int hi=info.hashCode();
+    Field getField(FieldInfo info, boolean getValid) {
+        int hi = info.hashCode();
         
-        if (hi<_index.length)
-        {
-            if (_index[hi]>=0)
-            {
-                Field field=(Field)(_fields.get(_index[hi]));
+        if (hi < _index.length) {
+            if (_index[hi] >= 0) {
+                Field field = (Field)(_fields.get(_index[hi]));
                 
-                return (field!=null && (!getValid||field._version==_version))?field:null;
+                return (field != null && (!getValid || field._version == _version)) ? field : null;
             }
-        }
-        else
-        {    
-            for (int i=0;i<_fields.size();i++)
-            {
-                Field field=(Field)_fields.get(i);
-                if (info.equals(field._info) && (!getValid||field._version==_version))
+        } else {
+            for (int i = 0;i < _fields.size(); i++) {
+                Field field = (Field)_fields.get(i);
+                if (info.equals(field._info) && (!getValid || field._version == _version))
                     return field;
             }
         }
@@ -705,10 +685,9 @@ public class HttpFields
     }    
     
     /* ------------------------------------------------------------ */
-    public boolean containsKey(String name)
-    {
+    public boolean containsKey(String name) {
         FieldInfo info=getFieldInfo(name);
-        return getField(info,true)!=null;
+        return getField(info,true) != null;
     }
     
     /* -------------------------------------------------------------- */
@@ -717,12 +696,12 @@ public class HttpFields
      * multiple fields of the same name, only the first is returned.
      * @param name the case-insensitive field name
      */
-    public String get(String name)
-    {
-        FieldInfo info=getFieldInfo(name);
-        Field field=getField(info,true);
-        if (field!=null)
+    public String get(String name) {
+        FieldInfo info = getFieldInfo(name);
+        Field field = getField(info,true);
+        if (field != null) {
             return field._value;
+        }
         return null;
     }
     
@@ -733,29 +712,28 @@ public class HttpFields
      */
     public Enumeration getValues(String name)
     {
-        FieldInfo info=getFieldInfo(name);
-        final Field field=getField(info,true);
+        FieldInfo info = getFieldInfo(name);
+        final Field field = getField(info,true);
 
-        if (field!=null)
-        {            
-            return new Enumeration()
-                {
-                    Field f=field;
+        if (field!=null) {
+            return new Enumeration() {
+                    Field f = field;
                     
-                    public boolean hasMoreElements()
-                    {
-                        while (f!=null && f._version!=_version)
-                            f=f._next;
-                        return f!=null;
+                    public boolean hasMoreElements() {
+                        while (f != null && f._version != _version) {
+                            f = f._next;
+                        }
+                        return f != null;
                     }
                         
-                    public Object nextElement()
-                        throws NoSuchElementException
-                    {
-                        if (f==null)
+                    public Object nextElement() throws NoSuchElementException {
+                        if (f == null) {
                             throw new NoSuchElementException();
-                        Field n=f;
-                        do f=f._next; while (f!=null && f._version!=_version);
+                        }
+                        Field n = f;
+                        do {
+                            f = f._next;
+                        } while (f != null && f._version != _version);
                         return n._value;
                     }
                 };
@@ -772,37 +750,37 @@ public class HttpFields
      * @param separators String of separators.
      * @return Enumeration of the values, or null if no such header.
      */
-    public Enumeration getValues(String name,final String separators)
-    {
+    public Enumeration getValues(String name,final String separators) {
         final Enumeration e = getValues(name);
-        if (e==null)
+        if (e == null) {
             return null;
-        return new Enumeration()
-            {
-                QuotedStringTokenizer tok=null;
-                public boolean hasMoreElements()
-                {
-                    if (tok!=null && tok.hasMoreElements())
-                            return true;
-                    while (e.hasMoreElements())
-                    {
-                        String value=(String)e.nextElement();
-                        tok=new QuotedStringTokenizer(value,separators,false,false);
-                        if (tok.hasMoreElements())
-                            return true;
+        }
+        return new Enumeration() {
+                QuotedStringTokenizer tok = null;
+                public boolean hasMoreElements() {
+                    if (tok != null && tok.hasMoreElements()) {
+                        return true;
                     }
-                    tok=null;
+                    while (e.hasMoreElements()) {
+                        String value = (String)e.nextElement();
+                        tok = new QuotedStringTokenizer(value, separators,false,false);
+                        if (tok.hasMoreElements()) {
+                            return true;
+                        }
+                    }
+                    tok = null;
                     return false;
                 }
                         
-                public Object nextElement()
-                    throws NoSuchElementException
-                {
-                    if (!hasMoreElements())
+                public Object nextElement() throws NoSuchElementException {
+                    if (!hasMoreElements()) {
                         throw new NoSuchElementException();
-                    String next=(String) tok.nextElement();
-		    if (next!=null)next=next.trim();
-		    return next;
+                    }
+                    String next = (String) tok.nextElement();
+                    if (next != null) {
+                        next =  next.trim();
+                    }
+                    return next;
                 }
             };
     }
@@ -812,34 +790,31 @@ public class HttpFields
      * @param name the name of the field
      * @param value the value of the field. If null the field is cleared.
      */
-    public String put(String name,String value)
+    public String put(String name, String value)
     {
-        if (value==null)
+        if (value == null) {
             return remove(name);
-        
-        FieldInfo info=getFieldInfo(name);
-        Field field=getField(info,false);
+        }
+        FieldInfo info = getFieldInfo(name);
+        Field field = getField(info,false);
         // Look for value to replace.
-        if (field!=null)
-        {
-            String old=(field._version==_version)?field._value:null;
-            field.reset(value,_version);
+        if (field != null) {
+            String old = (field._version == _version) ? field._value:null;
+            field.reset(value, _version);
 
-            field=field._next;
-            while(field!=null)
-            {
+            field = field._next;
+            while (field != null) {
                 field.clear();
-                field=field._next;
+                field = field._next;
             }
             return old;    
-        }
-        else
-        {
+        } else {
             // new value;
-            field=new Field(info,value,_version);
+            field = new Field(info, value, _version);
             int hi=info.hashCode();
-            if (hi<_index.length)
-                _index[hi]=_fields.size();
+            if (hi<_index.length) {
+                _index[hi] = _fields.size();
+            }
             _fields.add(field);
             return null;
         }
@@ -851,29 +826,26 @@ public class HttpFields
      * @param name the name of the field
      * @param list the List value of the field. If null the field is cleared.
      */
-    public void put(String name,List list)
-    {
-        if (list==null || list.size()==0)
-        {
+    public void put(String name, List list) {
+        if (list == null || list.size() == 0) {
             remove(name);
             return;
         }
         
-        Object v=list.get(0);
-        if (v!=null)
-            put(name,v.toString());
-        else
+        Object v = list.get(0);
+        if (v != null) {
+            put(name, v.toString());
+        } else {
             remove(name);
-        
-        if (list.size()>1)
-        {    
+        }
+        if (list.size() > 1) {
             java.util.Iterator iter = list.iterator();
             iter.next();
-            while(iter.hasNext())
-            {
-                v=iter.next();
-                if (v!=null)
-                    add(name,v.toString());
+            while (iter.hasNext()) {
+                v = iter.next();
+                if (v != null) {
+                    add(name, v.toString());
+                }
             }
         }
     }
@@ -888,40 +860,35 @@ public class HttpFields
      * @exception IllegalArgumentException If the name is a single
      *            valued field and already has a value.
      */
-    public void add(String name,String value)
-        throws IllegalArgumentException
-    {
-        if (value==null)
+    public void add(String name, String value) throws IllegalArgumentException {
+        if (value == null) {
             throw new IllegalArgumentException("null value");
-        
-        FieldInfo info=getFieldInfo(name);
-        Field field=getField(info,false);
-        Field last=null;
-        if (field!=null)
-        {
-            while(field!=null && field._version==_version)
-            {
-                last=field;
-                field=field._next;
+        }
+        FieldInfo info = getFieldInfo(name);
+        Field field = getField(info,false);
+        Field last = null;
+        if (field != null) {
+            while (field != null && field._version == _version) {
+                last = field;
+                field = field._next;
             }
         }
 
-        if (field!=null)    
-            field.reset(value,_version);
-        else
-        {
+        if (field != null) {
+            field.reset(value, _version);
+        } else {
             // create the field
-            field=new Field(info,value,_version);
+            field = new Field(info, value, _version);
             
             // look for chain to add too
-            if(last!=null)
-            {
-                field._prev=last;
-                last._next=field;    
+            if (last != null) {
+                field._prev = last;
+                last._next = field;
+            } else {
+                if (info.hashCode() < _index.length) {
+                    _index[info.hashCode()] = _fields.size();
+                }
             }
-            else if (info.hashCode()<_index.length)
-                _index[info.hashCode()]=_fields.size();
-            
             _fields.add(field);
         }
     }
@@ -932,17 +899,15 @@ public class HttpFields
      */
     public String remove(String name)
     {
-        String old=null;
-        FieldInfo info=getFieldInfo(name);
-        Field field=getField(info,true);
+        String old = null;
+        FieldInfo info = getFieldInfo(name);
+        Field field = getField(info,true);
 
-        if (field!=null)
-        {
-            old=field._value;
-            while(field!=null)
-            {
+        if (field != null) {
+            old = field._value;
+            while (field != null) {
                 field.clear();
-                field=field._next;
+                field = field._next;
             }
         }
         
@@ -956,12 +921,11 @@ public class HttpFields
      * @param name the case-insensitive field name
      * @exception NumberFormatException If bad integer found
      */
-    public int getIntField(String name)
-        throws NumberFormatException
-    {
+    public int getIntField(String name) throws NumberFormatException {
         String val = valueParameters(get(name),null);
-        if (val!=null)
+        if (val != null) {
             return Integer.parseInt(val);
+        }
         return -1;
     }
     
@@ -971,49 +935,39 @@ public class HttpFields
      * The case of the field name is ignored.
      * @param name the case-insensitive field name
      */
-    public long getDateField(String name)
-    {
+    public long getDateField(String name) {
         String val = valueParameters(get(name),null);
-        if (val==null)
+        if (val == null) {
             return -1;
-
-        if (_dateReceive==null)
-       {
-               _dateReceive=(SimpleDateFormat[])__dateReceiveCache.get();
-               if (_dateReceive==null)
-               {
-                    _dateReceive=(SimpleDateFormat[]) new SimpleDateFormat[__dateReceiveSource.length];
-                    __dateReceiveCache.set(_dateReceive);
-               }
-       }
+        }
+        if (_dateReceive == null) {
+           _dateReceive = (SimpleDateFormat[])__dateReceiveCache.get();
+           if (_dateReceive == null) {
+                _dateReceive = (SimpleDateFormat[]) new SimpleDateFormat[__dateReceiveSource.length];
+                __dateReceiveCache.set(_dateReceive);
+           }
+        }
        
-        for (int i=0;i<_dateReceive.length;i++)
-        {
+        for (int i = 0; i < _dateReceive.length; i++) {
             // clone formatter for thread safety
-            if (_dateReceive[i]==null)
-                _dateReceive[i]=(SimpleDateFormat)__dateReceiveSource[i].clone();
-            
-            try{
-                Date date=(Date)_dateReceive[i].parseObject(val);
-                return date.getTime();
+            if (_dateReceive[i] == null) {
+                _dateReceive[i] = (SimpleDateFormat) __dateReceiveSource[i].clone();
             }
-            catch(java.lang.Exception e)
-            {
-                LogSupport.ignore(log,e);
+            try {
+                Date date = (Date)_dateReceive[i].parseObject(val);
+                return date.getTime();
+            } catch(java.lang.Exception e) {
+                LogSupport.ignore(log, e);
             }
         }
-        if (val.endsWith(" GMT"))
-        {
-            val=val.substring(0,val.length()-4);
-            for (int i=0;i<_dateReceive.length;i++)
-            {
-                try{
-                    Date date=(Date)_dateReceive[i].parseObject(val);
+        if (val.endsWith(" GMT")) {
+            val = val.substring(0, val.length()-4);
+            for (int i = 0; i < _dateReceive.length; i++) {
+                try {
+                    Date date = (Date)_dateReceive[i].parseObject(val);
                     return date.getTime();
-                }
-                catch(java.lang.Exception e)
-                {
-                    LogSupport.ignore(log,e);
+                } catch(java.lang.Exception e) {
+                    LogSupport.ignore(log, e);
                 }
             }
         }
@@ -1027,8 +981,7 @@ public class HttpFields
      * @param name the field name
      * @param value the field integer value
      */
-    public void putIntField(String name, int value)
-    {
+    public void putIntField(String name, int value) {
         put(name, Integer.toString(value));
     }
 
@@ -1038,9 +991,8 @@ public class HttpFields
      * @param name the field name
      * @param date the field date value
      */
-    public void putDateField(String name, Date date)
-    {
-        putDateField(name,date.getTime());
+    public void putDateField(String name, Date date) {
+        putDateField(name, date.getTime());
     }
     
     /* -------------------------------------------------------------- */
@@ -1049,9 +1001,8 @@ public class HttpFields
      * @param name the field name
      * @param date the field date value
      */
-    public void addDateField(String name, Date date)
-    {
-        addDateField(name,date.getTime());
+    public void addDateField(String name, Date date) {
+        addDateField(name, date.getTime());
     }
     
     /* -------------------------------------------------------------- */
@@ -1060,12 +1011,10 @@ public class HttpFields
      * @param name the field name
      * @param date the field date value
      */
-    public void addDateField(String name, long date)
-    {
-        if (_dateBuffer==null)
-        {
-            _dateBuffer=new StringBuffer(32);
-            _calendar=new HttpCal();
+    public void addDateField(String name, long date) {
+        if (_dateBuffer == null) {
+            _dateBuffer = new StringBuffer(32);
+            _calendar = new HttpCal();
         }
         _dateBuffer.setLength(0);
         _calendar.setTimeInMillis(date);
@@ -1079,12 +1028,10 @@ public class HttpFields
      * @param name the field name
      * @param date the field date value
      */
-    public void putDateField(String name, long date)
-    {
-        if (_dateBuffer==null)
-        {
-            _dateBuffer=new StringBuffer(32);
-            _calendar=new HttpCal();
+    public void putDateField(String name, long date) {
+        if (_dateBuffer == null) {
+            _dateBuffer = new StringBuffer(32);
+            _calendar = new HttpCal();
         }
         _dateBuffer.setLength(0);
         _calendar.setTimeInMillis(date);
@@ -1095,122 +1042,108 @@ public class HttpFields
     /* -------------------------------------------------------------- */
     /** Read HttpHeaders from inputStream.
      */
-    public void read(LineInput in)
-        throws IOException
-    {  
-        Field last=null;
-        char[] buf=null;
-        int size=0;
+    public void read(LineInput in) throws IOException {
+        Field last = null;
+        char[] buf = null;
+        int size = 0;
         net.lightbody.bmp.proxy.jetty.util.LineInput.LineBuffer line_buffer;
-        synchronized(in)
-        {
+        synchronized(in) {
             line:
-            while ((line_buffer=in.readLineBuffer())!=null)
-            {
+            while ((line_buffer = in.readLineBuffer()) != null) {
                 // check space in the lowercase buffer
-                buf=line_buffer.buffer;
-                size=line_buffer.size;
-                if (size==0)
+                buf = line_buffer.buffer;
+                size = line_buffer.size;
+                if (size == 0) {
                     break;
-                
+                }
                 // setup loop state machine
-                int i1=-1;
-                int i2=-1;
-                int name_l=0;
-                int i=0;
-                char c=buf[0];
+                int i1 = -1;
+                int i2 = -1;
+                int name_l = 0;
+                int i = 0;
+                char c = buf[0];
                 
                 // Check for continuity line
-                if (c!=' ' && c!='\t')
-                {
-                    i2=0;
+                if (c != ' ' && c != '\t') {
+                    i2 = 0;
                     // reading name upto :
-                    for (i=1;i<size;i++)
-                    {
-                        c=buf[i];
-                        if (c==':')
-                        {
-                            name_l=i2+1; 
+                    for (i = 1; i < size; i++) {
+                        c = buf[i];
+                        if (c == ':') {
+                            name_l = i2 + 1;
                             break;
                         }
                         
-                        if (c!=' '&&c!='\t')
-                            i2=i;
+                        if (c != ' ' && c != '\t') {
+                            i2 = i;
+                        }
                     }
                 }   
 
                 // skip whitespace after : or start of continuity line
-                for (i++;i<size;i++)
-                {
-                    c=buf[i];
-                    if (c!=' ' && c!='\t')
-                    {
-                        i1=i;
-                        i2=i-1;
+                for (i++; i < size; i++) {
+                    c = buf[i];
+                    if (c != ' ' && c != '\t') {
+                        i1 = i;
+                        i2 = i - 1;
                         break;
                     }
                 }
                 
                 // Reverse Parse the "name : value" to last char of value
-                for (i=size;i-->i1 && i>=0;)
-                {
-                    c=buf[i];
-                    if (c!=' ' && c!='\t')
-                    {
-                        i2=i;
+                for (i = size; i --> i1 && i >= 0;) {
+                    c = buf[i];
+                    if (c != ' ' && c != '\t') {
+                        i2 = i;
                         break;
                     }
                 }
 
                 // If no name, it is a continuation line
-                if (name_l<=0)
-                {
-                    if (i1>0 && last!=null)
-                        last._value=last._value+' '+new String(buf,i1,i2-i1+1);
+                if (name_l <= 0) {
+                    if (i1 > 0 && last != null) {
+                        last._value = last._value + ' ' + new String(buf, i1, i2 - i1 + 1);
+                    }
                     continue;
                 }
 
                 // create the field.
-                FieldInfo info = getFieldInfo(buf,0,name_l);
-                Field field=getField(info,false);
-                last=null;
-                if (field!=null)
-                {
-                    while(field!=null && field._version==_version)
-                    {
-                        last=field;
-                        field=field._next;
+                FieldInfo info = getFieldInfo(buf,0, name_l);
+                Field field = getField(info,false);
+                last = null;
+                if (field != null) {
+                    while (field != null && field._version == _version) {
+                        last = field;
+                        field = field._next;
                     }
                 }
                 
-                if (field!=null)
-                {
-                    if (i1>=0)
-                        field.reset(buf,i1,i2-i1+1,_version);
-                    else
-                        field.reset("",_version);
-                }
-                else
-                {
-                    // create the field
-                    if (i1>=0)
-                        field=new Field(info,buf,i1,i2-i1+1,_version);
-                    else
-                        field=new Field(info,"",_version);
-                    
-                    // look for chain to add too
-                    if(last!=null)
-                    {
-                        field._prev=last;
-                        last._next=field; 
-                          
+                if (field != null) {
+                    if (i1 >= 0) {
+                        field.reset(buf, i1, i2 - i1 + 1, _version);
+                    } else {
+                        field.reset("", _version);
                     }
-                    else if (info.hashCode()<_index.length)
-                        _index[info.hashCode()]=_fields.size(); 
+                } else {
+                    // create the field
+                    if (i1 >= 0) {
+                        field = new Field(info, buf, i1, i2 - i1 + 1, _version);
+                    } else {
+                        field = new Field(info, "", _version);
+                    }
+                    // look for chain to add too
+                    if (last != null) {
+                        field._prev = last;
+                        last._next = field;
+                    } else {
+                        if (info.hashCode() < _index.length) {
+                            _index[info.hashCode()] = _fields.size();
+                        }
+                    }
                     _fields.add(field);
                 }
                 
-                last=field;
+                last = field;
             }
         }
     }
@@ -1219,16 +1152,13 @@ public class HttpFields
     /* -------------------------------------------------------------- */
     /* Write Extra HTTP headers.
      */
-    public void write(Writer writer)
-        throws IOException
-    {
-        synchronized(writer)
-        {
-            for (int i=0;i<_fields.size();i++)
-            {
-                Field field=(Field)_fields.get(i);
-                if (field!=null)
-                    field.write(writer,_version);
+    public void write(Writer writer) throws IOException {
+        synchronized (writer) {
+            for (int i = 0; i < _fields.size(); i++) {
+                Field field = (Field)_fields.get(i);
+                if (field != null) {
+                    field.write(writer, _version);
+                }
             }
             writer.write(__CRLF);
         }
@@ -1236,33 +1166,28 @@ public class HttpFields
     
     
     /* -------------------------------------------------------------- */
-    public String toString()
-    {
-        try
-        {
+    public String toString() {
+        try {
             StringWriter writer = new StringWriter();
             write(writer);
             return writer.toString();
+        } catch(Exception e) {
         }
-        catch(Exception e)
-        {}
         return null;
     }
 
     /* ------------------------------------------------------------ */
     /** Clear the header.
      */
-    public void clear()
-    {
+    public void clear() {
         _version++;
-        if (_version>1000)
-        {
-            _version=0;
-            for (int i=_fields.size();i-->0;)
-            {
-                Field field=(Field)_fields.get(i);
-                if (field!=null)
+        if (_version > 1000) {
+            _version = 0;
+            for (int i = _fields.size(); i --> 0;) {
+                Field field = (Field)_fields.get(i);
+                if (field != null) {
                     field.clear();
+                }
             }
         }
     }
@@ -1271,89 +1196,87 @@ public class HttpFields
     /** Destroy the header.
      * Help the garbage collector by null everything that we can.
      */
-    public void destroy()
-    {   
-        for (int i=_fields.size();i-->0;)
-        {
-            Field field=(Field)_fields.get(i);
-            if (field!=null)
+    public void destroy() {
+        for (int i = _fields.size(); i --> 0;) {
+            Field field = (Field)_fields.get(i);
+            if (field != null) {
                 field.destroy();
+            }
         }
-        _fields=null;
-        _index=null;
-        _dateBuffer=null;
-        _calendar=null;
-        _dateReceive=null;
+        _fields = null;
+        _index = null;
+        _dateBuffer = null;
+        _calendar = null;
+        _dateReceive = null;
     }
     
     /* ------------------------------------------------------------ */
     /** Get field value parameters.
      * Some field values can have parameters.  This method separates
      * the value from the parameters and optionally populates a
-     * map with the paramters. For example:<PRE>
+     * map with the parameters. For example:<PRE>
      *   FieldName : Value ; param1=val1 ; param2=val2
      * </PRE>
-     * @param value The Field value, possibly with parameteres.
+     * @param value The Field value, possibly with parameters.
      * @param parameters A map to populate with the parameters, or null
      * @return The value.
      */
     public static String valueParameters(String value, Map parameters)
     {
-        if (value==null)
+        if (value == null) {
             return null;
-        
+        }
         int i = value.indexOf(';');
-        if (i<0)
+        if (i < 0) {
             return value;
-        if (parameters==null)
-            return value.substring(0,i).trim();
-
-        StringTokenizer tok1 =
-            new QuotedStringTokenizer(value.substring(i),";",false,true);
-        while(tok1.hasMoreTokens())
-        {
-            String token=tok1.nextToken();
-            StringTokenizer tok2 =
-                new QuotedStringTokenizer(token,"= ");
-            if (tok2.hasMoreTokens())
-            {
-                String paramName=tok2.nextToken();
-                String paramVal=null;
-                if (tok2.hasMoreTokens())
-                    paramVal=tok2.nextToken();
-                parameters.put(paramName,paramVal);
+        }
+        if (parameters == null) {
+            return value.substring(0, i).trim();
+        }
+        StringTokenizer tok1 = new QuotedStringTokenizer(value.substring(i),";",false,true);
+        while (tok1.hasMoreTokens()) {
+            String token = tok1.nextToken();
+            StringTokenizer tok2 = new QuotedStringTokenizer(token,"= ");
+            if (tok2.hasMoreTokens()) {
+                String paramName = tok2.nextToken();
+                String paramVal = null;
+                if (tok2.hasMoreTokens()) {
+                    paramVal = tok2.nextToken();
+                }
+                parameters.put(paramName, paramVal);
             }
         }
         
-        return value.substring(0,i).trim();
+        return value.substring(0, i).trim();
     }
 
     /* ------------------------------------------------------------ */
-    public static Float getQuality(String value)
-    {
-        if (value==null)
+    public static Float getQuality(String value) {
+        if (value == null) {
             return __zero;
-        
-        int qe=value.indexOf(";");
-        if (qe++<0 || qe==value.length())
+        }
+        int qe = value.indexOf(";");
+        if (qe++ < 0 || qe == value.length()) {
             return __one;
-        
-        if (value.charAt(qe++)=='q')
-        {
+        }
+        if (value.charAt(qe++) == 'q') {
             qe++;
-            Map.Entry entry=__qualities.getEntry(value,qe,value.length()-qe);
-            if (entry!=null)
-                return (Float)entry.getValue();
+            Map.Entry entry = __qualities.getEntry(value, qe,value.length() - qe);
+            if (entry != null) {
+                return (Float) entry.getValue();
+            }
         }
         
         HashMap params = new HashMap(3);
-        valueParameters(value,params);
-        String qs=(String)params.get("q");
-        Float q=(Float)__qualities.get(qs);
-        if (q==null)
-        {
-            try{q=new Float(qs);}
-            catch(Exception e){q=__one;}
+        valueParameters(value, params);
+        String qs = (String)params.get("q");
+        Float q = (Float)__qualities.get(qs);
+        if (q == null) {
+            try {
+                q = new Float(qs);
+            } catch (Exception e) {
+                q = __one;
+            }
         }
         return q;
     }
@@ -1363,141 +1286,124 @@ public class HttpFields
      * @param enm Enumeration of values with quality parameters
      * @return values in quality order.
      */
-    public static List qualityList(Enumeration enm)
-    {
-        if(enm==null || !enm.hasMoreElements())
+    public static List qualityList(Enumeration enm) {
+        if(enm == null || !enm.hasMoreElements()) {
             return Collections.EMPTY_LIST;
-
-        Object list=null;
-        Object qual=null;
+        }
+        Object list = null;
+        Object qual = null;
 
         // Assume list will be well ordered and just add nonzero
-        while(enm.hasMoreElements())
-        {
-            String v=enm.nextElement().toString();
-            Float q=getQuality(v);
+        while (enm.hasMoreElements()) {
+            String v = enm.nextElement().toString();
+            Float q = getQuality(v);
 
-            if (q.floatValue()>=0.001)
-            {
-                list=LazyList.add(list,v);
-                qual=LazyList.add(qual,q);
+            if (q.floatValue() >= 0.001) {
+                list = LazyList.add(list, v);
+                qual = LazyList.add(qual, q);
             }
         }
 
-        List vl=LazyList.getList(list,false);
-        if (vl.size()<2)
+        List vl = LazyList.getList(list,false);
+        if (vl.size() < 2) {
             return vl;
-
-        List ql=LazyList.getList(qual,false);
+        }
+        List ql = LazyList.getList(qual,false);
 
         // sort list with swaps
-        Float last=__zero;
-        for (int i=vl.size();i-->0;)
-        {
+        Float last = __zero;
+        for (int i = vl.size(); i --> 0;) {
             Float q = (Float)ql.get(i);
-            if (last.compareTo(q)>0)
-            {
-                Object tmp=vl.get(i);
-                vl.set(i,vl.get(i+1));
-                vl.set(i+1,tmp);
-                ql.set(i,ql.get(i+1));
-                ql.set(i+1,q);
-                last=__zero;
-                i=vl.size();
+            if (last.compareTo(q) > 0) {
+                Object tmp = vl.get(i);
+                vl.set(i, vl.get(i + 1));
+                vl.set(i + 1, tmp);
+                ql.set(i, ql.get(i + 1));
+                ql.set(i + 1,q);
+                last = __zero;
+                i = vl.size();
                 continue;
             }
-            last=q;
+            last = q;
         }
         ql.clear();
         return vl;
     }
-    
-
 
     /* ------------------------------------------------------------ */
     /** Format a set cookie value
      * @param cookie The cookie.
      */
-    public void addSetCookie(Cookie cookie)
-    {
-        String name=cookie.getName();
-        String value=cookie.getValue();
-        int version=cookie.getVersion();
+    public void addSetCookie(Cookie cookie) {
+        String name = cookie.getName();
+        String value = cookie.getValue();
+        int version = cookie.getVersion();
         
         // Check arguments
-        if (name==null || name.length()==0)
+        if (name == null || name.length() == 0) {
             throw new IllegalArgumentException("Bad cookie name");
-
+        }
         // Format value and params
         StringBuffer buf = new StringBuffer(128);
-        String name_value_params=null;
-        synchronized(buf)
-        {
+        String name_value_params = null;
+        synchronized (buf) {
             buf.append(name);
             buf.append('=');
-            if (value!=null && value.length()>0)
-            {
-                if (version==0)
-                    URI.encodeString(buf,value,"\";, '");
-                else
-                    buf.append(QuotedStringTokenizer.quote(value,"\";, '"));
-            }
-
-            if (version>0)
-            {
-                buf.append(";Version=");
-                buf.append(version);
-                String comment=cookie.getComment();
-                if (comment!=null && comment.length()>0)
-                {
-                    buf.append(";Comment=");
-                    QuotedStringTokenizer.quote(buf,comment);
+            if (value != null && value.length() > 0) {
+                if (version == 0) {
+                    URI.encodeString(buf, value, "\";, '");
+                } else {
+                    buf.append(QuotedStringTokenizer.quote(value, "\";, '"));
                 }
             }
-            String path=cookie.getPath();
-            if (path!=null && path.length()>0)
-            {
+
+            if (version > 0) {
+                buf.append(";Version=");
+                buf.append(version);
+                String comment = cookie.getComment();
+                if (comment != null && comment.length() > 0) {
+                    buf.append(";Comment=");
+                    QuotedStringTokenizer.quote(buf, comment);
+                }
+            }
+            String path = cookie.getPath();
+            if (path != null && path.length() > 0) {
                 buf.append(";Path=");
                 buf.append(path);
             }
-            String domain=cookie.getDomain();
-            if (domain!=null && domain.length()>0)
-            {
+            String domain = cookie.getDomain();
+            if (domain != null && domain.length() > 0) {
                 buf.append(";Domain=");
                 buf.append(domain.toLowerCase());// lowercase for IE
             }
             long maxAge = cookie.getMaxAge();
-            if (maxAge>=0)
-            {
-                if (version==0)
-                {
+            if (maxAge >= 0) {
+                if (version == 0) {
                     buf.append(";Expires=");
-                    if (maxAge==0)
+                    if (maxAge == 0) {
                         buf.append(__01Jan1970);
-                    else
-                        formatDate(buf,System.currentTimeMillis()+1000L*maxAge,true);
-                }
-                else
-                {
+                    } else {
+                        formatDate(buf, System.currentTimeMillis() + 1000L * maxAge, true);
+                    }
+                } else {
                     buf.append (";Max-Age=");
                     buf.append (cookie.getMaxAge());
                 }
+            } else {
+                if (version>0) {
+                    buf.append (";Discard");
+                }
             }
-            else if (version>0)
-            {
-                buf.append (";Discard");
-            }
-            if (cookie.getSecure())
-            {
+            if (cookie.getSecure()) {
                 buf.append(";Secure");
             }
-            if (cookie instanceof HttpOnlyCookie)
+            if (cookie instanceof HttpOnlyCookie) {
                 buf.append(";HttpOnly");
-            
+            }
             name_value_params = buf.toString();
         }
         put(__Expires,__01Jan1970);
-        add(__SetCookie,name_value_params);
+        add(__SetCookie, name_value_params);
     }
 
     /* ------------------------------------------------------------ */
@@ -1505,18 +1411,17 @@ public class HttpFields
      * Single valued fields are replaced, while all others are added.
      * @param fields 
      */
-    public void add(HttpFields fields)
-    {
-        if (fields==null)
+    public void add(HttpFields fields) {
+        if (fields == null) {
             return;
-
+        }
         Enumeration enm = fields.getFieldNames();
-        while( enm.hasMoreElements() )
-        {
+        while (enm.hasMoreElements()) {
             String name = (String)enm.nextElement();
             Enumeration values = fields.getValues(name);
-            while(values.hasMoreElements())
-                add(name,(String)values.nextElement());
+            while(values.hasMoreElements()) {
+                add(name, (String) values.nextElement());
+            }
         }
     }
 
@@ -1525,37 +1430,52 @@ public class HttpFields
      * return an iterator for field name:value pairs
      * @return an HttpFields.Iterator
      */
-    public Iterator iterator() {return new EntryIterator();}
+    public Iterator iterator() {
+        return new EntryIterator();
+    }
 
     
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    public class Entry
-    {
+    public class Entry {
         protected int _i;
         
-        Entry(int i) {_i=i;}
-        public String getKey() {return ((Field)_fields.get(_i)).getDisplayName();}
-        public String getValue() {return ((Field)_fields.get(_i))._value;}
+        Entry(int i) {
+            _i = i;
+        }
+
+        public String getKey() {
+            return ((Field)_fields.get(_i)).getDisplayName();
+        }
+
+        public String getValue() {
+            return ((Field)_fields.get(_i))._value;
+        }
     }
 
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    private class EntryIterator implements Iterator
-    {
-        protected int _i=0;
-        public boolean hasNext() {return (_i<_fields.size());}
-        public Object next() throws NoSuchElementException {return new Entry(_i++);}
-        public void remove() { throw new UnsupportedOperationException();}
+    private class EntryIterator implements Iterator {
+        protected int _i = 0;
+
+        public boolean hasNext() {
+            return (_i < _fields.size());
+        }
+
+        public Object next() throws NoSuchElementException {
+            return new Entry(_i++);
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
     /* handle 1.3 protected methods                        */
-    private static class HttpCal extends GregorianCalendar
-    {
-        HttpCal()
-        {
+    private static class HttpCal extends GregorianCalendar {
+        HttpCal() {
             super(__GMT);
         }
 
@@ -1563,16 +1483,14 @@ public class HttpFields
         /**
          * @see java.util.Calendar#setTimeInMillis(long)
          */
-        public void setTimeInMillis(long arg0)
-        {
+        public void setTimeInMillis(long arg0) {
             super.setTimeInMillis(arg0);
         }
         /* ------------------------------------------------------------------------------- */
         /**
          * @see java.util.Calendar#getTimeInMillis()
          */
-        public long getTimeInMillis()
-        {
+        public long getTimeInMillis() {
             return super.getTimeInMillis();
         }
     }
