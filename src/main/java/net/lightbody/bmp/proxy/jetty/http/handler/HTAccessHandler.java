@@ -9,152 +9,157 @@
 
 package net.lightbody.bmp.proxy.jetty.http.handler;
 
-import net.lightbody.bmp.proxy.jetty.http.*;
+import net.lightbody.bmp.proxy.jetty.http.HttpContext;
+import net.lightbody.bmp.proxy.jetty.http.HttpException;
+import net.lightbody.bmp.proxy.jetty.http.HttpFields;
+import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
+import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
+import net.lightbody.bmp.proxy.jetty.http.SecurityConstraint;
+import net.lightbody.bmp.proxy.jetty.http.UserRealm;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import net.lightbody.bmp.proxy.jetty.util.*;
+import net.lightbody.bmp.proxy.jetty.util.B64Code;
+import net.lightbody.bmp.proxy.jetty.util.LogSupport;
+import net.lightbody.bmp.proxy.jetty.util.Resource;
+import net.lightbody.bmp.proxy.jetty.util.StringUtil;
+import net.lightbody.bmp.proxy.jetty.util.URI;
+import net.lightbody.bmp.proxy.jetty.util.UnixCrypt;
 import org.apache.commons.logging.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.Principal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 /* ------------------------------------------------------------ */
-/** Handler to authenticate access using the Apache's .htaccess files.
+
+/**
+ * Handler to authenticate access using the Apache's .htaccess files.
  *
- * @version HTAccessHandler v1.0a
  * @author Van den Broeke Iris
  * @author Deville Daniel
  * @author Dubois Roger
  * @author Greg Wilkins
  * @author Konstantin Metlov
- *
+ * @version HTAccessHandler v1.0a
  */
-public class HTAccessHandler extends AbstractHttpHandler
-{
+public class HTAccessHandler extends AbstractHttpHandler {
     private static Log log = LogFactory.getLog(HTAccessHandler.class);
 
-    String _default=null;
-    String _accessFile=".htaccess";
+    String _default = null;
+    String _accessFile = ".htaccess";
 
-    transient HashMap _htCache=new HashMap();
+    transient HashMap _htCache = new HashMap();
 
     /* ------------------------------------------------------------ */
     public void handle(String pathInContext,
                        String pathParams,
                        HttpRequest request,
                        HttpResponse response)
-            throws HttpException,IOException
-    {
-        String user=null;
-        String password=null;
-        boolean IPValid=true;
+            throws HttpException, IOException {
+        String user = null;
+        String password = null;
+        boolean IPValid = true;
 
-        if(log.isDebugEnabled())log.debug("HTAccessHandler pathInContext="+pathInContext);
+        if (log.isDebugEnabled()) log.debug("HTAccessHandler pathInContext=" + pathInContext);
 
-        String credentials=request.getField(HttpFields.__Authorization);
+        String credentials = request.getField(HttpFields.__Authorization);
 
-        if (credentials!=null)
-        {
-            credentials=credentials.substring(credentials.indexOf(' ')+1);
-            credentials=B64Code.decode(credentials,StringUtil.__ISO_8859_1);
-            int i=credentials.indexOf(':');
-            user=credentials.substring(0,i);
-            password=credentials.substring(i+1);
+        if (credentials != null) {
+            credentials = credentials.substring(credentials.indexOf(' ') + 1);
+            credentials = B64Code.decode(credentials, StringUtil.__ISO_8859_1);
+            int i = credentials.indexOf(':');
+            user = credentials.substring(0, i);
+            password = credentials.substring(i + 1);
 
-            if(log.isDebugEnabled())log.debug("User="+user+", password="+
-                    "******************************".substring(0,password.length()));
+            if (log.isDebugEnabled()) log.debug("User=" + user + ", password=" +
+                    "******************************".substring(0, password.length()));
         }
 
-        HTAccess ht=null;
+        HTAccess ht = null;
 
-        try
-        {
-            Resource resource=null;
-            String directory=pathInContext.endsWith("/")
-                    ?pathInContext:
+        try {
+            Resource resource = null;
+            String directory = pathInContext.endsWith("/")
+                    ? pathInContext :
                     URI.parentPath(pathInContext);
 
             // Look for htAccess resource
-            while (directory!=null)
-            {
-                String htPath=directory+_accessFile;
-                resource=getHttpContext().getResource(htPath);
-                if(log.isDebugEnabled())log.debug("directory="+directory+" resource="+resource);
+            while (directory != null) {
+                String htPath = directory + _accessFile;
+                resource = getHttpContext().getResource(htPath);
+                if (log.isDebugEnabled()) log.debug("directory=" + directory + " resource=" + resource);
 
-                if (resource!=null && resource.exists() && !resource.isDirectory())
+                if (resource != null && resource.exists() && !resource.isDirectory())
                     break;
-                resource=null;
-                directory=URI.parentPath(directory);
+                resource = null;
+                directory = URI.parentPath(directory);
             }
 
             // Try default directory
-            if (resource==null && _default!=null)
-            {
-                resource=Resource.newResource(_default);
+            if (resource == null && _default != null) {
+                resource = Resource.newResource(_default);
                 if (!resource.exists() || resource.isDirectory())
                     return;
             }
-            if (resource==null)
+            if (resource == null)
                 return;
 
-            if(log.isDebugEnabled())log.debug("HTACCESS="+resource);
+            if (log.isDebugEnabled()) log.debug("HTACCESS=" + resource);
 
-            ht=(HTAccess)_htCache.get(resource);
-            if (ht==null || ht.getLastModified()!=resource.lastModified())
-            {
-                ht=new HTAccess(resource);
-                _htCache.put(resource,ht);
-                if(log.isDebugEnabled())log.debug("HTCache loaded "+ht);
+            ht = (HTAccess) _htCache.get(resource);
+            if (ht == null || ht.getLastModified() != resource.lastModified()) {
+                ht = new HTAccess(resource);
+                _htCache.put(resource, ht);
+                if (log.isDebugEnabled()) log.debug("HTCache loaded " + ht);
             }
 
             // prevent access to htaccess files
-            if (pathInContext.endsWith(_accessFile))
-            {
+            if (pathInContext.endsWith(_accessFile)) {
                 response.sendError(HttpResponse.__403_Forbidden);
                 request.setHandled(true);
                 return;
             }
 
             // See if there is a config problem
-            if (ht.isForbidden())
-            {
-                log.warn("Mis-configured htaccess: "+ht);
+            if (ht.isForbidden()) {
+                log.warn("Mis-configured htaccess: " + ht);
                 response.sendError(HttpResponse.__403_Forbidden);
                 request.setHandled(true);
                 return;
             }
 
             //first see if we need to handle based on method type
-            Map methods=ht.getMethods();
-            if (methods.size()>0 && !methods.containsKey(request.getMethod()))
+            Map methods = ht.getMethods();
+            if (methods.size() > 0 && !methods.containsKey(request.getMethod()))
                 return; //Nothing to check
 
             // Check the accesss
-            int satisfy=ht.getSatisfy();
+            int satisfy = ht.getSatisfy();
 
             // second check IP address
-            IPValid=ht.checkAccess("",request.getRemoteAddr());
-            if(log.isDebugEnabled())log.debug("IPValid = "+IPValid);
+            IPValid = ht.checkAccess("", request.getRemoteAddr());
+            if (log.isDebugEnabled()) log.debug("IPValid = " + IPValid);
 
             // If IP is correct and satify is ANY then access is allowed
-            if (IPValid==true && satisfy==HTAccess.ANY)
+            if (IPValid == true && satisfy == HTAccess.ANY)
                 return;
 
             // If IP is NOT correct and satify is ALL then access is forbidden
-            if (IPValid==false && satisfy==HTAccess.ALL)
-            {
+            if (IPValid == false && satisfy == HTAccess.ALL) {
                 response.sendError(HttpResponse.__403_Forbidden);
                 request.setHandled(true);
                 return;
             }
 
             // set required page
-            if (!ht.checkAuth(user,password,getHttpContext(),request))
-            {
+            if (!ht.checkAuth(user, password, getHttpContext(), request)) {
                 log.debug("Auth Failed");
-                response.setField(HttpFields.__WwwAuthenticate,"basic realm="+ht.getName());
+                response.setField(HttpFields.__WwwAuthenticate, "basic realm=" + ht.getName());
                 response.sendError(HttpResponse.__401_Unauthorized);
                 response.commit();
                 request.setHandled(true);
@@ -162,18 +167,14 @@ public class HTAccessHandler extends AbstractHttpHandler
             }
 
             // set user
-            if (user!=null)
-            {
+            if (user != null) {
                 request.setAuthType(SecurityConstraint.__BASIC_AUTH);
                 request.setAuthUser(user);
             }
 
-        }
-        catch (Exception ex)
-        {
-            log.warn(LogSupport.EXCEPTION,ex);
-            if (ht!=null)
-            {
+        } catch (Exception ex) {
+            log.warn(LogSupport.EXCEPTION, ex);
+            if (ht != null) {
                 response.sendError(HttpResponse.__500_Internal_Server_Error);
                 request.setHandled(true);
             }
@@ -182,7 +183,9 @@ public class HTAccessHandler extends AbstractHttpHandler
 
 
     /* ------------------------------------------------------------ */
-    /** set functions for the following .xml administration statements.
+
+    /**
+     * set functions for the following .xml administration statements.
      *
      * <Call name="addHandler">
      * <Arg>
@@ -192,186 +195,152 @@ public class HTAccessHandler extends AbstractHttpHandler
      * </New>
      * </Arg>
      * </Call>
-     *
      */
-    public void setDefault(String dir)
-    {
-        _default=dir;
+    public void setDefault(String dir) {
+        _default = dir;
     }
 
 
     /* ------------------------------------------------------------ */
-    public void setAccessFile(String anArg)
-    {
-        if (anArg==null)
-            _accessFile=".htaccess";
+    public void setAccessFile(String anArg) {
+        if (anArg == null)
+            _accessFile = ".htaccess";
         else
-            _accessFile=anArg;
+            _accessFile = anArg;
     }
 
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    private static class HTAccess
-    {
+    private static class HTAccess {
         // private boolean _debug = false;
-        static final int ANY=0;
-        static final int ALL=1;
-        static final String USER="user";
-        static final String GROUP="group";
-        static final String VALID_USER="valid-user";
+        static final int ANY = 0;
+        static final int ALL = 1;
+        static final String USER = "user";
+        static final String GROUP = "group";
+        static final String VALID_USER = "valid-user";
 
         /* ------------------------------------------------------------ */
         String _userFile;
         Resource _userResource;
-        HashMap _users=null;
+        HashMap _users = null;
         long _userModified;
 
         /* ------------------------------------------------------------ */
         String _groupFile;
         Resource _groupResource;
-        HashMap _groups=null;
+        HashMap _groups = null;
         long _groupModified;
 
-        int _satisfy=0;
+        int _satisfy = 0;
         String _type;
         String _name;
-        HashMap _methods=new HashMap();
-        HashSet _requireEntities=new HashSet();
+        HashMap _methods = new HashMap();
+        HashSet _requireEntities = new HashSet();
         String _requireName;
         int _order;
-        ArrayList _allowList=new ArrayList();
-        ArrayList _denyList=new ArrayList();
+        ArrayList _allowList = new ArrayList();
+        ArrayList _denyList = new ArrayList();
         long _lastModified;
-        boolean _forbidden=false;
+        boolean _forbidden = false;
 
         /* ------------------------------------------------------------ */
-        public HTAccess(Resource resource)
-        {
-            BufferedReader htin=null;
-            try
-            {
-                htin=new BufferedReader(new InputStreamReader(resource.getInputStream()));
+        public HTAccess(Resource resource) {
+            BufferedReader htin = null;
+            try {
+                htin = new BufferedReader(new InputStreamReader(resource.getInputStream()));
                 parse(htin);
-                _lastModified=resource.lastModified();
+                _lastModified = resource.lastModified();
 
-                if (_userFile!=null)
-                {
-                    _userResource=Resource.newResource(_userFile);
-                    if (!_userResource.exists())
-                    {
-                        _forbidden=true;
-                        log.warn("Could not find ht user file: "+_userFile);
-                    }
-                    else
-                        if(log.isDebugEnabled())log.debug("user file: "+_userResource);
+                if (_userFile != null) {
+                    _userResource = Resource.newResource(_userFile);
+                    if (!_userResource.exists()) {
+                        _forbidden = true;
+                        log.warn("Could not find ht user file: " + _userFile);
+                    } else if (log.isDebugEnabled()) log.debug("user file: " + _userResource);
                 }
 
-                if (_groupFile!=null)
-                {
-                    _groupResource=Resource.newResource(_groupFile);
-                    if (!_groupResource.exists())
-                    {
-                        _forbidden=true;
-                        log.warn("Could not find ht group file: "+_groupResource);
-                    }
-                    else
-                        if(log.isDebugEnabled())log.debug("group file: "+_groupResource);
+                if (_groupFile != null) {
+                    _groupResource = Resource.newResource(_groupFile);
+                    if (!_groupResource.exists()) {
+                        _forbidden = true;
+                        log.warn("Could not find ht group file: " + _groupResource);
+                    } else if (log.isDebugEnabled()) log.debug("group file: " + _groupResource);
                 }
-            }
-            catch (IOException e)
-            {
-                _forbidden=true;
-                log.warn(LogSupport.EXCEPTION,e);
+            } catch (IOException e) {
+                _forbidden = true;
+                log.warn(LogSupport.EXCEPTION, e);
             }
         }
 
         /* ------------------------------------------------------------ */
-        public boolean isForbidden()
-        {
+        public boolean isForbidden() {
             return _forbidden;
         }
 
         /* ------------------------------------------------------------ */
-        public HashMap getMethods()
-        {
+        public HashMap getMethods() {
             return _methods;
         }
 
         /* ------------------------------------------------------------ */
-        public long getLastModified()
-        {
+        public long getLastModified() {
             return _lastModified;
         }
 
         /* ------------------------------------------------------------ */
-        public Resource getUserResource()
-        {
+        public Resource getUserResource() {
             return _userResource;
         }
 
         /* ------------------------------------------------------------ */
-        public Resource getGroupResource()
-        {
+        public Resource getGroupResource() {
             return _groupResource;
         }
 
         /* ------------------------------------------------------------ */
-        public int getSatisfy()
-        {
+        public int getSatisfy() {
             return (_satisfy);
         }
 
         /* ------------------------------------------------------------ */
-        public String getName()
-        {
+        public String getName() {
             return _name;
         }
 
         /* ------------------------------------------------------------ */
-        public String getType()
-        {
+        public String getType() {
             return _type;
         }
 
         /* ------------------------------------------------------------ */
-        public boolean checkAccess(String host,String ip)
-        {
+        public boolean checkAccess(String host, String ip) {
             String elm;
-            boolean alp=false;
-            boolean dep=false;
+            boolean alp = false;
+            boolean dep = false;
 
             // if no allows and no deny defined, then return true
-            if (_allowList.size()==0 && _denyList.size()==0)
+            if (_allowList.size() == 0 && _denyList.size() == 0)
                 return (true);
 
             // looping for allows
-            for (int i=0;i<_allowList.size();i++)
-            {
-                elm=(String)_allowList.get(i);
-                if (elm.equals("all"))
-                {
-                    alp=true;
+            for (int i = 0; i < _allowList.size(); i++) {
+                elm = (String) _allowList.get(i);
+                if (elm.equals("all")) {
+                    alp = true;
                     break;
-                }
-                else
-                {
-                    char c=elm.charAt(0);
-                    if (c>='0' && c<='9')
-                    {
+                } else {
+                    char c = elm.charAt(0);
+                    if (c >= '0' && c <= '9') {
                         // ip
-                        if (ip.startsWith(elm))
-                        {
-                            alp=true;
+                        if (ip.startsWith(elm)) {
+                            alp = true;
                             break;
                         }
-                    }
-                    else
-                    {
+                    } else {
                         // hostname
-                        if (host.endsWith(elm))
-                        {
-                            alp=true;
+                        if (host.endsWith(elm)) {
+                            alp = true;
                             break;
                         }
                     }
@@ -379,37 +348,28 @@ public class HTAccessHandler extends AbstractHttpHandler
             }
 
             // looping for denies
-            for (int i=0;i<_denyList.size();i++)
-            {
-                elm=(String)_denyList.get(i);
-                if (elm.equals("all"))
-                {
-                    dep=true;
+            for (int i = 0; i < _denyList.size(); i++) {
+                elm = (String) _denyList.get(i);
+                if (elm.equals("all")) {
+                    dep = true;
                     break;
-                }
-                else
-                {
-                    char c=elm.charAt(0);
-                    if (c>='0' && c<='9')
-                    { // ip
-                        if (ip.startsWith(elm))
-                        {
-                            dep=true;
+                } else {
+                    char c = elm.charAt(0);
+                    if (c >= '0' && c <= '9') { // ip
+                        if (ip.startsWith(elm)) {
+                            dep = true;
                             break;
                         }
-                    }
-                    else
-                    { // hostname
-                        if (host.endsWith(elm))
-                        {
-                            dep=true;
+                    } else { // hostname
+                        if (host.endsWith(elm)) {
+                            dep = true;
                             break;
                         }
                     }
                 }
             }
 
-            if (_order<0) //deny,allow
+            if (_order < 0) //deny,allow
                 return !dep || alp;
             //mutual failure == allow,deny
             return alp && !dep;
@@ -419,177 +379,143 @@ public class HTAccessHandler extends AbstractHttpHandler
         public boolean checkAuth(String user,
                                  String pass,
                                  HttpContext context,
-                                 HttpRequest request)
-        {
-            if (_requireName==null)
+                                 HttpRequest request) {
+            if (_requireName == null)
                 return true;
 
             // Authenticate with realm
-            UserRealm realm=context.getRealm();
-            Principal principal=realm==null?null:realm.authenticate(user,pass,request);
-            if (principal==null)
-            {
+            UserRealm realm = context.getRealm();
+            Principal principal = realm == null ? null : realm.authenticate(user, pass, request);
+            if (principal == null) {
                 // Have to authenticate the user with the password file
-                String code=getUserCode(user);
-                String salt=code!=null?code.substring(0,2):user;
-                String cred=(user!=null&&pass!=null)?UnixCrypt.crypt(pass,salt):null;
-                if (code==null || (code.equals("") && !pass.equals("")) || !code.equals(cred))
+                String code = getUserCode(user);
+                String salt = code != null ? code.substring(0, 2) : user;
+                String cred = (user != null && pass != null) ? UnixCrypt.crypt(pass, salt) : null;
+                if (code == null || (code.equals("") && !pass.equals("")) || !code.equals(cred))
                     return false;
             }
 
-            if (_requireName.equalsIgnoreCase(USER))
-            {
+            if (_requireName.equalsIgnoreCase(USER)) {
                 if (_requireEntities.contains(user))
                     return true;
-            }
-            else if (_requireName.equalsIgnoreCase(GROUP))
-            {
-                ArrayList gps=getUserGroups(user);
-                if (gps!=null)
-                    for (int g=gps.size();g-->0;)
+            } else if (_requireName.equalsIgnoreCase(GROUP)) {
+                ArrayList gps = getUserGroups(user);
+                if (gps != null)
+                    for (int g = gps.size(); g-- > 0; )
                         if (_requireEntities.contains(gps.get(g)))
                             return true;
-            }
-            else if (_requireName.equalsIgnoreCase(VALID_USER))
-            {
+            } else if (_requireName.equalsIgnoreCase(VALID_USER)) {
                 return true;
             }
-            
+
             return false;
         }
 
         /* ------------------------------------------------------------ */
-        public boolean isAccessLimited()
-        {
-            if (_allowList.size()>0 || _denyList.size()>0)
+        public boolean isAccessLimited() {
+            if (_allowList.size() > 0 || _denyList.size() > 0)
                 return true;
             else
                 return false;
         }
 
         /* ------------------------------------------------------------ */
-        public boolean isAuthLimited()
-        {
-            if (_requireName!=null)
+        public boolean isAuthLimited() {
+            if (_requireName != null)
                 return true;
             else
                 return false;
         }
 
         /* ------------------------------------------------------------ */
-        private String getUserCode(String user)
-        {
-            if (_userResource==null)
+        private String getUserCode(String user) {
+            if (_userResource == null)
                 return null;
 
-            if (_users==null || _userModified!=_userResource.lastModified())
-            {
-                if(log.isDebugEnabled())log.debug("LOAD "+_userResource);
-                _users=new HashMap();
-                BufferedReader ufin=null;
-                try
-                {
-                    ufin=new BufferedReader(new InputStreamReader(_userResource.getInputStream()));
-                    _userModified=_userResource.lastModified();
+            if (_users == null || _userModified != _userResource.lastModified()) {
+                if (log.isDebugEnabled()) log.debug("LOAD " + _userResource);
+                _users = new HashMap();
+                BufferedReader ufin = null;
+                try {
+                    ufin = new BufferedReader(new InputStreamReader(_userResource.getInputStream()));
+                    _userModified = _userResource.lastModified();
                     String line;
-                    while ((line=ufin.readLine())!=null)
-                    {
-                        line=line.trim();
+                    while ((line = ufin.readLine()) != null) {
+                        line = line.trim();
                         if (line.startsWith("#")) continue;
-                        int spos=line.indexOf(':');
-                        if (spos<0)
+                        int spos = line.indexOf(':');
+                        if (spos < 0)
                             continue;
-                        String u=line.substring(0,spos).trim();
-                        String p=line.substring(spos+1).trim();
-                        _users.put(u,p);
+                        String u = line.substring(0, spos).trim();
+                        String p = line.substring(spos + 1).trim();
+                        _users.put(u, p);
                     }
-                }
-                catch (IOException e)
-                {
-                    log.warn(LogSupport.EXCEPTION,e);
-                }
-                finally
-                {
-                    try
-                    {
-                        if (ufin!=null) ufin.close();
-                    }
-                    catch (IOException e2)
-                    {
-                        log.warn(LogSupport.EXCEPTION,e2);
+                } catch (IOException e) {
+                    log.warn(LogSupport.EXCEPTION, e);
+                } finally {
+                    try {
+                        if (ufin != null) ufin.close();
+                    } catch (IOException e2) {
+                        log.warn(LogSupport.EXCEPTION, e2);
                     }
                 }
             }
 
-            return (String)_users.get(user);
+            return (String) _users.get(user);
         }
 
         /* ------------------------------------------------------------ */
-        private ArrayList getUserGroups(String group)
-        {
-            if (_groupResource==null)
+        private ArrayList getUserGroups(String group) {
+            if (_groupResource == null)
                 return null;
 
-            if (_groups==null || _groupModified!=_groupResource.lastModified())
-            {
-                if(log.isDebugEnabled())log.debug("LOAD "+_groupResource);
+            if (_groups == null || _groupModified != _groupResource.lastModified()) {
+                if (log.isDebugEnabled()) log.debug("LOAD " + _groupResource);
 
-                _groups=new HashMap();
-                BufferedReader ufin=null;
-                try
-                {
-                    ufin=new BufferedReader(new InputStreamReader(_groupResource.getInputStream()));
-                    _groupModified=_groupResource.lastModified();
+                _groups = new HashMap();
+                BufferedReader ufin = null;
+                try {
+                    ufin = new BufferedReader(new InputStreamReader(_groupResource.getInputStream()));
+                    _groupModified = _groupResource.lastModified();
                     String line;
-                    while ((line=ufin.readLine())!=null)
-                    {
-                        line=line.trim();
-                        if (line.startsWith("#") || line.length()==0) continue;
+                    while ((line = ufin.readLine()) != null) {
+                        line = line.trim();
+                        if (line.startsWith("#") || line.length() == 0) continue;
 
-                        StringTokenizer tok=new StringTokenizer(line,": \t");
+                        StringTokenizer tok = new StringTokenizer(line, ": \t");
 
                         if (!tok.hasMoreTokens())
                             continue;
-                        String g=tok.nextToken();
+                        String g = tok.nextToken();
                         if (!tok.hasMoreTokens())
                             continue;
-                        while (tok.hasMoreTokens())
-                        {
-                            String u=tok.nextToken();
-                            ArrayList gl=(ArrayList)_groups.get(u);
-                            if (gl==null)
-                            {
-                                gl=new ArrayList();
-                                _groups.put(u,gl);
+                        while (tok.hasMoreTokens()) {
+                            String u = tok.nextToken();
+                            ArrayList gl = (ArrayList) _groups.get(u);
+                            if (gl == null) {
+                                gl = new ArrayList();
+                                _groups.put(u, gl);
                             }
                             gl.add(g);
                         }
                     }
-                }
-                catch (IOException e)
-                {
-                    log.warn(LogSupport.EXCEPTION,e);
-                }
-                finally
-                {
-                    try
-                    {
-                        if (ufin!=null) ufin.close();
-                    }
-                    catch (IOException e2)
-                    {
-                        log.warn(LogSupport.EXCEPTION,e2);
+                } catch (IOException e) {
+                    log.warn(LogSupport.EXCEPTION, e);
+                } finally {
+                    try {
+                        if (ufin != null) ufin.close();
+                    } catch (IOException e2) {
+                        log.warn(LogSupport.EXCEPTION, e2);
                     }
                 }
             }
-            
-            return (ArrayList)_groups.get(group);
+
+            return (ArrayList) _groups.get(group);
         }
 
         /* ------------------------------------------------------------ */
-        public String toString()
-        {
-            StringBuffer buf=new StringBuffer();
+        public String toString() {
+            StringBuffer buf = new StringBuffer();
 
             buf.append("AuthUserFile=");
             buf.append(_userFile);
@@ -603,9 +529,9 @@ public class HTAccessHandler extends AbstractHttpHandler
             buf.append(_methods);
             buf.append(", satisfy=");
             buf.append(_satisfy);
-            if (_order<0)
+            if (_order < 0)
                 buf.append(", order=deny,allow");
-            else if (_order>0)
+            else if (_order > 0)
                 buf.append(", order=allow,deny");
             else
                 buf.append(", order=mutual-failure");
@@ -624,137 +550,104 @@ public class HTAccessHandler extends AbstractHttpHandler
 
         /* ------------------------------------------------------------ */
         private void parse(BufferedReader htin)
-                throws IOException
-        {
+                throws IOException {
             String line;
-            while ((line=htin.readLine())!=null)
-            {
-                line=line.trim();
+            while ((line = htin.readLine()) != null) {
+                line = line.trim();
                 if (line.startsWith("#"))
                     continue;
-                else if (line.startsWith("AuthUserFile"))
-                {
-                    _userFile=line.substring(13).trim();
-                }
-                else if (line.startsWith("AuthGroupFile"))
-                {
-                    _groupFile=line.substring(14).trim();
-                }
-                else if (line.startsWith("AuthName"))
-                {
-                    _name=line.substring(8).trim();
-                }
-                else if (line.startsWith("AuthType"))
-                {
-                    _type=line.substring(8).trim();
+                else if (line.startsWith("AuthUserFile")) {
+                    _userFile = line.substring(13).trim();
+                } else if (line.startsWith("AuthGroupFile")) {
+                    _groupFile = line.substring(14).trim();
+                } else if (line.startsWith("AuthName")) {
+                    _name = line.substring(8).trim();
+                } else if (line.startsWith("AuthType")) {
+                    _type = line.substring(8).trim();
                 }
                 //else if (line.startsWith("<Limit")) {
-                else if (line.startsWith("<Limit"))
-                {
-                    int limit=line.length();
-                    int endp=line.indexOf('>');
+                else if (line.startsWith("<Limit")) {
+                    int limit = line.length();
+                    int endp = line.indexOf('>');
                     StringTokenizer tkns;
 
-                    if (endp<0) endp=limit;
-                    tkns=new StringTokenizer(line.substring(6,endp));
-                    while (tkns.hasMoreTokens())
-                    {
-                        _methods.put(tkns.nextToken(),Boolean.TRUE);
+                    if (endp < 0) endp = limit;
+                    tkns = new StringTokenizer(line.substring(6, endp));
+                    while (tkns.hasMoreTokens()) {
+                        _methods.put(tkns.nextToken(), Boolean.TRUE);
                     }
 
-                    while ((line=htin.readLine())!=null)
-                    {
-                        line=line.trim();
+                    while ((line = htin.readLine()) != null) {
+                        line = line.trim();
                         if (line.startsWith("#"))
                             continue;
-                        else if (line.startsWith("satisfy"))
-                        {
-                            int pos1=7;
-                            limit=line.length();
-                            while ((pos1<limit) && (line.charAt(pos1)<=' ')) pos1++;
-                            int pos2=pos1;
-                            while ((pos2<limit) && (line.charAt(pos2)>' ')) pos2++;
-                            String l_string=line.substring(pos1,pos2);
+                        else if (line.startsWith("satisfy")) {
+                            int pos1 = 7;
+                            limit = line.length();
+                            while ((pos1 < limit) && (line.charAt(pos1) <= ' ')) pos1++;
+                            int pos2 = pos1;
+                            while ((pos2 < limit) && (line.charAt(pos2) > ' ')) pos2++;
+                            String l_string = line.substring(pos1, pos2);
                             if (l_string.equals("all"))
-                                _satisfy=1;
-                            else if (l_string.equals("any")) _satisfy=0;
-                        }
-                        else if (line.startsWith("require"))
-                        {
-                            int pos1=7;
-                            limit=line.length();
-                            while ((pos1<limit) && (line.charAt(pos1)<=' ')) pos1++;
-                            int pos2=pos1;
-                            while ((pos2<limit) && (line.charAt(pos2)>' ')) pos2++;
-                            _requireName=line.substring(pos1,pos2).toLowerCase();
+                                _satisfy = 1;
+                            else if (l_string.equals("any")) _satisfy = 0;
+                        } else if (line.startsWith("require")) {
+                            int pos1 = 7;
+                            limit = line.length();
+                            while ((pos1 < limit) && (line.charAt(pos1) <= ' ')) pos1++;
+                            int pos2 = pos1;
+                            while ((pos2 < limit) && (line.charAt(pos2) > ' ')) pos2++;
+                            _requireName = line.substring(pos1, pos2).toLowerCase();
                             if (USER.equals(_requireName))
-                                _requireName=USER;
+                                _requireName = USER;
                             else if (GROUP.equals(_requireName))
-                                _requireName=GROUP;
+                                _requireName = GROUP;
                             else if (VALID_USER.equals(_requireName))
-                                _requireName=VALID_USER;
+                                _requireName = VALID_USER;
 
-                            pos1=pos2+1;
-                            if (pos1<limit)
-                            {
-                                while ((pos1<limit) && (line.charAt(pos1)<=' ')) pos1++;
+                            pos1 = pos2 + 1;
+                            if (pos1 < limit) {
+                                while ((pos1 < limit) && (line.charAt(pos1) <= ' ')) pos1++;
 
-                                tkns=new StringTokenizer(line.substring(pos1));
-                                while (tkns.hasMoreTokens())
-                                {
+                                tkns = new StringTokenizer(line.substring(pos1));
+                                while (tkns.hasMoreTokens()) {
                                     _requireEntities.add(tkns.nextToken());
                                 }
                             }
 
-                        }
-                        else if (line.startsWith("order"))
-                        {
-                            if(log.isDebugEnabled())log.debug("orderline="+line+"order="+_order);
-                            if (line.indexOf("allow,deny")>0)
-                            {
+                        } else if (line.startsWith("order")) {
+                            if (log.isDebugEnabled()) log.debug("orderline=" + line + "order=" + _order);
+                            if (line.indexOf("allow,deny") > 0) {
                                 log.debug("==>allow+deny");
-                                _order=1;
-                            }
-                            else if (line.indexOf("deny,allow")>0)
-                            {
+                                _order = 1;
+                            } else if (line.indexOf("deny,allow") > 0) {
                                 log.debug("==>deny,allow");
-                                _order=-1;
-                            }
-                            else if (line.indexOf("mutual-failure")>0)
-                            {
+                                _order = -1;
+                            } else if (line.indexOf("mutual-failure") > 0) {
                                 log.debug("==>mutual");
-                                _order=0;
+                                _order = 0;
+                            } else {
                             }
-                            else
-                            {
-                            }
-                        }
-                        else if (line.startsWith("allow from"))
-                        {
-                            int pos1=10;
-                            limit=line.length();
-                            while ((pos1<limit) && (line.charAt(pos1)<=' ')) pos1++;
-                            if(log.isDebugEnabled())log.debug("allow process:"+line.substring(pos1));
-                            tkns=new StringTokenizer(line.substring(pos1));
-                            while (tkns.hasMoreTokens())
-                            {
+                        } else if (line.startsWith("allow from")) {
+                            int pos1 = 10;
+                            limit = line.length();
+                            while ((pos1 < limit) && (line.charAt(pos1) <= ' ')) pos1++;
+                            if (log.isDebugEnabled()) log.debug("allow process:" + line.substring(pos1));
+                            tkns = new StringTokenizer(line.substring(pos1));
+                            while (tkns.hasMoreTokens()) {
                                 _allowList.add(tkns.nextToken());
                             }
-                        }
-                        else if (line.startsWith("deny from"))
-                        {
-                            int pos1=9;
-                            limit=line.length();
-                            while ((pos1<limit) && (line.charAt(pos1)<=' ')) pos1++;
-                            if(log.isDebugEnabled())log.debug("deny process:"+line.substring(pos1));
+                        } else if (line.startsWith("deny from")) {
+                            int pos1 = 9;
+                            limit = line.length();
+                            while ((pos1 < limit) && (line.charAt(pos1) <= ' ')) pos1++;
+                            if (log.isDebugEnabled()) log.debug("deny process:" + line.substring(pos1));
 
-                            tkns=new StringTokenizer(line.substring(pos1));
-                            while (tkns.hasMoreTokens())
-                            {
+                            tkns = new StringTokenizer(line.substring(pos1));
+                            while (tkns.hasMoreTokens()) {
                                 _denyList.add(tkns.nextToken());
                             }
-                        }
-                        else if (line.startsWith("</Limit>")) break;
+                        } else if (line.startsWith("</Limit>")) break;
                     }
                 }
             }

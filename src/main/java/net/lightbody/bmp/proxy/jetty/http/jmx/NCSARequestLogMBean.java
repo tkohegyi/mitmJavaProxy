@@ -20,24 +20,25 @@ import net.lightbody.bmp.proxy.jetty.util.jmx.LifeCycleMBean;
 import javax.management.MBeanException;
 
 /* ------------------------------------------------------------ */
-/** 
- *
- * @version $Revision: 1.7 $
+
+/**
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.7 $
  */
-public class NCSARequestLogMBean extends LifeCycleMBean
-{
+public class NCSARequestLogMBean extends LifeCycleMBean {
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @exception MBeanException
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
      */
     public NCSARequestLogMBean()
-        throws MBeanException
-    {}    
+            throws MBeanException {
+    }
 
     /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
+    protected void defineManagedResource() {
         super.defineManagedResource();
         defineAttribute("filename");
         defineAttribute("datedFilename");

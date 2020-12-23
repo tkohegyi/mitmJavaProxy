@@ -15,47 +15,81 @@
 
 package net.lightbody.bmp.proxy.jetty.http.handler;
 
-import net.lightbody.bmp.proxy.jetty.http.*;
+import net.lightbody.bmp.proxy.jetty.http.HttpConnection;
+import net.lightbody.bmp.proxy.jetty.http.HttpException;
+import net.lightbody.bmp.proxy.jetty.http.HttpFields;
+import net.lightbody.bmp.proxy.jetty.http.HttpMessage;
+import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
+import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
+import net.lightbody.bmp.proxy.jetty.http.HttpTunnel;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import net.lightbody.bmp.proxy.jetty.util.*;
+import net.lightbody.bmp.proxy.jetty.util.IO;
+import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
+import net.lightbody.bmp.proxy.jetty.util.LineInput;
+import net.lightbody.bmp.proxy.jetty.util.LogSupport;
+import net.lightbody.bmp.proxy.jetty.util.StringMap;
 import net.lightbody.bmp.proxy.jetty.util.URI;
 import org.apache.commons.logging.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.Socket;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
 /* ------------------------------------------------------------ */
+
 /**
  * Proxy request handler. A HTTP/1.1 Proxy. This implementation uses the JVMs URL implementation to
  * make proxy requests.
- * <P>
+ * <p>
  * The HttpTunnel mechanism is also used to implement the CONNECT method.
- * 
- * @version $Id: ProxyHandler.java,v 1.34 2005/10/05 13:32:59 gregwilkins Exp $
+ *
  * @author Greg Wilkins (gregw)
  * @author giacof@tiscali.it (chained proxy)
+ * @version $Id: ProxyHandler.java,v 1.34 2005/10/05 13:32:59 gregwilkins Exp $
  */
-public class ProxyHandler extends AbstractHttpHandler
-{
+public class ProxyHandler extends AbstractHttpHandler {
     private static Log log = LogFactory.getLog(ProxyHandler.class);
 
     protected Set _proxyHostsWhiteList;
     protected Set _proxyHostsBlackList;
     protected int _tunnelTimeoutMs = 250;
-    private boolean _anonymous=false;
-    private transient boolean _chained=false;
-
-    
-    /* ------------------------------------------------------------ */
     /**
      * Map of leg by leg headers (not end to end). Should be a set, but more efficient string map is
      * used instead.
      */
     protected StringMap _DontProxyHeaders = new StringMap();
+    /**
+     * Map of leg by leg headers (not end to end). Should be a set, but more efficient string map is
+     * used instead.
+     */
+    protected StringMap _ProxyAuthHeaders = new StringMap();
+
+
+    /* ------------------------------------------------------------ */
+    /**
+     * Map of allows schemes to proxy Should be a set, but more efficient string map is used
+     * instead.
+     */
+    protected StringMap _ProxySchemes = new StringMap();
+    /**
+     * Set of allowed CONNECT ports.
+     */
+    protected HashSet _allowedConnectPorts = new HashSet();
+
+    /* ------------------------------------------------------------ */
+    private boolean _anonymous = false;
+    private transient boolean _chained = false;
+
+    /* ------------------------------------------------------------ */
+
     {
         Object o = new Object();
         _DontProxyHeaders.setIgnoreCase(true);
@@ -68,12 +102,6 @@ public class ProxyHandler extends AbstractHttpHandler
         _DontProxyHeaders.put(HttpFields.__Upgrade, o);
     }
 
-    /* ------------------------------------------------------------ */
-    /**
-     * Map of leg by leg headers (not end to end). Should be a set, but more efficient string map is
-     * used instead.
-     */
-    protected StringMap _ProxyAuthHeaders = new StringMap();
     {
         Object o = new Object();
         _ProxyAuthHeaders.put(HttpFields.__ProxyAuthorization, o);
@@ -81,11 +109,7 @@ public class ProxyHandler extends AbstractHttpHandler
     }
 
     /* ------------------------------------------------------------ */
-    /**
-     * Map of allows schemes to proxy Should be a set, but more efficient string map is used
-     * instead.
-     */
-    protected StringMap _ProxySchemes = new StringMap();
+
     {
         Object o = new Object();
         _ProxySchemes.setIgnoreCase(true);
@@ -94,11 +118,6 @@ public class ProxyHandler extends AbstractHttpHandler
         _ProxySchemes.put("ftp", o);
     }
 
-    /* ------------------------------------------------------------ */
-    /**
-     * Set of allowed CONNECT ports.
-     */
-    protected HashSet _allowedConnectPorts = new HashSet();
     {
         _allowedConnectPorts.add(new Integer(80));
         _allowedConnectPorts.add(new Integer(8000));
@@ -107,27 +126,25 @@ public class ProxyHandler extends AbstractHttpHandler
         _allowedConnectPorts.add(new Integer(443));
         _allowedConnectPorts.add(new Integer(8443));
     }
-    
-    
+
 
     /* ------------------------------------------------------------ */
-    /* 
+    /*
      */
-    public void start() throws Exception
-    {
-        _chained=System.getProperty("http.proxyHost")!=null;
+    public void start() throws Exception {
+        _chained = System.getProperty("http.proxyHost") != null;
         super.start();
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Get proxy host white list.
-     * 
+     *
      * @return Array of hostnames and IPs that are proxied, or an empty array if all hosts are
-     *         proxied.
+     * proxied.
      */
-    public String[] getProxyHostsWhiteList()
-    {
+    public String[] getProxyHostsWhiteList() {
         if (_proxyHostsWhiteList == null || _proxyHostsWhiteList.size() == 0)
             return new String[0];
 
@@ -137,17 +154,16 @@ public class ProxyHandler extends AbstractHttpHandler
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Set proxy host white list.
-     * 
+     *
      * @param hosts Array of hostnames and IPs that are proxied, or null if all hosts are proxied.
      */
-    public void setProxyHostsWhiteList(String[] hosts)
-    {
+    public void setProxyHostsWhiteList(String[] hosts) {
         if (hosts == null || hosts.length == 0)
             _proxyHostsWhiteList = null;
-        else
-        {
+        else {
             _proxyHostsWhiteList = new HashSet();
             for (int i = 0; i < hosts.length; i++)
                 if (hosts[i] != null && hosts[i].trim().length() > 0)
@@ -156,13 +172,13 @@ public class ProxyHandler extends AbstractHttpHandler
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Get proxy host black list.
-     * 
+     *
      * @return Array of hostnames and IPs that are NOT proxied.
      */
-    public String[] getProxyHostsBlackList()
-    {
+    public String[] getProxyHostsBlackList() {
         if (_proxyHostsBlackList == null || _proxyHostsBlackList.size() == 0)
             return new String[0];
 
@@ -172,17 +188,16 @@ public class ProxyHandler extends AbstractHttpHandler
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Set proxy host black list.
-     * 
+     *
      * @param hosts Array of hostnames and IPs that are NOT proxied.
      */
-    public void setProxyHostsBlackList(String[] hosts)
-    {
+    public void setProxyHostsBlackList(String[] hosts) {
         if (hosts == null || hosts.length == 0)
             _proxyHostsBlackList = null;
-        else
-        {
+        else {
             _proxyHostsBlackList = new HashSet();
             for (int i = 0; i < hosts.length; i++)
                 if (hosts[i] != null && hosts[i].trim().length() > 0)
@@ -191,41 +206,36 @@ public class ProxyHandler extends AbstractHttpHandler
     }
 
     /* ------------------------------------------------------------ */
-    public int getTunnelTimeoutMs()
-    {
+    public int getTunnelTimeoutMs() {
         return _tunnelTimeoutMs;
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Tunnel timeout. IE on win2000 has connections issues with normal timeout handling. This
      * timeout should be set to a low value that will expire to allow IE to see the end of the
      * tunnel connection.
      */
-    public void setTunnelTimeoutMs(int ms)
-    {
+    public void setTunnelTimeoutMs(int ms) {
         _tunnelTimeoutMs = ms;
     }
 
     /* ------------------------------------------------------------ */
-    public void handle(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws HttpException, IOException
-    {
+    public void handle(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws HttpException, IOException {
         URI uri = request.getURI();
 
         // Is this a CONNECT request?
-        if (HttpRequest.__CONNECT.equalsIgnoreCase(request.getMethod()))
-        {
+        if (HttpRequest.__CONNECT.equalsIgnoreCase(request.getMethod())) {
             response.setField(HttpFields.__Connection, "close"); // TODO Needed for IE????
             handleConnect(pathInContext, pathParams, request, response);
             return;
         }
 
-        try
-        {
+        try {
             // Do we proxy this?
             URL url = isProxied(uri);
-            if (url == null)
-            {
+            if (url == null) {
                 if (isForbidden(uri))
                     sendForbid(request, response, uri);
                 return;
@@ -239,8 +249,7 @@ public class ProxyHandler extends AbstractHttpHandler
 
             // Set method
             HttpURLConnection http = null;
-            if (connection instanceof HttpURLConnection)
-            {
+            if (connection instanceof HttpURLConnection) {
                 http = (HttpURLConnection) connection;
                 http.setRequestMethod(request.getMethod());
                 http.setInstanceFollowRedirects(false);
@@ -255,8 +264,7 @@ public class ProxyHandler extends AbstractHttpHandler
             boolean xForwardedFor = false;
             boolean hasContent = false;
             Enumeration enm = request.getFieldNames();
-            while (enm.hasMoreElements())
-            {
+            while (enm.hasMoreElements()) {
                 // TODO could be better than this!
                 String hdr = (String) enm.nextElement();
 
@@ -269,11 +277,9 @@ public class ProxyHandler extends AbstractHttpHandler
                     hasContent = true;
 
                 Enumeration vals = request.getFieldValues(hdr);
-                while (vals.hasMoreElements())
-                {
+                while (vals.hasMoreElements()) {
                     String val = (String) vals.nextElement();
-                    if (val != null)
-                    {
+                    if (val != null) {
                         connection.addRequestProperty(hdr, val);
                         xForwardedFor |= HttpFields.__XForwardedFor.equalsIgnoreCase(hdr);
                     }
@@ -294,23 +300,19 @@ public class ProxyHandler extends AbstractHttpHandler
             // customize Connection
             customizeConnection(pathInContext, pathParams, request, connection);
 
-            try
-            {
+            try {
                 connection.setDoInput(true);
 
                 // do input thang!
                 InputStream in = request.getInputStream();
-                if (hasContent)
-                {
+                if (hasContent) {
                     connection.setDoOutput(true);
                     IO.copy(in, connection.getOutputStream());
                 }
 
                 // Connect
                 connection.connect();
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 LogSupport.ignore(log, e);
             }
 
@@ -318,8 +320,7 @@ public class ProxyHandler extends AbstractHttpHandler
 
             // handler status codes etc.
             int code = HttpResponse.__500_Internal_Server_Error;
-            if (http != null)
-            {
+            if (http != null) {
                 proxy_in = http.getErrorStream();
 
                 code = http.getResponseCode();
@@ -327,14 +328,10 @@ public class ProxyHandler extends AbstractHttpHandler
                 response.setReason(http.getResponseMessage());
             }
 
-            if (proxy_in == null)
-            {
-                try
-                {
+            if (proxy_in == null) {
+                try {
                     proxy_in = connection.getInputStream();
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     LogSupport.ignore(log, e);
                     proxy_in = http.getErrorStream();
                 }
@@ -348,8 +345,7 @@ public class ProxyHandler extends AbstractHttpHandler
             int h = 0;
             String hdr = connection.getHeaderFieldKey(h);
             String val = connection.getHeaderField(h);
-            while (hdr != null || val != null)
-            {
+            while (hdr != null || val != null) {
                 if (hdr != null && val != null && !_DontProxyHeaders.containsKey(hdr) && (_chained || !_ProxyAuthHeaders.containsKey(hdr)))
                     response.addField(hdr, val);
                 h++;
@@ -364,9 +360,7 @@ public class ProxyHandler extends AbstractHttpHandler
             if (proxy_in != null)
                 IO.copy(proxy_in, response.getOutputStream());
 
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             log.warn(e.toString());
             LogSupport.ignore(log, e);
             if (!response.isCommitted())
@@ -375,53 +369,44 @@ public class ProxyHandler extends AbstractHttpHandler
     }
 
     /* ------------------------------------------------------------ */
-    public void handleConnect(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws HttpException, IOException
-    {
+    public void handleConnect(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws HttpException, IOException {
         URI uri = request.getURI();
 
-        try
-        {
+        try {
             if (log.isDebugEnabled())
                 log.debug("CONNECT: " + uri);
             InetAddrPort addrPort = new InetAddrPort(uri.toString());
 
-            if (isForbidden(HttpMessage.__SSL_SCHEME, addrPort.getHost(), addrPort.getPort(), false))
-            {
+            if (isForbidden(HttpMessage.__SSL_SCHEME, addrPort.getHost(), addrPort.getPort(), false)) {
                 sendForbid(request, response, uri);
-            }
-            else
-            {
-                HttpConnection http_connection=request.getHttpConnection();
+            } else {
+                HttpConnection http_connection = request.getHttpConnection();
                 http_connection.forceClose();
 
                 // Get the timeout
                 int timeoutMs = 30000;
                 Object maybesocket = http_connection.getConnection();
-                if (maybesocket instanceof Socket)
-                {
+                if (maybesocket instanceof Socket) {
                     Socket s = (Socket) maybesocket;
                     timeoutMs = s.getSoTimeout();
                 }
-                
-                
+
+
                 // Create the tunnel
-                HttpTunnel tunnel = newHttpTunnel(request,response,addrPort.getInetAddress(), addrPort.getPort(),timeoutMs);
-                
-                
-                if (tunnel!=null)
-                {
+                HttpTunnel tunnel = newHttpTunnel(request, response, addrPort.getInetAddress(), addrPort.getPort(), timeoutMs);
+
+
+                if (tunnel != null) {
                     // TODO - need to setup semi-busy loop for IE.
-                    if (_tunnelTimeoutMs > 0)
-                    {
+                    if (_tunnelTimeoutMs > 0) {
                         tunnel.getSocket().setSoTimeout(_tunnelTimeoutMs);
-                        if (maybesocket instanceof Socket)
-                        {
+                        if (maybesocket instanceof Socket) {
                             Socket s = (Socket) maybesocket;
                             s.setSoTimeout(_tunnelTimeoutMs);
                         }
                     }
                     tunnel.setTimeoutMs(timeoutMs);
-                    
+
                     customizeConnection(pathInContext, pathParams, request, tunnel.getSocket());
                     request.getHttpConnection().setHttpTunnel(tunnel);
                     response.setStatus(HttpResponse.__200_OK);
@@ -429,73 +414,58 @@ public class ProxyHandler extends AbstractHttpHandler
                 }
                 request.setHandled(true);
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             LogSupport.ignore(log, e);
             response.sendError(HttpResponse.__500_Internal_Server_Error);
         }
     }
 
     /* ------------------------------------------------------------ */
-    protected HttpTunnel newHttpTunnel(HttpRequest request, HttpResponse response, InetAddress iaddr, int port, int timeoutMS) throws IOException
-    {
-        try
-        {
-            Socket socket=null;
-            InputStream in=null;
-            
-            String chained_proxy_host=System.getProperty("http.proxyHost");
-            if (chained_proxy_host==null)
-            {
-                socket= new Socket(iaddr, port);
+    protected HttpTunnel newHttpTunnel(HttpRequest request, HttpResponse response, InetAddress iaddr, int port, int timeoutMS) throws IOException {
+        try {
+            Socket socket = null;
+            InputStream in = null;
+
+            String chained_proxy_host = System.getProperty("http.proxyHost");
+            if (chained_proxy_host == null) {
+                socket = new Socket(iaddr, port);
                 socket.setSoTimeout(timeoutMS);
                 socket.setTcpNoDelay(true);
-            }
-            else
-            {
+            } else {
                 int chained_proxy_port = Integer.getInteger("http.proxyPort", 8888).intValue();
-                
-                Socket chain_socket= new Socket(chained_proxy_host, chained_proxy_port);
+
+                Socket chain_socket = new Socket(chained_proxy_host, chained_proxy_port);
                 chain_socket.setSoTimeout(timeoutMS);
                 chain_socket.setTcpNoDelay(true);
-                if (log.isDebugEnabled()) log.debug("chain proxy socket="+chain_socket);
-                
+                if (log.isDebugEnabled()) log.debug("chain proxy socket=" + chain_socket);
+
                 LineInput line_in = new LineInput(chain_socket.getInputStream());
-                byte[] connect= request.toString().getBytes(net.lightbody.bmp.proxy.jetty.util.StringUtil.__ISO_8859_1);
+                byte[] connect = request.toString().getBytes(net.lightbody.bmp.proxy.jetty.util.StringUtil.__ISO_8859_1);
                 chain_socket.getOutputStream().write(connect);
-                
+
                 String chain_response_line = line_in.readLine();
                 HttpFields chain_response = new HttpFields();
                 chain_response.read(line_in);
-                
+
                 // decode response
                 int space0 = chain_response_line.indexOf(' ');
-                if (space0>0 && space0+1<chain_response_line.length())
-                {
-                    int space1 = chain_response_line.indexOf(' ',space0+1);
-                    
-                    if (space1>space0)
-                    {
-                        int code=Integer.parseInt(chain_response_line.substring(space0+1,space1));
-                        
-                        if (code>=200 && code<300)
-                        {
-                            socket=chain_socket;
-                            in=line_in;
-                        }
-                        else
-                        {
+                if (space0 > 0 && space0 + 1 < chain_response_line.length()) {
+                    int space1 = chain_response_line.indexOf(' ', space0 + 1);
+
+                    if (space1 > space0) {
+                        int code = Integer.parseInt(chain_response_line.substring(space0 + 1, space1));
+
+                        if (code >= 200 && code < 300) {
+                            socket = chain_socket;
+                            in = line_in;
+                        } else {
                             Enumeration iter = chain_response.getFieldNames();
-                            while (iter.hasMoreElements())
-                            {
-                                String name=(String)iter.nextElement();
-                                if (!_DontProxyHeaders.containsKey(name))
-                                {
+                            while (iter.hasMoreElements()) {
+                                String name = (String) iter.nextElement();
+                                if (!_DontProxyHeaders.containsKey(name)) {
                                     Enumeration values = chain_response.getValues(name);
-                                    while(values.hasMoreElements())
-                                    {
-                                        String value=(String)values.nextElement();
+                                    while (values.hasMoreElements()) {
+                                        String value = (String) values.nextElement();
                                         response.setField(name, value);
                                     }
                                 }
@@ -507,50 +477,47 @@ public class ProxyHandler extends AbstractHttpHandler
                     }
                 }
             }
-            
-            if (socket==null)
+
+            if (socket == null)
                 return null;
-            HttpTunnel tunnel=new HttpTunnel(socket,in,null);
+            HttpTunnel tunnel = new HttpTunnel(socket, in, null);
             return tunnel;
-        }
-        catch(IOException e)
-        {
+        } catch (IOException e) {
             log.debug(e);
             response.sendError(HttpResponse.__400_Bad_Request);
             return null;
         }
     }
-    
-    
+
+
     /* ------------------------------------------------------------ */
+
     /**
      * Customize proxy Socket connection for CONNECT. Method to allow derived handlers to customize
      * the tunnel sockets.
-     * 
      */
-    protected void customizeConnection(String pathInContext, String pathParams, HttpRequest request, Socket socket) throws IOException
-    {
+    protected void customizeConnection(String pathInContext, String pathParams, HttpRequest request, Socket socket) throws IOException {
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Customize proxy URL connection. Method to allow derived handlers to customize the connection.
      */
-    protected void customizeConnection(String pathInContext, String pathParams, HttpRequest request, URLConnection connection) throws IOException
-    {
+    protected void customizeConnection(String pathInContext, String pathParams, HttpRequest request, URLConnection connection) throws IOException {
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Is URL Proxied. Method to allow derived handlers to select which URIs are proxied and to
      * where.
-     * 
+     *
      * @param uri The requested URI, which should include a scheme, host and port.
      * @return The URL to proxy to, or null if the passed URI should not be proxied. The default
-     *         implementation returns the passed uri if isForbidden() returns true.
+     * implementation returns the passed uri if isForbidden() returns true.
      */
-    protected URL isProxied(URI uri) throws MalformedURLException
-    {
+    protected URL isProxied(URI uri) throws MalformedURLException {
         // Is this a proxy request?
         if (isForbidden(uri))
             return null;
@@ -560,13 +527,13 @@ public class ProxyHandler extends AbstractHttpHandler
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Is URL Forbidden.
-     * 
+     *
      * @return True if the URL is not forbidden. Calls isForbidden(scheme,host,port,true);
      */
-    protected boolean isForbidden(URI uri)
-    {
+    protected boolean isForbidden(URI uri) {
         String scheme = uri.getScheme();
         String host = uri.getHost();
         int port = uri.getPort();
@@ -574,21 +541,20 @@ public class ProxyHandler extends AbstractHttpHandler
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Is scheme,host & port Forbidden.
-     * 
-     * @param scheme A scheme that mast be in the proxySchemes StringMap.
-     * @param host A host that must pass the white and black lists
-     * @param port A port that must in the allowedConnectPorts Set
+     *
+     * @param scheme           A scheme that mast be in the proxySchemes StringMap.
+     * @param host             A host that must pass the white and black lists
+     * @param port             A port that must in the allowedConnectPorts Set
      * @param openNonPrivPorts If true ports greater than 1024 are allowed.
      * @return True if the request to the scheme,host and port is not forbidden.
      */
-    protected boolean isForbidden(String scheme, String host, int port, boolean openNonPrivPorts)
-    {
+    protected boolean isForbidden(String scheme, String host, int port, boolean openNonPrivPorts) {
         // Check port
         Integer p = new Integer(port);
-        if (port > 0 && !_allowedConnectPorts.contains(p))
-        {
+        if (port > 0 && !_allowedConnectPorts.contains(p)) {
             if (!openNonPrivPorts || port <= 1024)
                 return true;
         }
@@ -609,30 +575,30 @@ public class ProxyHandler extends AbstractHttpHandler
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Send Forbidden. Method called to send forbidden response. Default implementation calls
      * sendError(403)
      */
-    protected void sendForbid(HttpRequest request, HttpResponse response, URI uri) throws IOException
-    {
+    protected void sendForbid(HttpRequest request, HttpResponse response, URI uri) throws IOException {
         response.sendError(HttpResponse.__403_Forbidden, "Forbidden for Proxy @618");
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * @return Returns the anonymous.
      */
-    public boolean isAnonymous()
-    {
+    public boolean isAnonymous() {
         return _anonymous;
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * @param anonymous The anonymous to set.
      */
-    public void setAnonymous(boolean anonymous)
-    {
+    public void setAnonymous(boolean anonymous) {
         _anonymous = anonymous;
     }
 }

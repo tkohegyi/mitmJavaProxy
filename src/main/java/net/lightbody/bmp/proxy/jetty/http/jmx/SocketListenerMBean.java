@@ -18,26 +18,26 @@ package net.lightbody.bmp.proxy.jetty.http.jmx;
 import javax.management.MBeanException;
 
 /* ------------------------------------------------------------ */
-/** 
- *
- * @version $Revision: 1.6 $
+
+/**
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.6 $
  */
-public class SocketListenerMBean extends HttpListenerMBean
-{
+public class SocketListenerMBean extends HttpListenerMBean {
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @exception MBeanException 
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
      */
     public SocketListenerMBean()
-        throws MBeanException
-    {
+            throws MBeanException {
         super();
     }
 
     /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
+    protected void defineManagedResource() {
         super.defineManagedResource();
         defineAttribute("lowResources");
         defineAttribute("lowResourcePersistTimeMs");

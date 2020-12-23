@@ -33,85 +33,91 @@ import javax.management.modelmbean.ModelMBean;
 import java.util.HashMap;
 
 /* ------------------------------------------------------------ */
-/** HttpServer MBean.
+
+/**
+ * HttpServer MBean.
  * This Model MBean class provides the mapping for HttpServer
  * management methods. It also registers itself as a membership
  * listener of the HttpServer, so it can create and destroy MBean
  * wrappers for listeners and contexts.
  *
- * @version $Revision: 1.16 $
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.16 $
  */
 public class HttpServerMBean extends LifeCycleMBean
-    implements ComponentListener
-{
+        implements ComponentListener {
     private static Log log = LogFactory.getLog(HttpServerMBean.class);
 
     private HttpServer _httpServer;
     private HashMap _mbeanMap = new HashMap();
 
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @exception MBeanException 
-     * @exception InstanceNotFoundException 
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
+     * @throws InstanceNotFoundException
      */
     protected HttpServerMBean(HttpServer httpServer)
-        throws MBeanException, InstanceNotFoundException
-    {
-        _httpServer=httpServer;
+            throws MBeanException, InstanceNotFoundException {
+        _httpServer = httpServer;
         _httpServer.addEventListener(this);
-        try{super.setManagedResource(_httpServer,"objectReference");}
-        catch(InvalidTargetObjectTypeException e){log.warn(LogSupport.EXCEPTION,e);}
+        try {
+            super.setManagedResource(_httpServer, "objectReference");
+        } catch (InvalidTargetObjectTypeException e) {
+            log.warn(LogSupport.EXCEPTION, e);
+        }
     }
 
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @exception MBeanException 
-     * @exception InstanceNotFoundException 
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
+     * @throws InstanceNotFoundException
      */
     public HttpServerMBean()
-        throws MBeanException, InstanceNotFoundException
-    {
+            throws MBeanException, InstanceNotFoundException {
         this(new HttpServer());
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void setManagedResource(Object o,String s)
-        throws MBeanException, InstanceNotFoundException, InvalidTargetObjectTypeException
-    {
-        if (o!=null)
-            ((HttpServer)o).addEventListener(this);
-        super.setManagedResource(o,s);
+    public void setManagedResource(Object o, String s)
+            throws MBeanException, InstanceNotFoundException, InvalidTargetObjectTypeException {
+        if (o != null)
+            ((HttpServer) o).addEventListener(this);
+        super.setManagedResource(o, s);
     }
 
     /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
+    protected void defineManagedResource() {
         super.defineManagedResource();
-        
-        defineAttribute("listeners",READ_ONLY);
-        defineAttribute("contexts",READ_ONLY);
-        defineAttribute("version",READ_ONLY,ON_MBEAN);
-        defineAttribute("components",READ_ONLY,ON_MBEAN);
+
+        defineAttribute("listeners", READ_ONLY);
+        defineAttribute("contexts", READ_ONLY);
+        defineAttribute("version", READ_ONLY, ON_MBEAN);
+        defineAttribute("components", READ_ONLY, ON_MBEAN);
         defineAttribute("requestLog");
-        
+
         defineAttribute("trace");
 
-        
-        defineOperation("addListener",new String[]{"java.lang.String"},IMPACT_ACTION);
-        defineOperation("addListener",new String[]{"net.lightbody.bmp.proxy.jetty.util.InetAddrPort"},IMPACT_ACTION);
-        defineOperation("addListener",new String[]{"net.lightbody.bmp.proxy.jetty.http.HttpListener"},IMPACT_ACTION);
-        defineOperation("removeListener",new String[]{"net.lightbody.bmp.proxy.jetty.http.HttpListener"},IMPACT_ACTION);
-        defineOperation("addContext",new String[]{"net.lightbody.bmp.proxy.jetty.http.HttpContext"},IMPACT_ACTION);
-        defineOperation("removeContext",new String[]{"net.lightbody.bmp.proxy.jetty.http.HttpContext"},IMPACT_ACTION);
-        defineOperation("addContext",new String[]{"java.lang.String"},IMPACT_ACTION);
-        defineOperation("addContext",new String[]{"java.lang.String","java.lang.String"},IMPACT_ACTION);
-        
+
+        defineOperation("addListener", new String[]{"java.lang.String"}, IMPACT_ACTION);
+        defineOperation("addListener", new String[]{"net.lightbody.bmp.proxy.jetty.util.InetAddrPort"}, IMPACT_ACTION);
+        defineOperation("addListener", new String[]{"net.lightbody.bmp.proxy.jetty.http.HttpListener"}, IMPACT_ACTION);
+        defineOperation("removeListener", new String[]{"net.lightbody.bmp.proxy.jetty.http.HttpListener"}, IMPACT_ACTION);
+        defineOperation("addContext", new String[]{"net.lightbody.bmp.proxy.jetty.http.HttpContext"}, IMPACT_ACTION);
+        defineOperation("removeContext", new String[]{"net.lightbody.bmp.proxy.jetty.http.HttpContext"}, IMPACT_ACTION);
+        defineOperation("addContext", new String[]{"java.lang.String"}, IMPACT_ACTION);
+        defineOperation("addContext", new String[]{"java.lang.String", "java.lang.String"}, IMPACT_ACTION);
+
         defineAttribute("requestsPerGC");
-        
+
         defineAttribute("statsOn");
         defineAttribute("statsOnMs");
-        defineOperation("statsReset",IMPACT_ACTION);
+        defineOperation("statsReset", IMPACT_ACTION);
         defineAttribute("connections");
         defineAttribute("connectionsOpen");
         defineAttribute("connectionsOpenMin");
@@ -131,116 +137,103 @@ public class HttpServerMBean extends LifeCycleMBean
         defineAttribute("requestsDurationAve");
         defineAttribute("requestsDurationMin");
         defineAttribute("requestsDurationMax");
-        
-        defineOperation("stop",new String[]{"java.lang.Boolean.TYPE"},IMPACT_ACTION);
-        defineOperation("save",new String[]{"java.lang.String"},IMPACT_ACTION);
-        defineOperation("destroy",IMPACT_ACTION);
+
+        defineOperation("stop", new String[]{"java.lang.Boolean.TYPE"}, IMPACT_ACTION);
+        defineOperation("save", new String[]{"java.lang.String"}, IMPACT_ACTION);
+        defineOperation("destroy", IMPACT_ACTION);
     }
-    
+
     /* ------------------------------------------------------------ */
-    public synchronized void addComponent(ComponentEvent event)
-    {
-        try
-        {
-            if(log.isDebugEnabled())log.debug("Component added "+event);
-            Object o=event.getComponent();
-            
-            ModelMBean mbean=ModelMBeanImpl.mbeanFor(o);
-            if (mbean==null)
-                log.warn("No MBean for "+o);
-            else
-            {
-                ObjectName oName=null;
-                if (mbean instanceof ModelMBeanImpl)
-                {
-                    ((ModelMBeanImpl)mbean).setBaseObjectName(getObjectName().toString());
-                    oName=
-                        getMBeanServer().registerMBean(mbean,null).getObjectName();
+    public synchronized void addComponent(ComponentEvent event) {
+        try {
+            if (log.isDebugEnabled()) log.debug("Component added " + event);
+            Object o = event.getComponent();
+
+            ModelMBean mbean = ModelMBeanImpl.mbeanFor(o);
+            if (mbean == null)
+                log.warn("No MBean for " + o);
+            else {
+                ObjectName oName = null;
+                if (mbean instanceof ModelMBeanImpl) {
+                    ((ModelMBeanImpl) mbean).setBaseObjectName(getObjectName().toString());
+                    oName =
+                            getMBeanServer().registerMBean(mbean, null).getObjectName();
+                } else {
+                    oName = uniqueObjectName(getMBeanServer(),
+                            o,
+                            getObjectName().toString());
+                    oName = getMBeanServer().registerMBean(mbean, oName)
+                            .getObjectName();
                 }
-                else
-                {
-                    oName=uniqueObjectName(getMBeanServer(),
-                                           o,
-                                           getObjectName().toString());
-                    oName=getMBeanServer().registerMBean(mbean,oName)
-                        .getObjectName();
-                }
-                Holder holder = new Holder(oName,mbean);
-                _mbeanMap.put(o,holder);
+                Holder holder = new Holder(oName, mbean);
+                _mbeanMap.put(o, holder);
             }
-        }
-        catch(Exception e)
-        {
-            log.warn(LogSupport.EXCEPTION,e);
+        } catch (Exception e) {
+            log.warn(LogSupport.EXCEPTION, e);
         }
     }
 
     /* ------------------------------------------------------------ */
-    public String getVersion()
-    {
+    public String getVersion() {
         return Version.getDetail();
     }
-    
-    
+
+
     /* ------------------------------------------------------------ */
-    public ObjectName[] getComponents()
-    {
-        Holder[] h=(Holder[])_mbeanMap.values().toArray(new Holder[_mbeanMap.size()]);
+    public ObjectName[] getComponents() {
+        Holder[] h = (Holder[]) _mbeanMap.values().toArray(new Holder[_mbeanMap.size()]);
         ObjectName[] on = new ObjectName[h.length];
-        for (int i=0;i<on.length;i++)
-            on[i]=h[i].oName;
+        for (int i = 0; i < on.length; i++)
+            on[i] = h[i].oName;
         return on;
     }
-    
-    
+
+
     /* ------------------------------------------------------------ */
-    public synchronized void removeComponent(ComponentEvent event)
-    {
-        if(log.isDebugEnabled())log.debug("Component removed "+event);
-        
-        try
-        {
-            Object o=event.getComponent();
-            Holder holder=(Holder)_mbeanMap.remove(o);
-            if (holder!=null)
+    public synchronized void removeComponent(ComponentEvent event) {
+        if (log.isDebugEnabled()) log.debug("Component removed " + event);
+
+        try {
+            Object o = event.getComponent();
+            Holder holder = (Holder) _mbeanMap.remove(o);
+            if (holder != null)
                 getMBeanServer().unregisterMBean(holder.oName);
-            else if (o==_httpServer)
+            else if (o == _httpServer)
                 getMBeanServer().unregisterMBean(this.getObjectName());
-        }
-        catch(Exception e)
-        {
-            log.warn(LogSupport.EXCEPTION,e);
+        } catch (Exception e) {
+            log.warn(LogSupport.EXCEPTION, e);
         }
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** 
-     * @param ok 
+
+    /**
+     * @param ok
      */
-    public void postRegister(Boolean ok)
-    {
+    public void postRegister(Boolean ok) {
         super.postRegister(ok);
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void postDeregister()
-    {
+    public void postDeregister() {
         _httpServer.removeEventListener(this);
-        _httpServer=null;
-        if (_mbeanMap!=null)
+        _httpServer = null;
+        if (_mbeanMap != null)
             _mbeanMap.clear();
-        _mbeanMap=null;
-        
+        _mbeanMap = null;
+
         super.postDeregister();
     }
 
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    private static class Holder
-    {
-        Holder(ObjectName oName,Object mbean){ this.oName=oName; this.mbean=mbean;}
+    private static class Holder {
         ObjectName oName;
         Object mbean;
+        Holder(ObjectName oName, Object mbean) {
+            this.oName = oName;
+            this.mbean = mbean;
+        }
     }
 }
 

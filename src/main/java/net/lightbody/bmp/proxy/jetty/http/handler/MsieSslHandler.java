@@ -28,54 +28,48 @@ import java.io.IOException;
 /**
  * Handler to force MSIE SSL connections to not be persistent to
  * work around MSIE5 bug.
- *  
+ *
  * @author gregw
  * @author chris haynes
- *
  */
-public class MsieSslHandler extends AbstractHttpHandler
-{
+public class MsieSslHandler extends AbstractHttpHandler {
     private static Log log = LogFactory.getLog(MsieSslHandler.class);
-    
-    private String userAgentSubString="MSIE 5";
-    
-    /* 
+
+    private String userAgentSubString = "MSIE 5";
+
+    /*
      * @see net.lightbody.bmp.proxy.jetty.http.HttpHandler#handle(java.lang.String, java.lang.String, net.lightbody.bmp.proxy.jetty.http.HttpRequest, net.lightbody.bmp.proxy.jetty.http.HttpResponse)
      */
     public void handle(
-        String pathInContext,
-        String pathParams,
-        HttpRequest request,
-        HttpResponse response)
-        throws HttpException, IOException
-    {
+            String pathInContext,
+            String pathParams,
+            HttpRequest request,
+            HttpResponse response)
+            throws HttpException, IOException {
         String userAgent = request.getField(HttpFields.__UserAgent);
-        
-        if(userAgent != null &&  
-           userAgent.indexOf( userAgentSubString)>=0 &&
-           HttpRequest.__SSL_SCHEME.equalsIgnoreCase(request.getScheme()))
-        {
+
+        if (userAgent != null &&
+                userAgent.indexOf(userAgentSubString) >= 0 &&
+                HttpRequest.__SSL_SCHEME.equalsIgnoreCase(request.getScheme())) {
             if (log.isDebugEnabled())
                 log.debug("Force close");
             response.setField(HttpFields.__Connection, HttpFields.__Close);
             request.getHttpConnection().forceClose();
         }
     }
-    
+
     /**
      * @return The substring to match against the User-Agent field
      */
-    public String getUserAgentSubString()
-    {
+    public String getUserAgentSubString() {
         return userAgentSubString;
     }
 
     /**
      * @param string The substring to match against the User-Agent field
      */
-    public void setUserAgentSubString(String string)
-    {
-        userAgentSubString= string;
+    public void setUserAgentSubString(String string) {
+        userAgentSubString = string;
     }
 
 }

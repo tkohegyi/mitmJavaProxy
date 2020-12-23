@@ -20,26 +20,26 @@ import net.lightbody.bmp.proxy.jetty.util.jmx.ThreadPoolMBean;
 import javax.management.MBeanException;
 
 /* ------------------------------------------------------------ */
-/** 
- *
- * @version $Revision: 1.5 $
+
+/**
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.5 $
  */
-public class SocketChannelListenerMBean extends ThreadPoolMBean
-{
+public class SocketChannelListenerMBean extends ThreadPoolMBean {
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @exception MBeanException 
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
      */
     public SocketChannelListenerMBean()
-        throws MBeanException
-    {
+            throws MBeanException {
         super();
     }
 
     /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
+    protected void defineManagedResource() {
         super.defineManagedResource();
         defineAttribute("host");
         defineAttribute("port");

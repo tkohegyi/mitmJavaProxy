@@ -30,39 +30,40 @@ import java.util.HashMap;
 
 
 /* ------------------------------------------------------------ */
+
 /**
- *
- * @version $Revision: 1.17 $
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.17 $
  */
-public class HttpContextMBean extends LifeCycleMBean
-{
+public class HttpContextMBean extends LifeCycleMBean {
     private static Log log = LogFactory.getLog(HttpContextMBean.class);
 
     private HttpContext _httpContext;
-    private HashMap _rlMap=new HashMap(3);
+    private HashMap _rlMap = new HashMap(3);
     private HashMap _handlerMap = new HashMap();
 
     /* ------------------------------------------------------------ */
-    /** Constructor.
-     * @exception MBeanException
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
      */
     public HttpContextMBean()
-        throws MBeanException
-    {}
+            throws MBeanException {
+    }
 
     /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
+    protected void defineManagedResource() {
         super.defineManagedResource();
 
         defineAttribute("virtualHosts");
         defineAttribute("hosts");
         defineAttribute("contextPath");
 
-        defineAttribute("handlers",READ_ONLY,ON_MBEAN);
-        defineAttribute("requestLog",READ_ONLY,ON_MBEAN);
-        
+        defineAttribute("handlers", READ_ONLY, ON_MBEAN);
+        defineAttribute("requestLog", READ_ONLY, ON_MBEAN);
+
         defineAttribute("classPath");
 
         defineAttribute("realm");
@@ -73,26 +74,26 @@ public class HttpContextMBean extends LifeCycleMBean
         defineAttribute("maxCachedFileSize");
         defineAttribute("maxCacheSize");
         defineOperation("flushCache",
-                        IMPACT_ACTION);
+                IMPACT_ACTION);
         defineOperation("getResource",
-                        new String[] {STRING},
-                        IMPACT_ACTION);
+                new String[]{STRING},
+                IMPACT_ACTION);
 
         defineAttribute("welcomeFiles");
         defineOperation("addWelcomeFile",
-                        new String[] {STRING},
-                        IMPACT_INFO);
+                new String[]{STRING},
+                IMPACT_INFO);
         defineOperation("removeWelcomeFile",
-                        new String[] {STRING},
-                        IMPACT_INFO);
+                new String[]{STRING},
+                IMPACT_INFO);
 
         defineAttribute("mimeMap");
-        defineOperation("setMimeMapping",new String[] {STRING,STRING},IMPACT_ACTION);
+        defineOperation("setMimeMapping", new String[]{STRING, STRING}, IMPACT_ACTION);
 
-        
+
         defineAttribute("statsOn");
         defineAttribute("statsOnMs");
-        defineOperation("statsReset",IMPACT_ACTION);
+        defineOperation("statsReset", IMPACT_ACTION);
         defineAttribute("requests");
         defineAttribute("requestsActive");
         defineAttribute("requestsActiveMax");
@@ -102,108 +103,102 @@ public class HttpContextMBean extends LifeCycleMBean
         defineAttribute("responses4xx");
         defineAttribute("responses5xx");
 
-        defineOperation("stop",new String[] {"java.lang.Boolean.TYPE"},IMPACT_ACTION);
+        defineOperation("stop", new String[]{"java.lang.Boolean.TYPE"}, IMPACT_ACTION);
 
         defineOperation("destroy",
-                        IMPACT_ACTION);
+                IMPACT_ACTION);
 
         defineOperation("setInitParameter",
-                        new String[] {STRING,STRING},
-                        IMPACT_ACTION);
+                new String[]{STRING, STRING},
+                IMPACT_ACTION);
         defineOperation("getInitParameter",
-                        new String[] {STRING},
-                        IMPACT_INFO);
+                new String[]{STRING},
+                IMPACT_INFO);
         defineOperation("getInitParameterNames",
-                        NO_PARAMS,
-                        IMPACT_INFO);
+                NO_PARAMS,
+                IMPACT_INFO);
 
-        defineOperation("setAttribute",new String[] {STRING,OBJECT},IMPACT_ACTION);
-        defineOperation("getAttribute",new String[] {STRING},IMPACT_INFO);
-        defineOperation("getAttributeNames",NO_PARAMS,IMPACT_INFO);
-        defineOperation("removeAttribute",new String[] {STRING},IMPACT_ACTION);
+        defineOperation("setAttribute", new String[]{STRING, OBJECT}, IMPACT_ACTION);
+        defineOperation("getAttribute", new String[]{STRING}, IMPACT_INFO);
+        defineOperation("getAttributeNames", NO_PARAMS, IMPACT_INFO);
+        defineOperation("removeAttribute", new String[]{STRING}, IMPACT_ACTION);
 
-        defineOperation("addHandler",new String[] {"net.lightbody.bmp.proxy.jetty.http.HttpHandler"},IMPACT_ACTION);
-        defineOperation("addHandler",new String[] {INT,"net.lightbody.bmp.proxy.jetty.http.HttpHandler"},IMPACT_ACTION);
-        defineOperation("removeHandler",new String[] {INT},IMPACT_ACTION);
+        defineOperation("addHandler", new String[]{"net.lightbody.bmp.proxy.jetty.http.HttpHandler"}, IMPACT_ACTION);
+        defineOperation("addHandler", new String[]{INT, "net.lightbody.bmp.proxy.jetty.http.HttpHandler"}, IMPACT_ACTION);
+        defineOperation("removeHandler", new String[]{INT}, IMPACT_ACTION);
 
 
-        _httpContext=(HttpContext)getManagedResource();
-        
-        _httpContext.addEventListener(new LifeCycleListener()
-                {
+        _httpContext = (HttpContext) getManagedResource();
 
-                    public void lifeCycleStarting (LifeCycleEvent event)
-                    {}
+        _httpContext.addEventListener(new LifeCycleListener() {
 
-                    public void lifeCycleStarted (LifeCycleEvent event)
-                    {
-                        getHandlers();                     
-                    }
+            public void lifeCycleStarting(LifeCycleEvent event) {
+            }
 
-                    public void lifeCycleFailure (LifeCycleEvent event)
-                    {}
+            public void lifeCycleStarted(LifeCycleEvent event) {
+                getHandlers();
+            }
 
-                    public void lifeCycleStopping (LifeCycleEvent event)
-                    {}
+            public void lifeCycleFailure(LifeCycleEvent event) {
+            }
 
-                    public void lifeCycleStopped (LifeCycleEvent event)
-                    {
-                        destroyHandlers();
-                    }
-            
-                });
+            public void lifeCycleStopping(LifeCycleEvent event) {
+            }
+
+            public void lifeCycleStopped(LifeCycleEvent event) {
+                destroyHandlers();
+            }
+
+        });
     }
 
 
     /* ------------------------------------------------------------ */
-    protected ObjectName newObjectName(MBeanServer server)
-    {
-        ObjectName oName=super.newObjectName(server);
-        String context=_httpContext.getContextPath();
-        if (context.length()==0)
-            context="/";
-        try{oName=new ObjectName(oName+",context="+context);}
-        catch(Exception e){log.warn(LogSupport.EXCEPTION,e);}
+    protected ObjectName newObjectName(MBeanServer server) {
+        ObjectName oName = super.newObjectName(server);
+        String context = _httpContext.getContextPath();
+        if (context.length() == 0)
+            context = "/";
+        try {
+            oName = new ObjectName(oName + ",context=" + context);
+        } catch (Exception e) {
+            log.warn(LogSupport.EXCEPTION, e);
+        }
         return oName;
     }
 
     /* ------------------------------------------------------------ */
-    public void postRegister(Boolean ok)
-    {
+    public void postRegister(Boolean ok) {
         super.postRegister(ok);
         if (ok.booleanValue())
             getHandlers();
     }
 
     /* ------------------------------------------------------------ */
-    public void postDeregister()
-    {
-        _httpContext=null;
+    public void postDeregister() {
+        _httpContext = null;
         destroyComponentMBeans(_handlerMap);
         super.postDeregister();
     }
 
     /* ------------------------------------------------------------ */
-    public ObjectName[] getHandlers()
-    {
-        return getComponentMBeans(_httpContext.getHandlers(),_handlerMap);
+    public ObjectName[] getHandlers() {
+        return getComponentMBeans(_httpContext.getHandlers(), _handlerMap);
     }
-    
-  
-    public void destroyHandlers()
-    {
+
+
+    public void destroyHandlers() {
         destroyComponentMBeans(_handlerMap);
     }
 
     /* ------------------------------------------------------------ */
-    public ObjectName getRequestLog()
-    {
+    public ObjectName getRequestLog() {
         Object o = _httpContext.getRequestLog();
-        if (o==null)
+        if (o == null)
             return null;
-        
-        ObjectName[] on=getComponentMBeans(new Object[]{o},_rlMap);
-        if (on.length>0)
+
+        ObjectName[] on = getComponentMBeans(new Object[]{o}, _rlMap);
+        if (on.length > 0)
             return on[0];
         return null;
     }

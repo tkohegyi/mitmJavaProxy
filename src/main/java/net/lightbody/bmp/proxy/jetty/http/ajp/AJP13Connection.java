@@ -15,7 +15,13 @@
 
 package net.lightbody.bmp.proxy.jetty.http.ajp;
 
-import net.lightbody.bmp.proxy.jetty.http.*;
+import net.lightbody.bmp.proxy.jetty.http.HttpConnection;
+import net.lightbody.bmp.proxy.jetty.http.HttpContext;
+import net.lightbody.bmp.proxy.jetty.http.HttpFields;
+import net.lightbody.bmp.proxy.jetty.http.HttpMessage;
+import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
+import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
+import net.lightbody.bmp.proxy.jetty.http.Version;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LineInput;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
@@ -33,13 +39,13 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 /* ------------------------------------------------------------ */
+
 /**
- * @version $Id: AJP13Connection.java,v 1.38 2006/11/22 20:21:30 gregwilkins Exp $
  * @author Greg Wilkins (gregw)
+ * @version $Id: AJP13Connection.java,v 1.38 2006/11/22 20:21:30 gregwilkins Exp $
  */
-public class AJP13Connection extends HttpConnection
-{
-    private static Log log=LogFactory.getLog(AJP13Connection.class);
+public class AJP13Connection extends HttpConnection {
+    private static Log log = LogFactory.getLog(AJP13Connection.class);
 
     private AJP13Listener _listener;
     private AJP13InputStream _ajpIn;
@@ -51,296 +57,271 @@ public class AJP13Connection extends HttpConnection
     private boolean _isSSL;
 
     /* ------------------------------------------------------------ */
-    public AJP13Connection(AJP13Listener listener, InputStream in, OutputStream out, Socket socket, int bufferSize) throws IOException
-    {
-        super(listener,null,new AJP13InputStream(in,out,bufferSize),out,socket);
+    public AJP13Connection(AJP13Listener listener, InputStream in, OutputStream out, Socket socket, int bufferSize) throws IOException {
+        super(listener, null, new AJP13InputStream(in, out, bufferSize), out, socket);
 
-        LineInput lin=(LineInput)getInputStream().getInputStream();
-        _ajpIn=(AJP13InputStream)lin.getInputStream();
-        _ajpOut=new AJP13OutputStream(getOutputStream().getOutputStream(),bufferSize);
+        LineInput lin = (LineInput) getInputStream().getInputStream();
+        _ajpIn = (AJP13InputStream) lin.getInputStream();
+        _ajpOut = new AJP13OutputStream(getOutputStream().getOutputStream(), bufferSize);
         _ajpOut.setCommitObserver(this);
         getOutputStream().setBufferedOutputStream(_ajpOut);
-        _listener=listener;
+        _listener = listener;
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Get the Remote address.
-     * 
+     *
      * @return the remote address
      */
-    public InetAddress getRemoteInetAddress()
-    {
+    public InetAddress getRemoteInetAddress() {
         return null;
     }
 
     /* ------------------------------------------------------------ */
-    public void destroy()
-    {
-        if (_ajpIn!=null)
+    public void destroy() {
+        if (_ajpIn != null)
             _ajpIn.destroy();
-        _ajpIn=null;
-        if (_ajpOut!=null)
+        _ajpIn = null;
+        if (_ajpOut != null)
             _ajpOut.destroy();
-        _ajpOut=null;
-        _remoteHost=null;
-        _remoteAddr=null;
-        _serverName=null;
+        _ajpOut = null;
+        _remoteHost = null;
+        _remoteAddr = null;
+        _serverName = null;
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Get the Remote address.
-     * 
+     *
      * @return the remote host name
      */
-    public String getRemoteAddr()
-    {
+    public String getRemoteAddr() {
         return _remoteAddr;
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Get the Remote address.
-     * 
+     *
      * @return the remote host name
      */
-    public String getRemoteHost()
-    {
+    public String getRemoteHost() {
         return _remoteHost;
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Get the listeners HttpServer . Conveniance method equivalent to
      * getListener().getHost().
-     * 
+     *
      * @return HttpServer.
      */
-    public String getServerName()
-    {
+    public String getServerName() {
         return _serverName;
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Get the listeners Port . Conveniance method equivalent to
      * getListener().getPort().
-     * 
+     *
      * @return HttpServer.
      */
-    public int getServerPort()
-    {
+    public int getServerPort() {
         return _serverPort;
     }
 
     /* ------------------------------------------------------------ */
+
     /**
      * Get the listeners Default scheme. Conveniance method equivalent to
      * getListener().getDefaultProtocol().
-     * 
+     *
      * @return HttpServer.
      */
-    public String getDefaultScheme()
-    {
-        return _isSSL?HttpMessage.__SSL_SCHEME:super.getDefaultScheme();
+    public String getDefaultScheme() {
+        return _isSSL ? HttpMessage.__SSL_SCHEME : super.getDefaultScheme();
     }
 
     /* ------------------------------------------------------------ */
-    public boolean isSSL()
-    {
+    public boolean isSSL() {
         return _isSSL;
     }
 
     /* ------------------------------------------------------------ */
-    public boolean handleNext()
-    {
-        AJP13RequestPacket packet=null;
-        HttpRequest request=getRequest();
-        HttpResponse response=getResponse();
-        HttpContext context=null;
-        boolean gotRequest=false;
-        _persistent=true;
-        _keepAlive=true;
+    public boolean handleNext() {
+        AJP13RequestPacket packet = null;
+        HttpRequest request = getRequest();
+        HttpResponse response = getResponse();
+        HttpContext context = null;
+        boolean gotRequest = false;
+        _persistent = true;
+        _keepAlive = true;
 
-        try
-        {
-            try
-            {
-                packet=null;
-                packet=_ajpIn.nextPacket();
-                if (packet==null)
+        try {
+            try {
+                packet = null;
+                packet = _ajpIn.nextPacket();
+                if (packet == null)
                     return false;
-                if (packet.getDataSize()==0)
+                if (packet.getDataSize() == 0)
                     return true;
-            }
-            catch (IOException e)
-            {
-                LogSupport.ignore(log,e);
+            } catch (IOException e) {
+                LogSupport.ignore(log, e);
                 return false;
             }
 
-            int type=packet.getByte();
+            int type = packet.getByte();
             if (log.isDebugEnabled())
-                log.debug("AJP13 type="+type+" size="+packet.unconsumedData());
+                log.debug("AJP13 type=" + type + " size=" + packet.unconsumedData());
 
-            switch (type)
-            {
-                case AJP13Packet.__FORWARD_REQUEST:
-                    request.setTimeStamp(System.currentTimeMillis());
+            switch (type) {
+            case AJP13Packet.__FORWARD_REQUEST:
+                request.setTimeStamp(System.currentTimeMillis());
 
-                    request.setState(HttpMessage.__MSG_EDITABLE);
-                    request.setMethod(packet.getMethod());
-                    request.setVersion(packet.getString());
-		    String version=packet.getString();
-		    try
-		    {
-			request.setVersion(version);
-		    }
-		    catch(Exception e)
-		    {
-			log.warn("Bad version"+version,e);
-			log.warn(packet.toString());
-		    }
+                request.setState(HttpMessage.__MSG_EDITABLE);
+                request.setMethod(packet.getMethod());
+                request.setVersion(packet.getString());
+                String version = packet.getString();
+                try {
+                    request.setVersion(version);
+                } catch (Exception e) {
+                    log.warn("Bad version" + version, e);
+                    log.warn(packet.toString());
+                }
 
-                    String path=packet.getString();
-                    int sc=path.lastIndexOf(";");
-                    if (sc<0)
-                        request.setPath(URI.encodePath(path));
-                    else
-                        request.setPath(URI.encodePath(path.substring(0,sc))+path.substring(sc));
+                String path = packet.getString();
+                int sc = path.lastIndexOf(";");
+                if (sc < 0)
+                    request.setPath(URI.encodePath(path));
+                else
+                    request.setPath(URI.encodePath(path.substring(0, sc)) + path.substring(sc));
 
-                    _remoteAddr=packet.getString();
-                    _remoteHost=packet.getString();
-                    _serverName=packet.getString();
-                    _serverPort=packet.getInt();
-                    _isSSL=packet.getBoolean();
+                _remoteAddr = packet.getString();
+                _remoteHost = packet.getString();
+                _serverName = packet.getString();
+                _serverPort = packet.getInt();
+                _isSSL = packet.getBoolean();
 
-                    // Check keep alive
-                    _keepAlive=request.getDotVersion()>=1;
+                // Check keep alive
+                _keepAlive = request.getDotVersion() >= 1;
 
-                    // Headers
-                    int h=packet.getInt();
-                    for (int i=0; i<h; i++)
-                    {
-                        String hdr=packet.getHeader();
-                        String val=packet.getString();
-                        request.addField(hdr,val);
-                        if (!_keepAlive&&hdr.equalsIgnoreCase(HttpFields.__Connection)&&val.equalsIgnoreCase(HttpFields.__KeepAlive))
-                            _keepAlive=true;
+                // Headers
+                int h = packet.getInt();
+                for (int i = 0; i < h; i++) {
+                    String hdr = packet.getHeader();
+                    String val = packet.getString();
+                    request.addField(hdr, val);
+                    if (!_keepAlive && hdr.equalsIgnoreCase(HttpFields.__Connection) && val.equalsIgnoreCase(HttpFields.__KeepAlive))
+                        _keepAlive = true;
+                }
+
+                // Handler other attributes
+                byte attr = packet.getByte();
+                while ((0xFF & attr) != 0xFF) {
+                    String value = (attr == 11) ? null : packet.getString();
+                    switch (attr) {
+                    case 11: // key size
+                        request.setAttribute("javax.servlet.request.key_size", new Integer(packet.getInt()));
+                        break;
+                    case 10: // request attribute
+                        request.setAttribute(value, packet.getString());
+                        break;
+                    case 9: // SSL session
+                        request.setAttribute("javax.servlet.request.ssl_session", value);
+                        break;
+                    case 8: // SSL cipher
+                        request.setAttribute("javax.servlet.request.cipher_suite", value);
+                        break;
+                    case 7: // SSL cert
+                        // request.setAttribute("javax.servlet.request.X509Certificate",value);
+                        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                        InputStream certstream = new ByteArrayInputStream(value.getBytes());
+                        X509Certificate cert = (X509Certificate) cf.generateCertificate(certstream);
+                        X509Certificate certs[] =
+                                {cert};
+                        request.setAttribute("javax.servlet.request.X509Certificate", certs);
+                        break;
+                    case 6: // JVM Route
+                        request.setAttribute("net.lightbody.bmp.proxy.jetty.http.ajp.JVMRoute", value);
+                        break;
+                    case 5: // Query String
+                        request.setQuery(value);
+                        break;
+                    case 4: // AuthType
+                        request.setAuthType(value);
+                        break;
+                    case 3: // Remote User
+                        request.setAuthUser(value);
+                        break;
+
+                    case 2: // servlet path not implemented
+                    case 1: // _context not implemented
+                    default:
+                        log.warn("Unknown attr: " + attr + "=" + value);
                     }
 
-                    // Handler other attributes
-                    byte attr=packet.getByte();
-                    while ((0xFF&attr)!=0xFF)
-                    {
-                        String value=(attr==11)?null:packet.getString();
-                        switch (attr)
-                        {
-                            case 11: // key size
-                                request.setAttribute("javax.servlet.request.key_size",new Integer(packet.getInt()));
-                                break;
-                            case 10: // request attribute
-                                request.setAttribute(value,packet.getString());
-                                break;
-                            case 9: // SSL session
-                                request.setAttribute("javax.servlet.request.ssl_session",value);
-                                break;
-                            case 8: // SSL cipher
-                                request.setAttribute("javax.servlet.request.cipher_suite",value);
-                                break;
-                            case 7: // SSL cert
-                                // request.setAttribute("javax.servlet.request.X509Certificate",value);
-                                CertificateFactory cf=CertificateFactory.getInstance("X.509");
-                                InputStream certstream=new ByteArrayInputStream(value.getBytes());
-                                X509Certificate cert=(X509Certificate)cf.generateCertificate(certstream);
-                                X509Certificate certs[]=
-                                { cert };
-                                request.setAttribute("javax.servlet.request.X509Certificate",certs);
-                                break;
-                            case 6: // JVM Route
-                                request.setAttribute("net.lightbody.bmp.proxy.jetty.http.ajp.JVMRoute",value);
-                                break;
-                            case 5: // Query String
-                                request.setQuery(value);
-                                break;
-                            case 4: // AuthType
-                                request.setAuthType(value);
-                                break;
-                            case 3: // Remote User
-                                request.setAuthUser(value);
-                                break;
+                    attr = packet.getByte();
+                }
 
-                            case 2: // servlet path not implemented
-                            case 1: // _context not implemented
-                            default:
-                                log.warn("Unknown attr: "+attr+"="+value);
-                        }
+                _listener.customizeRequest(this, request);
 
-                        attr=packet.getByte();
-                    }
+                gotRequest = true;
+                statsRequestStart();
+                request.setState(HttpMessage.__MSG_RECEIVED);
 
-                    _listener.customizeRequest(this,request);
+                // Complete response
+                if (request.getContentLength() == 0 && request.getField(HttpFields.__TransferEncoding) == null)
+                    _ajpIn.close();
 
-                    gotRequest=true;
-                    statsRequestStart();
-                    request.setState(HttpMessage.__MSG_RECEIVED);
+                // Prepare response
+                response.setState(HttpMessage.__MSG_EDITABLE);
+                response.setVersion(HttpMessage.__HTTP_1_1);
+                response.setDateField(HttpFields.__Date, _request.getTimeStamp());
+                if (!Version.isParanoid())
+                    response.setField(HttpFields.__Server, Version.getDetail());
 
-                    // Complete response
-                    if (request.getContentLength()==0&&request.getField(HttpFields.__TransferEncoding)==null)
-                        _ajpIn.close();
+                // Service request
+                if (log.isDebugEnabled())
+                    log.debug("REQUEST:\n" + request);
+                context = service(request, response);
+                if (log.isDebugEnabled())
+                    log.debug("RESPONSE:\n" + response);
 
-                    // Prepare response
-                    response.setState(HttpMessage.__MSG_EDITABLE);
-                    response.setVersion(HttpMessage.__HTTP_1_1);
-                    response.setDateField(HttpFields.__Date,_request.getTimeStamp());
-                    if (!Version.isParanoid())
-                        response.setField(HttpFields.__Server,Version.getDetail());
+                break;
 
-                    // Service request
-                    if (log.isDebugEnabled())
-                        log.debug("REQUEST:\n"+request);
-                    context=service(request,response);
-                    if (log.isDebugEnabled())
-                        log.debug("RESPONSE:\n"+response);
-
-                    break;
-
-                default:
-                    if (log.isDebugEnabled())
-                        log.debug("Ignored: "+packet);
-                    _persistent=false;
+            default:
+                if (log.isDebugEnabled())
+                    log.debug("Ignored: " + packet);
+                _persistent = false;
             }
 
-        }
-        catch (SocketException e)
-        {
-            LogSupport.ignore(log,e);
-            _persistent=false;
-        }
-        catch (Exception e)
-        {
-            log.warn(LogSupport.EXCEPTION,e);
-            _persistent=false;
-            try
-            {
+        } catch (SocketException e) {
+            LogSupport.ignore(log, e);
+            _persistent = false;
+        } catch (Exception e) {
+            log.warn(LogSupport.EXCEPTION, e);
+            _persistent = false;
+            try {
                 if (gotRequest)
                     _ajpOut.close();
+            } catch (IOException e2) {
+                LogSupport.ignore(log, e2);
             }
-            catch (IOException e2)
-            {
-                LogSupport.ignore(log,e2);
-            }
-        }
-        finally
-        {
+        } finally {
             // abort if nothing received.
-            if (packet==null||!gotRequest)
+            if (packet == null || !gotRequest)
                 return false;
 
             // flush and end the output
-            try
-            {
+            try {
                 // Consume unread input.
                 // while(_ajpIn.skip(4096)>0 || _ajpIn.read()>=0);
 
@@ -358,31 +339,25 @@ public class AJP13Connection extends HttpConnection
                 getInputStream().resetStream();
                 _ajpIn.resetStream();
                 _ajpOut.resetStream();
-            }
-            catch (Exception e)
-            {
-                log.debug(LogSupport.EXCEPTION,e);
-                _persistent=false;
-            }
-            finally
-            {
+            } catch (Exception e) {
+                log.debug(LogSupport.EXCEPTION, e);
+                _persistent = false;
+            } finally {
                 statsRequestEnd();
-                if (context!=null)
-                    context.log(request,response,-1);
+                if (context != null)
+                    context.log(request, response, -1);
             }
         }
         return _persistent;
     }
 
     /* ------------------------------------------------------------ */
-    protected void firstWrite() throws IOException
-    {
+    protected void firstWrite() throws IOException {
         log.debug("ajp13 firstWrite()");
     }
 
     /* ------------------------------------------------------------ */
-    protected void commit() throws IOException
-    {
+    protected void commit() throws IOException {
         log.debug("ajp13 commit()");
         if (_response.isCommitted())
             return;
@@ -391,8 +366,7 @@ public class AJP13Connection extends HttpConnection
     }
 
     /* ------------------------------------------------------------ */
-    protected void setupOutputStream() throws IOException
-    {
+    protected void setupOutputStream() throws IOException {
         // Nobble the OutputStream for HEAD requests
         if (HttpRequest.__HEAD.equals(getRequest().getMethod()))
             getOutputStream().nullOutput();

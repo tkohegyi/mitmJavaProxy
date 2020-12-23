@@ -24,17 +24,18 @@ import java.io.IOException;
 
 
 /* ------------------------------------------------------------ */
-/** Abstract HTTP Handler.
- * @version $Id: NullHandler.java,v 1.17 2004/05/09 20:32:06 gregwilkins Exp $
+
+/**
+ * Abstract HTTP Handler.
+ *
  * @author Greg Wilkins (gregw)
+ * @version $Id: NullHandler.java,v 1.17 2004/05/09 20:32:06 gregwilkins Exp $
  */
-public class NullHandler extends AbstractHttpHandler
-{
-    /* 
+public class NullHandler extends AbstractHttpHandler {
+    /*
      * @see net.lightbody.bmp.proxy.jetty.http.HttpHandler#handle(java.lang.String, java.lang.String, net.lightbody.bmp.proxy.jetty.http.HttpRequest, net.lightbody.bmp.proxy.jetty.http.HttpResponse)
      */
-    public void handle(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws HttpException, IOException
-    {
+    public void handle(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws HttpException, IOException {
     }
 }
 

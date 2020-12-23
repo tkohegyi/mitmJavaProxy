@@ -15,65 +15,66 @@
 
 package net.lightbody.bmp.proxy.jetty.http.handler;
 
-import net.lightbody.bmp.proxy.jetty.http.*;
+import net.lightbody.bmp.proxy.jetty.http.BasicAuthenticator;
+import net.lightbody.bmp.proxy.jetty.http.ClientCertAuthenticator;
+import net.lightbody.bmp.proxy.jetty.http.HttpException;
+import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
+import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
+import net.lightbody.bmp.proxy.jetty.http.SecurityConstraint;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import org.apache.commons.logging.Log;
 
 import java.io.IOException;
 
 /* ------------------------------------------------------------ */
-/** Handler to enforce SecurityConstraints.
+
+/**
+ * Handler to enforce SecurityConstraints.
  *
- * @version $Id: SecurityHandler.java,v 1.32 2005/08/13 00:01:26 gregwilkins Exp $
  * @author Greg Wilkins (gregw)
+ * @version $Id: SecurityHandler.java,v 1.32 2005/08/13 00:01:26 gregwilkins Exp $
  */
-public class SecurityHandler extends AbstractHttpHandler
-{   
+public class SecurityHandler extends AbstractHttpHandler {
     private static Log log = LogFactory.getLog(SecurityHandler.class);
 
     /* ------------------------------------------------------------ */
-    private String _authMethod=SecurityConstraint.__BASIC_AUTH;
+    private String _authMethod = SecurityConstraint.__BASIC_AUTH;
 
     /* ------------------------------------------------------------ */
-    public String getAuthMethod()
-    {
+    public String getAuthMethod() {
         return _authMethod;
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void setAuthMethod(String method)
-    {
-        if (isStarted() && _authMethod!=null && !_authMethod.equals(method))
+    public void setAuthMethod(String method) {
+        if (isStarted() && _authMethod != null && !_authMethod.equals(method))
             throw new IllegalStateException("Handler started");
         _authMethod = method;
     }
 
     /* ------------------------------------------------------------ */
     public void start()
-        throws Exception
-    {
-        if (getHttpContext().getAuthenticator()==null)
-        {
+            throws Exception {
+        if (getHttpContext().getAuthenticator() == null) {
             // Find out the Authenticator.
             if (SecurityConstraint.__BASIC_AUTH.equalsIgnoreCase(_authMethod))
                 getHttpContext().setAuthenticator(new BasicAuthenticator());
             else if (SecurityConstraint.__CERT_AUTH.equalsIgnoreCase(_authMethod))
                 getHttpContext().setAuthenticator(new ClientCertAuthenticator());
             else
-                log.warn("Unknown Authentication method:"+_authMethod);
+                log.warn("Unknown Authentication method:" + _authMethod);
         }
-        
+
         super.start();
     }
-    
+
     /* ------------------------------------------------------------ */
     public void handle(String pathInContext,
                        String pathParams,
                        HttpRequest request,
                        HttpResponse response)
-        throws HttpException, IOException
-    {
-        getHttpContext().checkSecurityConstraints(pathInContext,request,response);
+            throws HttpException, IOException {
+        getHttpContext().checkSecurityConstraints(pathInContext, request, response);
     }
 
 }

@@ -20,34 +20,35 @@ import net.lightbody.bmp.proxy.jetty.util.jmx.ThreadedServerMBean;
 import javax.management.MBeanException;
 
 /* ------------------------------------------------------------ */
-/** 
- *
- * @version $Revision: 1.5 $
+
+/**
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.5 $
  */
 public class HttpListenerMBean
-    extends ThreadedServerMBean
-{
+        extends ThreadedServerMBean {
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @exception MBeanException 
+
+    /**
+     * Constructor.
+     *
+     * @throws MBeanException
      */
     public HttpListenerMBean()
-        throws MBeanException
-    {}
-    
+            throws MBeanException {
+    }
+
     /* ------------------------------------------------------------ */
-    protected void defineManagedResource()
-    {
+    protected void defineManagedResource() {
         super.defineManagedResource();
         defineAttribute("defaultScheme");
-        defineAttribute("lowOnResources",false);
-        defineAttribute("outOfResources",false);
+        defineAttribute("lowOnResources", false);
+        defineAttribute("outOfResources", false);
         defineAttribute("confidentialPort");
         defineAttribute("confidentialScheme");
         defineAttribute("integralPort");
-        defineAttribute("integralScheme"); 
-        defineAttribute("bufferSize");  
-        defineAttribute("bufferReserve"); 
-    }    
+        defineAttribute("integralScheme");
+        defineAttribute("bufferSize");
+        defineAttribute("bufferReserve");
+    }
 }
