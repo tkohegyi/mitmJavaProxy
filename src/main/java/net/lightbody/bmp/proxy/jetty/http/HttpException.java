@@ -21,46 +21,41 @@ import java.io.IOException;
 
 
 /* ------------------------------------------------------------ */
-/** Exception for known HTTP error status. 
+
+/**
+ * Exception for known HTTP error status.
  *
- * @version $Revision: 1.5 $
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.5 $
  */
-public class HttpException extends IOException
-{
+public class HttpException extends IOException {
     private int _code;
 
-    public int getCode()
-    {
-        return _code;
-    }
-    
-    public String getReason()
-    {
-        return (String)HttpResponse.__statusMsg.get(TypeUtil.newInteger(_code));
-    }
-    
-    public HttpException()
-    {
-        _code=HttpResponse.__400_Bad_Request ;
-    }
-    
-    public HttpException(int code)
-    {
-        _code=code;
-    }
-    
-    public HttpException(int code, String message)
-    {
-        super(message);
-        _code=code;
+    public HttpException() {
+        _code = HttpResponse.__400_Bad_Request;
     }
 
-    public String toString()
-    {
-        String message=getMessage();
-        String reason=getReason();
-        return "HttpException("+_code+","+reason+","+message+")";
+    public HttpException(int code) {
+        _code = code;
+    }
+
+    public HttpException(int code, String message) {
+        super(message);
+        _code = code;
+    }
+
+    public int getCode() {
+        return _code;
+    }
+
+    public String getReason() {
+        return (String) HttpResponse.__statusMsg.get(TypeUtil.newInteger(_code));
+    }
+
+    public String toString() {
+        String message = getMessage();
+        String reason = getReason();
+        return "HttpException(" + _code + "," + reason + "," + message + ")";
     }
 }
 

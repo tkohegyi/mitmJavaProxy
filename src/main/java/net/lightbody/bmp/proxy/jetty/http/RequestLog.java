@@ -20,15 +20,17 @@ import net.lightbody.bmp.proxy.jetty.util.LifeCycle;
 import java.io.Serializable;
 
 /* ------------------------------------------------------------ */
-/** Abstract HTTP Request Log format
- * @version $Id: RequestLog.java,v 1.5 2004/05/09 20:31:40 gregwilkins Exp $
+
+/**
+ * Abstract HTTP Request Log format
+ *
  * @author Tony Thompson
  * @author Greg Wilkins
+ * @version $Id: RequestLog.java,v 1.5 2004/05/09 20:31:40 gregwilkins Exp $
  */
 public interface RequestLog
-    extends LifeCycle,
-            Serializable
-{
+        extends LifeCycle,
+        Serializable {
     public void log(HttpRequest request,
                     HttpResponse response,
                     int responseLength);

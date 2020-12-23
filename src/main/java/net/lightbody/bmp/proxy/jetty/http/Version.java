@@ -17,59 +17,67 @@ package net.lightbody.bmp.proxy.jetty.http;
 
 
 /* ------------------------------------------------------------ */
-/** Jetty version.
- *
+
+/**
+ * Jetty version.
+ * <p>
  * This class sets the version data returned in the Server and
  * Servlet-Container headers.   If the
  * java.org.mortbay.http.Version.paranoid System property is set to
  * true, then this information is suppressed.
  *
- * @version $Revision: 1.16 $
  * @author Greg Wilkins (gregw)
+ * @version $Revision: 1.16 $
  */
-public class Version
-{
-    private static boolean __paranoid = 
-        Boolean.getBoolean("net.lightbody.bmp.proxy.jetty.http.Version.paranoid");
-    
-    private static String __Version="Jetty/5.1";
-    private static String __VersionImpl=__Version+".x";
-    private static String __VersionDetail="Unknown";
-    private  static String __notice = "This application is using software from the "+
-        __Version+
-        " HTTP server and servlet container.\nJetty is Copyright (c) Mort Bay Consulting Pty. Ltd. (Australia) and others.\nJetty is distributed under an open source license.\nThe license and standard release of Jetty are available from http://jetty.jetty.org\n";
+public class Version {
+    private static boolean __paranoid =
+            Boolean.getBoolean("net.lightbody.bmp.proxy.jetty.http.Version.paranoid");
 
-    static
-    {
+    private static String __Version = "Jetty/5.1";
+    private static String __VersionImpl = __Version + ".x";
+    private static String __VersionDetail = "Unknown";
+    private static String __notice = "This application is using software from the " +
+            __Version +
+            " HTTP server and servlet container.\nJetty is Copyright (c) Mort Bay Consulting Pty. Ltd. (Australia) and others.\nJetty is distributed under an open source license.\nThe license and standard release of Jetty are available from http://jetty.jetty.org\n";
+
+    static {
         updateVersion();
     }
-    
-    public static String getVersion() {return __Version;}
-    public static String getImplVersion() {return __VersionImpl;}
-    public static String getDetail() {return __VersionDetail;}
-    public static boolean isParanoid(){return __paranoid;}
 
-    public static void main(String[] arg)
-    {
-        System.out.println(__notice);
-        System.out.println("net.lightbody.bmp.proxy.jetty.http.Version="+__Version);
-        System.out.println("net.lightbody.bmp.proxy.jetty.http.VersionImpl="+__VersionImpl);
-        System.out.println("net.lightbody.bmp.proxy.jetty.http.VersionDetail="+__VersionDetail);
+    public static String getVersion() {
+        return __Version;
     }
 
-    public static void updateVersion()
-    {
+    public static String getImplVersion() {
+        return __VersionImpl;
+    }
+
+    public static String getDetail() {
+        return __VersionDetail;
+    }
+
+    public static boolean isParanoid() {
+        return __paranoid;
+    }
+
+    public static void main(String[] arg) {
+        System.out.println(__notice);
+        System.out.println("net.lightbody.bmp.proxy.jetty.http.Version=" + __Version);
+        System.out.println("net.lightbody.bmp.proxy.jetty.http.VersionImpl=" + __VersionImpl);
+        System.out.println("net.lightbody.bmp.proxy.jetty.http.VersionDetail=" + __VersionDetail);
+    }
+
+    public static void updateVersion() {
         Package p = Version.class.getPackage();
-        if (p!=null && p.getImplementationVersion()!=null)
-            __VersionImpl="Jetty/"+p.getImplementationVersion();
-        
-        if (!__paranoid)
-        {
-            __VersionDetail=__VersionImpl+
-                " ("+System.getProperty("os.name")+
-                "/"+System.getProperty("os.version")+
-                " "+System.getProperty("os.arch")+
-                " java/"+System.getProperty("java.version");
+        if (p != null && p.getImplementationVersion() != null)
+            __VersionImpl = "Jetty/" + p.getImplementationVersion();
+
+        if (!__paranoid) {
+            __VersionDetail = __VersionImpl +
+                    " (" + System.getProperty("os.name") +
+                    "/" + System.getProperty("os.version") +
+                    " " + System.getProperty("os.arch") +
+                    " java/" + System.getProperty("java.version");
         }
     }
 }

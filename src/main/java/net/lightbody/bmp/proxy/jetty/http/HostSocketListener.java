@@ -24,45 +24,38 @@ import java.net.Socket;
  * this simple listener extention forces the host header to be set to a specific value.
  * It is useful when deployed behind old apache mod_proxy implementations that
  * lie about the real host used by the client.
- * 
  */
-public class HostSocketListener extends SocketListener
-{
+public class HostSocketListener extends SocketListener {
     String _host;
-    
-    public HostSocketListener()
-    {
+
+    public HostSocketListener() {
         super();
     }
 
-    public HostSocketListener(InetAddrPort address)
-    {
+    public HostSocketListener(InetAddrPort address) {
         super(address);
     }
 
     /**
      * @return Returns the host.
      */
-    public String getForcedHost()
-    {
+    public String getForcedHost() {
         return _host;
     }
-    
+
     /**
      * @param host The host to set.
      */
-    public void setForcedHost(String host)
-    {
+    public void setForcedHost(String host) {
         _host = host;
     }
-    
-    /* 
+
+    /*
      * @see net.lightbody.bmp.proxy.jetty.http.SocketListener#customizeRequest(java.net.Socket, net.lightbody.bmp.proxy.jetty.http.HttpRequest)
      */
-    protected void customizeRequest(Socket socket, HttpRequest request)
-    {
+    protected void customizeRequest(Socket socket, HttpRequest request) {
         request.setState(HttpMessage.__MSG_EDITABLE);
-        if (_host==null)
+        if (_host == null)
             request.removeField(HttpFields.__Host);
         else
             request.setField(HttpFields.__Host, _host);

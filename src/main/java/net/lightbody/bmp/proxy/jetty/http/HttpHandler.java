@@ -22,7 +22,9 @@ import java.io.Serializable;
 
 
 /* ------------------------------------------------------------ */
-/** HTTP handler.
+
+/**
+ * HTTP handler.
  * The HTTP Handler interface is implemented by classes that wish to
  * receive and handle requests from the HttpServer.  The handle method
  * is called for each request and the handler may ignore, modify or
@@ -31,44 +33,49 @@ import java.io.Serializable;
  * <LI>org.mortbay.http.handler.ResourceHandler</LI>
  * <LI>org.mortbay.jetty.servlet.ServletHandler</LI>
  * </UL>
+ *
+ * @author Greg Wilkins (gregw)
+ * @version $Id: HttpHandler.java,v 1.11 2005/03/15 10:03:40 gregwilkins Exp $
  * @see net.lightbody.bmp.proxy.jetty.http.HttpServer
  * @see net.lightbody.bmp.proxy.jetty.http.HttpContext
- * @version $Id: HttpHandler.java,v 1.11 2005/03/15 10:03:40 gregwilkins Exp $
- * @author Greg Wilkins (gregw)
  */
-public interface HttpHandler extends LifeCycle, Serializable
-{
+public interface HttpHandler extends LifeCycle, Serializable {
     /* ------------------------------------------------------------ */
-    /** Get the name of the handler.
+
+    /**
+     * Get the name of the handler.
+     *
      * @return The name of the handler used for logging and reporting.
      */
     public String getName();
-    
+
     /* ------------------------------------------------------------ */
     public HttpContext getHttpContext();
 
     /* ------------------------------------------------------------ */
     public void initialize(HttpContext context);
-    
+
     /* ------------------------------------------------------------ */
-    /** Handle a request.
-     *
+
+    /**
+     * Handle a request.
+     * <p>
      * Note that Handlers are tried in order until one has handled the
      * request. i.e. until request.isHandled() returns true.
-     *
+     * <p>
      * In broad terms this means, either a response has been commited
      * or request.setHandled(true) has been called.
      *
      * @param pathInContext The context path
-     * @param pathParams Path parameters such as encoded Session ID
-     * @param request The HttpRequest request
-     * @param response The HttpResponse response
+     * @param pathParams    Path parameters such as encoded Session ID
+     * @param request       The HttpRequest request
+     * @param response      The HttpResponse response
      */
     public void handle(String pathInContext,
                        String pathParams,
                        HttpRequest request,
                        HttpResponse response)
-        throws HttpException, IOException;
+            throws HttpException, IOException;
 }
 
 

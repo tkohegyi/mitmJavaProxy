@@ -25,395 +25,387 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.security.Principal;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.StringTokenizer;
 
 /* ------------------------------------------------------------ */
-/** HashMapped User Realm.
- *
+
+/**
+ * HashMapped User Realm.
+ * <p>
  * An implementation of UserRealm that stores users and roles in-memory in
  * HashMaps.
- * <P>
+ * <p>
  * Typically these maps are populated by calling the load() method or passing
  * a properties resource to the constructor. The format of the properties
  * file is: <PRE>
- *  username: password [,rolename ...]
+ * username: password [,rolename ...]
  * </PRE>
- * Passwords may be clear text, obfuscated or checksummed.  The class 
+ * Passwords may be clear text, obfuscated or checksummed.  The class
  * com.mortbay.Util.Password should be used to generate obfuscated
  * passwords or password checksums.
- * 
+ * <p>
  * If DIGEST Authentication is used, the password must be in a recoverable
  * format, either plain text or OBF:.
- *
+ * <p>
  * The HashUserRealm also implements SSORealm but provides no implementation
  * of SSORealm. Instead setSSORealm may be used to provide a delegate
- * SSORealm implementation. 
+ * SSORealm implementation.
  *
- * @see Password
- * @version $Id: HashUserRealm.java,v 1.29 2005/08/13 00:01:24 gregwilkins Exp $
  * @author Greg Wilkins (gregw)
+ * @version $Id: HashUserRealm.java,v 1.29 2005/08/13 00:01:24 gregwilkins Exp $
+ * @see Password
  */
 public class HashUserRealm
-    extends HashMap
-    implements UserRealm, SSORealm, Externalizable
-{
-    private static Log log = LogFactory.getLog(HashUserRealm.class);
-
-    /** HttpContext Attribute to set to activate SSO.
+        extends HashMap
+        implements UserRealm, SSORealm, Externalizable {
+    /**
+     * HttpContext Attribute to set to activate SSO.
      */
     public static final String __SSO = "net.lightbody.bmp.proxy.jetty.http.SSO";
-    
+    private static Log log = LogFactory.getLog(HashUserRealm.class);
+    protected HashMap _roles = new HashMap(7);
     /* ------------------------------------------------------------ */
     private String _realmName;
     private String _config;
-    protected HashMap _roles=new HashMap(7);
     private SSORealm _ssoRealm;
-    
+
 
     /* ------------------------------------------------------------ */
-    /** Constructor. 
+
+    /**
+     * Constructor.
      */
-    public HashUserRealm()
-    {}
-    
+    public HashUserRealm() {
+    }
+
     /* ------------------------------------------------------------ */
-    /** Constructor. 
+
+    /**
+     * Constructor.
+     *
      * @param name Realm Name
      */
-    public HashUserRealm(String name)
-    {
-        _realmName=name;
+    public HashUserRealm(String name) {
+        _realmName = name;
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** Constructor. 
-     * @param name Realm name
+
+    /**
+     * Constructor.
+     *
+     * @param name   Realm name
      * @param config Filename or url of user properties file.
      */
     public HashUserRealm(String name, String config)
-        throws IOException
-    {
-        _realmName=name;
+            throws IOException {
+        _realmName = name;
         load(config);
     }
-    
+
     /* ------------------------------------------------------------ */
     public void writeExternal(java.io.ObjectOutput out)
-        throws java.io.IOException
-    {
+            throws java.io.IOException {
         out.writeObject(_realmName);
         out.writeObject(_config);
     }
-    
-    /* ------------------------------------------------------------ */
-    public void readExternal(java.io.ObjectInput in)
-        throws java.io.IOException, ClassNotFoundException
-    {
-        _realmName= (String)in.readObject();
-        _config=(String)in.readObject();
-        if (_config!=null)
-            load(_config);
-    }
-    
 
     /* ------------------------------------------------------------ */
-    /** Load realm users from properties file.
+    public void readExternal(java.io.ObjectInput in)
+            throws java.io.IOException, ClassNotFoundException {
+        _realmName = (String) in.readObject();
+        _config = (String) in.readObject();
+        if (_config != null)
+            load(_config);
+    }
+
+
+    /* ------------------------------------------------------------ */
+
+    /**
+     * Load realm users from properties file.
      * The property file maps usernames to password specs followed by
      * an optional comma separated list of role names.
      *
      * @param config Filename or url of user properties file.
-     * @exception IOException 
+     * @throws IOException
      */
     public void load(String config)
-        throws IOException
-    {
-        _config=config;
-        if(log.isDebugEnabled())log.debug("Load "+this+" from "+config);
+            throws IOException {
+        _config = config;
+        if (log.isDebugEnabled()) log.debug("Load " + this + " from " + config);
         Properties properties = new Properties();
-        Resource resource=Resource.newResource(config);
+        Resource resource = Resource.newResource(config);
         properties.load(resource.getInputStream());
 
         Iterator iter = properties.entrySet().iterator();
-        while(iter.hasNext())
-        {
-            Map.Entry entry = (Map.Entry)iter.next();
+        while (iter.hasNext()) {
+            Map.Entry entry = (Map.Entry) iter.next();
 
-            String username=entry.getKey().toString().trim();
-            String credentials=entry.getValue().toString().trim();
-            String roles=null;
-            int c=credentials.indexOf(',');
-            if (c>0)
-            {
-                roles=credentials.substring(c+1).trim();
-                credentials=credentials.substring(0,c).trim();
+            String username = entry.getKey().toString().trim();
+            String credentials = entry.getValue().toString().trim();
+            String roles = null;
+            int c = credentials.indexOf(',');
+            if (c > 0) {
+                roles = credentials.substring(c + 1).trim();
+                credentials = credentials.substring(0, c).trim();
             }
 
-            if (username!=null && username.length()>0 &&
-                credentials!=null && credentials.length()>0)
-            {
-                put(username,credentials);
-                if(roles!=null && roles.length()>0)
-                {
-                    StringTokenizer tok = new StringTokenizer(roles,", ");
+            if (username != null && username.length() > 0 &&
+                    credentials != null && credentials.length() > 0) {
+                put(username, credentials);
+                if (roles != null && roles.length() > 0) {
+                    StringTokenizer tok = new StringTokenizer(roles, ", ");
                     while (tok.hasMoreTokens())
-                        addUserToRole(username,tok.nextToken());
+                        addUserToRole(username, tok.nextToken());
                 }
             }
         }
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** 
-     * @param name The realm name 
+
+    /**
+     * @return The realm name.
      */
-    public void setName(String name)
-    {
-        _realmName=name;
-    }
-    
-    /* ------------------------------------------------------------ */
-    /** 
-     * @return The realm name. 
-     */
-    public String getName()
-    {
+    public String getName() {
         return _realmName;
     }
 
     /* ------------------------------------------------------------ */
-    public Principal getPrincipal(String username)
-    {
-        return (Principal)super.get(username);
+
+    /**
+     * @param name The realm name
+     */
+    public void setName(String name) {
+        _realmName = name;
     }
-    
+
+    /* ------------------------------------------------------------ */
+    public Principal getPrincipal(String username) {
+        return (Principal) super.get(username);
+    }
+
     /* ------------------------------------------------------------ */
     public Principal authenticate(String username,
                                   Object credentials,
-                                  HttpRequest request)
-    {
+                                  HttpRequest request) {
         KnownUser user;
-        synchronized (this)
-        {
-            user = (KnownUser)super.get(username);
+        synchronized (this) {
+            user = (KnownUser) super.get(username);
         }
-        if (user==null)
+        if (user == null)
             return null;
 
         if (user.authenticate(credentials))
             return user;
-        
+
         return null;
-    }
-    
-    /* ------------------------------------------------------------ */
-    public void disassociate(Principal user)
-    {
-    }
-    
-    /* ------------------------------------------------------------ */
-    public Principal pushRole(Principal user, String role)
-    {
-        if (user==null)
-            user=new User();
-        
-        return new WrappedUser(user,role);
     }
 
     /* ------------------------------------------------------------ */
-    public Principal popRole(Principal user)
-    {
-        WrappedUser wu = (WrappedUser)user;
+    public void disassociate(Principal user) {
+    }
+
+    /* ------------------------------------------------------------ */
+    public Principal pushRole(Principal user, String role) {
+        if (user == null)
+            user = new User();
+
+        return new WrappedUser(user, role);
+    }
+
+    /* ------------------------------------------------------------ */
+    public Principal popRole(Principal user) {
+        WrappedUser wu = (WrappedUser) user;
         return wu.getUserPrincipal();
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** Put user into realm.
-     * @param name User name
+
+    /**
+     * Put user into realm.
+     *
+     * @param name        User name
      * @param credentials String password, Password or UserPrinciple
-     *                    instance. 
+     *                    instance.
      * @return Old UserPrinciple value or null
      */
-    public synchronized Object put(Object name, Object credentials)
-    {
+    public synchronized Object put(Object name, Object credentials) {
         if (credentials instanceof Principal)
             return super.put(name.toString(),
-                             credentials);
-        
+                    credentials);
+
         if (credentials instanceof Password)
             return super.put(name,
-                             new KnownUser(name.toString(),
-                                          (Password)credentials));
+                    new KnownUser(name.toString(),
+                            (Password) credentials));
         if (credentials != null)
             return super
-                .put(name,
-                     new KnownUser(name.toString(),
-                                   Credential.getCredential(credentials.toString())));
+                    .put(name,
+                            new KnownUser(name.toString(),
+                                    Credential.getCredential(credentials.toString())));
         return null;
     }
 
     /* ------------------------------------------------------------ */
-    /** Add a user to a role.
-     * @param userName 
-     * @param roleName 
+
+    /**
+     * Add a user to a role.
+     *
+     * @param userName
+     * @param roleName
      */
-    public synchronized void addUserToRole(String userName, String roleName)
-    {
-        HashSet userSet = (HashSet)_roles.get(roleName);
-        if (userSet==null)
-        {
-            userSet=new HashSet(11);
-            _roles.put(roleName,userSet);
+    public synchronized void addUserToRole(String userName, String roleName) {
+        HashSet userSet = (HashSet) _roles.get(roleName);
+        if (userSet == null) {
+            userSet = new HashSet(11);
+            _roles.put(roleName, userSet);
         }
         userSet.add(userName);
     }
-    
+
     /* -------------------------------------------------------- */
-    public boolean reauthenticate(Principal user)
-    {
-        return ((User)user).isAuthenticated();
-    }
-    
-    /* ------------------------------------------------------------ */
-    /** Check if a user is in a role.
-     * @param user The user, which must be from this realm 
-     * @param roleName 
-     * @return True if the user can act in the role.
-     */
-    public synchronized boolean isUserInRole(Principal user, String roleName)
-    {
-        if (user instanceof WrappedUser)
-            return ((WrappedUser)user).isUserInRole(roleName);
-         
-        if (user==null || ((User)user).getUserRealm()!=this)
-            return false;
-        
-        HashSet userSet = (HashSet)_roles.get(roleName);
-        return userSet!=null && userSet.contains(user.getName());
+    public boolean reauthenticate(Principal user) {
+        return ((User) user).isAuthenticated();
     }
 
     /* ------------------------------------------------------------ */
-    public void logout(Principal user)
-    {}
-    
-    /* ------------------------------------------------------------ */
-    public String toString()
-    {
-        return "Realm["+_realmName+"]";
+
+    /**
+     * Check if a user is in a role.
+     *
+     * @param user     The user, which must be from this realm
+     * @param roleName
+     * @return True if the user can act in the role.
+     */
+    public synchronized boolean isUserInRole(Principal user, String roleName) {
+        if (user instanceof WrappedUser)
+            return ((WrappedUser) user).isUserInRole(roleName);
+
+        if (user == null || ((User) user).getUserRealm() != this)
+            return false;
+
+        HashSet userSet = (HashSet) _roles.get(roleName);
+        return userSet != null && userSet.contains(user.getName());
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void dump(PrintStream out)
-    {
-        out.println(this+":");
+    public void logout(Principal user) {
+    }
+
+    /* ------------------------------------------------------------ */
+    public String toString() {
+        return "Realm[" + _realmName + "]";
+    }
+
+    /* ------------------------------------------------------------ */
+    public void dump(PrintStream out) {
+        out.println(this + ":");
         out.println(super.toString());
         out.println(_roles);
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** 
+
+    /**
      * @return The SSORealm to delegate single sign on requests to.
      */
-    public SSORealm getSSORealm()
-    {
+    public SSORealm getSSORealm() {
         return _ssoRealm;
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** Set the SSORealm.
+
+    /**
+     * Set the SSORealm.
      * A SSORealm implementation may be set to enable support for SSO.
+     *
      * @param ssoRealm The SSORealm to delegate single sign on requests to.
      */
-    public void setSSORealm(SSORealm ssoRealm)
-    {
+    public void setSSORealm(SSORealm ssoRealm) {
         _ssoRealm = ssoRealm;
     }
-    
+
     /* ------------------------------------------------------------ */
     public Credential getSingleSignOn(HttpRequest request,
-                                      HttpResponse response)
-    {
-        if (_ssoRealm!=null)
-            return _ssoRealm.getSingleSignOn(request,response);
+                                      HttpResponse response) {
+        if (_ssoRealm != null)
+            return _ssoRealm.getSingleSignOn(request, response);
         return null;
     }
-    
-    
+
+
     /* ------------------------------------------------------------ */
     public void setSingleSignOn(HttpRequest request,
                                 HttpResponse response,
                                 Principal principal,
-                                Credential credential)
-    {
-        if (_ssoRealm!=null)
-            _ssoRealm.setSingleSignOn(request,response,principal,credential);
+                                Credential credential) {
+        if (_ssoRealm != null)
+            _ssoRealm.setSingleSignOn(request, response, principal, credential);
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void clearSingleSignOn(String username)
-    {
-        if (_ssoRealm!=null)
+    public void clearSingleSignOn(String username) {
+        if (_ssoRealm != null)
             _ssoRealm.clearSingleSignOn(username);
     }
-    
+
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    private class User implements Principal
-    {
-        List roles=null;
+    private class User implements Principal {
+        List roles = null;
 
         /* ------------------------------------------------------------ */
-        private UserRealm getUserRealm()
-        {
+        private UserRealm getUserRealm() {
             return HashUserRealm.this;
         }
-        
-        public String getName()
-        {
+
+        public String getName() {
             return "Anonymous";
         }
-                
-        public boolean isAuthenticated()
-        {
+
+        public boolean isAuthenticated() {
             return false;
         }
-        
-        public String toString()
-        {
+
+        public String toString() {
             return getName();
-        }        
+        }
     }
-    
+
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    private class KnownUser extends User
-    {
+    private class KnownUser extends User {
         private String _userName;
         private Credential _cred;
-        
+
         /* -------------------------------------------------------- */
-        KnownUser(String name,Credential credential)
-        {
-            _userName=name;
-            _cred=credential;
+        KnownUser(String name, Credential credential) {
+            _userName = name;
+            _cred = credential;
         }
-        
+
         /* -------------------------------------------------------- */
-        boolean authenticate(Object credentials)
-        {
-            return _cred!=null && _cred.check(credentials);
+        boolean authenticate(Object credentials) {
+            return _cred != null && _cred.check(credentials);
         }
-        
+
         /* ------------------------------------------------------------ */
-        public String getName()
-        {
+        public String getName() {
             return _userName;
         }
-        
+
         /* -------------------------------------------------------- */
-        public boolean isAuthenticated()
-        {
+        public boolean isAuthenticated() {
             return true;
         }
     }
@@ -421,34 +413,28 @@ public class HashUserRealm
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
-    private class WrappedUser extends User
-    {   
+    private class WrappedUser extends User {
         private Principal user;
         private String role;
 
-        WrappedUser(Principal user, String role)
-        {
-            this.user=user;
-            this.role=role;
+        WrappedUser(Principal user, String role) {
+            this.user = user;
+            this.role = role;
         }
 
-        Principal getUserPrincipal()
-        {
-            return user;    
+        Principal getUserPrincipal() {
+            return user;
         }
 
-        public String getName()
-        {
-            return "role:"+role;
+        public String getName() {
+            return "role:" + role;
         }
-                
-        public boolean isAuthenticated()
-        {
+
+        public boolean isAuthenticated() {
             return true;
         }
-        
-        public boolean isUserInRole(String role)
-        {
+
+        public boolean isUserInRole(String role) {
             return this.role.equals(role);
         }
     }

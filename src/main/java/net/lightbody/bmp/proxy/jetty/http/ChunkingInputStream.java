@@ -25,198 +25,188 @@ import java.io.InputStream;
 
 
 /* ------------------------------------------------------------ */
-/** Dechunk input.
+
+/**
+ * Dechunk input.
  * Or limit content length.
  */
-public class ChunkingInputStream extends InputStream
-{
+public class ChunkingInputStream extends InputStream {
+    private static final String __UNEXPECTED_EOF = "Unexpected EOF while chunking";
     private static Log log = LogFactory.getLog(ChunkingInputStream.class);
-    private static final String __UNEXPECTED_EOF="Unexpected EOF while chunking";
+    /* ------------------------------------------------------------ */
+    int _chunkSize = 0;
+    HttpFields _trailer = null;
+    LineInput _in;
 
     /* ------------------------------------------------------------ */
-    int _chunkSize=0;
-    HttpFields _trailer=null;
-    LineInput _in;
-    
-    /* ------------------------------------------------------------ */
-    /** Constructor.
+
+    /**
+     * Constructor.
      */
-    public ChunkingInputStream(LineInput in)
-    {
-        _in=in;
+    public ChunkingInputStream(LineInput in) {
+        _in = in;
     }
-    
+
     /* ------------------------------------------------------------ */
-    public void resetStream()
-    {
-        _chunkSize=0;
-        _trailer=null;
+    public void resetStream() {
+        _chunkSize = 0;
+        _trailer = null;
     }
-    
+
     /* ------------------------------------------------------------ */
     public int read()
-        throws IOException
-    {
-        int b=-1;
-        if (_chunkSize<=0 && getChunkSize()<=0)
+            throws IOException {
+        int b = -1;
+        if (_chunkSize <= 0 && getChunkSize() <= 0)
             return -1;
-        b=_in.read();
-        if (b<0)
-        {
-            _chunkSize=-1;
+        b = _in.read();
+        if (b < 0) {
+            _chunkSize = -1;
             throw new IOException(__UNEXPECTED_EOF);
         }
         _chunkSize--;
         return b;
     }
-    
+
     /* ------------------------------------------------------------ */
-    public int read(byte b[]) throws IOException
-    {
+    public int read(byte b[]) throws IOException {
         int len = b.length;
-        if (_chunkSize<=0 && getChunkSize()<=0)
+        if (_chunkSize <= 0 && getChunkSize() <= 0)
             return -1;
         if (len > _chunkSize)
-            len=_chunkSize;
-        len=_in.read(b,0,len);
-        if (len<0)
-        {
-            _chunkSize=-1;
+            len = _chunkSize;
+        len = _in.read(b, 0, len);
+        if (len < 0) {
+            _chunkSize = -1;
             throw new IOException(__UNEXPECTED_EOF);
         }
-        _chunkSize=_chunkSize-len;
+        _chunkSize = _chunkSize - len;
         return len;
     }
-    
+
     /* ------------------------------------------------------------ */
-    public int read(byte b[], int off, int len) throws IOException
-    {  
-        if (_chunkSize<=0 && getChunkSize()<=0)
+    public int read(byte b[], int off, int len) throws IOException {
+        if (_chunkSize <= 0 && getChunkSize() <= 0)
             return -1;
         if (len > _chunkSize)
-            len=_chunkSize;
-        len=_in.read(b,off,len);
-        if (len<0)
-        {
-            _chunkSize=-1;
+            len = _chunkSize;
+        len = _in.read(b, off, len);
+        if (len < 0) {
+            _chunkSize = -1;
             throw new IOException(__UNEXPECTED_EOF);
         }
-        _chunkSize=_chunkSize-len;
+        _chunkSize = _chunkSize - len;
         return len;
     }
-    
+
     /* ------------------------------------------------------------ */
-    public long skip(long len) throws IOException
-    { 
-        if (_chunkSize<=0 && getChunkSize()<=0)
-                return -1;
+    public long skip(long len) throws IOException {
+        if (_chunkSize <= 0 && getChunkSize() <= 0)
+            return -1;
         if (len > _chunkSize)
-            len=_chunkSize;
-        len=_in.skip(len);
-        if (len<0)
-        {
-            _chunkSize=-1;
+            len = _chunkSize;
+        len = _in.skip(len);
+        if (len < 0) {
+            _chunkSize = -1;
             throw new IOException(__UNEXPECTED_EOF);
         }
-        _chunkSize=_chunkSize-(int)len;
+        _chunkSize = _chunkSize - (int) len;
         return len;
     }
-    
+
     /* ------------------------------------------------------------ */
     public int available()
-        throws IOException
-    {
+            throws IOException {
         int len = _in.available();
-        if (len<=_chunkSize || _chunkSize==0)
+        if (len <= _chunkSize || _chunkSize == 0)
             return len;
         return _chunkSize;
     }
-    
+
     /* ------------------------------------------------------------ */
     public void close()
-        throws IOException
-    {
-        _chunkSize=-1;
+            throws IOException {
+        _chunkSize = -1;
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** Mark is not supported.
+
+    /**
+     * Mark is not supported.
+     *
      * @return false
      */
-    public boolean markSupported()
-    {
+    public boolean markSupported() {
         return false;
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** Not Implemented.
+
+    /**
+     * Not Implemented.
      */
-    public void reset()
-    {
+    public void reset() {
         log.warn(LogSupport.NOT_IMPLEMENTED);
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** Not Implemented.
-     * @param readlimit 
+
+    /**
+     * Not Implemented.
+     *
+     * @param readlimit
      */
-    public void mark(int readlimit)
-    {
+    public void mark(int readlimit) {
         log.warn(LogSupport.NOT_IMPLEMENTED);
     }
-    
+
     /* ------------------------------------------------------------ */
     /* Get the size of the next chunk.
      * @return size of the next chunk or -1 for EOF.
-     * @exception IOException 
+     * @exception IOException
      */
     private int getChunkSize()
-        throws IOException
-    {
-        if (_chunkSize<0)
+            throws IOException {
+        if (_chunkSize < 0)
             return -1;
-        
-        _trailer=null;
-        _chunkSize=-1;
-        
+
+        _trailer = null;
+        _chunkSize = -1;
+
         // Get next non blank line
         net.lightbody.bmp.proxy.jetty.util.LineInput.LineBuffer line_buffer
-            =_in.readLineBuffer();
-        while(line_buffer!=null && line_buffer.size==0)
-            line_buffer=_in.readLineBuffer();
-        
+                = _in.readLineBuffer();
+        while (line_buffer != null && line_buffer.size == 0)
+            line_buffer = _in.readLineBuffer();
+
         // Handle early EOF or error in format
-        if (line_buffer==null)
+        if (line_buffer == null)
             throw new IOException("Unexpected EOF");
-        
-        String line= new String(line_buffer.buffer,0,line_buffer.size);
-        
-        
+
+        String line = new String(line_buffer.buffer, 0, line_buffer.size);
+
+
         // Get chunksize
-        int i=line.indexOf(';');
-        if (i>0)
-            line=line.substring(0,i).trim();
-        try
-        {
-            _chunkSize = Integer.parseInt(line,16);
-        }
-        catch (NumberFormatException e)
-        {
-            _chunkSize=-1;
-            log.warn("Bad Chunk:"+line);
-            log.debug(LogSupport.EXCEPTION,e);
+        int i = line.indexOf(';');
+        if (i > 0)
+            line = line.substring(0, i).trim();
+        try {
+            _chunkSize = Integer.parseInt(line, 16);
+        } catch (NumberFormatException e) {
+            _chunkSize = -1;
+            log.warn("Bad Chunk:" + line);
+            log.debug(LogSupport.EXCEPTION, e);
             throw new IOException("Bad chunk size");
         }
-                 
+
         // check for EOF
-        if (_chunkSize==0)
-        {
-            _chunkSize=-1;
+        if (_chunkSize == 0) {
+            _chunkSize = -1;
             // Look for trailers
             _trailer = new HttpFields();
             _trailer.read(_in);
         }
-        
+
         return _chunkSize;
     }
 }

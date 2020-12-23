@@ -14,37 +14,36 @@
 // ========================================================================
 
 package net.lightbody.bmp.proxy.jetty.http;
+
 import java.io.IOException;
 
 
 /* ------------------------------------------------------------ */
-/** Exception for EOF detected. 
+
+/**
+ * Exception for EOF detected.
  *
- * @version $$
  * @author Greg Wilkins (gregw)
+ * @version $$
  */
-public class EOFException extends IOException
-{
+public class EOFException extends IOException {
     private IOException _ex;
 
-    public IOException getTargetException()
-    {
-        return _ex;
-    }
-    
-    
-    public EOFException()
-    {}
-    
-    public EOFException(IOException ex)
-    {
-        _ex=ex;
+    public EOFException() {
     }
 
-    public String toString()
-    {
-        return "EOFException("+
-            (_ex==null?"":(_ex.toString()))+
-            ")";
+
+    public EOFException(IOException ex) {
+        _ex = ex;
+    }
+
+    public IOException getTargetException() {
+        return _ex;
+    }
+
+    public String toString() {
+        return "EOFException(" +
+                (_ex == null ? "" : (_ex.toString())) +
+                ")";
     }
 }

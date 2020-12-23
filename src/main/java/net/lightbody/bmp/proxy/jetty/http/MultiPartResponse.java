@@ -23,139 +23,142 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /* ================================================================ */
-/** Handle a multipart MIME response.
+
+/**
+ * Handle a multipart MIME response.
  *
- * @version $Id: MultiPartResponse.java,v 1.12 2006/04/04 22:28:02 gregwilkins Exp $
  * @author Greg Wilkins
  * @author Jim Crossley
-*/
-public class MultiPartResponse
-{
+ * @version $Id: MultiPartResponse.java,v 1.12 2006/04/04 22:28:02 gregwilkins Exp $
+ */
+public class MultiPartResponse {
     private static Log log = LogFactory.getLog(MultiPartResponse.class);
-    
+
     /* ------------------------------------------------------------ */
     private static byte[] __CRLF;
     private static byte[] __DASHDASH;
-    static
-    {
-        try
-        {
-            __CRLF="\015\012".getBytes(StringUtil.__ISO_8859_1);
-            __DASHDASH="--".getBytes(StringUtil.__ISO_8859_1);
+
+    static {
+        try {
+            __CRLF = "\015\012".getBytes(StringUtil.__ISO_8859_1);
+            __DASHDASH = "--".getBytes(StringUtil.__ISO_8859_1);
+        } catch (Exception e) {
+            log.fatal(e);
+            System.exit(1);
         }
-        catch (Exception e) {log.fatal(e); System.exit(1);}
     }
-    
+
     /* ------------------------------------------------------------ */
     private String boundary;
     private byte[] boundaryBytes;
-
-    /* ------------------------------------------------------------ */
-    private MultiPartResponse()
-    {
-        try
-        {
-            boundary = "jetty"+System.identityHashCode(this)+
-                Long.toString(System.currentTimeMillis(),36);
-            boundaryBytes=boundary.getBytes(StringUtil.__ISO_8859_1);
-        }
-        catch (Exception e)
-        {
-            log.fatal(e); System.exit(1);
-        }
-    }    
-    
-    /* ------------------------------------------------------------ */
-    public String getBoundary()
-    {
-        return boundary;
-    }
-    
-    /* ------------------------------------------------------------ */    
-    /** PrintWriter to write content too.
+    /**
+     * PrintWriter to write content too.
      */
-    private OutputStream out = null; 
-    public OutputStream getOut() {return out;}
+    private OutputStream out = null;
+    /* ------------------------------------------------------------ */
+    private boolean inPart = false;
 
     /* ------------------------------------------------------------ */
-    private boolean inPart=false;
-    
+    /* ------------------------------------------------------------ */
+    private MultiPartResponse() {
+        try {
+            boundary = "jetty" + System.identityHashCode(this) +
+                    Long.toString(System.currentTimeMillis(), 36);
+            boundaryBytes = boundary.getBytes(StringUtil.__ISO_8859_1);
+        } catch (Exception e) {
+            log.fatal(e);
+            System.exit(1);
+        }
+    }
+
     /* ------------------------------------------------------------ */
     public MultiPartResponse(OutputStream out)
-         throws IOException
-    {
+            throws IOException {
         this();
-        this.out=out;
-        inPart=false;
+        this.out = out;
+        inPart = false;
     }
-    
-    /* ------------------------------------------------------------ */
-    /** MultiPartResponse constructor.
+
+    /**
+     * MultiPartResponse constructor.
      */
     public MultiPartResponse(HttpResponse response)
-         throws IOException
-    {
+            throws IOException {
         this();
-        response.setField(HttpFields.__ContentType,"multipart/mixed;boundary="+boundary);
-        out=response.getOutputStream();
-        inPart=false;
-    }    
+        response.setField(HttpFields.__ContentType, "multipart/mixed;boundary=" + boundary);
+        out = response.getOutputStream();
+        inPart = false;
+    }
 
     /* ------------------------------------------------------------ */
-    /** Start creation of the next Content.
+    public String getBoundary() {
+        return boundary;
+    }
+
+    /* ------------------------------------------------------------ */
+
+    public OutputStream getOut() {
+        return out;
+    }
+
+    /* ------------------------------------------------------------ */
+
+    /**
+     * Start creation of the next Content.
      */
     public void startPart(String contentType)
-         throws IOException
-    {
+            throws IOException {
         if (inPart)
             out.write(__CRLF);
-        inPart=true;
+        inPart = true;
         out.write(__DASHDASH);
         out.write(boundaryBytes);
         out.write(__CRLF);
-        out.write(("Content-Type: "+contentType).getBytes(StringUtil.__ISO_8859_1));
+        out.write(("Content-Type: " + contentType).getBytes(StringUtil.__ISO_8859_1));
         out.write(__CRLF);
         out.write(__CRLF);
     }
-    
+
     /* ------------------------------------------------------------ */
-    /** Start creation of the next Content.
+
+    /**
+     * Start creation of the next Content.
      */
     public void startPart(String contentType, String[] headers)
-         throws IOException
-    {
+            throws IOException {
         if (inPart)
             out.write(__CRLF);
-        inPart=true;
+        inPart = true;
         out.write(__DASHDASH);
         out.write(boundaryBytes);
         out.write(__CRLF);
-        out.write(("Content-Type: "+contentType).getBytes(StringUtil.__ISO_8859_1));
+        out.write(("Content-Type: " + contentType).getBytes(StringUtil.__ISO_8859_1));
         out.write(__CRLF);
-        for (int i=0;headers!=null && i<headers.length;i++)
-        {
+        for (int i = 0; headers != null && i < headers.length; i++) {
             out.write(headers[i].getBytes(StringUtil.__ISO_8859_1));
             out.write(__CRLF);
         }
         out.write(__CRLF);
     }
-        
+
     /* ------------------------------------------------------------ */
-    /** End the current part.
-     * @exception IOException IOException
+
+    /**
+     * End the current part.
+     *
+     * @throws IOException IOException
      */
     public void close()
-         throws IOException
-    {
+            throws IOException {
         if (inPart)
             out.write(__CRLF);
         out.write(__DASHDASH);
         out.write(boundaryBytes);
         out.write(__DASHDASH);
         out.write(__CRLF);
-        inPart=false;
+        inPart = false;
     }
-    
+
 };
 
 
