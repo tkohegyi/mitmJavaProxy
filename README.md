@@ -1,15 +1,16 @@
-MitmJavaProxy - For Wilma
+MitmJavaProxy
 ============================
-This Men-In-The-Middle Java Proxy is a derivative work that was originated from BrowserMob Proxy, then tailored for old Wilma versions, 
-then upgraded in order to be prepared for the next generation of Wilma. 
+This Men-In-The-Middle Java Proxy is a derivative work that was originated from **BrowserMob Proxy**, then tailored for old *Wilma* versions, 
+then upgraded in order to be prepared for the next generation of *Wilma*. 
 
-WARNING!!! Under Construction !!!
----------------------------
-**Right now everything seems to be working so can be used in test mode.**
+**Right now everything seems to be working so can be used in experimental mode.**
 
 Also please be aware that the main aim of creating this MITM Java proxy is to support the proxy need of Wilma.
 Therefore none of the original browsermob-proxy features should be expected as working, 
-because the main purpose is just proxying the HTTP/HTTPS messages and by intercepting them do whatever we (and Wilma) wants to do with the messages.
+because the main purpose is just:
+- proxying the HTTP/HTTPS messages and 
+- by intercepting both requests and responses
+- do whatever we (and Wilma) wants to do with the messages.
 
 Embedded Mode
 -------------
@@ -18,17 +19,17 @@ If you're using Java, the easiest way to get started is to embed the project dir
     <dependency>
         <groupId>com.epam.mitm</groupId>
         <artifactId>mitmJavaProxy</artifactId>
-        <version>0.11-beta-wilma-2.0.DEV</version>
+        <version>2.0-0.14.13</version>
         <type>pom</type>
     </dependency>
 
 The latest release is:
 
-[ ![Download](https://api.bintray.com/packages/epam/wilma/mitmJavaProxy/images/download.svg?version=0.11-beta-wilma-2.0.DEV) ](https://bintray.com/epam/wilma/mitmJavaProxy/0.11-beta-wilma-2.0.DEV/link)
+[ ![Download](https://api.bintray.com/packages/epam/wilma/mitmJavaProxy/images/download.svg?version=2.0-0.14.13) ](https://bintray.com/epam/wilma/mitmJavaProxy/2.0-0.14.13/link)
 
 HTTP Request Manipulation
 -------------------
-TODO (Note that it works, just need to be written here...)
+Just add a request interceptor to the proxy server, and manipulate the request as you wish...
 
 HTTP Response Manipulation
 -------------------
@@ -41,6 +42,6 @@ Or can be set per message via ...
 
 SSL Support
 -----------
-While the proxy supports SSL, it requires that a Certificate Authority be installed in to the browser. 
-This allows the browser to trust all the SSL traffic coming from the proxy, which will be proxied using a classic man-in-the-middle technique. 
-IT IS CRITICAL THAT YOU NOT INSTALL THIS CERTIFICATE AUTHORITY ON A BROWSER THAT IS USED FOR ANYTHING OTHER THAN TESTING.
+While the proxy supports SSL, it requires that a Certificate Authority be installed in to the browser - or at client from where you call a server via the proxy.
+This allows the client to trust all the SSL traffic coming from the proxy, which will be proxied using a classic man-in-the-middle technique. 
+IT IS CRITICAL THAT YOU NOT INSTALL THIS CERTIFICATE AUTHORITY ON A CLIENT/BROWSER THAT IS USED FOR ANYTHING OTHER THAN TESTING.
