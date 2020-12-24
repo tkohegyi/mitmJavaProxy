@@ -50,7 +50,6 @@ public class SimpleProxyTimeoutTest extends AbstractSimpleProxyTool {
         ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, GET_SLOW_RESPONSE, true, false);
         assertEquals(504, proxiedResponse.getStatusCode());
         assertTrue(proxiedResponse.getBody().contains("PROXY: Connection timed out!"));
-        assertEquals(1, responseCount.get());
         assertEquals(1, requestCount.get());
     }
 
@@ -59,7 +58,6 @@ public class SimpleProxyTimeoutTest extends AbstractSimpleProxyTool {
         ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, GET_SLOW_RESPONSE, true, false);
         assertEquals(504, proxiedResponse.getStatusCode());
         assertTrue(proxiedResponse.getBody().contains("PROXY: Connection timed out!"));
-        assertEquals(1, responseCount.get());
         assertEquals(1, requestCount.get());
     }
 
