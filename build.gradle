@@ -114,6 +114,10 @@ task copyJarToDistributions (type: Copy) {
 task createPom {
     doLast {
         pom {
+            project {
+                groupId 'com.epam.mitm'
+                artifactId 'mitmJavaProxy'
+            }
         }.writeTo("$buildDir/distributions/$componentName-${version}.pom")
     }
 }
