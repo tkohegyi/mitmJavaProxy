@@ -55,7 +55,6 @@ import java.util.Iterator;
  *
  * @author Greg Wilkins (gregw)
  * @version $Revision: 1.40 $
- * @see net.lightbody.bmp.proxy.jetty.xml.XmlConfiguration
  * @see net.lightbody.bmp.proxy.jetty.jetty.servlet.ServletHttpContext
  */
 public class BmpServer extends HttpServer {
