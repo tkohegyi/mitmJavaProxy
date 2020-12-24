@@ -15,9 +15,7 @@
 
 package net.lightbody.bmp.proxy.jetty.http;
 
-import net.lightbody.bmp.proxy.jetty.http.handler.DumpHandler;
 import net.lightbody.bmp.proxy.jetty.http.handler.NotFoundHandler;
-import net.lightbody.bmp.proxy.jetty.http.handler.ResourceHandler;
 import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.Container;
@@ -33,7 +31,6 @@ import net.lightbody.bmp.proxy.jetty.util.URI;
 import org.apache.commons.logging.Log;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.MalformedURLException;
@@ -47,18 +44,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-
-
-/* ------------------------------------------------------------ */
-
 /**
  * HTTP Server.
  * Services HTTP requests by maintaining a mapping between
  * a collection of HttpListeners which generate requests and
  * HttpContexts which contain collections of HttpHandlers.
  * <p>
- * This class is configured by API calls.  The
- * org.mortbay.jetty.Server class uses XML configuration files to
+ * This class is configured by API calls. The org.mortbay.jetty.Server class uses XML configuration files to
  * configure instances of this class.
  * <p>
  * The HttpServer implements the BeanContext API so that membership
@@ -72,24 +64,15 @@ import java.util.WeakHashMap;
  * @see HttpListener
  * @see BmpServer
  */
-public class HttpServer extends Container
-        implements LifeCycle,
-        EventProvider,
-        Serializable {
+public class HttpServer extends Container implements LifeCycle, EventProvider, Serializable {
     private static Log log = LogFactory.getLog(HttpServer.class);
 
-    /* ------------------------------------------------------------ */
     private static WeakHashMap __servers = new WeakHashMap();
-    private static Collection __roServers =
-            Collections.unmodifiableCollection(__servers.keySet());
+    private static Collection __roServers = Collections.unmodifiableCollection(__servers.keySet());
     private static String[] __noVirtualHost = new String[1];
 
-
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     private List _listeners = new ArrayList(3);
 
-    /* ------------------------------------------------------------ */
     private HashMap _realmMap = new HashMap(3);
     private StringMap _virtualHostMap = new StringMap();
     private boolean _trace = false;
@@ -101,62 +84,40 @@ public class HttpServer extends Container
     private transient int _gcRequests;
     private transient HttpContext _notFoundContext = null;
     private transient boolean _gracefulStop;
-    /* ------------------------------------------------------------ */
+
     private boolean _statsOn = false;
     private transient Object _statsLock = new Object[0];
 
-
-
-    /* ------------------------------------------------------------ */
     private transient long _statsStartedAt = 0;
 
-    /* ------------------------------------------------------------ */
     private transient int _connections;                  // total number of connections made to server
     private transient int _connectionsOpen;              // number of connections currently open
 
-
-    /* ------------------------------------------------------------ */
     private transient int _connectionsOpenMin;           // min number of connections open simultaneously
     private transient int _connectionsOpenMax;           // max number of connections open simultaneously
     private transient long _connectionsDurationMin;      // min duration of a connection
 
-
-    /* ------------------------------------------------------------ */
     private transient long _connectionsDurationMax;      // max duration of a connection
 
-    /* ------------------------------------------------------------ */
     private transient long _connectionsDurationTotal;    // total duration of all coneection
 
-
-    /* ------------------------------------------------------------ */
     private transient int _errors;                       // total bad requests to the server
 
-    /* ------------------------------------------------------------ */
     private transient int _requests;                     // total requests made to the server
 
-    /* ------------------------------------------------------------ */
     private transient int _requestsActive;               // number of requests currently being handled
 
-    /* ------------------------------------------------------------ */
     private transient int _requestsActiveMin;            // min number of connections handled simultaneously
     private transient int _requestsActiveMax;            // max number of connections handled simultaneously
     private transient int _connectionsRequestsMin;       // min requests per connection
 
-    /* ------------------------------------------------------------ */
     private transient int _connectionsRequestsMax;       // max requests per connection
 
-    /* ------------------------------------------------------------ */
     private transient long _requestsDurationMin;         // min request duration
 
-
-    /* ------------------------------------------------------------ */
     private transient long _requestsDurationMax;         // max request duration
 
-
-    /* ------------------------------------------------------------ */
     private transient long _requestsDurationTotal;       // total request duration
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -165,35 +126,25 @@ public class HttpServer extends Container
         this(false);
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      *
-     * @param anonymous If true, the server is not included in the
-     *                  static server lists and stopAll methods.
+     * @param anonymous If true, the server is not included in the static server lists and stopAll methods.
      */
     public HttpServer(boolean anonymous) {
         setAnonymous(anonymous);
         _virtualHostMap.setIgnoreCase(true);
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Get HttpServer Collection.
-     * Get a collection of all known HttpServers.  Servers can be
-     * removed from this list with the setAnonymous call.
+     * Get a collection of all known HttpServers. Servers can be removed from this list with the setAnonymous call.
      *
      * @return Collection of all servers.
      */
     public static Collection getHttpServers() {
         return __roServers;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @deprecated User getHttpServers()
@@ -202,62 +153,7 @@ public class HttpServer extends Container
         return new ArrayList(__roServers);
     }
 
-    /* ------------------------------------------------------------ */
-
-    /**
-     * Construct server from command line arguments.
-     *
-     * @param args
-     */
-    public static void main(String[] args) {
-        if (args.length == 0 || args.length > 2) {
-            System.err.println
-                    ("\nUsage - java net.lightbody.bmp.proxy.jetty.http.HttpServer [<addr>:]<port>");
-            System.err.println
-                    ("\nUsage - java net.lightbody.bmp.proxy.jetty.http.HttpServer -r [savefile]");
-            System.err.println
-                    ("  Serves files from '.' directory");
-            System.err.println
-                    ("  Dump handler for not found requests");
-            System.err.println
-                    ("  Default port is 8080");
-            System.exit(1);
-        }
-
-        try {
-
-            if (args.length == 1) {
-                // Create the server
-                HttpServer server = new HttpServer();
-
-                // Default is no virtual host
-                String host = null;
-                HttpContext context = server.getContext(host, "/");
-                context.setResourceBase(".");
-                context.addHandler(new ResourceHandler());
-                context.addHandler(new DumpHandler());
-                context.addHandler(new NotFoundHandler());
-
-                InetAddrPort address = new InetAddrPort(args[0]);
-                server.addListener(address);
-
-                server.start();
-            } else {
-                Resource resource = Resource.newResource(args[1]);
-                ObjectInputStream in = new ObjectInputStream(resource.getInputStream());
-                HttpServer server = (HttpServer) in.readObject();
-                in.close();
-                server.start();
-            }
-
-        } catch (Exception e) {
-            log.warn(LogSupport.EXCEPTION, e);
-        }
-    }
-
-    /* ------------------------------------------------------------ */
-    private void readObject(java.io.ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         HttpListener[] listeners = getListeners();
         HttpContext[] contexts = getContexts();
@@ -269,40 +165,34 @@ public class HttpServer extends Container
     }
 
     /**
-     * @param anonymous If true, the server is not included in the
-     *                  static server lists and stopAll methods.
+     * @param anonymous If true, the server is not included in the static server lists and stopAll methods.
      */
     public void setAnonymous(boolean anonymous) {
-        if (anonymous)
+        if (anonymous) {
             __servers.remove(this);
-        else
+        } else {
             __servers.put(this, __servers);
+        }
     }
 
-    /* ------------------------------------------------------------ */
     public boolean getStopGracefully() {
         return _gracefulStop;
     }
 
-    /* ------------------------------------------------------------ */
     public void setStopGracefully(boolean graceful) {
         _gracefulStop = graceful;
     }
-
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return Array of HttpListeners.
      */
     public HttpListener[] getListeners() {
-        if (_listeners == null)
+        if (_listeners == null) {
             return new HttpListener[0];
+        }
         HttpListener[] listeners = new HttpListener[_listeners.size()];
         return (HttpListener[]) _listeners.toArray(listeners);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param listeners Array of HttpListeners.
@@ -312,8 +202,9 @@ public class HttpServer extends Container
 
         for (int i = 0; i < listeners.length; i++) {
             boolean existing = old.remove(listeners[i]);
-            if (!existing)
+            if (!existing) {
                 addListener(listeners[i]);
+            }
         }
 
         for (int i = 0; i < old.size(); i++) {
@@ -322,8 +213,6 @@ public class HttpServer extends Container
         }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Create and add a SocketListener.
      * Conveniance method.
@@ -332,13 +221,10 @@ public class HttpServer extends Container
      * @return the HttpListener.
      * @throws IOException
      */
-    public HttpListener addListener(String address)
-            throws IOException {
+    public HttpListener addListener(String address) throws IOException {
         return addListener(new InetAddrPort(address));
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Create and add a SocketListener.
      * Conveniance method.
@@ -347,8 +233,7 @@ public class HttpServer extends Container
      * @return the HttpListener.
      * @throws IOException
      */
-    public HttpListener addListener(InetAddrPort address)
-            throws IOException {
+    public HttpListener addListener(InetAddrPort address) throws IOException {
         HttpListener listener = new SocketListener(address);
         listener.setHttpServer(this);
         _listeners.add(listener);
@@ -356,24 +241,18 @@ public class HttpServer extends Container
         return listener;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Add a HTTP Listener to the server.
      *
      * @param listener The Listener.
-     * @throws IllegalArgumentException If the listener is not for this
-     *                                  server.
+     * @throws IllegalArgumentException If the listener is not for this server.
      */
-    public HttpListener addListener(HttpListener listener)
-            throws IllegalArgumentException {
+    public HttpListener addListener(HttpListener listener) throws IllegalArgumentException {
         listener.setHttpServer(this);
         _listeners.add(listener);
         addComponent(listener);
         return listener;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Remove a HTTP Listener.
@@ -381,31 +260,29 @@ public class HttpServer extends Container
      * @param listener
      */
     public void removeListener(HttpListener listener) {
-        if (listener == null)
+        if (listener == null) {
             return;
-
+        }
         for (int l = 0; l < _listeners.size(); l++) {
             if (listener.equals(_listeners.get(l))) {
                 _listeners.remove(l);
                 removeComponent(listener);
-                if (listener.isStarted())
+                if (listener.isStarted()) {
                     try {
                         listener.stop();
                     } catch (InterruptedException e) {
                         log.warn(LogSupport.EXCEPTION, e);
                     }
+                }
                 listener.setHttpServer(null);
             }
         }
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     public synchronized HttpContext[] getContexts() {
-        if (_virtualHostMap == null)
+        if (_virtualHostMap == null) {
             return new HttpContext[0];
-
+        }
         ArrayList contexts = new ArrayList(33);
         Iterator maps = _virtualHostMap.values().iterator();
         while (maps.hasNext()) {
@@ -415,32 +292,29 @@ public class HttpServer extends Container
                 List list = (List) lists.next();
                 for (int i = 0; i < list.size(); i++) {
                     HttpContext context = (HttpContext) list.get(i);
-                    if (!contexts.contains(context))
+                    if (!contexts.contains(context)) {
                         contexts.add(context);
+                    }
                 }
             }
         }
         return (HttpContext[]) contexts.toArray(new HttpContext[contexts.size()]);
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     public synchronized void setContexts(HttpContext[] contexts) {
         List old = Arrays.asList(getContexts());
 
         for (int i = 0; i < contexts.length; i++) {
             boolean existing = old.remove(contexts[i]);
-            if (!existing)
+            if (!existing) {
                 addContext(contexts[i]);
+            }
         }
 
-        for (int i = 0; i < old.size(); i++)
+        for (int i = 0; i < old.size(); i++) {
             removeContext((HttpContext) old.get(i));
+        }
     }
-
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Add a context.
@@ -448,9 +322,9 @@ public class HttpServer extends Container
      * @param context
      */
     public HttpContext addContext(HttpContext context) {
-        if (context.getContextPath() == null ||
-                context.getContextPath().length() == 0)
+        if (context.getContextPath() == null || context.getContextPath().length() == 0) {
             throw new IllegalArgumentException("No Context Path Set");
+        }
         boolean existing = removeMappings(context);
         if (!existing) {
             context.setHttpServer(this);
@@ -460,53 +334,45 @@ public class HttpServer extends Container
         return context;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Remove a context or Web application.
      *
      * @throws IllegalStateException if context not stopped
      */
-    public boolean removeContext(HttpContext context)
-            throws IllegalStateException {
+    public boolean removeContext(HttpContext context) throws IllegalStateException {
         if (removeMappings(context)) {
             removeComponent(context);
-            if (context.isStarted())
+            if (context.isStarted()) {
                 try {
                     context.stop();
                 } catch (InterruptedException e) {
                     log.warn(LogSupport.EXCEPTION, e);
                 }
+            }
             context.setHttpServer(null);
             return true;
         }
         return false;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Add a context.
-     * As contexts cannot be publicly created, this may be used to
-     * alias an existing context.
+     * As contexts cannot be publicly created, this may be used to alias an existing context.
      *
      * @param virtualHost The virtual host or null for all hosts.
      * @param context
      */
-    public HttpContext addContext(String virtualHost,
-                                  HttpContext context) {
-        if (virtualHost != null)
+    public HttpContext addContext(String virtualHost, HttpContext context) {
+        if (virtualHost != null) {
             context.addVirtualHost(virtualHost);
+        }
         addContext(context);
         return context;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Create and add a new context.
-     * Note that multiple contexts can be created for the same
-     * virtualHost and contextPath. Requests are offered to multiple
+     * Note that multiple contexts can be created for the same virtualHost and contextPath. Requests are offered to multiple
      * contexts in the order they where added to the HttpServer.
      *
      * @param contextPath
@@ -519,12 +385,9 @@ public class HttpServer extends Container
         return hc;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Create and add a new context.
-     * Note that multiple contexts can be created for the same
-     * virtualHost and contextPath. Requests are offered to multiple
+     * Note that multiple contexts can be created for the same virtualHost and contextPath. Requests are offered to multiple
      * contexts in the order they where added to the HttpServer.
      *
      * @param virtualHost     Virtual hostname or null for all hosts.
@@ -532,17 +395,17 @@ public class HttpServer extends Container
      * @return A HttpContext instance created by a call to newHttpContext.
      */
     public HttpContext addContext(String virtualHost, String contextPathSpec) {
-        if (virtualHost != null && virtualHost.length() == 0)
+        if (virtualHost != null && virtualHost.length() == 0) {
             virtualHost = null;
+        }
         HttpContext hc = newHttpContext();
         hc.setContextPath(contextPathSpec);
-        if (virtualHost != null)
+        if (virtualHost != null) {
             hc.addVirtualHost(virtualHost);
+        }
         addContext(hc);
         return hc;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get specific context.
@@ -560,8 +423,9 @@ public class HttpServer extends Container
         if (contextMap != null) {
             List contextList = (List) contextMap.get(contextPathSpec);
             if (contextList != null) {
-                if (i >= contextList.size())
+                if (i >= contextList.size()) {
                     return null;
+                }
                 hc = (HttpContext) contextList.get(i);
             }
         }
@@ -574,8 +438,7 @@ public class HttpServer extends Container
      *
      * @param virtualHost     The virtual host or null for all hosts.
      * @param contextPathSpec
-     * @return HttpContext. If multiple contexts exist for the same
-     * virtualHost and pathSpec, the most recently added context is returned.
+     * @return HttpContext. If multiple contexts exist for the same virtualHost and pathSpec, the most recently added context is returned.
      * If no context exists, a new context is created by a call to newHttpContext.
      */
     public HttpContext getContext(String virtualHost, String contextPathSpec) {
@@ -585,36 +448,30 @@ public class HttpServer extends Container
 
         if (contextMap != null) {
             List contextList = (List) contextMap.get(contextPathSpec);
-            if (contextList != null && contextList.size() > 0)
+            if (contextList != null && contextList.size() > 0) {
                 hc = (HttpContext) contextList.get(contextList.size() - 1);
+            }
         }
-        if (hc == null)
+        if (hc == null) {
             hc = addContext(virtualHost, contextPathSpec);
-
+        }
         return hc;
     }
-
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get or create context.
      *
      * @param contextPathSpec Path specification relative to the context path.
-     * @return The HttpContext  If multiple contexts exist for the same
-     * pathSpec, the most recently added context is returned.
+     * @return The HttpContext  If multiple contexts exist for the same pathSpec, the most recently added context is returned.
      * If no context exists, a new context is created by a call to newHttpContext.
      */
     public HttpContext getContext(String contextPathSpec) {
         return getContext(null, contextPathSpec);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Create a new HttpContext.
-     * Specialized HttpServer classes may override this method to
-     * return subclasses of HttpContext.
+     * Specialized HttpServer classes may override this method to return subclasses of HttpContext.
      *
      * @return A new instance of HttpContext or a subclass of HttpContext
      */
@@ -622,9 +479,6 @@ public class HttpServer extends Container
         return new HttpContext();
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     synchronized void addMapping(String virtualHost, HttpContext context) {
         // Get the map of contexts
         PathMap contextMap = (PathMap) _virtualHostMap.get(virtualHost);
@@ -634,8 +488,7 @@ public class HttpServer extends Container
         }
 
         // Generalize contextPath
-        String contextPathSpec =
-                HttpContext.canonicalContextPathSpec(context.getContextPath());
+        String contextPathSpec = HttpContext.canonicalContextPathSpec(context.getContextPath());
 
         // Get the list of contexts at this path
         List contextList = (List) contextMap.get(contextPathSpec);
@@ -647,19 +500,19 @@ public class HttpServer extends Container
         // Add the context to the list
         contextList.add(context);
 
-        if (log.isDebugEnabled())
+        if (log.isDebugEnabled()) {
             log.debug("Added " + context + " for host " + (virtualHost == null ? "*" : virtualHost));
+        }
     }
 
-    /* ------------------------------------------------------------ */
     synchronized void addMappings(HttpContext context) {
-        if (context == _notFoundContext)
+        if (context == _notFoundContext) {
             return;
-
+        }
         String[] hosts = context.getVirtualHosts();
-        if (hosts == null || hosts.length == 0)
+        if (hosts == null || hosts.length == 0) {
             hosts = __noVirtualHost;
-
+        }
         // For each host name
         for (int h = 0; h < hosts.length; h++) {
             String virtualHost = hosts[h];
@@ -667,9 +520,6 @@ public class HttpServer extends Container
         }
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     synchronized boolean removeMapping(String virtualHost, HttpContext context) {
         boolean existing = false;
         if (_virtualHostMap != null) {
@@ -678,16 +528,17 @@ public class HttpServer extends Container
             Iterator i2 = contextMap.values().iterator();
             while (i2.hasNext()) {
                 List contextList = (List) i2.next();
-                if (contextList.remove(context))
+                if (contextList.remove(context)) {
                     existing = true;
-                if (contextList.size() == 0)
+                }
+                if (contextList.size() == 0) {
                     i2.remove();
+                }
             }
         }
         return existing;
     }
 
-    /* ------------------------------------------------------------ */
     synchronized boolean removeMappings(HttpContext context) {
         boolean existing = false;
 
@@ -695,8 +546,9 @@ public class HttpServer extends Container
             Iterator i1 = _virtualHostMap.keySet().iterator();
             while (i1.hasNext()) {
                 String virtualHost = (String) i1.next();
-                if (removeMapping(virtualHost, context))
+                if (removeMapping(virtualHost, context)) {
                     existing = true;
+                }
             }
         }
         return existing;
@@ -709,8 +561,6 @@ public class HttpServer extends Container
         return _trace;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param trace True if the TRACE method is fully implemented.
      */
@@ -718,16 +568,11 @@ public class HttpServer extends Container
         _trace = trace;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get the requests per GC.
-     * If this is set greater than zero, then the System garbage collector
-     * will be invoked after approximately this number of requests.  For
-     * predictable response, it is often best to have frequent small runs of
-     * the GC rather than infrequent large runs.  The request count is only
-     * approximate as it is not synchronized and multi CPU machines may miss
-     * counting some requests.
+     * If this is set greater than zero, then the System garbage collector will be invoked after approximately this number of requests.
+     * For predictable response, it is often best to have frequent small runs of the GC rather than infrequent large runs.
+     * The request count is only approximate as it is not synchronized and multi CPU machines may miss counting some requests.
      *
      * @return Approx requests per garbage collection.
      */
@@ -737,12 +582,9 @@ public class HttpServer extends Container
 
     /**
      * Set the requests per GC.
-     * If this is set greater than zero, then the System garbage collector
-     * will be invoked after approximately this number of requests.  For
-     * predictable response, it is often best to have frequent small runs of
-     * the GC rather than infrequent large runs.  The request count is only
-     * approximate as it is not synchronized and multi CPU machines may miss
-     * counting some requests.
+     * If this is set greater than zero, then the System garbage collector will be invoked after approximately this number of requests.
+     * For predictable response, it is often best to have frequent small runs of the GC rather than infrequent large runs.
+     * The request count is only approximate as it is not synchronized and multi CPU machines may miss counting some requests.
      *
      * @param requestsPerGC Approx requests per garbage collection.
      */
@@ -788,14 +630,11 @@ public class HttpServer extends Container
 
     /**
      * Start all handlers then listeners.
-     * If a subcomponent fails to start, it's exception is added to a
-     * org.mortbay.util.MultiException and the start method continues.
+     * If a subcomponent fails to start, it's exception is added to a org.mortbay.util.MultiException and the start method continues.
      *
-     * @throws MultiException A collection of exceptions thrown by
-     *                        start() method of subcomponents of the HttpServer.
+     * @throws MultiException A collection of exceptions thrown by start() method of subcomponents of the HttpServer.
      */
-    protected synchronized void doStart()
-            throws Exception {
+    protected synchronized void doStart() throws Exception {
         log.info("Version " + Version.getImplVersion());
 
         MultiException mex = new MultiException();
@@ -828,12 +667,13 @@ public class HttpServer extends Container
         for (int l = 0; l < _listeners.size(); l++) {
             HttpListener listener = (HttpListener) _listeners.get(l);
             listener.setHttpServer(this);
-            if (!listener.isStarted())
+            if (!listener.isStarted()) {
                 try {
                     listener.start();
                 } catch (Exception e) {
                     mex.add(e);
                 }
+            }
         }
 
         mex.ifExceptionThrowMulti();
@@ -843,21 +683,20 @@ public class HttpServer extends Container
      * Stop all listeners then all contexts.
      * Equivalent to stop(false);
      *
-     * @throws InterruptedException If interrupted, stop may not have
-     *                              been called on everything.
+     * @throws InterruptedException If interrupted, stop may not have been called on everything.
      */
-    protected synchronized void doStop()
-            throws InterruptedException {
+    protected synchronized void doStop() throws InterruptedException {
         for (int l = 0; l < _listeners.size(); l++) {
             HttpListener listener = (HttpListener) _listeners.get(l);
             if (listener.isStarted()) {
                 try {
                     listener.stop();
                 } catch (Exception e) {
-                    if (log.isDebugEnabled())
+                    if (log.isDebugEnabled()) {
                         log.warn(LogSupport.EXCEPTION, e);
-                    else
+                    } else {
                         log.warn(e.toString());
+                    }
                 }
             }
         }
@@ -874,8 +713,9 @@ public class HttpServer extends Container
         }
         _notFoundContext = null;
 
-        if (_requestLog != null && _requestLog.isStarted())
+        if (_requestLog != null && _requestLog.isStarted()) {
             _requestLog.stop();
+        }
     }
 
     /**
@@ -885,8 +725,7 @@ public class HttpServer extends Container
      *                 then this method will wait for requestsActive to go to zero
      *                 before stopping that context.
      */
-    public synchronized void stop(boolean graceful)
-            throws InterruptedException {
+    public synchronized void stop(boolean graceful) throws InterruptedException {
         boolean ov = _gracefulStop;
         try {
             _gracefulStop = graceful;
@@ -902,8 +741,7 @@ public class HttpServer extends Container
      *
      * @throws InterruptedException
      */
-    public void join()
-            throws InterruptedException {
+    public void join() throws InterruptedException {
         for (int l = 0; l < _listeners.size(); l++) {
             HttpListener listener = (HttpListener) _listeners.get(l);
             if (listener.isStarted() && listener instanceof ThreadPool) {
@@ -914,8 +752,7 @@ public class HttpServer extends Container
 
     /**
      * Define a virtual host alias.
-     * All requests to the alias are handled the same as request for
-     * the virtualHost.
+     * All requests to the alias are handled the same as request for the virtualHost.
      *
      * @param virtualHost Host name or IP
      * @param alias       Alias hostname or IP
@@ -924,12 +761,12 @@ public class HttpServer extends Container
     public void addHostAlias(String virtualHost, String alias) {
         log.warn("addHostAlias is deprecated. Use HttpContext.addVirtualHost");
         Object contextMap = _virtualHostMap.get(virtualHost);
-        if (contextMap == null)
+        if (contextMap == null) {
             throw new IllegalArgumentException("No Such Host: " + virtualHost);
+        }
         _virtualHostMap.put(alias, contextMap);
     }
 
-    /* ------------------------------------------------------------ */
     public RequestLog getRequestLog() {
         return _requestLog;
     }
@@ -940,11 +777,13 @@ public class HttpServer extends Container
      * @param log RequestLog to use.
      */
     public synchronized void setRequestLog(RequestLog log) {
-        if (_requestLog != null)
+        if (_requestLog != null) {
             removeComponent(_requestLog);
+        }
         _requestLog = log;
-        if (_requestLog != null)
+        if (_requestLog != null) {
             addComponent(_requestLog);
+        }
     }
 
     /**
@@ -954,22 +793,17 @@ public class HttpServer extends Container
      * @param response The response generated.
      * @param length   The length of the body.
      */
-    void log(HttpRequest request,
-             HttpResponse response,
-             int length) {
-        if (_requestLog != null &&
-                request != null &&
-                response != null)
+    void log(HttpRequest request, HttpResponse response, int length) {
+        if (_requestLog != null && request != null && response != null) {
             _requestLog.log(request, response, length);
+        }
     }
 
     /**
      * Service a request.
-     * Handle the request by passing it to the HttpHandler contained in
-     * the mapped HttpContexts.
-     * The requests host and path are used to select a list of
-     * HttpContexts. Each HttpHandler in these context is offered
-     * the request in turn, until the request is handled.
+     * Handle the request by passing it to the HttpHandler contained in the mapped HttpContexts.
+     * The requests host and path are used to select a list of HttpContexts.
+     * Each HttpHandler in these context is offered the request in turn, until the request is handled.
      * <p>
      * If no handler handles the request, 404 Not Found is returned.
      *
@@ -979,8 +813,7 @@ public class HttpServer extends Container
      * @throws IOException
      * @throws HttpException
      */
-    public HttpContext service(HttpRequest request, HttpResponse response)
-            throws IOException, HttpException {
+    public HttpContext service(HttpRequest request, HttpResponse response) throws IOException, HttpException {
         String host = request.getHost();
 
         if (_requestsPerGC > 0 && _gcRequests++ > _requestsPerGC) {
@@ -993,31 +826,33 @@ public class HttpServer extends Container
             if (contextMap != null) {
                 List contextLists = contextMap.getMatches(request.getPath());
                 if (contextLists != null) {
-                    if (log.isTraceEnabled()) log.trace("Contexts at " + request.getPath() + ": " + contextLists);
-
+                    if (log.isTraceEnabled()) {
+                        log.trace("Contexts at " + request.getPath() + ": " + contextLists);
+                    }
                     for (int i = 0; i < contextLists.size(); i++) {
-                        Map.Entry entry =
-                                (Map.Entry)
-                                        contextLists.get(i);
+                        Map.Entry entry = (Map.Entry) contextLists.get(i);
                         List contextList = (List) entry.getValue();
 
                         for (int j = 0; j < contextList.size(); j++) {
-                            HttpContext context =
-                                    (HttpContext) contextList.get(j);
+                            HttpContext context = (HttpContext) contextList.get(j);
 
-                            if (log.isDebugEnabled()) log.debug("Try " + context + "," + j);
+                            if (log.isDebugEnabled()) {
+                                log.debug("Try " + context + "," + j);
+                            }
 
                             context.handle(request, response);
-                            if (request.isHandled())
+                            if (request.isHandled()) {
                                 return context;
+                            }
                         }
                     }
                 }
             }
 
             // try no host
-            if (host == null)
+            if (host == null) {
                 break;
+            }
             host = null;
         }
 
@@ -1028,9 +863,8 @@ public class HttpServer extends Container
                 _notFoundContext.setHttpServer(this);
 
                 try {
-                    _notFoundContext
-                            .addHandler((NotFoundHandler) Class.forName
-                                    ("net.lightbody.bmp.proxy.jetty.http.handler.RootNotFoundHandler").newInstance());
+                    _notFoundContext.addHandler((NotFoundHandler)
+                            Class.forName("net.lightbody.bmp.proxy.jetty.http.handler.RootNotFoundHandler").newInstance());
                 } catch (Exception e) {
                     _notFoundContext.addHandler(new NotFoundHandler());
                 }
@@ -1044,31 +878,28 @@ public class HttpServer extends Container
             }
 
             _notFoundContext.handle(request, response);
-            if (!request.isHandled())
+            if (!request.isHandled()) {
                 response.sendError(HttpResponse.__404_Not_Found);
+            }
             return _notFoundContext;
         }
     }
 
     /**
      * Find handler.
-     * Find a handler for a URI.  This method is provided for
-     * the servlet context getContext method to search for another
-     * context by URI.  A list of hosts may be passed to qualify the
-     * search.
+     * Find a handler for a URI.  This method is provided for the servlet context getContext method to search for another
+     * context by URI.  A list of hosts may be passed to qualify the search.
      *
      * @param uri    URI that must be satisfied by the servlet handler
      * @param vhosts null or a list of virtual hosts names to search
      * @return HttpHandler
      */
-    public HttpHandler findHandler(Class handlerClass,
-                                   String uri,
-                                   String[] vhosts) {
+    public HttpHandler findHandler(Class handlerClass, String uri, String[] vhosts) {
         uri = URI.stripPath(uri);
 
-        if (vhosts == null || vhosts.length == 0)
+        if (vhosts == null || vhosts.length == 0) {
             vhosts = __noVirtualHost;
-
+        }
         for (int h = 0; h < vhosts.length; h++) {
             String host = vhosts[h];
 
@@ -1078,20 +909,16 @@ public class HttpServer extends Container
                 if (contextLists != null) {
 
                     for (int i = 0; i < contextLists.size(); i++) {
-                        Map.Entry entry =
-                                (Map.Entry)
-                                        contextLists.get(i);
+                        Map.Entry entry = (Map.Entry) contextLists.get(i);
 
                         List contextList = (List) entry.getValue();
 
                         for (int j = 0; j < contextList.size(); j++) {
-                            HttpContext context =
-                                    (HttpContext) contextList.get(j);
-
+                            HttpContext context = (HttpContext) contextList.get(j);
                             HttpHandler handler = context.getHandler(handlerClass);
-
-                            if (handler != null)
+                            if (handler != null) {
                                 return handler;
+                            }
                         }
                     }
                 }
@@ -1100,7 +927,6 @@ public class HttpServer extends Container
         return null;
     }
 
-    /* ------------------------------------------------------------ */
     public UserRealm addRealm(UserRealm realm) {
         return (UserRealm) _realmMap.put(realm.getName(), realm);
     }
@@ -1114,19 +940,18 @@ public class HttpServer extends Container
      */
     public UserRealm getRealm(String realmName) {
         if (realmName == null) {
-            if (_realmMap.size() == 1)
+            if (_realmMap.size() == 1) {
                 return (UserRealm) _realmMap.values().iterator().next();
+            }
             log.warn("Null realmName with multiple known realms");
         }
         return (UserRealm) _realmMap.get(realmName);
     }
 
-    /* ------------------------------------------------------------ */
     public UserRealm removeRealm(String realmName) {
         return (UserRealm) _realmMap.remove(realmName);
     }
 
-    /* ------------------------------------------------------------ */
     public Map getHostMap() {
         return _virtualHostMap;
     }
@@ -1137,10 +962,6 @@ public class HttpServer extends Container
     public boolean getResolveRemoteHost() {
         return _resolveRemoteHost;
     }
-
-
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param resolveRemoteHost True if the remote host name of connections is resolved.
@@ -1180,8 +1001,6 @@ public class HttpServer extends Container
         _requestsDurationTotal = 0;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return True if statistics collection is turned on.
      */
@@ -1189,17 +1008,10 @@ public class HttpServer extends Container
         return _statsOn;
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     public void setStatsOn(boolean on) {
         log.info("Statistics on = " + on + " for " + this);
         _statsOn = on;
     }
-
-
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return Timestamp stats were started at.
@@ -1208,16 +1020,12 @@ public class HttpServer extends Container
         return _statsOn ? (System.currentTimeMillis() - _statsStartedAt) : 0;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return Returns the connectionsDurationMin.
      */
     public long getConnectionsDurationMin() {
         return _connectionsDurationMin;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return Returns the connectionsDurationTotal.
@@ -1226,16 +1034,12 @@ public class HttpServer extends Container
         return _connectionsDurationTotal;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return Returns the connectionsOpenMin.
      */
     public int getConnectionsOpenMin() {
         return _connectionsOpenMin;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return Returns the connectionsRequestsMin.
@@ -1244,16 +1048,12 @@ public class HttpServer extends Container
         return _connectionsRequestsMin;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return Returns the requestsActiveMin.
      */
     public int getRequestsActiveMin() {
         return _requestsActiveMin;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return Returns the requestsDurationMin.
@@ -1262,8 +1062,6 @@ public class HttpServer extends Container
         return _requestsDurationMin;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return Returns the requestsDurationTotal.
      */
@@ -1271,211 +1069,175 @@ public class HttpServer extends Container
         return _requestsDurationTotal;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Number of connections accepted by the server since
-     * statsReset() called. Undefined if setStatsOn(false).
+     * @return Number of connections accepted by the server since statsReset() called. Undefined if setStatsOn(false).
      */
     public int getConnections() {
         return _connections;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Number of connections currently open that were opened
-     * since statsReset() called. Undefined if setStatsOn(false).
+     * @return Number of connections currently open that were opened since statsReset() called. Undefined if setStatsOn(false).
      */
     public int getConnectionsOpen() {
         return _connectionsOpen;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Maximum number of connections opened simultaneously
-     * since statsReset() called. Undefined if setStatsOn(false).
+     * @return Maximum number of connections opened simultaneously since statsReset() called. Undefined if setStatsOn(false).
      */
     public int getConnectionsOpenMax() {
         return _connectionsOpenMax;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Average duration in milliseconds of open connections
-     * since statsReset() called. Undefined if setStatsOn(false).
+     * @return Average duration in milliseconds of open connections since statsReset() called. Undefined if setStatsOn(false).
      */
     public long getConnectionsDurationAve() {
         return _connections == 0 ? 0 : (_connectionsDurationTotal / _connections);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Maximum duration in milliseconds of an open connection
-     * since statsReset() called. Undefined if setStatsOn(false).
+     * @return Maximum duration in milliseconds of an open connection since statsReset() called. Undefined if setStatsOn(false).
      */
     public long getConnectionsDurationMax() {
         return _connectionsDurationMax;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Average number of requests per connection
-     * since statsReset() called. Undefined if setStatsOn(false).
+     * @return Average number of requests per connection since statsReset() called. Undefined if setStatsOn(false).
      */
     public int getConnectionsRequestsAve() {
         return _connections == 0 ? 0 : (_requests / _connections);
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Maximum number of requests per connection
-     * since statsReset() called. Undefined if setStatsOn(false).
+     * @return Maximum number of requests per connection since statsReset() called. Undefined if setStatsOn(false).
      */
     public int getConnectionsRequestsMax() {
         return _connectionsRequestsMax;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Number of errors generated while handling requests.
-     * since statsReset() called. Undefined if setStatsOn(false).
+     * @return Number of errors generated while handling requests since statsReset() called. Undefined if setStatsOn(false).
      */
     public int getErrors() {
         return _errors;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Number of requests
-     * since statsReset() called. Undefined if setStatsOn(false).
+     * @return Number of requests since statsReset() called. Undefined if setStatsOn(false).
      */
     public int getRequests() {
         return _requests;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Number of requests currently active.
-     * Undefined if setStatsOn(false).
+     * @return Number of requests currently active. Undefined if setStatsOn(false).
      */
     public int getRequestsActive() {
         return _requestsActive;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Maximum number of active requests
-     * since statsReset() called. Undefined if setStatsOn(false).
+     * @return Maximum number of active requests since statsReset() called. Undefined if setStatsOn(false).
      */
     public int getRequestsActiveMax() {
         return _requestsActiveMax;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Average duration of request handling in milliseconds
-     * since statsReset() called. Undefined if setStatsOn(false).
+     * @return Average duration of request handling in milliseconds since statsReset() called. Undefined if setStatsOn(false).
      */
     public long getRequestsDurationAve() {
         return _requests == 0 ? 0 : (_requestsDurationTotal / _requests);
     }
 
     /**
-     * @return Get maximum duration in milliseconds of request handling
-     * since statsReset() called. Undefined if setStatsOn(false).
+     * @return Get maximum duration in milliseconds of request handling since statsReset() called. Undefined if setStatsOn(false).
      */
     public long getRequestsDurationMax() {
         return _requestsDurationMax;
     }
 
-    /* ------------------------------------------------------------ */
     void statsOpenConnection() {
         synchronized (_statsLock) {
             _connectionsOpen++;
-            if (_connectionsOpen > _connectionsOpenMax)
+            if (_connectionsOpen > _connectionsOpenMax) {
                 _connectionsOpenMax = _connectionsOpen;
+            }
         }
     }
 
-    /* ------------------------------------------------------------ */
     void statsGotRequest() {
         synchronized (_statsLock) {
             _requestsActive++;
-            if (_requestsActive > _requestsActiveMax)
+            if (_requestsActive > _requestsActiveMax) {
                 _requestsActiveMax = _requestsActive;
+            }
         }
     }
 
-    /* ------------------------------------------------------------ */
     void statsEndRequest(long duration, boolean ok) {
         synchronized (_statsLock) {
             _requests++;
             _requestsActive--;
-            if (_requestsActive < 0)
+            if (_requestsActive < 0) {
                 _requestsActive = 0;
-            if (_requestsActive < _requestsActiveMin)
+            }
+            if (_requestsActive < _requestsActiveMin) {
                 _requestsActiveMin = _requestsActive;
+            }
 
             if (ok) {
                 _requestsDurationTotal += duration;
-                if (_requestsDurationMin == 0 || duration < _requestsDurationMin)
+                if (_requestsDurationMin == 0 || duration < _requestsDurationMin) {
                     _requestsDurationMin = duration;
-                if (duration > _requestsDurationMax)
+                }
+                if (duration > _requestsDurationMax) {
                     _requestsDurationMax = duration;
-            } else
+                }
+            } else {
                 _errors++;
+            }
         }
     }
 
-
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     void statsCloseConnection(long duration, int requests) {
         synchronized (_statsLock) {
             _connections++;
             _connectionsOpen--;
             _connectionsDurationTotal += duration;
-            if (_connectionsOpen < 0)
+            if (_connectionsOpen < 0) {
                 _connectionsOpen = 0;
-            if (_connectionsOpen < _connectionsOpenMin)
+            }
+            if (_connectionsOpen < _connectionsOpenMin) {
                 _connectionsOpenMin = _connectionsOpen;
-            if (_connectionsDurationMin == 0 || duration < _connectionsDurationMin)
+            }
+            if (_connectionsDurationMin == 0 || duration < _connectionsDurationMin) {
                 _connectionsDurationMin = duration;
-            if (duration > _connectionsDurationMax)
+            }
+            if (duration > _connectionsDurationMax) {
                 _connectionsDurationMax = duration;
-            if (_connectionsRequestsMin == 0 || requests < _connectionsRequestsMin)
+            }
+            if (_connectionsRequestsMin == 0 || requests < _connectionsRequestsMin) {
                 _connectionsRequestsMin = requests;
-            if (requests > _connectionsRequestsMax)
+            }
+            if (requests > _connectionsRequestsMax) {
                 _connectionsRequestsMax = requests;
+            }
         }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Save the HttpServer
+     * Save the HttpServer.
      * The server is saved by serialization to the given filename or URL.
      *
      * @param saveat A file or URL to save the configuration at.
      * @throws MalformedURLException
      * @throws IOException
      */
-    public void save(String saveat)
-            throws MalformedURLException,
-            IOException {
+    public void save(String saveat) throws MalformedURLException, IOException {
         Resource resource = Resource.newResource(saveat);
         ObjectOutputStream out = new ObjectOutputStream(resource.getOutputStream());
         out.writeObject(this);
@@ -1484,23 +1246,23 @@ public class HttpServer extends Container
         log.info("Saved " + this + " to " + resource);
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-
     /**
      * Destroy a stopped server.
-     * Remove all components and send notifications to all event
-     * listeners. The HttpServer must be stopped before it can be destroyed.
+     * Remove all components and send notifications to all event listeners.
+     * The HttpServer must be stopped before it can be destroyed.
      */
     public void destroy() {
         __servers.remove(this);
-        if (isStarted())
+        if (isStarted()) {
             throw new IllegalStateException("Started");
-        if (_listeners != null)
+        }
+        if (_listeners != null) {
             _listeners.clear();
+        }
         _listeners = null;
-        if (_virtualHostMap != null)
+        if (_virtualHostMap != null) {
             _virtualHostMap.clear();
+        }
         _virtualHostMap = null;
         _notFoundContext = null;
 

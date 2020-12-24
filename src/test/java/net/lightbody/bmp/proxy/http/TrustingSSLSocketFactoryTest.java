@@ -14,6 +14,9 @@ import java.security.UnrecoverableKeyException;
 
 import static org.junit.Assert.assertNotNull;
 
+/**
+ * Test class to test TrustingSSLSocketFactory class.
+ */
 public class TrustingSSLSocketFactoryTest {
     private TrustingSSLSocketFactory underTest;
 

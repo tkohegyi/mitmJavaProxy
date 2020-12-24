@@ -33,25 +33,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-
-/* ------------------------------------------------------------ */
-
 /**
  * The Jetty HttpServer.
  * <p>
- * This specialization of org.mortbay.http.HttpServer adds knowledge
- * about servlets and their specialized contexts.   It also included
- * support for initialization from xml configuration files
- * that follow the XmlConfiguration dtd.
+ * This specialization of org.mortbay.http.HttpServer adds knowledge about servlets and their specialized contexts.
+ * It also included support for initialization from xml configuration files that follow the XmlConfiguration dtd.
  * <p>
- * HttpContexts created by Server are of the type
- * org.mortbay.jetty.servlet.ServletHttpContext unless otherwise
- * specified.
+ * HttpContexts created by Server are of the type org.mortbay.jetty.servlet.ServletHttpContext unless otherwise specified.
  * <p>
- * This class also provides a main() method which starts a server for
- * each config file passed on the command line.  If the system
- * property JETTY_NO_SHUTDOWN_HOOK is not set to true, then a shutdown
- * hook is thread is registered to stop these servers.
+ * This class also provides a main() method which starts a server for each config file passed on the command line.
+ * If the system property JETTY_NO_SHUTDOWN_HOOK is not set to true,
+ * then a shutdown hook is thread is registered to stop these servers.
  *
  * @author Greg Wilkins (gregw)
  * @version $Revision: 1.40 $
@@ -65,50 +57,36 @@ public class BmpServer extends HttpServer {
     private String _configuration;
     private String _rootWebApp;
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      */
     public BmpServer() {
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      *
-     * @param configuration The filename or URL of the XML
-     *                      configuration file.
+     * @param configuration The filename or URL of the XML configuration file.
      */
-    public BmpServer(String configuration)
-            throws IOException {
+    public BmpServer(String configuration) throws IOException {
         this(Resource.newResource(configuration).getURL());
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      *
-     * @param configuration The filename or URL of the XML
-     *                      configuration file.
+     * @param configuration The filename or URL of the XML configuration file.
      */
-    public BmpServer(Resource configuration)
-            throws IOException {
+    public BmpServer(Resource configuration) throws IOException {
         this(configuration.getURL());
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      *
-     * @param configuration The filename or URL of the XML
-     *                      configuration file.
+     * @param configuration The filename or URL of the XML configuration file.
      */
-    public BmpServer(URL configuration)
-            throws IOException {
+    public BmpServer(URL configuration) throws IOException {
         _configuration = configuration.toString();
         BmpServer.hookThread.add(this);
         try {
@@ -125,9 +103,6 @@ public class BmpServer extends HttpServer {
         }
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     public static void main(String[] arg) {
         String[] dftConfig = {"etc/jetty.xml"};
 
@@ -144,7 +119,6 @@ public class BmpServer extends HttpServer {
                 bmpServers[i] = new BmpServer(arg[i]);
                 bmpServers[i].setStopAtShutdown(true);
                 bmpServers[i].start();
-
             } catch (Exception e) {
                 log.warn(LogSupport.EXCEPTION, e);
             }
@@ -160,22 +134,17 @@ public class BmpServer extends HttpServer {
         }
     }
 
-    /* ------------------------------------------------------------ */
     public boolean getStopAtShutdown() {
         return hookThread.contains(this);
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     public void setStopAtShutdown(boolean stop) {
-        if (stop)
+        if (stop) {
             hookThread.add(this);
-        else
+        } else {
             hookThread.remove(this);
+        }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get the root webapp name.
@@ -185,8 +154,6 @@ public class BmpServer extends HttpServer {
     public String getRootWebApp() {
         return _rootWebApp;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Set the root webapp name.
@@ -200,17 +167,17 @@ public class BmpServer extends HttpServer {
     /**
      * Configure the server from an XML file.
      *
-     * @param configuration The filename or URL of the XML
-     *                      configuration file.
+     * @param configuration The filename or URL of the XML configuration file.
      */
-    public void configure(String configuration)
-            throws IOException {
+    public void configure(String configuration) throws IOException {
 
         URL url = Resource.newResource(configuration).getURL();
-        if (_configuration != null && _configuration.equals(url.toString()))
+        if (_configuration != null && _configuration.equals(url.toString())) {
             return;
-        if (_configuration != null)
+        }
+        if (_configuration != null) {
             throw new IllegalStateException("Already configured with " + _configuration);
+        }
         try {
             XmlConfiguration config = new XmlConfiguration(url);
             _configuration = url.toString();
@@ -223,21 +190,14 @@ public class BmpServer extends HttpServer {
         }
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     public String getConfiguration() {
         return _configuration;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Create a new ServletHttpContext.
-     * Ths method is called by HttpServer to creat new contexts.  Thus
-     * calls to addContext or getContext that result in a new Context
-     * being created will return an
-     * org.mortbay.jetty.servlet.ServletHttpContext instance.
+     * Ths method is called by HttpServer to creat new contexts. Thus calls to addContext or getContext that result in a new Context
+     * being created will return an org.mortbay.jetty.servlet.ServletHttpContext instance.
      *
      * @return ServletHttpContext
      */
@@ -245,218 +205,164 @@ public class BmpServer extends HttpServer {
         return new ServletHttpContext();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Create a new WebApplicationContext.
-     * Ths method is called by Server to creat new contexts for web
-     * applications.  Thus calls to addWebApplication that result in
-     * a new Context being created will return an correct class instance.
-     * Derived class can override this method to create instance of its
-     * own class derived from WebApplicationContext in case it needs more
-     * functionality.
+     * Ths method is called by Server to creat new contexts for web applications. Thus calls to addWebApplication that result in
+     * a new Context being created will return an correct class instance. Derived class can override this method
+     * to create instance of its own class derived from WebApplicationContext in case it needs more functionality.
      *
      * @param webApp The Web application directory or WAR file.
      * @return WebApplicationContext
      */
-    protected WebApplicationContext newWebApplicationContext(
-            String webApp
-    ) {
+    protected WebApplicationContext newWebApplicationContext(String webApp) {
         return new WebApplicationContext(webApp);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Add Web Application.
      *
-     * @param contextPathSpec The context path spec. Which must be of
-     *                        the form / or /path/*
+     * @param contextPathSpec The context path spec. Which must be of the form / or /path/*
      * @param webApp          The Web application directory or WAR file.
      * @return The WebApplicationContext
      * @throws IOException
      */
-    public WebApplicationContext addWebApplication(String contextPathSpec,
-                                                   String webApp)
-            throws IOException {
+    public WebApplicationContext addWebApplication(String contextPathSpec, String webApp) throws IOException {
         return addWebApplication(null, contextPathSpec, webApp);
     }
-
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Add Web Application.
      *
      * @param virtualHost     Virtual host name or null
-     * @param contextPathSpec The context path spec. Which must be of
-     *                        the form / or /path/*
+     * @param contextPathSpec The context path spec. Which must be of the form / or /path/*
      * @param webApp          The Web application directory or WAR file.
      * @return The WebApplicationContext
      * @throws IOException
      */
-    public WebApplicationContext addWebApplication(String virtualHost,
-                                                   String contextPathSpec,
-                                                   String webApp)
-            throws IOException {
-        WebApplicationContext appContext =
-                newWebApplicationContext(webApp);
+    public WebApplicationContext addWebApplication(String virtualHost, String contextPathSpec, String webApp) throws IOException {
+        WebApplicationContext appContext = newWebApplicationContext(webApp);
         appContext.setContextPath(contextPathSpec);
         addContext(virtualHost, appContext);
-        if (log.isDebugEnabled()) log.debug("Web Application " + appContext + " added");
+        if (log.isDebugEnabled()) {
+            log.debug("Web Application " + appContext + " added");
+        }
         return appContext;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Add Web Applications.
-     * Add auto webapplications to the server.  The name of the
-     * webapp directory or war is used as the context name. If a
-     * webapp is called "root" it is added at "/".
+     * Add auto webapplications to the server. The name of the webapp directory or war is used as the context name.
+     * If a webapp is called "root" it is added at "/".
      *
      * @param webapps Directory file name or URL to look for auto webapplication.
      * @throws IOException
      */
-    public WebApplicationContext[] addWebApplications(String webapps)
-            throws IOException {
+    public WebApplicationContext[] addWebApplications(String webapps) throws IOException {
         return addWebApplications(null, webapps, null, false);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Add Web Applications.
-     * Add auto webapplications to the server.  The name of the
-     * webapp directory or war is used as the context name. If the
-     * webapp matches the rootWebApp it is added as the "/" context.
+     * Add auto webapplications to the server. The name of the webapp directory or war is used as the context name.
+     * If the webapp matches the rootWebApp it is added as the "/" context.
      *
      * @param host    Virtual host name or null
      * @param webapps Directory file name or URL to look for auto webapplication.
      * @throws IOException
      */
-    public WebApplicationContext[] addWebApplications(String host,
-                                                      String webapps)
-            throws IOException {
+    public WebApplicationContext[] addWebApplications(String host, String webapps) throws IOException {
         return addWebApplications(host, webapps, null, false);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Add Web Applications.
-     * Add auto webapplications to the server.  The name of the
-     * webapp directory or war is used as the context name. If the
-     * webapp matches the rootWebApp it is added as the "/" context.
+     * Add auto webapplications to the server. The name of the webapp directory or war is used as the context name.
+     * If the webapp matches the rootWebApp it is added as the "/" context.
      *
      * @param host    Virtual host name or null
-     * @param webapps Directory file name or URL to look for auto
-     *                webapplication.
+     * @param webapps Directory file name or URL to look for auto webapplication.
      * @param extract If true, extract war files
      * @throws IOException
      */
-    public WebApplicationContext[] addWebApplications(String host,
-                                                      String webapps,
-                                                      boolean extract)
-            throws IOException {
+    public WebApplicationContext[] addWebApplications(String host, String webapps, boolean extract) throws IOException {
         return addWebApplications(host, webapps, null, extract);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Add Web Applications.
-     * Add auto webapplications to the server.  The name of the
-     * webapp directory or war is used as the context name. If the
-     * webapp matches the rootWebApp it is added as the "/" context.
+     * Add auto webapplications to the server. The name of the webapp directory or war is used as the context name.
+     * If the webapp matches the rootWebApp it is added as the "/" context.
      *
      * @param host     Virtual host name or null
-     * @param webapps  Directory file name or URL to look for auto
-     *                 webapplication.
+     * @param webapps  Directory file name or URL to look for auto webapplication.
      * @param defaults The defaults xml filename or URL which is
      *                 loaded before any in the web app. Must respect the web.dtd.
-     *                 If null the default defaults file is used. If the empty string, then
-     *                 no defaults file is used.
+     *                 If null the default defaults file is used. If the empty string, then no defaults file is used.
      * @param extract  If true, extract war files
      * @throws IOException
      */
-    public WebApplicationContext[] addWebApplications(String host,
-                                                      String webapps,
-                                                      String defaults,
-                                                      boolean extract)
-            throws IOException {
+    public WebApplicationContext[] addWebApplications(String host, String webapps, String defaults, boolean extract) throws IOException {
         return addWebApplications(host, webapps, defaults, extract, true);
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Add Web Applications.
-     * Add auto webapplications to the server.  The name of the
-     * webapp directory or war is used as the context name. If the
+     * Add auto webapplications to the server. The name of the webapp directory or war is used as the context name. If the
      * webapp matches the rootWebApp it is added as the "/" context.
      *
      * @param host                      Virtual host name or null
-     * @param webapps                   Directory file name or URL to look for auto
-     *                                  webapplication.
+     * @param webapps                   Directory file name or URL to look for auto webapplication.
      * @param defaults                  The defaults xml filename or URL which is
      *                                  loaded before any in the web app. Must respect the web.dtd.
-     *                                  If null the default defaults file is used. If the empty string, then
-     *                                  no defaults file is used.
+     *                                  If null the default defaults file is used. If the empty string, then no defaults file is used.
      * @param extract                   If true, extract war files
      * @param java2CompliantClassLoader True if java2 compliance is applied to all webapplications
      * @throws IOException
      */
-    public WebApplicationContext[] addWebApplications(String host,
-                                                      String webapps,
-                                                      String defaults,
-                                                      boolean extract,
-                                                      boolean java2CompliantClassLoader)
-            throws IOException {
+    public WebApplicationContext[] addWebApplications(String host, String webapps, String defaults, boolean extract, boolean java2CompliantClassLoader) throws IOException {
         ArrayList wacs = new ArrayList();
         Resource r = Resource.newResource(webapps);
-        if (!r.exists())
+        if (!r.exists()) {
             throw new IllegalArgumentException("No such webapps resource " + r);
-
-        if (!r.isDirectory())
+        }
+        if (!r.isDirectory()) {
             throw new IllegalArgumentException("Not directory webapps resource " + r);
-
+        }
         String[] files = r.list();
 
         for (int f = 0; files != null && f < files.length; f++) {
             String context = files[f];
 
-            if (context.equalsIgnoreCase("CVS/") ||
-                    context.equalsIgnoreCase("CVS") ||
-                    context.startsWith("."))
+            if (context.equalsIgnoreCase("CVS/")
+                    || context.equalsIgnoreCase("CVS")
+                    || context.startsWith(".")) {
                 continue;
-
-
-            String app = r.addPath(r.encode(files[f])).toString();
-            if (context.toLowerCase().endsWith(".war") ||
-                    context.toLowerCase().endsWith(".jar")) {
-                context = context.substring(0, context.length() - 4);
-                Resource unpacked = r.addPath(context);
-                if (unpacked != null && unpacked.exists() && unpacked.isDirectory())
-                    continue;
             }
 
-            if (_rootWebApp != null && (context.equals(_rootWebApp) || context.equals(_rootWebApp + "/")))
-                context = "/";
-            else
-                context = "/" + context;
+            String app = r.addPath(r.encode(files[f])).toString();
+            if (context.toLowerCase().endsWith(".war") || context.toLowerCase().endsWith(".jar")) {
+                context = context.substring(0, context.length() - 4);
+                Resource unpacked = r.addPath(context);
+                if (unpacked != null && unpacked.exists() && unpacked.isDirectory()) {
+                    continue;
+                }
+            }
 
-            WebApplicationContext wac = addWebApplication(host,
-                    context,
-                    app);
+            if (_rootWebApp != null && (context.equals(_rootWebApp) || context.equals(_rootWebApp + "/"))) {
+                context = "/";
+            } else {
+                context = "/" + context;
+            }
+
+            WebApplicationContext wac = addWebApplication(host, context, app);
             wac.setExtractWAR(extract);
             wac.setClassLoaderJava2Compliant(java2CompliantClassLoader);
             if (defaults != null) {
-                if (defaults.length() == 0)
+                if (defaults.length() == 0) {
                     wac.setDefaultsDescriptor(null);
-                else
+                } else {
                     wac.setDefaultsDescriptor(defaults);
+                }
             }
             wacs.add(wac);
         }
@@ -469,10 +375,8 @@ public class BmpServer extends HttpServer {
     }
 
     /**
-     * setWebApplicationConfigurationClasses
-     * Set up the list of classnames of WebApplicationContext.Configuration
-     * implementations that will be applied to configure every webapp.
-     * The list can be overridden by individual WebApplicationContexts.
+     * Set up the list of classnames of WebApplicationContext. Configuration implementations that will be applied
+     * to configure every webapp. The list can be overridden by individual WebApplicationContexts.
      */
     public void setWebApplicationConfigurationClassNames(String[] configurationClassNames) {
         if (configurationClassNames != null) {
@@ -498,12 +402,13 @@ public class BmpServer extends HttpServer {
         private void createShutdownHook() {
             if (!Boolean.getBoolean("JETTY_NO_SHUTDOWN_HOOK") && !hooked) {
                 try {
-                    Method shutdownHook = java.lang.Runtime.class.getMethod("addShutdownHook",
-                            new Class[]{java.lang.Thread.class});
+                    Method shutdownHook = java.lang.Runtime.class.getMethod("addShutdownHook", new Class[]{java.lang.Thread.class});
                     shutdownHook.invoke(Runtime.getRuntime(), new Object[]{this});
                     this.hooked = true;
                 } catch (Exception e) {
-                    if (log.isDebugEnabled()) log.debug("No shutdown hook in JVM ", e);
+                    if (log.isDebugEnabled()) {
+                        log.debug("No shutdown hook in JVM ", e);
+                    }
                 }
             }
         }
@@ -564,7 +469,9 @@ public class BmpServer extends HttpServer {
             Iterator it = servers.iterator();
             while (it.hasNext()) {
                 BmpServer svr = (BmpServer) it.next();
-                if (svr == null) continue;
+                if (svr == null) {
+                    continue;
+                }
                 try {
                     svr.stop();
                 } catch (Exception e) {

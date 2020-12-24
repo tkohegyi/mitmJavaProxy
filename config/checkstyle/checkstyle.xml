@@ -287,7 +287,7 @@
       <property name="severity" value="error" />
     </module>
     <module name="ThrowsCount">
-      <property name="max" value="3" />
+      <property name="max" value="5" />
     </module>
     <module name="SuppressWarnings">
       <property name="severity" value="error" />
