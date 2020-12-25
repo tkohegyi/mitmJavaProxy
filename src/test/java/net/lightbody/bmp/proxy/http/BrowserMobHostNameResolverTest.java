@@ -14,12 +14,8 @@ public class BrowserMobHostNameResolverTest {
 
     @Test
     public void testLibraryUsageLocalhost() throws UnknownHostException {
-        try {
-            InetAddress addr = Address.getByName("localhost");
-            Assert.assertNotNull(addr);  //this is expected in java >1.8
-        } catch (UnknownHostException e) {
-            //this is expected in java <=1.8
-        }
+        InetAddress addr = Address.getByName("localhost");
+        Assert.assertNotNull(addr);  //this is expected in java >1.8
     }
 
     @Test
