@@ -56,12 +56,10 @@ import org.apache.http.cookie.CookieOrigin;
 import org.apache.http.cookie.CookieSpec;
 import org.apache.http.cookie.CookieSpecProvider;
 import org.apache.http.cookie.MalformedCookieException;
-import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.cookie.BrowserCompatSpec;
-import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
@@ -120,21 +118,17 @@ public class BrowserMobHttpClient {
     private Har har;
     private String harPageRef;
     private boolean captureHeaders;
-    private boolean captureContent;
-    // if captureContent is set, default policy is to capture binary contents too
+    private boolean captureContent; // if captureContent is set, default policy is to capture binary contents too
     private boolean captureBinaryContent = true;
-    private SimulatedSocketFactory socketFactory;
-    private TrustingSSLSocketFactory sslSocketFactory;
-    private PoolingHttpClientConnectionManager httpClientConnMgr;
-    private HttpClient httpClient;
-    private List<BlacklistEntry> blacklistEntries = null;
-    private WhitelistEntry whitelistEntry = null;
+    private final SimulatedSocketFactory socketFactory;
+    private final TrustingSSLSocketFactory sslSocketFactory;
+    private final PoolingHttpClientConnectionManager httpClientConnMgr;
+    private final HttpClient httpClient;
     private int requestTimeout;
     private BrowserMobHostNameResolver hostNameResolver;
     private boolean decompress = true;
     private WildcardMatchingCredentialsProvider credsProvider;
     private boolean shutdown = false;
-    private AuthType authType;
 
     private boolean followRedirects = true;
     private AtomicInteger requestCounter;
@@ -356,7 +350,6 @@ public class BrowserMobHttpClient {
         }
 
         try {
-            //            long start = System.currentTimeMillis();
             boolean isResponseVolatile = ProxyServer.getResponseVolatile(); //this is the base of response volatility
             req.setResponseVolatile(isResponseVolatile);
 
@@ -365,23 +358,15 @@ public class BrowserMobHttpClient {
                 interceptor.process(req);
             }
 
-            //            long request = System.currentTimeMillis();
-            //            System.out.println("REQUEST-INTERCEPTORS: " + (request - start));
-
             // Response volatility might be overwritten in request interceptors, but not later, so from now it is fixed:
             isResponseVolatile = req.getResponseVolatile();
 
             BrowserMobHttpResponse response = execute(req, 1, isResponseVolatile);
 
-            //            long respStart = System.currentTimeMillis();
-            //            System.out.println("REQUEST-EXECUTION-RESPONSE: " + (respStart - request));
-
             for (ResponseInterceptor interceptor : responseInterceptors) {
                 interceptor.process(response);
             }
 
-            //            long responseEnd = System.currentTimeMillis();
-            //            System.out.println("RESPONSE-INTERCEPTORS: " + (responseEnd - respStart));
             if (isResponseVolatile) {
                 response.doAnswer();
             }
@@ -420,32 +405,7 @@ public class BrowserMobHttpClient {
                 method.setURI(new URI(newUrl));
                 url = newUrl;
             } catch (URISyntaxException e) {
-                LOGGER.warn("Could not rewrite url to %s", newUrl);
-            }
-        }
-
-        // handle whitelist and blacklist entries
-        int mockResponseCode = -1;
-        if (whitelistEntry != null) {
-            boolean found = false;
-            for (Pattern pattern : whitelistEntry.patterns) {
-                if (pattern.matcher(url).matches()) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                mockResponseCode = whitelistEntry.responseCode;
-            }
-        }
-
-        if (blacklistEntries != null) {
-            for (BlacklistEntry blacklistEntry : blacklistEntries) {
-                if (blacklistEntry.pattern.matcher(url).matches()) {
-                    mockResponseCode = blacklistEntry.responseCode;
-                    break;
-                }
+                LOGGER.warn("Could not rewrite url to {}", newUrl);
             }
         }
 
@@ -475,7 +435,6 @@ public class BrowserMobHttpClient {
         if (verificationText != null) {
             contentMatched = false;
         }
-        Date start = new Date();
 
         // link the object up now, before we make the request, so that if we get cut off (ie: favicon.ico request and browser shuts down)
         // we still have the attempt associated, even if we never got a response
@@ -490,18 +449,6 @@ public class BrowserMobHttpClient {
             har.getLog().addEntry(entry);
         }
 
-        /* This part puts query info into the har entry - Wilma don1t need it so cut out
-        String query = method.getURI().getRawQuery();
-        if (query != null) {
-            MultiMap<String> params = new MultiMap<String>();
-            UrlEncoded.decodeTo(query, params, "UTF-8");
-            for (String k : params.keySet()) {
-                for (Object v : params.getValues(k)) {
-                    entry.getRequest().getQueryString().add(new HarNameValuePair(k, (String) v));
-                }
-            }
-        }*/
-
         String errorMessage = null;
         HttpResponse response = null;
 
@@ -510,14 +457,6 @@ public class BrowserMobHttpClient {
         ActiveRequest activeRequest = new ActiveRequest(method, ctx, entry.getStartedDateTime());
         synchronized (activeRequests) {
             activeRequests.add(activeRequest);
-        }
-
-        // for dealing with automatic authentication
-        if (authType == AuthType.NTLM) {
-            // todo: not supported yet
-            //ctx.setAttribute("preemptive-auth", new NTLMScheme(new JCIFSEngine()));
-        } else if (authType == AuthType.BASIC) {
-            ctx.setAttribute("preemptive-auth", new BasicScheme());
         }
 
         StatusLine statusLine = null;
@@ -529,83 +468,57 @@ public class BrowserMobHttpClient {
                 method.addHeader("User-Agent", "MITM-JavaProxy V/1.0");
             }
 
-            // was the request mocked out?
-            if (mockResponseCode != -1) {
-                statusCode = mockResponseCode;
+            response = httpClient.execute(method, ctx);
 
-                // TODO: HACKY!!
-                callback.handleHeaders(new Header[]{new Header() {
-                    @Override
-                    public String getName() {
-                        return "Content-Type";
+            statusLine = response.getStatusLine();
+            statusCode = statusLine.getStatusCode();
+
+            if (callback != null) {
+                callback.handleStatusLine(statusLine);
+                callback.handleHeaders(response.getAllHeaders());
+            }
+
+            if (response.getEntity() != null) {
+                is = response.getEntity().getContent();
+            }
+
+            // check for null (resp 204 can cause HttpClient to return null, which is what Google does with http://clients1.google.com/generate_204)
+            if (is != null) {
+                Header contentEncodingHeader = response.getFirstHeader("Content-Encoding");
+                if (contentEncodingHeader != null) {
+                    if ("gzip".equalsIgnoreCase(contentEncodingHeader.getValue())) {
+                        gzipping = true;
+                    } else if ("deflate".equalsIgnoreCase(contentEncodingHeader.getValue())) {
+                        deflating = true;
                     }
-
-                    @Override
-                    public String getValue() {
-                        return "text/plain";
-                    }
-
-                    @Override
-                    public HeaderElement[] getElements() throws ParseException {
-                        return new HeaderElement[0];
-                    }
-                }});
-            } else {
-                response = httpClient.execute(method, ctx);
-
-                statusLine = response.getStatusLine();
-                statusCode = statusLine.getStatusCode();
-
-                if (callback != null) {
-                    callback.handleStatusLine(statusLine);
-                    callback.handleHeaders(response.getAllHeaders());
                 }
 
-                if (response.getEntity() != null) {
-                    is = response.getEntity().getContent();
+                // deal with GZIP content!
+                if (decompress && response.getEntity().getContentLength() != 0) { //getContentLength<0 if unknown
+                    if (gzipping) {
+                        is = new GZIPInputStream(is);
+                    } else if (deflating) {  //RAW deflate only
+                        // WARN : if system is using zlib<=1.1.4 the stream must be append with a dummy byte
+                        // that is not required for zlib>1.1.4 (not mentioned on current Inflater javadoc)
+                        is = new InflaterInputStream(is, new Inflater(true));
+                    }
                 }
 
-                // check for null (resp 204 can cause HttpClient to return null, which is what Google does with http://clients1.google.com/generate_204)
-                if (is != null) {
-                    Header contentEncodingHeader = response.getFirstHeader("Content-Encoding");
-                    if (contentEncodingHeader != null) {
-                        if ("gzip".equalsIgnoreCase(contentEncodingHeader.getValue())) {
-                            gzipping = true;
-                        } else if ("deflate".equalsIgnoreCase(contentEncodingHeader.getValue())) {
-                            deflating = true;
-                        }
+                if (isResponseVolatile) {
+                    //response content is volatile
+                    bytes = is.available();
+                    bos = new ByteArrayOutputStream();
+                    org.apache.commons.io.IOUtils.copy(is, bos);
+                } else {
+                    //response content is not volatile
+                    if (captureContent) {
+                        os = new ClonedOutputStream(os);
                     }
-
-                    // deal with GZIP content!
-                    if (decompress && response.getEntity().getContentLength() != 0) { //getContentLength<0 if unknown
-                        if (gzipping) {
-                            is = new GZIPInputStream(is);
-                        } else if (deflating) {  //RAW deflate only
-                            // WARN : if system is using zlib<=1.1.4 the stream must be append with a dummy byte
-                            // that is not required for zlib>1.1.4 (not mentioned on current Inflater javadoc)
-                            is = new InflaterInputStream(is, new Inflater(true));
-                        }
-                    }
-
-                    if (isResponseVolatile) {
-                        //response content is volatile
-                        bytes = is.available();
-                        bos = new ByteArrayOutputStream();
-                        org.apache.commons.io.IOUtils.copy(is, bos);
-                    } else {
-                        //response content is not volatile
-                        if (captureContent) {
-                            // todo - something here?
-                            os = new ClonedOutputStream(os);
-
-                        }
-                        bytes = copyWithStatsDynamic(is, os); //if copied to os, then response gone back
-                    }
+                    bytes = copyWithStatsDynamic(is, os); //if copied to os, then response gone back
                 }
             }
         } catch (Exception e) {
             errorMessage = e.toString();
-
             if (callback != null) {
                 if (activeRequest.wasTimeout) {
                     e = new ConnectTimeoutException();
@@ -615,7 +528,7 @@ public class BrowserMobHttpClient {
 
             // only log it if we're not shutdown (otherwise, errors that happen during a shutdown can likely be ignored)
             if (!shutdown) {
-                LOGGER.info(String.format("%s when requesting %s", errorMessage, url));
+                LOGGER.info("{} when requesting {}", errorMessage, url);
             }
         } finally {
             // the request is done, get it out of here
@@ -641,8 +554,6 @@ public class BrowserMobHttpClient {
         entry.setServerIPAddress(RequestInfo.get().getResolvedAddress());
         entry.setTime(RequestInfo.get().getTotalTime());
 
-        // todo: where you store this in HAR?
-        // obj.setErrorMessage(errorMessage);
         entry.getResponse().setBodySize(bytes);
         entry.getResponse().getContent().setSize(bytes);
         entry.getResponse().setStatus(statusCode);
@@ -805,7 +716,7 @@ public class BrowserMobHttpClient {
         int expectedStatusCode = req.getExpectedStatusCode();
 
         // if we didn't mock out the actual response code and the expected code isn't what we saw, we have a problem
-        if (mockResponseCode == -1 && expectedStatusCode > -1) {
+        if (expectedStatusCode > -1) {
             if (followRedirects) {
                 throw new RuntimeException("Response validation cannot be used while following redirects");
             }
@@ -919,14 +830,6 @@ public class BrowserMobHttpClient {
         this.requestTimeout = requestTimeout;
     }
 
-    public void setSocketOperationTimeout(final int readTimeout) {
-        throw new UnsupportedOperationException("setSocketTimeout does not work");
-    }
-
-    public void setConnectionTimeout(final int connectionTimeout) {
-        throw new UnsupportedOperationException("setConnectionTimeout does not work");
-    }
-
     public boolean isFollowRedirects() {
         return followRedirects;
     }
@@ -938,24 +841,6 @@ public class BrowserMobHttpClient {
 
     public void rewriteUrl(final String match, final String replace) {
         rewriteRules.add(new RewriteRule(match, replace));
-    }
-
-    // this method is provided for backwards compatibility before we renamed it to
-    // blacklistRequests (note the plural)
-    public void blacklistRequest(final String pattern, final int responseCode) {
-        blacklistRequests(pattern, responseCode);
-    }
-
-    public void blacklistRequests(final String pattern, final int responseCode) {
-        if (blacklistEntries == null) {
-            blacklistEntries = new CopyOnWriteArrayList<BlacklistEntry>();
-        }
-
-        blacklistEntries.add(new BlacklistEntry(pattern, responseCode));
-    }
-
-    public void whitelistRequests(final String[] patterns, final int responseCode) {
-        whitelistEntry = new WhitelistEntry(patterns, responseCode);
     }
 
     public void addHeader(final String name, final String value) {
@@ -1010,12 +895,6 @@ public class BrowserMobHttpClient {
         //httpClient.getParams().setParameter(ClientPNames.COOKIE_POLICY, "easy");
         decompress = false;
         setFollowRedirects(false);
-    }
-
-    private enum AuthType {
-        NONE,
-        BASIC,
-        NTLM
     }
 
     static class PreemptiveAuth implements HttpRequestInterceptor {
@@ -1076,28 +955,6 @@ public class BrowserMobHttpClient {
                     // this is fine, we're shutting it down anyway
                 }
             }
-        }
-    }
-
-    private class WhitelistEntry {
-        private final List<Pattern> patterns = new CopyOnWriteArrayList<Pattern>();
-        private final int responseCode;
-
-        private WhitelistEntry(final String[] patterns, final int responseCode) {
-            for (String pattern : patterns) {
-                this.patterns.add(Pattern.compile(pattern));
-            }
-            this.responseCode = responseCode;
-        }
-    }
-
-    private class BlacklistEntry {
-        private final Pattern pattern;
-        private final int responseCode;
-
-        private BlacklistEntry(final String pattern, final int responseCode) {
-            this.pattern = Pattern.compile(pattern);
-            this.responseCode = responseCode;
         }
     }
 

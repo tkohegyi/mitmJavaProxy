@@ -191,24 +191,8 @@ public class ProxyServer {
         client.setRequestTimeout(requestTimeout);
     }
 
-    public void setSocketOperationTimeout(final int readTimeout) {
-        client.setSocketOperationTimeout(readTimeout);
-    }
-
-    public void setConnectionTimeout(final int connectionTimeout) {
-        client.setConnectionTimeout(connectionTimeout);
-    }
-
     public void rewriteUrl(final String match, final String replace) {
         client.rewriteUrl(match, replace);
-    }
-
-    public void blacklistRequests(final String pattern, final int responseCode) {
-        client.blacklistRequests(pattern, responseCode);
-    }
-
-    public void whitelistRequests(final String[] patterns, final int responseCode) {
-        client.whitelistRequests(patterns, responseCode);
     }
 
     public void addHeader(final String name, final String value) {
