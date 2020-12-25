@@ -1,10 +1,7 @@
 package net.lightbody.bmp.core.har;
 
-import org.codehaus.jackson.annotate.JsonWriteNullProperties;
-
 import java.util.List;
 
-@JsonWriteNullProperties(value = false)
 public class HarPostData {
     private String mimeType;
     private List<HarPostDataParam> params;

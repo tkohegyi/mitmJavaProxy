@@ -1,11 +1,8 @@
 package net.lightbody.bmp.core.har;
 
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class HarRequest {
     private String method;
     private String url;
@@ -16,9 +13,6 @@ public class HarRequest {
     private HarPostData postData;
     private long headersSize; // Odd grammar in spec
     private long bodySize;
-
-    public HarRequest() {
-    }
 
     public HarRequest(String method, String url, String httpVersion) {
         this.method = method;

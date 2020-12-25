@@ -1,19 +1,12 @@
 package net.lightbody.bmp.core.har;
 
-import net.lightbody.bmp.core.json.ISO8601DateFormatter;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-
 import java.util.Date;
 
-@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class HarPage {
     private String id;
     private Date startedDateTime;
     private String title = "";
     private HarPageTimings pageTimings = new HarPageTimings();
-
-    public HarPage() {
-    }
 
     public HarPage(String id) {
         this.id = id;
@@ -28,7 +21,6 @@ public class HarPage {
         this.id = id;
     }
 
-    @JsonSerialize(using = ISO8601DateFormatter.class)
     public Date getStartedDateTime() {
         return startedDateTime;
     }

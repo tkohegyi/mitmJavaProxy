@@ -1,11 +1,8 @@
 package net.lightbody.bmp.core.har;
 
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class HarLog {
     private String version = "1.2";
     private HarNameVersion creator;

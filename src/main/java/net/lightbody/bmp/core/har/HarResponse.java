@@ -1,11 +1,8 @@
 package net.lightbody.bmp.core.har;
 
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class HarResponse {
     private int status;
     private String statusText;
@@ -16,9 +13,6 @@ public class HarResponse {
     private String redirectURL = "";
     private long headersSize;
     private long bodySize;
-
-    public HarResponse() {
-    }
 
     public HarResponse(int status, String statusText, String httpVersion) {
         this.status = status;

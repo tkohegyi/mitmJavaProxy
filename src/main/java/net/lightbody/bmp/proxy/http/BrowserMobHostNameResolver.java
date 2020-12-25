@@ -25,15 +25,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BrowserMobHostNameResolver implements HostNameResolver {
-    public static ThreadLocal<Boolean> fakeSlow = new ThreadLocal<Boolean>() {
-        @Override
-        protected Boolean initialValue() {
-            return false;
-        }
-    };
     protected final Logger logger = LoggerFactory.getLogger(BrowserMobHostNameResolver.class);
-    private Map<String, String> remappings = new ConcurrentHashMap<String, String>();
-    private Map<String, List<String>> reverseMapping = new ConcurrentHashMap<String, List<String>>();
+    private final Map<String, String> remappings = new ConcurrentHashMap<String, String>();
+    private final Map<String, List<String>> reverseMapping = new ConcurrentHashMap<String, List<String>>();
 
     private Cache cache;
     private Resolver resolver;
@@ -65,14 +59,6 @@ public class BrowserMobHostNameResolver implements HostNameResolver {
 
         Date start = new Date();
         Record[] records = lookup.run();
-        if (fakeSlow.get()) {
-            fakeSlow.set(false);
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
         Date end = new Date();
 
         if (records == null || records.length == 0) {
@@ -101,7 +87,7 @@ public class BrowserMobHostNameResolver implements HostNameResolver {
         remappings.put(source, target);
         List<String> list = reverseMapping.get(target);
         if (list == null) {
-            list = new ArrayList<String>();
+            list = new ArrayList<>();
         }
         list.add(source);
         reverseMapping.put(target, list);
@@ -132,7 +118,7 @@ public class BrowserMobHostNameResolver implements HostNameResolver {
         Name host = new Name(hostname + ".");
         //putting in a good long TTL, and using an A record, but AAAA might be desired as well for IPv6
         Record aRec = new ARecord(host, Type.A, 9999999, getInetAddressFromString(ipAddress));
-        Lookup.getDefaultCache(Type.A).addRecord(aRec, Credibility.NORMAL, this);
+        Lookup.getDefaultCache(Type.A).addRecord(aRec, Credibility.NORMAL);
     }
 
     private InetAddress getInetAddressFromString(String ip) throws UnknownHostException {

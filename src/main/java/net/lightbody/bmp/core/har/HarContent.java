@@ -1,11 +1,7 @@
 package net.lightbody.bmp.core.har;
 
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-
-@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class HarContent {
     private long size;
-    private Long compression;
     private String mimeType = "";
     private String text;
 
@@ -15,14 +11,6 @@ public class HarContent {
 
     public void setSize(long size) {
         this.size = size;
-    }
-
-    public Long getCompression() {
-        return compression;
-    }
-
-    public void setCompression(Long compression) {
-        this.compression = compression;
     }
 
     public String getMimeType() {

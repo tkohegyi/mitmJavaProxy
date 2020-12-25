@@ -4,9 +4,6 @@ public final class HarNameValuePair {
     private String name;
     private String value;
 
-    public HarNameValuePair() {
-    }
-
     public HarNameValuePair(String name, String value) {
         this.name = name;
         this.value = value;

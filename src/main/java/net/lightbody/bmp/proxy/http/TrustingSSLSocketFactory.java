@@ -9,7 +9,6 @@ import org.java_bandwidthlimiter.StreamManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.HostnameVerifier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -58,7 +57,7 @@ public class TrustingSSLSocketFactory extends SSLConnectionSocketFactory {
                         .loadKeyMaterial(keyStore, keyStorePassword.toCharArray())
                         .loadTrustMaterial(null, (cert, authType) -> true) //trust strategy is here
                         .build(),
-                (HostnameVerifier) new AllowAllHostnameVerifier()
+                new AllowAllHostnameVerifier()
         );
         //sslContextFactory.setValidateCerts(false); ???
         //sslContextFactory.setIncludeProtocols("TLSv1.2", "TLSv1.1", "TLSv1"); ???

@@ -4,9 +4,6 @@ public class HarNameVersion {
     private String name;
     private String version;
 
-    public HarNameVersion() {
-    }
-
     public HarNameVersion(String name, String version) {
         this.name = name;
         this.version = version;
