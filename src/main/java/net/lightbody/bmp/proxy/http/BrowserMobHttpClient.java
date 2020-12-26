@@ -76,7 +76,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
@@ -153,9 +152,7 @@ public class BrowserMobHttpClient {
                 .build();
 
         httpClientConnMgr = new PoolingHttpClientConnectionManager(registry) {
-            public ConnectionRequest requestConnection(
-                    final HttpRoute route,
-                    final Object state) {
+            public ConnectionRequest requestConnection(final HttpRoute route, final Object state) {
                 final ConnectionRequest wrapped = super.requestConnection(route, state);
                 return new ConnectionRequest() {
                     @Override
@@ -421,7 +418,6 @@ public class BrowserMobHttpClient {
         }
 
         String charSet = "UTF-8";
-        String responseBody = null;
 
         InputStream is = null;
         int statusCode = -998;
@@ -495,10 +491,12 @@ public class BrowserMobHttpClient {
                 if (decompress && response.getEntity().getContentLength() != 0) { //getContentLength<0 if unknown
                     if (gzipping) {
                         is = new GZIPInputStream(is);
-                    } else if (deflating) {  //RAW deflate only
-                        // WARN : if system is using zlib<=1.1.4 the stream must be append with a dummy byte
-                        // that is not required for zlib>1.1.4 (not mentioned on current Inflater javadoc)
-                        is = new InflaterInputStream(is, new Inflater(true));
+                    } else {
+                        if (deflating) {  //RAW deflate only
+                            // WARN : if system is using zlib<=1.1.4 the stream must be append with a dummy byte
+                            // that is not required for zlib>1.1.4 (not mentioned on current Inflater javadoc)
+                            is = new InflaterInputStream(is, new Inflater(true));
+                        }
                     }
                 }
 
@@ -629,7 +627,7 @@ public class BrowserMobHttpClient {
 
                 ByteArrayOutputStream copy = null;
                 boolean enableWorkWithCopy = false;
-                if (!isResponseVolatile && captureContent && os != null && os instanceof ClonedOutputStream) {
+                if (!isResponseVolatile && captureContent && os instanceof ClonedOutputStream) {
                     copy = ((ClonedOutputStream) os).getOutput();
                     enableWorkWithCopy = true;
                 }
