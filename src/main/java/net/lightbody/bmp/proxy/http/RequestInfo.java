@@ -10,7 +10,7 @@ import java.util.Date;
 public class RequestInfo {
     protected static final Logger logger = LoggerFactory.getLogger(RequestInfo.class);
 
-    private static ThreadLocal<RequestInfo> instance = new ThreadLocal<RequestInfo>() {
+    private static final ThreadLocal<RequestInfo> instance = new ThreadLocal<RequestInfo>() {
         @Override
         protected RequestInfo initialValue() {
             return new RequestInfo();
@@ -57,10 +57,11 @@ public class RequestInfo {
     private Long ping(Date start, Date end) {
         if (this.start == null) {
             this.start = start;
-        } else if (this.start.after(start)) {
-            logger.error("Saw a later start time that was before the first start time for URL {}", url);
+        } else {
+            if (this.start.after(start)) {
+                logger.error("Saw a later start time that was before the first start time for URL {}", url);
+            }
         }
-
         return end.getTime() - start.getTime();
     }
 

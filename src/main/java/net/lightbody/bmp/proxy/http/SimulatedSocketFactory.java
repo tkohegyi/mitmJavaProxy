@@ -85,6 +85,7 @@ public class SimulatedSocketFactory implements ConnectionSocketFactory {
             sock.setReuseAddress(true);
             sock.setSoLinger(true, 0);
         } catch (Exception e) {
+            //this is fine not to do anything here
         }
     }
 
@@ -99,9 +100,7 @@ public class SimulatedSocketFactory implements ConnectionSocketFactory {
         String hostString = null;
         try {
             hostString = (String) getHostMethod.invoke(remoteAddress, new Object[]{});
-        } catch (InvocationTargetException ite) {
-            throw new RuntimeException("Expecting InetSocketAddress to have a package scoped \"getHostString\" method which returns a String and takes no input");
-        } catch (IllegalAccessException iae) {
+        } catch (InvocationTargetException | IllegalAccessException e) {
             throw new RuntimeException("Expecting InetSocketAddress to have a package scoped \"getHostString\" method which returns a String and takes no input");
         }
         return hostString;

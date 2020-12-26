@@ -8,7 +8,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 public class HttpClientInterrupter {
     protected static final Logger logger = LoggerFactory.getLogger(HttpClientInterrupter.class);
-    private static Set<BrowserMobHttpClient> clients = new CopyOnWriteArraySet<BrowserMobHttpClient>();
+    private static final Set<BrowserMobHttpClient> clients = new CopyOnWriteArraySet<BrowserMobHttpClient>();
 
     static {
         Thread thread = new Thread(new Runnable() {

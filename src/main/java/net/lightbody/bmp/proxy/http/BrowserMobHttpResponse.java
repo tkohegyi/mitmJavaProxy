@@ -13,19 +13,19 @@ import java.io.OutputStream;
 
 public class BrowserMobHttpResponse {
     private final boolean responseVolatile;
-    private HarEntry entry;
-    private HttpRequestBase method;
-    private URI proxyRequestURI;
-    private HttpResponse response;
-    private boolean contentMatched;
-    private String verificationText;
-    private String errorMessage;
-    private String body;
-    private String contentType;
-    private String charSet;
-    private int status;
+    private final HarEntry entry;
+    private final HttpRequestBase method;
+    private final URI proxyRequestURI;
+    private final HttpResponse response;
+    private final boolean contentMatched;
+    private final String verificationText;
+    private final String errorMessage;
+    private final String body;
+    private final String contentType;
+    private final String charSet;
+    private final int status;
+    private final OutputStream os;
     private ByteArrayOutputStream bos;
-    private OutputStream os;
 
     public BrowserMobHttpResponse(int status, HarEntry entry, HttpRequestBase method, URI proxyRequestURI, HttpResponse response,
                                   boolean contentMatched, String verificationText, String errorMessage,
@@ -90,12 +90,6 @@ public class BrowserMobHttpResponse {
 
     public HttpResponse getRawResponse() {
         return response;
-    }
-
-    public void checkContentMatched(String info) {
-        if (!isContentMatched()) {
-            throw new RuntimeException("Content match failure. Expected '" + verificationText + "'." + (info != null ? " " + info : ""));
-        }
     }
 
     public HarEntry getEntry() {

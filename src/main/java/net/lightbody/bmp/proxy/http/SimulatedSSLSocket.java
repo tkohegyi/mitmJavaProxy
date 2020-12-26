@@ -13,9 +13,9 @@ import java.nio.channels.SocketChannel;
 import java.util.Date;
 
 public class SimulatedSSLSocket extends Socket {
-    private Socket socket;
-    private StreamManager streamManager;
-    private int timeout;
+    private final Socket socket;
+    private final StreamManager streamManager;
+    private final int timeout;
 
     public SimulatedSSLSocket(Socket socket, StreamManager streamManager, int timeout) {
         this.socket = socket;

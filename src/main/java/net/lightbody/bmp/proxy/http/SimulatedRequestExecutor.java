@@ -12,8 +12,7 @@ import java.util.Date;
 
 public class SimulatedRequestExecutor extends HttpRequestExecutor {
     @Override
-    protected HttpResponse doSendRequest(final HttpRequest request, final HttpClientConnection conn, final HttpContext context)
-            throws IOException, HttpException {
+    protected HttpResponse doSendRequest(final HttpRequest request, final HttpClientConnection conn, final HttpContext context) throws IOException, HttpException {
         Date start = new Date();
         HttpResponse response = super.doSendRequest(request, conn, context);
         RequestInfo.get().send(start, new Date());
@@ -21,8 +20,7 @@ public class SimulatedRequestExecutor extends HttpRequestExecutor {
     }
 
     @Override
-    protected HttpResponse doReceiveResponse(final HttpRequest request, final HttpClientConnection conn, final HttpContext context)
-            throws HttpException, IOException {
+    protected HttpResponse doReceiveResponse(final HttpRequest request, final HttpClientConnection conn, final HttpContext context) throws HttpException, IOException {
         Date start = new Date();
         HttpResponse response = super.doReceiveResponse(request, conn, context);
         RequestInfo.get().wait(start, new Date());

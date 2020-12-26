@@ -13,7 +13,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.HttpMultipartMode;
-import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
@@ -36,19 +36,19 @@ public class BrowserMobHttpRequest {
     private final List<NameValuePair> nvps = new ArrayList<NameValuePair>();
     private final boolean collectAdditionalInfo;
     private final HttpRequest proxyRequest;
+    private final String wilmaMessageId = TIME_STAMP_BASED_ID_GENERATOR.nextIdentifier();
     private int expectedStatusCode;
     private String verificationText;
     private StringEntity stringEntity;
     private ByteArrayEntity byteArrayEntity;
     private InputStreamEntity inputStreamEntity;
-    private MultipartEntity multipartEntity;
+    private MultipartEntityBuilder multipartEntityBuilder;
     private OutputStream outputStream;
     private RequestCallback requestCallback;
     private ByteArrayOutputStream copy;
     private String expectedLocation;
     private boolean multiPart;
     private InputStream playGround;
-    private String wilmaMessageId = TIME_STAMP_BASED_ID_GENERATOR.nextIdentifier();
     private boolean responseVolatile = false;
 
     protected BrowserMobHttpRequest(final HttpRequestBase method, final BrowserMobHttpClient client, final int expectedStatusCode,
@@ -121,7 +121,7 @@ public class BrowserMobHttpRequest {
     public void makeMultiPart() {
         if (!multiPart) {
             multiPart = true;
-            multipartEntity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+            multipartEntityBuilder = MultipartEntityBuilder.create().setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
         }
     }
 
@@ -137,15 +137,15 @@ public class BrowserMobHttpRequest {
                         enclosingRequest.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
                     } else {
                         for (NameValuePair nvp : nvps) {
-                            multipartEntity.addPart(nvp.getName(), new StringBody(nvp.getValue()));
+                            multipartEntityBuilder.addPart(nvp.getName(), new StringBody(nvp.getValue()));
                         }
-                        enclosingRequest.setEntity(multipartEntity);
+                        enclosingRequest.setEntity(multipartEntityBuilder.build());
                     }
                 } catch (UnsupportedEncodingException e) {
                     logger.error("Could not find UTF-8 encoding, something is really wrong", e);
                 }
-            } else if (multipartEntity != null) {
-                enclosingRequest.setEntity(multipartEntity);
+            } else if (multipartEntityBuilder != null) {
+                enclosingRequest.setEntity(multipartEntityBuilder.build());
             } else if (byteArrayEntity != null) {
                 enclosingRequest.setEntity(byteArrayEntity);
             } else if (stringEntity != null) {
