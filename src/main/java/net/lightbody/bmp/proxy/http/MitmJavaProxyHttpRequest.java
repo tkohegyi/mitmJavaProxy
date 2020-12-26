@@ -28,9 +28,9 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BrowserMobHttpRequest {
+public class MitmJavaProxyHttpRequest {
     public static final TimeStampBasedIdGenerator TIME_STAMP_BASED_ID_GENERATOR = new TimeStampBasedIdGenerator();
-    protected static final Logger logger = LoggerFactory.getLogger(BrowserMobHttpRequest.class);
+    protected static final Logger logger = LoggerFactory.getLogger(MitmJavaProxyHttpRequest.class);
     private final HttpRequestBase method;
     private final BrowserMobHttpClient client;
     private final List<NameValuePair> nvps = new ArrayList<NameValuePair>();
@@ -51,8 +51,8 @@ public class BrowserMobHttpRequest {
     private InputStream playGround;
     private boolean responseVolatile = false;
 
-    protected BrowserMobHttpRequest(final HttpRequestBase method, final BrowserMobHttpClient client, final int expectedStatusCode,
-                                    final boolean collectAdditionalInfo, final HttpRequest proxyRequest) {
+    protected MitmJavaProxyHttpRequest(final HttpRequestBase method, final BrowserMobHttpClient client, final int expectedStatusCode,
+                                       final boolean collectAdditionalInfo, final HttpRequest proxyRequest) {
         this.method = method;
         this.client = client;
         this.expectedStatusCode = expectedStatusCode;
@@ -126,7 +126,7 @@ public class BrowserMobHttpRequest {
     }
 
     //MAIN METHOD
-    public BrowserMobHttpResponse execute() {
+    public MitmJavaProxyHttpResponse execute() {
         // deal with PUT/POST requests
         if (method instanceof HttpEntityEnclosingRequestBase) {
             HttpEntityEnclosingRequestBase enclosingRequest = (HttpEntityEnclosingRequestBase) method;

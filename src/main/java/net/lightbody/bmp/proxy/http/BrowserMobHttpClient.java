@@ -15,7 +15,6 @@ import net.lightbody.bmp.proxy.util.CappedByteArrayOutputStream;
 import net.lightbody.bmp.proxy.util.ClonedOutputStream;
 import net.lightbody.bmp.proxy.util.IOUtils;
 import org.apache.http.Header;
-import org.apache.http.HeaderElement;
 import org.apache.http.HttpClientConnection;
 import org.apache.http.HttpConnection;
 import org.apache.http.HttpEntity;
@@ -25,7 +24,6 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.ParseException;
 import org.apache.http.StatusLine;
 import org.apache.http.auth.AuthScheme;
 import org.apache.http.auth.AuthScope;
@@ -222,55 +220,55 @@ public class BrowserMobHttpClient {
         responseInterceptors.add(interceptor);
     }
 
-    public BrowserMobHttpRequest newPost(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
+    public MitmJavaProxyHttpRequest newPost(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
         try {
             URI uri = makeUri(url);
-            return new BrowserMobHttpRequest(new HttpPost(uri), this, -1, captureContent, proxyRequest);
+            return new MitmJavaProxyHttpRequest(new HttpPost(uri), this, -1, captureContent, proxyRequest);
         } catch (URISyntaxException e) {
             throw reportBadURI(url, "POST");
         }
     }
 
-    public BrowserMobHttpRequest newGet(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
+    public MitmJavaProxyHttpRequest newGet(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
         try {
             URI uri = makeUri(url);
-            return new BrowserMobHttpRequest(new HttpGet(uri), this, -1, captureContent, proxyRequest);
+            return new MitmJavaProxyHttpRequest(new HttpGet(uri), this, -1, captureContent, proxyRequest);
         } catch (URISyntaxException e) {
             throw reportBadURI(url, "GET");
         }
     }
 
-    public BrowserMobHttpRequest newPut(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
+    public MitmJavaProxyHttpRequest newPut(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
         try {
             URI uri = makeUri(url);
-            return new BrowserMobHttpRequest(new HttpPut(uri), this, -1, captureContent, proxyRequest);
+            return new MitmJavaProxyHttpRequest(new HttpPut(uri), this, -1, captureContent, proxyRequest);
         } catch (Exception e) {
             throw reportBadURI(url, "PUT");
         }
     }
 
-    public BrowserMobHttpRequest newDelete(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
+    public MitmJavaProxyHttpRequest newDelete(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
         try {
             URI uri = makeUri(url);
-            return new BrowserMobHttpRequest(new HttpDelete(uri), this, -1, captureContent, proxyRequest);
+            return new MitmJavaProxyHttpRequest(new HttpDelete(uri), this, -1, captureContent, proxyRequest);
         } catch (URISyntaxException e) {
             throw reportBadURI(url, "DELETE");
         }
     }
 
-    public BrowserMobHttpRequest newOptions(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
+    public MitmJavaProxyHttpRequest newOptions(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
         try {
             URI uri = makeUri(url);
-            return new BrowserMobHttpRequest(new HttpOptions(uri), this, -1, captureContent, proxyRequest);
+            return new MitmJavaProxyHttpRequest(new HttpOptions(uri), this, -1, captureContent, proxyRequest);
         } catch (URISyntaxException e) {
             throw reportBadURI(url, "OPTIONS");
         }
     }
 
-    public BrowserMobHttpRequest newHead(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
+    public MitmJavaProxyHttpRequest newHead(final String url, final net.lightbody.bmp.proxy.jetty.http.HttpRequest proxyRequest) {
         try {
             URI uri = makeUri(url);
-            return new BrowserMobHttpRequest(new HttpHead(uri), this, -1, captureContent, proxyRequest);
+            return new MitmJavaProxyHttpRequest(new HttpHead(uri), this, -1, captureContent, proxyRequest);
         } catch (URISyntaxException e) {
             throw reportBadURI(url, "HEAD");
         }
@@ -324,7 +322,7 @@ public class BrowserMobHttpClient {
 
     private RuntimeException reportBadURI(final String url, final String method) {
         if (har != null && harPageRef != null) {
-            HarEntry entry = new HarEntry(harPageRef, BrowserMobHttpRequest.TIME_STAMP_BASED_ID_GENERATOR.nextIdentifier());
+            HarEntry entry = new HarEntry(harPageRef, MitmJavaProxyHttpRequest.TIME_STAMP_BASED_ID_GENERATOR.nextIdentifier());
             entry.setTime(0);
             entry.setRequest(new HarRequest(method, url, "HTTP/1.1"));
             entry.setResponse(new HarResponse(-998, "Bad URI", "HTTP/1.1"));
@@ -344,7 +342,7 @@ public class BrowserMobHttpClient {
     }
 
     //MAIN METHOD TO HANDLE A REQUEST AND PREPARE A RESULT
-    public BrowserMobHttpResponse execute(final BrowserMobHttpRequest req) {
+    public MitmJavaProxyHttpResponse execute(final MitmJavaProxyHttpRequest req) {
         if (!allowNewRequests.get()) {
             throw new RuntimeException("No more requests allowed");
         }
@@ -361,7 +359,7 @@ public class BrowserMobHttpClient {
             // Response volatility might be overwritten in request interceptors, but not later, so from now it is fixed:
             isResponseVolatile = req.getResponseVolatile();
 
-            BrowserMobHttpResponse response = execute(req, 1, isResponseVolatile);
+            MitmJavaProxyHttpResponse response = execute(req, 1, isResponseVolatile);
 
             for (ResponseInterceptor interceptor : responseInterceptors) {
                 interceptor.process(response);
@@ -380,7 +378,7 @@ public class BrowserMobHttpClient {
     //If we were making cake, this would be the filling :)
     //Sending the prepared - maybe altered - request to the server, and getting back the result
     //
-    private BrowserMobHttpResponse execute(final BrowserMobHttpRequest req, int depth, boolean isResponseVolatile) {
+    private MitmJavaProxyHttpResponse execute(final MitmJavaProxyHttpRequest req, int depth, boolean isResponseVolatile) {
         if (depth >= MAX_REDIRECT) {
             throw new IllegalStateException("Max number of redirects (" + MAX_REDIRECT + ") reached");
         }
@@ -757,7 +755,7 @@ public class BrowserMobHttpClient {
             }
         }
 
-        return new BrowserMobHttpResponse(statusCode, entry, method, req.getProxyRequest().getURI(), response, contentMatched, verificationText, errorMessage,
+        return new MitmJavaProxyHttpResponse(statusCode, entry, method, req.getProxyRequest().getURI(), response, contentMatched, verificationText, errorMessage,
                 entry.getResponse().getContent().getText(), contentType, charSet, bos, os, isResponseVolatile);
     }
 

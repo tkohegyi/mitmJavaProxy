@@ -1,6 +1,6 @@
 package com.epam.mitm.proxy.help;
 
-import net.lightbody.bmp.proxy.http.BrowserMobHttpResponse;
+import net.lightbody.bmp.proxy.http.MitmJavaProxyHttpResponse;
 import net.lightbody.bmp.proxy.http.ResponseInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class DefaultResponseInterceptor implements ResponseInterceptor {
         this.responseCount = responseCount;
     }
 
-    public void process(final BrowserMobHttpResponse response) {
+    public void process(final MitmJavaProxyHttpResponse response) {
         responseCount.incrementAndGet();
         logger.info("Response Interceptor Called, status: {}", response.getStatus());
     }

@@ -2,8 +2,8 @@ package net.lightbody.bmp.proxy;
 
 import net.lightbody.bmp.proxy.http.BadURIException;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpClient;
-import net.lightbody.bmp.proxy.http.BrowserMobHttpRequest;
-import net.lightbody.bmp.proxy.http.BrowserMobHttpResponse;
+import net.lightbody.bmp.proxy.http.MitmJavaProxyHttpRequest;
+import net.lightbody.bmp.proxy.http.MitmJavaProxyHttpResponse;
 import net.lightbody.bmp.proxy.http.RequestCallback;
 import net.lightbody.bmp.proxy.jetty.http.HttpException;
 import net.lightbody.bmp.proxy.jetty.http.HttpFields;
@@ -229,7 +229,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
                 // httpClient.setFollowRedirects(false);
             }
 
-            BrowserMobHttpRequest httpReq = null;
+            MitmJavaProxyHttpRequest httpReq = null;
             if ("GET".equals(request.getMethod())) {
                 httpReq = httpClient.newGet(urlStr, request);
             } else if ("POST".equals(request.getMethod())) {
@@ -322,7 +322,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
                 }
             });
 
-            BrowserMobHttpResponse httpRes = httpReq.execute();
+            MitmJavaProxyHttpResponse httpRes = httpReq.execute();
 
             // ALWAYS mark the request as handled if we actually handled it. Otherwise, Jetty will think non 2xx responses
             // mean it wasn't actually handled, resulting in totally valid 304 Not Modified requests turning in to 404 responses

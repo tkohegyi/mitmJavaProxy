@@ -1,6 +1,6 @@
 package com.epam.mitm.proxy.help;
 
-import net.lightbody.bmp.proxy.http.BrowserMobHttpRequest;
+import net.lightbody.bmp.proxy.http.MitmJavaProxyHttpRequest;
 import net.lightbody.bmp.proxy.http.RequestInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +40,7 @@ public class DefaultRequestInterceptor implements RequestInterceptor {
     }
 
 
-    public void process(final BrowserMobHttpRequest request) {
+    public void process(final MitmJavaProxyHttpRequest request) {
         requestCount.incrementAndGet();
         String uriPath = request.getMethod().getURI().getPath();
         if (stubRequestPattern != null && stubUri != null && uriPath.contains(stubRequestPattern)) {

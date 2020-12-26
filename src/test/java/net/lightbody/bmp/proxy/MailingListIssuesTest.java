@@ -8,7 +8,7 @@ import net.lightbody.bmp.core.har.HarLog;
 import net.lightbody.bmp.core.har.HarPostData;
 import net.lightbody.bmp.core.har.HarRequest;
 import net.lightbody.bmp.core.har.HarResponse;
-import net.lightbody.bmp.proxy.http.BrowserMobHttpRequest;
+import net.lightbody.bmp.proxy.http.MitmJavaProxyHttpRequest;
 import net.lightbody.bmp.proxy.http.RequestInterceptor;
 import net.lightbody.bmp.proxy.util.IOUtils;
 import org.apache.http.HttpEntity;
@@ -56,7 +56,7 @@ public class MailingListIssuesTest extends DummyServerTest {
         final boolean[] interceptorHit = {false};
         proxy.addRequestInterceptor(new RequestInterceptor() {
             @Override
-            public void process(final BrowserMobHttpRequest request) {
+            public void process(final MitmJavaProxyHttpRequest request) {
                 interceptorHit[0] = true;
             }
         });
@@ -83,7 +83,7 @@ public class MailingListIssuesTest extends DummyServerTest {
         final String[] remoteHost = {null};
         proxy.addRequestInterceptor(new RequestInterceptor() {
             @Override
-            public void process(final BrowserMobHttpRequest request) {
+            public void process(final MitmJavaProxyHttpRequest request) {
                 remoteHost[0] = request.getProxyRequest().getRemoteHost();
             }
         });
@@ -109,7 +109,7 @@ public class MailingListIssuesTest extends DummyServerTest {
     public void testThatWeCanChangeTheUserAgent() throws IOException, InterruptedException {
         proxy.addRequestInterceptor(new RequestInterceptor() {
             @Override
-            public void process(final BrowserMobHttpRequest request) {
+            public void process(final MitmJavaProxyHttpRequest request) {
                 request.getMethod().removeHeaders("User-Agent");
                 request.getMethod().addHeader("User-Agent", "Bananabot/1.0");
             }
@@ -135,7 +135,7 @@ public class MailingListIssuesTest extends DummyServerTest {
     public void testThatInterceptorsCanRewriteUrls() throws IOException, InterruptedException {
         proxy.addRequestInterceptor(new RequestInterceptor() {
             @Override
-            public void process(final BrowserMobHttpRequest request) {
+            public void process(final MitmJavaProxyHttpRequest request) {
                 try {
                     request.getMethod().setURI(new URI(B_TXT_URL));
                 } catch (URISyntaxException e) {

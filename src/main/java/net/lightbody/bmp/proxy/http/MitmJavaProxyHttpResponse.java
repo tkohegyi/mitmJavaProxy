@@ -11,7 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class BrowserMobHttpResponse {
+public class MitmJavaProxyHttpResponse {
     private final boolean responseVolatile;
     private final HarEntry entry;
     private final HttpRequestBase method;
@@ -27,10 +27,10 @@ public class BrowserMobHttpResponse {
     private final OutputStream os;
     private ByteArrayOutputStream bos;
 
-    public BrowserMobHttpResponse(int status, HarEntry entry, HttpRequestBase method, URI proxyRequestURI, HttpResponse response,
-                                  boolean contentMatched, String verificationText, String errorMessage,
-                                  String body, String contentType, String charSet,
-                                  ByteArrayOutputStream bos, OutputStream os, boolean responseVolatile) {
+    public MitmJavaProxyHttpResponse(int status, HarEntry entry, HttpRequestBase method, URI proxyRequestURI, HttpResponse response,
+                                     boolean contentMatched, String verificationText, String errorMessage,
+                                     String body, String contentType, String charSet,
+                                     ByteArrayOutputStream bos, OutputStream os, boolean responseVolatile) {
         this.entry = entry;
         this.method = method;
         this.proxyRequestURI = proxyRequestURI;
