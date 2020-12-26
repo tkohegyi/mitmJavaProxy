@@ -9,7 +9,6 @@
 
 package net.lightbody.bmp.proxy.jetty.http.handler;
 
-import net.lightbody.bmp.proxy.jetty.http.HttpException;
 import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
 
@@ -107,15 +106,15 @@ public class IPAccessHandler extends AbstractHttpHandler {
      * @param request       The incoming HTTP-request
      * @param response      The outgoing HTTP-response
      */
-    public void handle(String pathInContext, String pathParams, HttpRequest request,
-                       HttpResponse response) throws HttpException, IOException {
+    public void handle(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws IOException {
 
         // exempt error pages
         // TODO This probably should be more general?
-        if (request.getAttribute("javax.servlet.error.status_code") != null) return;
+        if (request.getAttribute("javax.servlet.error.status_code") != null) {
+            return;
+        }
 
         try {
-
             String ip = request.getRemoteAddr();
             boolean authorized = checkIP(ip);
 
@@ -123,11 +122,7 @@ public class IPAccessHandler extends AbstractHttpHandler {
                 // The IP is NOT allowed
                 response.sendError(HttpResponse.__403_Forbidden);
                 request.setHandled(true);
-                return;
-            } else {
-                // The IP is allowed
-                return;
-            }
+            } //else the ip is allowed
         } catch (Exception ex) {
             System.out.println(ex);
             response.sendError(HttpResponse.__500_Internal_Server_Error);

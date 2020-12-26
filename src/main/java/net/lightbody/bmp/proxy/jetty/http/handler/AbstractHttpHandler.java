@@ -20,9 +20,9 @@ import net.lightbody.bmp.proxy.jetty.http.HttpFields;
 import net.lightbody.bmp.proxy.jetty.http.HttpHandler;
 import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.ByteArrayISO8859Writer;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -37,7 +37,7 @@ import java.io.OutputStream;
  * @version $Id: AbstractHttpHandler.java,v 1.12 2005/08/13 00:01:26 gregwilkins Exp $
  */
 abstract public class AbstractHttpHandler implements HttpHandler {
-    private static Log log = LogFactory.getLog(AbstractHttpHandler.class);
+    private final Logger log = LoggerFactory.getLogger(AbstractHttpHandler.class);
 
     /* ----------------------------------------------------------------- */
     private String _name;
@@ -49,8 +49,9 @@ abstract public class AbstractHttpHandler implements HttpHandler {
     public String getName() {
         if (_name == null) {
             _name = this.getClass().getName();
-            if (!log.isDebugEnabled())
+            if (!log.isDebugEnabled()) {
                 _name = _name.substring(_name.lastIndexOf('.') + 1);
+            }
         }
         return _name;
     }
@@ -74,24 +75,26 @@ abstract public class AbstractHttpHandler implements HttpHandler {
      * @param context Must be the HttpContext of the handler
      */
     public void initialize(HttpContext context) {
-        if (_context == null)
+        if (_context == null) {
             _context = context;
-        else if (_context != context)
-            throw new IllegalStateException("Can't initialize handler for different context");
+        } else {
+            if (_context != context) {
+                throw new IllegalStateException("Can't initialize handler for different context");
+            }
+        }
     }
 
     /* ----------------------------------------------------------------- */
-    public void start()
-            throws Exception {
-        if (_context == null)
+    public void start() throws Exception {
+        if (_context == null) {
             throw new IllegalStateException("No context for " + this);
+        }
         _started = true;
         if (log.isDebugEnabled()) log.debug("Started " + this);
     }
 
     /* ----------------------------------------------------------------- */
-    public void stop()
-            throws InterruptedException {
+    public void stop() throws InterruptedException {
         _started = false;
         if (log.isDebugEnabled()) log.debug("Stopped " + this);
     }
@@ -107,14 +110,11 @@ abstract public class AbstractHttpHandler implements HttpHandler {
     }
 
     /* ----------------------------------------------------------------- */
-    public void handleTrace(HttpRequest request,
-                            HttpResponse response)
-            throws IOException {
+    public void handleTrace(HttpRequest request, HttpResponse response) throws IOException {
         boolean trace = getHttpContext().getHttpServer().getTrace();
 
         // Handle TRACE by returning request header
-        response.setField(HttpFields.__ContentType,
-                HttpFields.__MessageHttp);
+        response.setField(HttpFields.__ContentType, HttpFields.__MessageHttp);
         if (trace) {
             OutputStream out = response.getOutputStream();
             ByteArrayISO8859Writer writer = new ByteArrayISO8859Writer();

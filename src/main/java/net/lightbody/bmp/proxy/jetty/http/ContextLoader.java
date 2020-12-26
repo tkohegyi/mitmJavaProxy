@@ -15,16 +15,15 @@
 
 package net.lightbody.bmp.proxy.jetty.http;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.IO;
 import net.lightbody.bmp.proxy.jetty.util.Resource;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.CodeSource;
@@ -32,12 +31,9 @@ import java.security.PermissionCollection;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 
-/* ------------------------------------------------------------ */
-
 /**
  * ClassLoader for HttpContext.
- * Specializes URLClassLoader with some utility and file mapping
- * methods.
+ * Specializes URLClassLoader with some utility and file mapping methods.
  * <p>
  * This loader defaults to the 2.3 servlet spec behaviour where non
  * system classes are loaded from the classpath in preference to the
@@ -48,13 +44,13 @@ import java.util.StringTokenizer;
  * @version $Id: ContextLoader.java,v 1.37 2006/01/09 07:26:12 gregwilkins Exp $
  */
 public class ContextLoader extends URLClassLoader {
-    private static Log log = LogFactory.getLog(ContextLoader.class);
+    private final Logger log = LoggerFactory.getLogger(ContextLoader.class);
 
+    private final HttpContext _context;
     private boolean _java2compliant = false;
     private ClassLoader _parent;
     private PermissionCollection _permissions;
     private String _urlClassPath;
-    private HttpContext _context;
 
     /* ------------------------------------------------------------ */
 
@@ -62,20 +58,18 @@ public class ContextLoader extends URLClassLoader {
      * Constructor.
      *
      * @param classPath Comma separated path of filenames or URLs
-     *                  pointing to directories or jar files. Directories should end
-     *                  with '/'.
+     *                  pointing to directories or jar files. Directories should end with '/'.
      * @throws IOException
      */
-    public ContextLoader(HttpContext context, String classPath, ClassLoader parent, PermissionCollection permisions)
-            throws MalformedURLException, IOException {
+    public ContextLoader(HttpContext context, String classPath, ClassLoader parent, PermissionCollection permissions) throws IOException {
         super(new URL[0], parent);
         _context = context;
-        _permissions = permisions;
+        _permissions = permissions;
         _parent = parent;
 
-        if (_parent == null)
+        if (_parent == null) {
             _parent = getSystemClassLoader();
-
+        }
         if (classPath == null) {
             _urlClassPath = "";
         } else {
@@ -83,8 +77,7 @@ public class ContextLoader extends URLClassLoader {
 
             while (tokenizer.hasMoreTokens()) {
                 Resource resource = Resource.newResource(tokenizer.nextToken());
-                if (log.isDebugEnabled())
-                    log.debug("Path resource=" + resource);
+                log.debug("Path resource={}", resource);
 
                 // Resolve file path if possible
                 File file = resource.getFile();
@@ -105,8 +98,7 @@ public class ContextLoader extends URLClassLoader {
                         File jar = File.createTempFile("Jetty-", ".jar", lib);
 
                         jar.deleteOnExit();
-                        if (log.isDebugEnabled())
-                            log.debug("Extract " + resource + " to " + jar);
+                        log.debug("Extract {} to {}", resource, jar);
                         FileOutputStream out = null;
                         try {
                             out = new FileOutputStream(jar);
@@ -117,31 +109,20 @@ public class ContextLoader extends URLClassLoader {
 
                         URL url = jar.toURL();
                         addURL(url);
-                        _urlClassPath =
-                                (_urlClassPath == null) ? url.toString() : (_urlClassPath + "," + url.toString());
+                        _urlClassPath = (_urlClassPath == null) ? url.toString() : (_urlClassPath + "," + url.toString());
                     } else {
                         URL url = resource.getURL();
                         addURL(url);
-                        _urlClassPath =
-                                (_urlClassPath == null) ? url.toString() : (_urlClassPath + "," + url.toString());
+                        _urlClassPath = (_urlClassPath == null) ? url.toString() : (_urlClassPath + "," + url.toString());
                     }
                 }
             }
         }
-
-        if (log.isDebugEnabled()) {
-            if (log.isDebugEnabled())
-                log.debug("ClassPath=" + _urlClassPath);
-            if (log.isDebugEnabled())
-                log.debug("Permissions=" + _permissions);
-            if (log.isDebugEnabled())
-                log.debug("URL=" + Arrays.asList(getURLs()));
-        }
+        log.debug("ClassPath={}", _urlClassPath);
+        log.debug("Permissions={}", _permissions);
+        log.debug("URL=" + Arrays.asList(getURLs()));
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     public boolean isJava2Compliant() {
         return _java2compliant;
     }
@@ -155,170 +136,154 @@ public class ContextLoader extends URLClassLoader {
         _java2compliant = compliant;
     }
 
-    /* ------------------------------------------------------------ */
     public String toString() {
         return "ContextLoader@" + hashCode() + "(" + _urlClassPath + ")\n  --parent--> " + _parent.toString();
     }
 
-    /* ------------------------------------------------------------ */
     public PermissionCollection getPermissions(CodeSource cs) {
         PermissionCollection pc = (_permissions == null) ? super.getPermissions(cs) : _permissions;
-        if (log.isDebugEnabled())
-            log.debug("loader.getPermissions(" + cs + ")=" + pc);
+        log.debug("loader.getPermissions({})={}", cs, pc);
         return pc;
     }
 
-    /* ------------------------------------------------------------ */
     public Class loadClass(String name) throws ClassNotFoundException {
         return loadClass(name, false);
     }
 
-    /* ------------------------------------------------------------ */
     protected Class loadClass(String name, boolean resolve) throws ClassNotFoundException {
         Class c = findLoadedClass(name);
         ClassNotFoundException ex = null;
         boolean tried_parent = false;
         if (c == null && (_java2compliant || isSystemPath(name)) && !isServerPath(name) && _parent != null) {
-            if (log.isTraceEnabled())
-                log.trace("try loadClass " + name + " from " + _parent);
+            log.trace("try loadClass {} from {}", name, _parent);
             tried_parent = true;
             try {
                 c = _parent.loadClass(name);
-                if (log.isTraceEnabled())
-                    log.trace("p0 loaded " + c);
+                log.trace("p0 loaded {}", c);
             } catch (ClassNotFoundException e) {
                 ex = e;
             }
         }
 
         if (c == null) {
-            if (log.isTraceEnabled())
-                log.trace("try findClass " + name + " from " + _urlClassPath);
+            log.trace("try findClass {} from {}", name, _urlClassPath);
             try {
                 c = this.findClass(name);
-                if (log.isTraceEnabled())
-                    log.trace("cx loaded " + c);
+                log.trace("cx loaded {}", c);
             } catch (ClassNotFoundException e) {
                 ex = e;
             }
         }
 
         if (c == null && !tried_parent && !isServerPath(name) && _parent != null) {
-            if (log.isTraceEnabled())
-                log.trace("try loadClass " + name + " from " + _parent);
+            log.trace("try loadClass {} name {}", name, _parent);
             c = _parent.loadClass(name);
-            if (log.isTraceEnabled())
-                log.trace("p1 loaded " + c);
+            log.trace("p1 loaded {}", c);
         }
 
-        if (c == null)
+        if (c == null) {
             throw ex;
-
-        if (resolve)
+        }
+        if (resolve) {
             resolveClass(c);
-
+        }
         return c;
     }
 
-    /* ------------------------------------------------------------ */
     public URL getResource(String name) {
         URL url = null;
         boolean tried_parent = false;
         if (_parent != null && (_java2compliant || isSystemPath(name))) {
-            if (log.isTraceEnabled())
-                log.trace("try getResource " + name + " from " + _parent);
+            log.trace("try getResource {} from {}", name, _parent);
             tried_parent = true;
             url = _parent.getResource(name);
         }
 
         if (url == null) {
-            if (log.isTraceEnabled())
-                log.trace("try findResource " + name + " from " + _urlClassPath);
+            log.trace("try findResource {} from {}", name, _urlClassPath);
             url = this.findResource(name);
 
             if (url == null && name.startsWith("/")) {
-                if (log.isDebugEnabled())
-                    log.debug("HACK leading / off " + name);
+                log.debug("HACK leading / off {}", name);
                 url = this.findResource(name.substring(1));
             }
         }
 
         if (_parent != null && url == null && !tried_parent) {
-            if (log.isTraceEnabled())
-                log.trace("try getResource " + name + " from " + _parent);
+            log.trace("try getResource {} from {}", name, _parent);
             url = _parent.getResource(name);
         }
 
-        if (url != null)
-            if (log.isTraceEnabled())
-                log.trace("found " + url);
-
+        if (url != null) {
+            log.trace("found {}", url);
+        }
         return url;
     }
 
-    /* ------------------------------------------------------------ */
     public boolean isServerPath(String name) {
         name = name.replace('/', '.');
-        while (name.startsWith("."))
+        while (name.startsWith(".")) {
             name = name.substring(1);
-
+        }
         String[] server_classes = _context.getServerClasses();
 
         if (server_classes != null) {
-            for (int i = 0; i < server_classes.length; i++) {
+            for (String server_class : server_classes) {
                 boolean result = true;
-                String c = server_classes[i];
+                String c = server_class;
                 if (c.startsWith("-")) {
                     c = c.substring(1);
                     result = false;
                 }
 
                 if (c.endsWith(".")) {
-                    if (name.startsWith(c))
+                    if (name.startsWith(c)) {
                         return result;
-                } else if (name.equals(c)) {
-                    return result;
+                    }
+                } else {
+                    if (name.equals(c)) {
+                        return result;
+                    }
                 }
             }
         }
         return false;
     }
 
-    /* ------------------------------------------------------------ */
     public boolean isSystemPath(String name) {
         name = name.replace('/', '.');
-        while (name.startsWith("."))
+        while (name.startsWith(".")) {
             name = name.substring(1);
-
+        }
         String[] system_classes = _context.getSystemClasses();
         if (system_classes != null) {
-            for (int i = 0; i < system_classes.length; i++) {
+            for (String system_class : system_classes) {
                 boolean result = true;
-                String c = system_classes[i];
+                String c = system_class;
                 if (c.startsWith("-")) {
                     c = c.substring(1);
                     result = false;
                 }
 
                 if (c.endsWith(".")) {
-                    if (name.startsWith(c))
+                    if (name.startsWith(c)) {
                         return result;
-                } else if (name.equals(c))
-                    return result;
+                    }
+                } else {
+                    if (name.equals(c)) {
+                        return result;
+                    }
+                }
             }
         }
-
         return false;
     }
 
-    /* ------------------------------------------------------------ */
     public void destroy() {
         this._parent = null;
         this._permissions = null;
         this._urlClassPath = null;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return Returns the serverClasses.
@@ -327,8 +292,6 @@ public class ContextLoader extends URLClassLoader {
         return _context.getServerClasses();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param serverClasses The serverClasses to set.
      */
@@ -336,16 +299,12 @@ public class ContextLoader extends URLClassLoader {
         _context.setServerClasses(serverClasses);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return Returns the systemClasses.
      */
     String[] getSystemClasses() {
         return _context.getSystemClasses();
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param systemClasses The systemClasses to set.

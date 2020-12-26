@@ -22,8 +22,6 @@ import net.lightbody.bmp.proxy.jetty.util.OutputObserver;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/* ------------------------------------------------------------ */
-
 /**
  * Buffered Output Stream.
  * Uses ByteBufferOutputStream to allow pre and post writes.
@@ -31,17 +29,13 @@ import java.io.OutputStream;
  * @author Greg Wilkins (gregw)
  * @version $Revision: 1.8 $
  */
-public class BufferedOutputStream
-        extends ByteBufferOutputStream
-        implements HttpMessage.HeaderWriter {
+public class BufferedOutputStream extends ByteBufferOutputStream implements HttpMessage.HeaderWriter {
     protected OutputStream _out;
     protected ByteArrayISO8859Writer _httpMessageWriter;
+    private final int _preReserve;
     private OutputObserver _commitObserver;
     private boolean _commited;
-    private int _preReserve;
     private boolean _bypassBuffer;
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -53,23 +47,16 @@ public class BufferedOutputStream
      * @param preReserve    The reserve of bytes for prepending
      * @param postReserve   The reserve of bytes for appending
      */
-    public BufferedOutputStream(OutputStream out,
-                                int capacity,
-                                int headerReserve,
-                                int preReserve,
-                                int postReserve) {
+    public BufferedOutputStream(OutputStream out, int capacity, int headerReserve, int preReserve, int postReserve) {
         super(capacity, headerReserve, postReserve);
         _out = out;
         _preReserve = preReserve;
         _httpMessageWriter = new ByteArrayISO8859Writer(headerReserve);
     }
 
-    /* ------------------------------------------------------------ */
     public OutputStream getOutputStream() {
         return _out;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return OutputObserver to receives commit events from this stream.
@@ -78,8 +65,6 @@ public class BufferedOutputStream
         return _commitObserver;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param commitObserver OutputObserver to receives commit events from this stream.
      */
@@ -87,12 +72,9 @@ public class BufferedOutputStream
         _commitObserver = commitObserver;
     }
 
-    /* ------------------------------------------------------------ */
     public boolean isCommitted() {
         return _commited;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return If true, the buffer is bypassed for large writes
@@ -102,8 +84,6 @@ public class BufferedOutputStream
         return _bypassBuffer;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param bypassBuffer If true, the buffer is bypassed for large writes
      *                     to a committed stream.
@@ -112,23 +92,18 @@ public class BufferedOutputStream
         _bypassBuffer = bypassBuffer;
     }
 
-    /* ------------------------------------------------------------ */
-    public void writeHeader(HttpMessage httpMessage)
-            throws IOException {
+    public void writeHeader(HttpMessage httpMessage) throws IOException {
         httpMessage.writeHeader(_httpMessageWriter);
-        if (_httpMessageWriter.size() > capacity())
+        if (_httpMessageWriter.size() > capacity()) {
             throw new IllegalStateException("Header too large");
+        }
     }
 
-    /* ------------------------------------------------------------ */
-    public void write(byte[] b)
-            throws IOException {
+    public void write(byte[] b) throws IOException {
         write(b, 0, b.length);
     }
 
-    /* ------------------------------------------------------------ */
-    public void write(byte[] b, int offset, int length)
-            throws IOException {
+    public void write(byte[] b, int offset, int length) throws IOException {
         int o = offset;
         int l = length;
         while (l > 0) {
@@ -154,9 +129,7 @@ public class BufferedOutputStream
         }
     }
 
-    /* ------------------------------------------------------------ */
-    protected void bypassWrite(byte[] b, int offset, int length)
-            throws IOException {
+    protected void bypassWrite(byte[] b, int offset, int length) throws IOException {
         try {
             _out.write(b, offset, length);
             _out.flush();
@@ -165,19 +138,16 @@ public class BufferedOutputStream
         }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * This implementation calls the commitObserver on the first flush since
-     * construction or reset.
+     * This implementation calls the commitObserver on the first flush since construction or reset.
      */
-    public void flush()
-            throws IOException {
+    public void flush() throws IOException {
         try {
             if (!_commited) {
                 _commited = true;
-                if (_commitObserver != null)
+                if (_commitObserver != null) {
                     _commitObserver.outputNotify(this, OutputObserver.__COMMITING, null);
+                }
             }
 
             wrapBuffer();
@@ -188,8 +158,9 @@ public class BufferedOutputStream
                 _httpMessageWriter.resetWriter();
             }
 
-            if (size() > 0)
+            if (size() > 0) {
                 writeTo(_out);
+            }
         } catch (IOException e) {
             throw new EOFException(e);
         } finally {
@@ -197,39 +168,31 @@ public class BufferedOutputStream
         }
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Wrap Buffer.
-     * Called by flush() to allow the data in the buffer to be pre and post
-     * written for any protocol wrapping.  The default implementation does
-     * nothing.
+     * Called by flush() to allow the data in the buffer to be pre and post written for any protocol wrapping.
+     * The default implementation does nothing.
      *
      * @throws IOException
      */
-    protected void wrapBuffer()
-            throws IOException {
+    protected void wrapBuffer() throws IOException {
     }
 
-    /* ------------------------------------------------------------ */
-    public void close()
-            throws IOException {
+    public void close() throws IOException {
         flush();
         _out.close();
     }
 
-    /* ------------------------------------------------------------ */
     public void resetStream() {
         super.reset(_httpMessageWriter.capacity());
         _commited = false;
     }
 
-    /* ------------------------------------------------------------ */
     public void destroy() {
         super.destroy();
-        if (_httpMessageWriter != null)
+        if (_httpMessageWriter != null) {
             _httpMessageWriter.destroy();
+        }
         _httpMessageWriter = null;
         _out = null;
     }

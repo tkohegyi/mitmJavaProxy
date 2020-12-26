@@ -15,11 +15,10 @@
 
 package net.lightbody.bmp.proxy.jetty.http;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.B64Code;
-import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.StringUtil;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -33,9 +32,7 @@ import java.security.Principal;
  * @version $Id: BasicAuthenticator.java,v 1.17 2005/08/13 00:01:24 gregwilkins Exp $
  */
 public class BasicAuthenticator implements Authenticator {
-    private static Log log = LogFactory.getLog(BasicAuthenticator.class);
-
-    /* ------------------------------------------------------------ */
+    private final Logger log = LoggerFactory.getLogger(BasicAuthenticator.class);
 
     /**
      * @return UserPrinciple if authenticated or null if not. If
@@ -43,18 +40,14 @@ public class BasicAuthenticator implements Authenticator {
      * the response as an auth challenge or redirect.
      * @throws IOException
      */
-    public Principal authenticate(UserRealm realm,
-                                  String pathInContext,
-                                  HttpRequest request,
-                                  HttpResponse response)
-            throws IOException {
+    public Principal authenticate(UserRealm realm, String pathInContext, HttpRequest request, HttpResponse response) throws IOException {
         // Get the user if we can
         Principal user = null;
         String credentials = request.getField(HttpFields.__Authorization);
 
         if (credentials != null) {
             try {
-                if (log.isDebugEnabled()) log.debug("Credentials: " + credentials);
+                log.debug("Credentials: {}", credentials);
                 credentials = credentials.substring(credentials.indexOf(' ') + 1);
                 credentials = B64Code.decode(credentials, StringUtil.__ISO_8859_1);
                 int i = credentials.indexOf(':');
@@ -62,37 +55,31 @@ public class BasicAuthenticator implements Authenticator {
                 String password = credentials.substring(i + 1);
                 user = realm.authenticate(username, password, request);
 
-                if (user == null)
-                    log.warn("AUTH FAILURE: user " + username);
-                else {
+                if (user == null) {
+                    log.warn("AUTH FAILURE: user {}", username);
+                } else {
                     request.setAuthType(SecurityConstraint.__BASIC_AUTH);
                     request.setAuthUser(username);
                     request.setUserPrincipal(user);
                 }
             } catch (Exception e) {
-                log.warn("AUTH FAILURE: " + e.toString());
-                LogSupport.ignore(log, e);
+                log.warn("AUTH FAILURE: {}", e.toString());
             }
         }
 
         // Challenge if we have no user
-        if (user == null && response != null)
+        if (user == null && response != null) {
             sendChallenge(realm, response);
-
+        }
         return user;
     }
 
-    /* ------------------------------------------------------------ */
     public String getAuthMethod() {
         return SecurityConstraint.__BASIC_AUTH;
     }
 
-    /* ------------------------------------------------------------ */
-    public void sendChallenge(UserRealm realm,
-                              HttpResponse response)
-            throws IOException {
-        response.setField(HttpFields.__WwwAuthenticate,
-                "basic realm=\"" + realm.getName() + '"');
+    public void sendChallenge(UserRealm realm, HttpResponse response) throws IOException {
+        response.setField(HttpFields.__WwwAuthenticate, "basic realm=\"" + realm.getName() + '"');
         response.sendError(HttpResponse.__401_Unauthorized);
     }
 

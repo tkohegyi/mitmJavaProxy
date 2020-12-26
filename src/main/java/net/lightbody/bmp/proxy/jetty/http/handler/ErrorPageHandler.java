@@ -14,7 +14,6 @@
 // ========================================================================
 package net.lightbody.bmp.proxy.jetty.http.handler;
 
-import net.lightbody.bmp.proxy.jetty.http.HttpException;
 import net.lightbody.bmp.proxy.jetty.http.HttpFields;
 import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
@@ -37,12 +36,7 @@ import java.net.URLDecoder;
  */
 public class ErrorPageHandler extends AbstractHttpHandler {
     /* ------------------------------------------------------------ */
-    public void handle(
-            String pathInContext,
-            String pathParams,
-            HttpRequest request,
-            HttpResponse response)
-            throws HttpException, IOException {
+    public void handle(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws IOException {
         response.setContentType(HttpFields.__TextHtml);
         ByteArrayISO8859Writer writer = new ByteArrayISO8859Writer(2048);
         writeErrorPage(request, writer, response.getStatus(), response.getReason());
@@ -53,8 +47,7 @@ public class ErrorPageHandler extends AbstractHttpHandler {
     }
 
     /* ------------------------------------------------------------ */
-    protected void writeErrorPage(HttpRequest request, Writer writer, int code, String message)
-            throws IOException {
+    protected void writeErrorPage(HttpRequest request, Writer writer, int code, String message) throws IOException {
         if (message != null) {
             message = URLDecoder.decode(message, "UTF-8");
             message = StringUtil.replace(message, "<", "&lt;");
@@ -74,10 +67,10 @@ public class ErrorPageHandler extends AbstractHttpHandler {
         writer.write("</pre>\n");
         writer.write("<p>RequestURI=");
         writer.write(uri);
-        writer.write(
-                "</p>\n<p><i><small><a href=\"http://jetty.jetty.org\">Powered by Jetty://</a></small></i></p>");
-        for (int i = 0; i < 20; i++)
+        writer.write("</p>\n<p><i><small><a href=\"http://jetty.jetty.org\">Powered by Jetty://</a></small></i></p>");
+        for (int i = 0; i < 20; i++) {
             writer.write("\n                                                ");
+        }
         writer.write("\n</body>\n</html>\n");
     }
 }

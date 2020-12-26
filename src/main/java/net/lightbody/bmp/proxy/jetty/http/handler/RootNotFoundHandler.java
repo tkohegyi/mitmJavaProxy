@@ -16,14 +16,13 @@
 package net.lightbody.bmp.proxy.jetty.http.handler;
 
 import net.lightbody.bmp.proxy.jetty.http.HttpContext;
-import net.lightbody.bmp.proxy.jetty.http.HttpException;
 import net.lightbody.bmp.proxy.jetty.http.HttpFields;
 import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.ByteArrayISO8859Writer;
 import net.lightbody.bmp.proxy.jetty.util.StringUtil;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -35,20 +34,13 @@ import java.io.OutputStream;
  * @version $Id: RootNotFoundHandler.java,v 1.11 2005/08/13 00:01:26 gregwilkins Exp $
  */
 public class RootNotFoundHandler extends NotFoundHandler {
-    private static Log log = LogFactory.getLog(RootNotFoundHandler.class);
+    private final Logger log = LoggerFactory.getLogger(RootNotFoundHandler.class);
 
-
-    /* ------------------------------------------------------------ */
-    public void handle(String pathInContext,
-                       String pathParams,
-                       HttpRequest request,
-                       HttpResponse response)
-            throws HttpException, IOException {
+    public void handle(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws IOException {
         log.debug("Root Not Found");
         String method = request.getMethod();
 
-        if (!method.equals(HttpRequest.__GET) ||
-                !request.getPath().equals("/")) {
+        if (!method.equals(HttpRequest.__GET) || !request.getPath().equals("/")) {
             // don't bother with fancy format.
             super.handle(pathInContext, pathParams, request, response);
             return;
@@ -72,8 +64,7 @@ public class RootNotFoundHandler extends NotFoundHandler {
 
         HttpContext[] contexts = getHttpContext().getHttpServer().getContexts();
 
-        for (int i = 0; i < contexts.length; i++) {
-            HttpContext context = contexts[i];
+        for (HttpContext context : contexts) {
             writer.write("<li><a href=\"");
             writer.write(context.getContextPath());
             writer.write("/\">");
@@ -83,9 +74,9 @@ public class RootNotFoundHandler extends NotFoundHandler {
 
         writer.write("</ul><small><I>The links above may not work if a virtual host is configured</I></small>");
 
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 10; i++) {
             writer.write("\n<!-- Padding for IE                  -->");
-
+        }
         writer.write("\n</BODY>\n</HTML>\n");
         writer.flush();
         response.setContentLength(writer.size());

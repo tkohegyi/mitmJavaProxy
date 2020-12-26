@@ -15,14 +15,12 @@
 
 package net.lightbody.bmp.proxy.jetty.http.handler;
 
-import net.lightbody.bmp.proxy.jetty.http.HttpException;
 import net.lightbody.bmp.proxy.jetty.http.HttpFields;
 import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
 import net.lightbody.bmp.proxy.jetty.http.InclusiveByteRange;
 import net.lightbody.bmp.proxy.jetty.http.MultiPartResponse;
 import net.lightbody.bmp.proxy.jetty.http.ResourceCache;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.CachedResource;
 import net.lightbody.bmp.proxy.jetty.util.IO;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
@@ -30,7 +28,8 @@ import net.lightbody.bmp.proxy.jetty.util.Resource;
 import net.lightbody.bmp.proxy.jetty.util.StringMap;
 import net.lightbody.bmp.proxy.jetty.util.TypeUtil;
 import net.lightbody.bmp.proxy.jetty.util.URI;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,29 +52,27 @@ import java.util.List;
  * @version $Id: ResourceHandler.java,v 1.66 2005/08/24 08:18:17 gregwilkins Exp $
  */
 public class ResourceHandler extends AbstractHttpHandler {
-    private static Log log = LogFactory.getLog(ResourceHandler.class);
+    private final Logger log = LoggerFactory.getLogger(ResourceHandler.class);
 
     /* ----------------------------------------------------------------- */
+    private final StringMap _methodMap = new StringMap();
     private boolean _acceptRanges = true;
     private boolean _redirectWelcomeFiles;
     private String[] _methods = null;
     private String _allowed;
     private boolean _dirAllowed = true;
     private int _minGzipLength = -1;
-    private StringMap _methodMap = new StringMap();
 
     {
         setAllowedMethods(new String[]
-                {
-                        HttpRequest.__GET,
-                        HttpRequest.__POST,
-                        HttpRequest.__HEAD,
-                        HttpRequest.__OPTIONS,
-                        HttpRequest.__TRACE
-                });
+            {
+                    HttpRequest.__GET,
+                    HttpRequest.__POST,
+                    HttpRequest.__HEAD,
+                    HttpRequest.__OPTIONS,
+                    HttpRequest.__TRACE
+            });
     }
-
-    /* ----------------------------------------------------------------- */
 
     /**
      * Construct a ResourceHandler.
@@ -83,64 +80,51 @@ public class ResourceHandler extends AbstractHttpHandler {
     public ResourceHandler() {
     }
 
-
-    /* ----------------------------------------------------------------- */
-    public synchronized void start()
-            throws Exception {
+    public synchronized void start() throws Exception {
         super.start();
     }
 
-    /* ----------------------------------------------------------------- */
-    public void stop()
-            throws InterruptedException {
+    public void stop() throws InterruptedException {
         super.stop();
     }
 
-    /* ------------------------------------------------------------ */
     public String[] getAllowedMethods() {
         return _methods;
     }
 
-    /* ------------------------------------------------------------ */
     public void setAllowedMethods(String[] methods) {
         StringBuffer b = new StringBuffer();
         _methods = methods;
         _methodMap.clear();
         for (int i = 0; i < methods.length; i++) {
             _methodMap.put(methods[i], methods[i]);
-            if (i > 0)
+            if (i > 0) {
                 b.append(',');
+            }
             b.append(methods[i]);
         }
         _allowed = b.toString();
     }
 
-    /* ------------------------------------------------------------ */
     public boolean isMethodAllowed(String method) {
         return _methodMap.get(method) != null;
     }
 
-    /* ------------------------------------------------------------ */
     public String getAllowedString() {
         return _allowed;
     }
 
-    /* ------------------------------------------------------------ */
     public boolean isDirAllowed() {
         return _dirAllowed;
     }
 
-    /* ------------------------------------------------------------ */
     public void setDirAllowed(boolean dirAllowed) {
         _dirAllowed = dirAllowed;
     }
 
-    /* ------------------------------------------------------------ */
     public boolean isAcceptRanges() {
         return _acceptRanges;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Set if the handler accepts range requests.
@@ -152,16 +136,12 @@ public class ResourceHandler extends AbstractHttpHandler {
         _acceptRanges = ar;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return True if welcome files are redirected to. False if forward is used.
      */
     public boolean getRedirectWelcome() {
         return _redirectWelcomeFiles;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param redirectWelcome True if welcome files are redirected to. False
@@ -171,8 +151,6 @@ public class ResourceHandler extends AbstractHttpHandler {
         _redirectWelcomeFiles = redirectWelcome;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get minimum content length for GZIP encoding.
      *
@@ -181,8 +159,6 @@ public class ResourceHandler extends AbstractHttpHandler {
     public int getMinGzipLength() {
         return _minGzipLength;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Set minimum content length for GZIP encoding.
@@ -195,36 +171,26 @@ public class ResourceHandler extends AbstractHttpHandler {
         _minGzipLength = minGzipLength;
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * get Resource to serve.
-     * Map a path to a resource. The default implementation calls
-     * HttpContext.getResource but derived handers may provide
+     * Map a path to a resource. The default implementation calls HttpContext.getResource but derived handlers may provide
      * their own mapping.
      *
      * @param pathInContext The path to find a resource for.
      * @return The resource to serve.
      */
-    protected Resource getResource(String pathInContext)
-            throws IOException {
+    protected Resource getResource(String pathInContext) throws IOException {
         return getHttpContext().getResource(pathInContext);
     }
 
-    /* ------------------------------------------------------------ */
-    public void handle(String pathInContext,
-                       String pathParams,
-                       HttpRequest request,
-                       HttpResponse response)
-            throws HttpException, IOException {
+    public void handle(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws IOException {
         Resource resource = getResource(pathInContext);
-        if (resource == null)
+        if (resource == null) {
             return;
-
+        }
         // Is the method allowed?
         if (!isMethodAllowed(request.getMethod())) {
-            if (log.isDebugEnabled()) log.debug("Method not allowed: " + request.getMethod());
+            log.debug("Method not allowed: {}", request.getMethod());
             if (resource.exists()) {
                 setAllowHeader(response);
                 response.sendError(HttpResponse.__405_Method_Not_Allowed);
@@ -234,50 +200,52 @@ public class ResourceHandler extends AbstractHttpHandler {
 
         // Handle the request
         try {
-            if (log.isDebugEnabled()) log.debug("PATH=" + pathInContext + " RESOURCE=" + resource);
-
+            log.debug("PATH={} RESOURCE={}", pathInContext, resource);
             // check filename
             String method = request.getMethod();
-            if (method.equals(HttpRequest.__GET) ||
-                    method.equals(HttpRequest.__POST) ||
-                    method.equals(HttpRequest.__HEAD))
+            switch (method) {
+            case HttpRequest.__GET:
+            case HttpRequest.__POST:
+            case HttpRequest.__HEAD:
                 handleGet(request, response, pathInContext, pathParams, resource);
-            else if (method.equals(HttpRequest.__PUT))
+                break;
+            case HttpRequest.__PUT:
                 handlePut(request, response, pathInContext, resource);
-            else if (method.equals(HttpRequest.__DELETE))
+                break;
+            case HttpRequest.__DELETE:
                 handleDelete(request, response, pathInContext, resource);
-            else if (method.equals(HttpRequest.__OPTIONS))
+                break;
+            case HttpRequest.__OPTIONS:
                 handleOptions(response, pathInContext);
-            else if (method.equals(HttpRequest.__MOVE))
+                break;
+            case HttpRequest.__MOVE:
                 handleMove(request, response, pathInContext, resource);
-            else if (method.equals(HttpRequest.__TRACE))
+                break;
+            case HttpRequest.__TRACE:
                 handleTrace(request, response);
-            else {
-                if (log.isDebugEnabled()) log.debug("Unknown action:" + method);
+                break;
+            default:
+                log.debug("Unknown action:{}", method);
                 // anything else...
                 try {
                     if (resource.exists())
                         response.sendError(HttpResponse.__501_Not_Implemented);
                 } catch (Exception e) {
-                    LogSupport.ignore(log, e);
+                    log.trace(e.getMessage(), e);
                 }
+                break;
             }
         } catch (IllegalArgumentException e) {
-            LogSupport.ignore(log, e);
+            log.trace(e.getMessage(), e);
         } finally {
-            if (resource != null && !(resource instanceof CachedResource))
+            if (!(resource instanceof CachedResource)) {
                 resource.release();
+            }
         }
     }
 
-    /* ------------------------------------------------------------------- */
-    public void handleGet(HttpRequest request,
-                          HttpResponse response,
-                          String pathInContext,
-                          String pathParams,
-                          Resource resource)
-            throws IOException {
-        if (log.isDebugEnabled()) log.debug("Looking for " + resource);
+    public void handleGet(HttpRequest request, HttpResponse response, String pathInContext, String pathParams, Resource resource) throws IOException {
+        log.debug("Looking for {}", resource);
 
         if (resource != null && resource.exists()) {
             // check if directory
@@ -316,37 +284,35 @@ public class ResourceHandler extends AbstractHttpHandler {
                 }
 
                 // Check modified dates
-                if (!passConditionalHeaders(request, response, resource))
+                if (!passConditionalHeaders(request, response, resource)) {
                     return;
+                }
                 // If we got here, no forward to index took place
                 sendDirectory(request, response, resource, pathInContext.length() > 1);
+            } else { // check if it is a file
+                if (resource.exists()) {
+                    // Check modified dates
+                    if (!passConditionalHeaders(request, response, resource)) {
+                        return;
+                    }
+                    sendData(request, response, pathInContext, resource, true);
+                } else {
+                    // don't know what it is
+                    log.warn("Unknown file type");
+                }
             }
-            // check if it is a file
-            else if (resource.exists()) {
-                // Check modified dates
-                if (!passConditionalHeaders(request, response, resource))
-                    return;
-                sendData(request, response, pathInContext, resource, true);
-            } else
-                // don't know what it is
-                log.warn("Unknown file type");
         }
     }
 
-
-    /* ------------------------------------------------------------ */
+    /**
     /* Check modification date headers.
      */
-    private boolean passConditionalHeaders(HttpRequest request,
-                                           HttpResponse response,
-                                           Resource resource)
-            throws IOException {
+    private boolean passConditionalHeaders(HttpRequest request, HttpResponse response, Resource resource) throws IOException {
         if (!request.getMethod().equals(HttpRequest.__HEAD)) {
             // If we have meta data for the file
             // Try a direct match for most common requests. Avoids
             // parsing the date.
-            ResourceCache.ResourceMetaData metaData =
-                    (ResourceCache.ResourceMetaData) resource.getAssociate();
+            ResourceCache.ResourceMetaData metaData = (ResourceCache.ResourceMetaData) resource.getAssociate();
             if (metaData != null) {
                 String ifms = request.getField(HttpFields.__IfModifiedSince);
                 String mdlm = metaData.getLastModified();
@@ -356,7 +322,6 @@ public class ResourceHandler extends AbstractHttpHandler {
                     return false;
                 }
             }
-
 
             long date = 0;
             // Parse the if[un]modified dates and compare to resource
@@ -382,24 +347,18 @@ public class ResourceHandler extends AbstractHttpHandler {
     }
 
 
-    /* ------------------------------------------------------------ */
-    void handlePut(HttpRequest request,
-                   HttpResponse response,
-                   String pathInContext,
-                   Resource resource)
-            throws IOException {
-        if (log.isDebugEnabled()) log.debug("PUT " + pathInContext + " in " + resource);
+    void handlePut(HttpRequest request, HttpResponse response, String pathInContext, Resource resource) throws IOException {
+        log.debug("PUT {} in {}", pathInContext, resource);
 
         boolean exists = resource != null && resource.exists();
-        if (exists &&
-                !passConditionalHeaders(request, response, resource))
+        if (exists && !passConditionalHeaders(request, response, resource)) {
             return;
-
+        }
         if (pathInContext.endsWith("/")) {
             if (!exists) {
-                if (!resource.getFile().mkdirs())
+                if (!resource.getFile().mkdirs()) {
                     response.sendError(HttpResponse.__403_Forbidden, "Directories could not be created");
-                else {
+                } else {
                     request.setHandled(true);
                     response.setStatus(HttpResponse.__201_Created);
                     response.commit();
@@ -414,86 +373,70 @@ public class ResourceHandler extends AbstractHttpHandler {
                 int toRead = request.getContentLength();
                 InputStream in = request.getInputStream();
                 OutputStream out = resource.getOutputStream();
-                if (toRead >= 0)
+                if (toRead >= 0) {
                     IO.copy(in, out, toRead);
-                else
+                } else {
                     IO.copy(in, out);
+                }
                 out.close();
                 request.setHandled(true);
-                response.setStatus(exists
-                        ? HttpResponse.__200_OK
-                        : HttpResponse.__201_Created);
+                response.setStatus(exists ? HttpResponse.__200_OK : HttpResponse.__201_Created);
                 response.commit();
             } catch (Exception ex) {
                 log.warn(LogSupport.EXCEPTION, ex);
-                response.sendError(HttpResponse.__403_Forbidden,
-                        ex.getMessage());
+                response.sendError(HttpResponse.__403_Forbidden, ex.getMessage());
             }
         }
     }
 
     /* ------------------------------------------------------------ */
-    void handleDelete(HttpRequest request,
-                      HttpResponse response,
-                      String pathInContext,
-                      Resource resource)
-            throws IOException {
-        if (log.isDebugEnabled()) log.debug("DELETE " + pathInContext + " from " + resource);
+    void handleDelete(HttpRequest request, HttpResponse response, String pathInContext, Resource resource) throws IOException {
+        log.debug("DELETE {} from {}", pathInContext, resource);
 
-        if (!resource.exists() ||
-                !passConditionalHeaders(request, response, resource))
+        if (!resource.exists() || !passConditionalHeaders(request, response, resource)) {
             return;
-
+        }
         try {
             // delete the file
-            if (resource.delete())
+            if (resource.delete()) {
                 response.setStatus(HttpResponse.__204_No_Content);
-            else
+            } else {
                 response.sendError(HttpResponse.__403_Forbidden);
-
+            }
             // Send response
             request.setHandled(true);
-        } catch (SecurityException sex) {
-            log.warn(LogSupport.EXCEPTION, sex);
-            response.sendError(HttpResponse.__403_Forbidden, sex.getMessage());
+        } catch (SecurityException e) {
+            log.warn(LogSupport.EXCEPTION, e);
+            response.sendError(HttpResponse.__403_Forbidden, e.getMessage());
         }
     }
 
-
-    /* ------------------------------------------------------------ */
-    void handleMove(HttpRequest request,
-                    HttpResponse response,
-                    String pathInContext,
-                    Resource resource)
-            throws IOException {
-        if (!resource.exists() || !passConditionalHeaders(request, response, resource))
+    void handleMove(HttpRequest request, HttpResponse response, String pathInContext, Resource resource) throws IOException {
+        if (!resource.exists() || !passConditionalHeaders(request, response, resource)) {
             return;
-
-
+        }
         String newPath = URI.canonicalPath(request.getField("New-uri"));
         if (newPath == null) {
-            response.sendError(HttpResponse.__405_Method_Not_Allowed,
-                    "Bad new uri");
+            response.sendError(HttpResponse.__405_Method_Not_Allowed, "Bad new uri");
             return;
         }
 
         String contextPath = getHttpContext().getContextPath();
         if (contextPath != null && !newPath.startsWith(contextPath)) {
-            response.sendError(HttpResponse.__405_Method_Not_Allowed,
-                    "Not in context");
+            response.sendError(HttpResponse.__405_Method_Not_Allowed, "Not in context");
             return;
         }
-
 
         // Find path
         try {
             // TODO - Check this
             String newInfo = newPath;
-            if (contextPath != null)
+            if (contextPath != null) {
                 newInfo = newInfo.substring(contextPath.length());
+            }
             Resource newFile = getHttpContext().getBaseResource().addPath(newInfo);
 
-            if (log.isDebugEnabled()) log.debug("Moving " + resource + " to " + newFile);
+            log.debug("Moving {} to {}", resource, newFile);
             resource.renameTo(newFile);
 
             response.setStatus(HttpResponse.__204_No_Content);
@@ -501,71 +444,56 @@ public class ResourceHandler extends AbstractHttpHandler {
         } catch (Exception ex) {
             log.warn(LogSupport.EXCEPTION, ex);
             setAllowHeader(response);
-            response.sendError(HttpResponse.__405_Method_Not_Allowed,
-                    "Error:" + ex);
-            return;
+            response.sendError(HttpResponse.__405_Method_Not_Allowed, "Error:" + ex);
         }
     }
 
-    /* ------------------------------------------------------------ */
-    void handleOptions(HttpResponse response, String pathInContext)
-            throws IOException {
-        if ("*".equals(pathInContext))
+    void handleOptions(HttpResponse response, String pathInContext) throws IOException {
+        if ("*".equals(pathInContext)) {
             return;
+        }
         setAllowHeader(response);
         response.commit();
     }
 
-    /* ------------------------------------------------------------ */
     void setAllowHeader(HttpResponse response) {
         response.setField(HttpFields.__Allow, getAllowedString());
     }
 
-    /* ------------------------------------------------------------ */
-    public void writeHeaders(HttpResponse response, Resource resource, long count)
-            throws IOException {
-        ResourceCache.ResourceMetaData metaData =
-                (ResourceCache.ResourceMetaData) resource.getAssociate();
+    public void writeHeaders(HttpResponse response, Resource resource, long count) {
+        ResourceCache.ResourceMetaData metaData = (ResourceCache.ResourceMetaData) resource.getAssociate();
 
         response.setContentType(metaData.getMimeType());
         if (count != -1) {
-            if (count == resource.length())
+            if (count == resource.length()) {
                 response.setField(HttpFields.__ContentLength, metaData.getLength());
-            else
+            } else {
                 response.setContentLength((int) count);
+            }
         }
 
         response.setField(HttpFields.__LastModified, metaData.getLastModified());
 
-        if (_acceptRanges && response.getHttpRequest().getDotVersion() > 0)
+        if (_acceptRanges && response.getHttpRequest().getDotVersion() > 0) {
             response.setField(HttpFields.__AcceptRanges, "bytes");
+        }
     }
 
-    /* ------------------------------------------------------------ */
-    public void sendData(HttpRequest request,
-                         HttpResponse response,
-                         String pathInContext,
-                         Resource resource,
-                         boolean writeHeaders)
-            throws IOException {
+    public void sendData(HttpRequest request, HttpResponse response, String pathInContext, Resource resource, boolean writeHeaders) throws IOException {
         long resLength = resource.length();
 
         //  see if there are any range headers
-        Enumeration reqRanges =
-                request.getDotVersion() > 0
-                        ? request.getFieldValues(HttpFields.__Range)
-                        : null;
+        Enumeration reqRanges = request.getDotVersion() > 0 ? request.getFieldValues(HttpFields.__Range) : null;
 
         if (!writeHeaders || reqRanges == null || !reqRanges.hasMoreElements()) {
             // look for a gziped content.
             Resource data = resource;
             if (_minGzipLength > 0) {
                 String accept = request.getField(HttpFields.__AcceptEncoding);
-                if (accept != null && resLength > _minGzipLength &&
-                        !pathInContext.endsWith(".gz")) {
+                if (accept != null && resLength > _minGzipLength && !pathInContext.endsWith(".gz")) {
                     Resource gz = getHttpContext().getResource(pathInContext + ".gz");
-                    if (gz.exists() && accept.indexOf("gzip") >= 0) {
-                        if (log.isDebugEnabled()) log.debug("gzip=" + gz);
+                    if (gz.exists() && accept.contains("gzip")) {
+                        log.debug("gzip={}", gz);
                         response.setField(HttpFields.__ContentEncoding, "gzip");
                         data = gz;
                         resLength = data.length();
@@ -582,18 +510,16 @@ public class ResourceHandler extends AbstractHttpHandler {
 
         // Parse the satisfiable ranges
         List ranges = InclusiveByteRange.satisfiableRanges(reqRanges, resLength);
-        if (log.isDebugEnabled()) log.debug("ranges: " + reqRanges + " == " + ranges);
+        log.debug("ranges: {} == {}", reqRanges, ranges);
 
         //  if there are no satisfiable ranges, send 416 response
         if (ranges == null || ranges.size() == 0) {
             log.debug("no satisfiable ranges");
             writeHeaders(response, resource, resLength);
             response.setStatus(HttpResponse.__416_Requested_Range_Not_Satisfiable);
-            response.setReason((String) HttpResponse.__statusMsg
-                    .get(TypeUtil.newInteger(HttpResponse.__416_Requested_Range_Not_Satisfiable)));
+            response.setReason((String) HttpResponse.__statusMsg.get(TypeUtil.newInteger(HttpResponse.__416_Requested_Range_Not_Satisfiable)));
 
-            response.setField(HttpFields.__ContentRange,
-                    InclusiveByteRange.to416HeaderRangeString(resLength));
+            response.setField(HttpFields.__ContentRange, InclusiveByteRange.to416HeaderRangeString(resLength));
 
             OutputStream out = response.getOutputStream();
             resource.writeTo(out, 0, resLength);
@@ -605,20 +531,15 @@ public class ResourceHandler extends AbstractHttpHandler {
         //  if there is only a single valid range (must be satisfiable 
         //  since were here now), send that range with a 216 response
         if (ranges.size() == 1) {
-            InclusiveByteRange singleSatisfiableRange =
-                    (InclusiveByteRange) ranges.get(0);
-            if (log.isDebugEnabled()) log.debug("single satisfiable range: " + singleSatisfiableRange);
+            InclusiveByteRange singleSatisfiableRange = (InclusiveByteRange) ranges.get(0);
+            log.debug("single satisfiable range: " + singleSatisfiableRange);
             long singleLength = singleSatisfiableRange.getSize(resLength);
             writeHeaders(response, resource, singleLength);
             response.setStatus(HttpResponse.__206_Partial_Content);
-            response.setReason((String) HttpResponse.__statusMsg
-                    .get(TypeUtil.newInteger(HttpResponse.__206_Partial_Content)));
-            response.setField(HttpFields.__ContentRange,
-                    singleSatisfiableRange.toHeaderRangeString(resLength));
+            response.setReason((String) HttpResponse.__statusMsg.get(TypeUtil.newInteger(HttpResponse.__206_Partial_Content)));
+            response.setField(HttpFields.__ContentRange, singleSatisfiableRange.toHeaderRangeString(resLength));
             OutputStream out = response.getOutputStream();
-            resource.writeTo(out,
-                    singleSatisfiableRange.getFirst(resLength),
-                    singleLength);
+            resource.writeTo(out, singleSatisfiableRange.getFirst(resLength), singleLength);
             request.setHandled(true);
             return;
         }
@@ -628,34 +549,31 @@ public class ResourceHandler extends AbstractHttpHandler {
         //  216 response which does not require an overall 
         //  content-length header
         //
-        ResourceCache.ResourceMetaData metaData =
-                (ResourceCache.ResourceMetaData) resource.getAssociate();
+        ResourceCache.ResourceMetaData metaData = (ResourceCache.ResourceMetaData) resource.getAssociate();
         String encoding = metaData.getMimeType();
         MultiPartResponse multi = new MultiPartResponse(response);
         response.setStatus(HttpResponse.__206_Partial_Content);
-        response.setReason((String) HttpResponse.__statusMsg
-                .get(TypeUtil.newInteger(HttpResponse.__206_Partial_Content)));
+        response.setReason((String) HttpResponse.__statusMsg.get(TypeUtil.newInteger(HttpResponse.__206_Partial_Content)));
 
         // If the request has a "Request-Range" header then we need to
         // send an old style multipart/x-byteranges Content-Type. This
         // keeps Netscape and acrobat happy. This is what Apache does.
         String ctp;
-        if (request.containsField(HttpFields.__RequestRange))
+        if (request.containsField(HttpFields.__RequestRange)) {
             ctp = "multipart/x-byteranges; boundary=";
-        else
+        } else {
             ctp = "multipart/byteranges; boundary=";
+        }
         response.setContentType(ctp + multi.getBoundary());
 
-        InputStream in = (resource instanceof CachedResource)
-                ? null : resource.getInputStream();
+        InputStream in = (resource instanceof CachedResource) ? null : resource.getInputStream();
         OutputStream out = response.getOutputStream();
         long pos = 0;
 
         for (int i = 0; i < ranges.size(); i++) {
             InclusiveByteRange ibr = (InclusiveByteRange) ranges.get(i);
-            String header = HttpFields.__ContentRange + ": " +
-                    ibr.toHeaderRangeString(resLength);
-            if (log.isDebugEnabled()) log.debug("multi range: " + encoding + " " + header);
+            String header = HttpFields.__ContentRange + ": " + ibr.toHeaderRangeString(resLength);
+            log.debug("multi range: {} {}", encoding, header);
             multi.startPart(encoding, new String[]{header});
 
             long start = ibr.getFirst(resLength);
@@ -673,27 +591,21 @@ public class ResourceHandler extends AbstractHttpHandler {
                 }
                 IO.copy(in, out, size);
                 pos += size;
-            } else
+            } else {
                 // Handle cached resource
                 resource.writeTo(out, start, size);
-
+            }
         }
-        if (in != null)
+        if (in != null) {
             in.close();
+        }
         multi.close();
 
         request.setHandled(true);
 
-        return;
     }
 
-
-    /* ------------------------------------------------------------------- */
-    void sendDirectory(HttpRequest request,
-                       HttpResponse response,
-                       Resource resource,
-                       boolean parent)
-            throws IOException {
+    void sendDirectory(HttpRequest request, HttpResponse response, Resource resource, boolean parent) throws IOException {
         if (!_dirAllowed) {
             response.sendError(HttpResponse.__403_Forbidden);
             return;
@@ -701,22 +613,22 @@ public class ResourceHandler extends AbstractHttpHandler {
 
         request.setHandled(true);
 
-        if (log.isDebugEnabled()) log.debug("sendDirectory: " + resource);
+        log.debug("sendDirectory: {}", resource);
         byte[] data = null;
-        if (resource instanceof CachedResource)
+        if (resource instanceof CachedResource) {
             data = ((CachedResource) resource).getCachedData();
-
+        }
         if (data == null) {
             String base = URI.addPaths(request.getPath(), "/");
             String dir = resource.getListHTML(URI.encodePath(base), parent);
             if (dir == null) {
-                response.sendError(HttpResponse.__403_Forbidden,
-                        "No directory");
+                response.sendError(HttpResponse.__403_Forbidden, "No directory");
                 return;
             }
             data = dir.getBytes("UTF8");
-            if (resource instanceof CachedResource)
+            if (resource instanceof CachedResource) {
                 ((CachedResource) resource).setCachedData(data);
+            }
         }
 
         response.setContentType("text/html; charset=UTF8");
