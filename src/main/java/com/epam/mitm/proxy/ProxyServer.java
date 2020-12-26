@@ -161,6 +161,8 @@ public class ProxyServer {
         pageCount++;
     }
 
+    /* This part is unused and not supported in MITM-JavaProxy
+
     public void endPage() {
         if (currentPage == null) {
             return;
@@ -175,16 +177,18 @@ public class ProxyServer {
         client.remapHost(source, target);
     }
 
+    public StreamManager getStreamManager() {
+        return streamManager;
+    }
+
+    */
+
     public void addRequestInterceptor(final RequestInterceptor interceptor) {
         client.addRequestInterceptor(interceptor);
     }
 
     public void addResponseInterceptor(final ResponseInterceptor interceptor) {
         client.addResponseInterceptor(interceptor);
-    }
-
-    public StreamManager getStreamManager() {
-        return streamManager;
     }
 
     public void setRequestTimeout(final int requestTimeout) {
