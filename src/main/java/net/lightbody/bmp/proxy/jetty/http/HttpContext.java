@@ -34,7 +34,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -83,6 +82,7 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
 
     public final static String __ErrorHandler = "net.lightbody.bmp.proxy.jetty.http.ErrorHandler";
     private final Logger log = LoggerFactory.getLogger(HttpContext.class);
+    private final PathMap _constraintMap = new PathMap();
     /* ------------------------------------------------------------ */
     transient Object _statsLock = new Object[0];
     transient long _statsStartedAt;
@@ -94,7 +94,6 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
     transient int _responses3xx; // Redirection
     transient int _responses4xx; // Client Error
     transient int _responses5xx; // Server Error
-    /* ------------------------------------------------------------ */
     /* ------------------------------------------------------------ */
     // These attributes are serialized by WebApplicationContext, which needs
     // to be updated if you add to these
@@ -116,16 +115,15 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
     private Map _initParams = new HashMap(11);
     private UserRealm _userRealm;
     private String _realmName;
-    private final PathMap _constraintMap = new PathMap();
     private Authenticator _authenticator;
     private RequestLog _requestLog;
     private String[] _welcomes =
-        {
-                "welcome.html",
-                "index.html",
-                "index.htm",
-                "index.jsp"
-        };
+            {
+                    "welcome.html",
+                    "index.html",
+                    "index.htm",
+                    "index.jsp"
+            };
     /* ------------------------------------------------------------ */
     private transient boolean _gracefulStop;
     private transient ClassLoader _parent;
@@ -305,15 +303,12 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
 
     /**
      * Get the virtual hosts for the context.
-     * Only requests that have a matching host header or fully qualified
-     * URL will be passed to that context with a virtual host name.
-     * A context with no virtual host names or a null virtual host name is
-     * available to all requests that are not served by a context with a
-     * matching virtual host name.
+     * Only requests that have a matching host header or fully qualified URL will be passed to that context
+     * with a virtual host name. A context with no virtual host names or a null virtual host name is
+     * available to all requests that are not served by a context with a matching virtual host name.
      *
-     * @return Array of virtual hosts that this context responds to. A
-     * null host name or empty array means any hostname is acceptable.
-     * Host names may be String representation of IP addresses.
+     * @return Array of virtual hosts that this context responds to. A null host name or empty array means
+     * any hostname is acceptable. Host names may be String representation of IP addresses.
      */
     public String[] getVirtualHosts() {
         if (_vhostsArray != null) {
@@ -374,60 +369,55 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
 
     /**
      * Set the hosts for the context.
-     * Set the real hosts that this context will accept requests for.
-     * If not null or empty, then only requests from HttpListeners for hosts
-     * in this array are accepted by this context.
-     * Unlike virutal hosts, this value is not used by HttpServer for
-     * matching a request to a context.
+     * Set the real hosts that this context will accept requests for. If not null or empty,
+     * then only requests from HttpListeners for hosts in this array are accepted by this context.
+     * Unlike virutal hosts, this value is not used by HttpServer for matching a request to a context.
      */
     public void setHosts(String[] hosts)
             throws UnknownHostException {
-        if (hosts == null || hosts.length == 0)
+        if (hosts == null || hosts.length == 0) {
             _hosts = null;
-        else {
+        } else {
             _hosts = new ArrayList();
-            for (int i = 0; i < hosts.length; i++)
-                if (hosts[i] != null)
+            for (int i = 0; i < hosts.length; i++) {
+                if (hosts[i] != null) {
                     _hosts.add(InetAddress.getByName(hosts[i]));
+                }
+            }
         }
 
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get system classes.
      * System classes cannot be overriden by context classloaders.
      *
-     * @return array of classname Strings.  Names ending with '.' are treated as package names. Names starting with '-' are treated as
-     * negative matches and must be listed before any enclosing packages. Null if not set.
+     * @return array of classname Strings.  Names ending with '.' are treated as package names.
+     * Names starting with '-' are treated as negative matches and must be listed before any enclosing packages.
+     * Null if not set.
      */
     public String[] getSystemClasses() {
         return _systemClasses;
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Set system classes.
      * System classes cannot be overriden by context classloaders.
      *
-     * @param classes array of classname Strings.  Names ending with '.' are treated as package names. Names starting with '-' are treated as
-     *                negative matches and must be listed before any enclosing packages.
+     * @param classes array of classname Strings.  Names ending with '.' are treated as package names.
+     *                Names starting with '-' are treated as negative matches and must be listed before any enclosing packages.
      */
     public void setSystemClasses(String[] classes) {
         _systemClasses = classes;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get system classes.
      * System classes cannot be seen by context classloaders.
      *
-     * @return array of classname Strings.  Names ending with '.' are treated as package names. Names starting with '-' are treated as
-     * negative matches and must be listed before any enclosing packages. Null if not set.
+     * @return array of classname Strings.  Names ending with '.' are treated as package names.
+     * Names starting with '-' are treated as negative matches and must be listed before any enclosing packages.
+     * Null if not set.
      */
     public String[] getServerClasses() {
         return _serverClasses;
@@ -437,14 +427,12 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
      * Set system classes.
      * Servers classes cannot be seen by context classloaders.
      *
-     * @param classes array of classname Strings.  Names ending with '.' are treated as package names. Names starting with '-' are treated as
-     *                negative matches and must be listed before any enclosing packages.
+     * @param classes array of classname Strings.  Names ending with '.' are treated as package names.
+     *                Names starting with '-' are treated as negative matches and must be listed before any enclosing packages.
      */
     public void setServerClasses(String[] classes) {
         _serverClasses = classes;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get all handlers.
@@ -452,37 +440,34 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
      * @return List of all HttpHandlers
      */
     public HttpHandler[] getHandlers() {
-        if (_handlersArray != null)
+        if (_handlersArray != null) {
             return _handlersArray;
-        if (_handlers == null)
+        }
+        if (_handlers == null) {
             _handlersArray = new HttpHandler[0];
-        else {
+        } else {
             _handlersArray = new HttpHandler[_handlers.size()];
             _handlersArray = (HttpHandler[]) _handlers.toArray(_handlersArray);
         }
         return _handlersArray;
     }
 
-
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     public void setHandlers(HttpHandler[] handlers) {
         List old = new ArrayList(_handlers);
 
         if (handlers != null) {
-            for (int i = 0; i < handlers.length; i++) {
-                boolean existing = old.remove(handlers[i]);
-                if (!existing)
-                    addHandler(handlers[i]);
+            for (HttpHandler handler : handlers) {
+                boolean existing = old.remove(handler);
+                if (!existing) {
+                    addHandler(handler);
+                }
             }
         }
 
-        for (int i = 0; i < old.size(); i++)
-            removeHandler((HttpHandler) old.get(i));
+        for (Object o : old) {
+            removeHandler((HttpHandler) o);
+        }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Add a handler.
@@ -495,14 +480,15 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         _handlersArray = null;
 
         HttpContext context = handler.getHttpContext();
-        if (context == null)
+        if (context == null) {
             handler.initialize(this);
-        else if (context != this)
-            throw new IllegalArgumentException("Handler in another HttpContext");
+        } else {
+            if (context != this) {
+                throw new IllegalArgumentException("Handler in another HttpContext");
+            }
+        }
         addComponent(handler);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Add a HttpHandler to the context.
@@ -513,8 +499,6 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         addHandler(_handlers.size(), handler);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get handler index.
      *
@@ -523,13 +507,12 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
      */
     public int getHandlerIndex(HttpHandler handler) {
         for (int h = 0; h < _handlers.size(); h++) {
-            if (handler == _handlers.get(h))
+            if (handler == _handlers.get(h)) {
                 return h;
+            }
         }
         return -1;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get a handler by class.
@@ -538,15 +521,14 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
      * @return The first handler that is an instance of the handlerClass
      */
     public synchronized HttpHandler getHandler(Class handlerClass) {
-        for (int h = 0; h < _handlers.size(); h++) {
-            HttpHandler handler = (HttpHandler) _handlers.get(h);
-            if (handlerClass.isInstance(handler))
+        for (Object o : _handlers) {
+            HttpHandler handler = (HttpHandler) o;
+            if (handlerClass.isInstance(handler)) {
                 return handler;
+            }
         }
         return null;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Remove a handler.
@@ -556,43 +538,39 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
      */
     public synchronized HttpHandler removeHandler(int i) {
         HttpHandler handler = _handlersArray[i];
-        if (handler.isStarted())
+        if (handler.isStarted()) {
             try {
                 handler.stop();
             } catch (InterruptedException e) {
                 log.warn(LogSupport.EXCEPTION, e);
             }
+        }
         _handlers.remove(i);
         _handlersArray = null;
         removeComponent(handler);
         return handler;
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Remove a handler.
      * The handler must be stopped before being removed.
      */
     public synchronized void removeHandler(HttpHandler handler) {
-        if (handler.isStarted())
+        if (handler.isStarted()) {
             try {
                 handler.stop();
             } catch (InterruptedException e) {
                 log.warn(LogSupport.EXCEPTION, e);
             }
+        }
         _handlers.remove(handler);
         removeComponent(handler);
         _handlersArray = null;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set context init parameter.
-     * Init Parameters differ from attributes as they can only
-     * have string values, servlets cannot set them and they do
+     * Init Parameters differ from attributes as they can only have string values, servlets cannot set them and they do
      * not have a package scoped name space.
      *
      * @param param param name
@@ -601,8 +579,6 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
     public void setInitParameter(String param, String value) {
         _initParams.put(param, value);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get context init parameter.
@@ -614,8 +590,6 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         return (String) _initParams.get(param);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get context init parameter.
      *
@@ -624,8 +598,6 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
     public Enumeration getInitParameterNames() {
         return Collections.enumeration(_initParams.keySet());
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Set a context attribute.
@@ -637,8 +609,6 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         _attributes.put(name, value);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param name attribute name
      * @return attribute value or null
@@ -647,8 +617,6 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         return _attributes.get(name);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      *
      */
@@ -656,16 +624,12 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         return _attributes;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      *
      */
     public void setAttributes(Map attributes) {
         _attributes = attributes;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return enumaration of names.
@@ -681,80 +645,64 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         _attributes.remove(name);
     }
 
-    /* ------------------------------------------------------------ */
     public void flushCache() {
         _resources.flushCache();
     }
 
-    /* ------------------------------------------------------------ */
     public String[] getWelcomeFiles() {
         return _welcomes;
     }
 
-    /* ------------------------------------------------------------ */
     public void setWelcomeFiles(String[] welcomes) {
-        if (welcomes == null)
+        if (welcomes == null) {
             _welcomes = new String[0];
-        else
+        } else {
             _welcomes = welcomes;
+        }
     }
 
-    /* ------------------------------------------------------------ */
     public void addWelcomeFile(String welcomeFile) {
-        if (welcomeFile.startsWith("/") ||
-                welcomeFile.startsWith(java.io.File.separator) ||
-                welcomeFile.endsWith("/") ||
-                welcomeFile.endsWith(java.io.File.separator))
+        if (welcomeFile.startsWith("/") || welcomeFile.startsWith(java.io.File.separator)
+                || welcomeFile.endsWith("/") || welcomeFile.endsWith(java.io.File.separator)) {
             log.warn("Invalid welcome file: " + welcomeFile);
+        }
         List list = new ArrayList(Arrays.asList(_welcomes));
         list.add(welcomeFile);
         _welcomes = (String[]) list.toArray(_welcomes);
     }
 
-    /* ------------------------------------------------------------ */
     public void removeWelcomeFile(String welcomeFile) {
         List list = new ArrayList(Arrays.asList(_welcomes));
         list.remove(welcomeFile);
         _welcomes = (String[]) list.toArray(_welcomes);
     }
 
-
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
-    public String getWelcomeFile(Resource resource)
-            throws IOException {
-        if (!resource.isDirectory())
+    public String getWelcomeFile(Resource resource) throws IOException {
+        if (!resource.isDirectory()) {
             return null;
-
+        }
         for (int i = 0; i < _welcomes.length; i++) {
             Resource welcome = resource.addPath(_welcomes[i]);
-            if (welcome.exists())
+            if (welcome.exists()) {
                 return _welcomes[i];
+            }
         }
 
         return null;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get the context classpath.
-     * This method only returns the paths that have been set for this
-     * context and does not include any paths from a parent or the
-     * system classloader.
-     * Note that this may not be a legal javac classpath.
+     * This method only returns the paths that have been set for this context and does not include any paths
+     * from a parent or the system classloader. Note that this may not be a legal javac classpath.
      *
-     * @return a comma or ';' separated list of class
-     * resources. These may be jar files, directories or URLs to jars
-     * or directories.
+     * @return a comma or ';' separated list of class resources.
+     * These may be jar files, directories or URLs to jars or directories.
      * @see #getFileClassPath()
      */
     public String getClassPath() {
         return _classPath;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Sets the class path for the context.
@@ -771,26 +719,21 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
             log.warn("classpath set while started");
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get the file classpath of the context.
-     * This method makes a best effort to return a complete file
-     * classpath for the context.
-     * It is obtained by walking the classloader hierarchy and looking for
-     * URLClassLoaders.  The system property java.class.path is also checked for
-     * file elements not already found in the loader hierarchy.
+     * This method makes a best effort to return a complete file classpath for the context.
+     * It is obtained by walking the classloader hierarchy and looking for URLClassLoaders.
+     * The system property java.class.path is also checked for file elements not already found in the loader hierarchy.
      *
      * @return Path of files and directories for loading classes.
-     * @throws IllegalStateException HttpContext.initClassLoader
-     *                               has not been called.
+     * @throws IllegalStateException HttpContext.initClassLoader has not been called.
      */
-    public String getFileClassPath()
-            throws IllegalStateException {
+    public String getFileClassPath() throws IllegalStateException {
 
         ClassLoader loader = getClassLoader();
-        if (loader == null)
+        if (loader == null) {
             throw new IllegalStateException("Context classloader not initialized");
+        }
 
         LinkedList paths = new LinkedList();
         LinkedList loaders = new LinkedList();
@@ -811,16 +754,17 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         for (int i = 0; i < loaders.size(); i++) {
             loader = (ClassLoader) loaders.get(i);
 
-            if (log.isDebugEnabled()) log.debug("extract paths from " + loader);
+            log.debug("extract paths from {}", loader);
             if (loader instanceof URLClassLoader) {
                 URL[] urls = ((URLClassLoader) loader).getURLs();
                 for (int j = 0; urls != null && j < urls.length; j++) {
                     try {
                         Resource path = Resource.newResource(urls[j]);
-                        if (log.isTraceEnabled()) log.trace("path " + path);
+                        log.trace("path {}", path);
                         File file = path.getFile();
-                        if (file != null)
+                        if (file != null) {
                             paths.add(file.getAbsolutePath());
+                        }
                     } catch (Exception e) {
                         //
                     }
@@ -835,58 +779,55 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
             while (tok.hasMoreTokens()) {
                 String path = tok.nextToken();
                 if (!paths.contains(path)) {
-                    if (log.isTraceEnabled()) log.trace("PATH=" + path);
+                    log.trace("PATH={}", path);
                     paths.add(path);
-                } else if (log.isTraceEnabled()) log.trace("done=" + path);
+                } else {
+                    log.trace("done={}", path);
+                }
             }
         }
 
         StringBuffer buf = new StringBuffer();
         Iterator iter = paths.iterator();
         while (iter.hasNext()) {
-            if (buf.length() > 0)
+            if (buf.length() > 0) {
                 buf.append(File.pathSeparator);
+            }
             buf.append(iter.next().toString());
         }
 
-        if (log.isDebugEnabled()) log.debug("fileClassPath=" + buf);
+        log.debug("fileClassPath={}", buf);
         return buf.toString();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Add the class path element  to the context.
-     * A class path is only required for a context if it uses classes
-     * that are not in the system class path.
+     * A class path is only required for a context if it uses classes that are not in the system class path.
      *
-     * @param classPath a comma or ';' separated list of class
-     *                  resources. These may be jar files, directories or URLs to jars
-     *                  or directories.
+     * @param classPath a comma or ';' separated list of class resources.
+     *                  These may be jar files, directories or URLs to jars or directories.
      */
     public void addClassPath(String classPath) {
-        if (_classPath == null || _classPath.length() == 0)
+        if (_classPath == null || _classPath.length() == 0) {
             _classPath = classPath;
-        else
+        } else {
             _classPath += "," + classPath;
-
-        if (isStarted())
+        }
+        if (isStarted()) {
             log.warn("classpath set while started");
+        }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Add elements to the class path for the context from the jar and zip files found
-     * in the specified resource.
+     * Add elements to the class path for the context from the jar and zip files found in the specified resource.
      *
-     * @param lib    the resource that contains the jar and/or zip files.
+     * @param lib the resource that contains the jar and/or zip files.
      * @see #setClassPath(String)
      */
     public void addClassPaths(Resource lib) {
-        if (isStarted())
+        if (isStarted()) {
             log.warn("classpaths set while started");
-
+        }
         if (lib.exists() && lib.isDirectory()) {
             String[] files = lib.list();
             for (int f = 0; files != null && f < files.length; f++) {
@@ -903,69 +844,62 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get Java2 compliant classloading.
      *
-     * @return If true, the class loader will conform to the java 2
-     * specification and delegate all loads to the parent classloader. If
-     * false, the context classloader only delegate loads for system classes
+     * @return If true, the class loader will conform to the java 2 specification and delegate all loads
+     * to the parent classloader. If false, the context classloader only delegate loads for system classes
      * or classes that it can't find itself.
      */
     public boolean isClassLoaderJava2Compliant() {
         return _classLoaderJava2Compliant;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set Java2 compliant classloading.
      *
-     * @param compliant If true, the class loader will conform to the java 2
-     *                  specification and delegate all loads to the parent classloader. If
-     *                  false, the context classloader only delegate loads for system classes
-     *                  or classes that it can't find itself.
+     * @param compliant If true, the class loader will conform to the java 2 specification and delegate all loads
+     *                  to the parent classloader. If false, the context classloader only delegate loads
+     *                  for system classes or classes that it can't find itself.
      */
     public void setClassLoaderJava2Compliant(boolean compliant) {
         _classLoaderJava2Compliant = compliant;
-        if (_loader != null && (_loader instanceof ContextLoader))
+        if (_loader != null && (_loader instanceof ContextLoader)) {
             ((ContextLoader) _loader).setJava2Compliant(compliant);
+        }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get Context temporary directory.
-     * A tempory directory is generated if it has not been set.  The
-     * "javax.servlet.context.tempdir" attribute is consulted and if
-     * not set, the host, port and context are used to generate a
-     * directory within the JVMs temporary directory.
+     * A tempory directory is generated if it has not been set. The "javax.servlet.context.tempdir" attribute
+     * is consulted and if not set, the host, port and context are used
+     * to generate a directory within the JVMs temporary directory.
      *
      * @return Temporary directory as a File.
      */
     public File getTempDirectory() {
-        if (_tmpDir != null)
+        if (_tmpDir != null) {
             return _tmpDir;
-
+        }
         // Initialize temporary directory
         //
         // I'm afraid that this is very much black magic.
         // but if you can think of better....
         Object t = getAttribute("javax.servlet.context.tempdir");
 
-        if (t != null && (t instanceof File)) {
+        if (t instanceof File) {
             _tmpDir = (File) t;
-            if (_tmpDir.isDirectory() && _tmpDir.canWrite())
+            if (_tmpDir.isDirectory() && _tmpDir.canWrite()) {
                 return _tmpDir;
+            }
         }
 
-        if (t != null && (t instanceof String)) {
+        if (t instanceof String) {
             try {
                 _tmpDir = new File((String) t);
 
                 if (_tmpDir.isDirectory() && _tmpDir.canWrite()) {
-                    if (log.isDebugEnabled()) log.debug("Converted to File " + _tmpDir + " for " + this);
+                    log.debug("Converted to File {} for {}", _tmpDir, this);
                     setAttribute("javax.servlet.context.tempdir", _tmpDir);
                     return _tmpDir;
                 }
@@ -978,8 +912,9 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         File work = null;
         try {
             work = new File(System.getProperty("jetty.home"), "work");
-            if (!work.exists() || !work.canWrite() || !work.isDirectory())
+            if (!work.exists() || !work.canWrite() || !work.isDirectory()) {
                 work = null;
+            }
         } catch (Exception e) {
             //
         }
@@ -989,48 +924,47 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
             HttpListener httpListener = _httpServer.getListeners()[0];
 
             String vhost = null;
-            for (int h = 0; vhost == null && _vhosts != null && h < _vhosts.size(); h++)
+            for (int h = 0; vhost == null && _vhosts != null && h < _vhosts.size(); h++) {
                 vhost = (String) _vhosts.get(h);
+            }
             String host = httpListener.getHost();
-            String temp = "Jetty_" +
-                    (host == null ? "" : host) +
-                    "_" +
-                    httpListener.getPort() +
-                    "_" +
-                    (vhost == null ? "" : vhost) +
-                    getContextPath();
+            String temp = "Jetty_"
+                    + (host == null ? "" : host) + "_" + httpListener.getPort() + "_" +
+                    (vhost == null ? "" : vhost) + getContextPath();
 
             temp = temp.replace('/', '_');
             temp = temp.replace('.', '_');
             temp = temp.replace('\\', '_');
 
-
-            if (work != null)
+            if (work != null) {
                 _tmpDir = new File(work, temp);
-            else {
+            } else {
                 _tmpDir = new File(System.getProperty("java.io.tmpdir"), temp);
 
                 if (_tmpDir.exists()) {
-                    if (log.isDebugEnabled()) log.debug("Delete existing temp dir " + _tmpDir + " for " + this);
+                    log.debug("Delete existing temp dir {} for {}", _tmpDir, this);
                     if (!IO.delete(_tmpDir)) {
-                        if (log.isDebugEnabled()) log.debug("Failed to delete temp dir " + _tmpDir);
+                        log.debug("Failed to delete temp dir {}", _tmpDir);
                     }
 
                     if (_tmpDir.exists()) {
                         String old = _tmpDir.toString();
                         _tmpDir = File.createTempFile(temp + "_", "");
-                        if (_tmpDir.exists())
+                        if (_tmpDir.exists()) {
                             _tmpDir.delete();
-                        log.warn("Can't reuse " + old + ", using " + _tmpDir);
+                        }
+                        log.warn("Can't reuse {}, using {}", old, _tmpDir);
                     }
                 }
             }
 
-            if (!_tmpDir.exists())
+            if (!_tmpDir.exists()) {
                 _tmpDir.mkdir();
-            if (work == null)
+            }
+            if (work == null) {
                 _tmpDir.deleteOnExit();
-            if (log.isDebugEnabled()) log.debug("Created temp dir " + _tmpDir + " for " + this);
+            }
+            log.debug("Created temp dir {} for {}", _tmpDir, this);
         } catch (Exception e) {
             _tmpDir = null;
         }
@@ -1039,11 +973,12 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
             try {
                 // that didn't work, so try something simpler (ish)
                 _tmpDir = File.createTempFile("JettyContext", "");
-                if (_tmpDir.exists())
+                if (_tmpDir.exists()) {
                     _tmpDir.delete();
+                }
                 _tmpDir.mkdir();
                 _tmpDir.deleteOnExit();
-                if (log.isDebugEnabled()) log.debug("Created temp dir " + _tmpDir + " for " + this);
+                log.debug("Created temp dir {} for {}", _tmpDir, this);
             } catch (IOException e) {
                 log.error(e.getMessage(), e);
                 System.exit(1);
@@ -1054,20 +989,15 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         return _tmpDir;
     }
 
-
-
-    /* ------------------------------------------------------------ */
-
     /**
-     * Set temporary directory for context.
-     * The javax.servlet.context.tempdir attribute is also set.
+     * Set temporary directory for context. The javax.servlet.context.tempdir attribute is also set.
      *
      * @param dir Writable temporary directory.
      */
     public void setTempDirectory(File dir) {
-        if (isStarted())
+        if (isStarted()) {
             throw new IllegalStateException("Started");
-
+        }
         if (dir != null) {
             try {
                 dir = new File(dir.getCanonicalPath());
@@ -1081,27 +1011,21 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
             dir.deleteOnExit();
         }
 
-        if (dir != null && (!dir.exists() || !dir.isDirectory() || !dir.canWrite()))
+        if (dir != null && (!dir.exists() || !dir.isDirectory() || !dir.canWrite())) {
             throw new IllegalArgumentException("Bad temp directory: " + dir);
+        }
 
         _tmpDir = dir;
         setAttribute("javax.servlet.context.tempdir", _tmpDir);
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Get the classloader.
-     * If no classloader has been set and the context has been loaded
-     * normally, then null is returned.
-     * If no classloader has been set and the context was loaded from
-     * a classloader, that loader is returned.
-     * If a classloader has been set and no classpath has been set then
-     * the set classloader is returned.
-     * If a classloader and a classpath has been set, then a new
-     * URLClassloader initialized on the classpath with the set loader as a
-     * partent is return.
+     * If no classloader has been set and the context has been loaded normally, then null is returned.
+     * If no classloader has been set and the context was loaded from a classloader, that loader is returned.
+     * If a classloader has been set and no classpath has been set then the set classloader is returned.
+     * If a classloader and a classpath has been set, then a new URLClassloader initialized
+     * on the classpath with the set loader as a partent is return.
      *
      * @return Classloader or null.
      */
@@ -1109,52 +1033,45 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         return _loader;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set ClassLoader.
      *
      * @param loader The loader to be used by this context.
      */
     public synchronized void setClassLoader(ClassLoader loader) {
-        if (isStarted())
+        if (isStarted()) {
             throw new IllegalStateException("Started");
+        }
         _loader = loader;
     }
 
-    /* ------------------------------------------------------------ */
     public ClassLoader getParentClassLoader() {
         return _parent;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set Parent ClassLoader.
-     * By default the parent loader is the thread context classloader
-     * of the thread that calls initClassLoader.  If setClassLoader is
-     * called, then the parent is ignored.
+     * By default the parent loader is the thread context classloader of the thread that calls initClassLoader.
+     * If setClassLoader is called, then the parent is ignored.
      *
-     * @param loader The class loader to use for the parent loader of
-     *               the context classloader.
+     * @param loader The class loader to use for the parent loader of the context classloader.
      */
     public synchronized void setParentClassLoader(ClassLoader loader) {
-        if (isStarted())
+        if (isStarted()) {
             throw new IllegalStateException("Started");
+        }
         _parent = loader;
     }
 
     /**
      * Initialize the context classloader.
      * Initialize the context classloader with the current parameters.
-     * Any attempts to change the classpath after this call will
-     * result in a IllegalStateException
+     * Any attempts to change the classpath after this call will result in a IllegalStateException
      *
      * @param forceContextLoader If true, a ContextLoader is always if
      *                           no loader has been set.
      */
-    protected void initClassLoader(boolean forceContextLoader)
-            throws MalformedURLException, IOException {
+    protected void initClassLoader(boolean forceContextLoader) throws IOException {
         ClassLoader parent = _parent;
         if (_loader == null) {
             // If no parent, then try this threads classes loader as parent
@@ -1162,26 +1079,22 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
                 parent = Thread.currentThread().getContextClassLoader();
 
             // If no parent, then try this classes loader as parent
-            if (parent == null)
+            if (parent == null) {
                 parent = this.getClass().getClassLoader();
-
-            if (log.isDebugEnabled()) log.debug("Init classloader from " + _classPath +
-                    ", " + parent + " for " + this);
+            }
+            log.debug("Init classloader from {}, {} for {}", _classPath, parent, this);
 
             if (forceContextLoader || _classPath != null || _permissions != null) {
                 ContextLoader loader = new ContextLoader(this, _classPath, parent, _permissions);
                 loader.setJava2Compliant(_classLoaderJava2Compliant);
                 _loader = loader;
-            } else
+            } else {
                 _loader = parent;
+            }
         }
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
-    public synchronized Class loadClass(String className)
-            throws ClassNotFoundException {
+    public synchronized Class loadClass(String className) throws ClassNotFoundException {
         if (_loader == null) {
             try {
                 initClassLoader(false);
@@ -1191,32 +1104,28 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
             }
         }
 
-        if (className == null)
+        if (className == null) {
             return null;
-
-        if (_loader == null)
+        }
+        if (_loader == null) {
             return Class.forName(className);
+        }
         return _loader.loadClass(className);
     }
 
-    /* ------------------------------------------------------------ */
     public String getRealmName() {
         return _realmName;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set the realm name.
      *
-     * @param realmName The name to use to retrieve the actual realm
-     *                  from the HttpServer
+     * @param realmName The name to use to retrieve the actual realm from the HttpServer
      */
     public void setRealmName(String realmName) {
         _realmName = realmName;
     }
 
-    /* ------------------------------------------------------------ */
     public UserRealm getRealm() {
         return _userRealm;
     }
@@ -1228,38 +1137,27 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         _userRealm = realm;
     }
 
-    /* ------------------------------------------------------------ */
     public Authenticator getAuthenticator() {
         return _authenticator;
     }
 
-    /* ------------------------------------------------------------ */
     public void setAuthenticator(Authenticator authenticator) {
         _authenticator = authenticator;
     }
 
-    /* ------------------------------------------------------------ */
     public void addSecurityConstraint(String pathSpec, SecurityConstraint sc) {
         Object scs = _constraintMap.get(pathSpec);
         scs = LazyList.add(scs, sc);
         _constraintMap.put(pathSpec, scs);
 
-        if (log.isDebugEnabled()) log.debug("added " + sc + " at " + pathSpec);
+        log.debug("added {} at {}", sc, pathSpec);
     }
 
-    /* ------------------------------------------------------------ */
     public void clearSecurityConstraints() {
         _constraintMap.clear();
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
-    public boolean checkSecurityConstraints(
-            String pathInContext,
-            HttpRequest request,
-            HttpResponse response)
-            throws HttpException, IOException {
+    public boolean checkSecurityConstraints(String pathInContext, HttpRequest request, HttpResponse response) throws IOException {
         UserRealm realm = getRealm();
 
         List scss = _constraintMap.getMatches(pathInContext);
@@ -1272,59 +1170,45 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
             // break if the matching pattern changes.  This allows only
             // constraints with matching pattern and method to be combined.
             loop:
-            for (int m = 0; m < scss.size(); m++) {
-                Map.Entry entry = (Map.Entry) scss.get(m);
+            for (Object o : scss) {
+                Map.Entry entry = (Map.Entry) o;
                 Object scs = entry.getValue();
                 String p = (String) entry.getKey();
                 for (int c = 0; c < LazyList.size(scs); c++) {
                     SecurityConstraint sc = (SecurityConstraint) LazyList.get(scs, c);
-                    if (!sc.forMethod(request.getMethod()))
+                    if (!sc.forMethod(request.getMethod())) {
                         continue;
-
-                    if (pattern != null && !pattern.equals(p))
+                    }
+                    if (pattern != null && !pattern.equals(p)) {
                         break loop;
+                    }
                     pattern = p;
                     constraints = LazyList.add(constraints, sc);
                 }
             }
 
             return SecurityConstraint.check(
-                    LazyList.getList(constraints),
-                    _authenticator,
-                    realm,
-                    pathInContext,
-                    request,
-                    response);
+                    LazyList.getList(constraints), _authenticator, realm, pathInContext, request, response);
         }
         request.setUserPrincipal(HttpRequest.__NOT_CHECKED);
         return true;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return True if a /context request is redirected to /context/ if
-     * there is not path in the context.
+     * @return True if a /context request is redirected to /context/ if there is not path in the context.
      */
     public boolean isRedirectNullPath() {
         return _redirectNullPath;
     }
 
-
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Set null path redirection.
      *
-     * @param b if true a /context request will be redirected to
-     *          /context/ if there is not path in the context.
+     * @param b if true a /context request will be redirected to /context/ if there is not path in the context.
      */
     public void setRedirectNullPath(boolean b) {
         _redirectNullPath = b;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get the permissions to be used for this context.
@@ -1333,14 +1217,10 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         return _permissions;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set the permissions to be used for this context.
-     * The collection of permissions set here are used for all classes
-     * loaded by this context.  This is simpler that creating a
-     * security policy file, as not all code sources may be statically
-     * known.
+     * The collection of permissions set here are used for all classes loaded by this context.
+     * This is simpler that creating a security policy file, as not all code sources may be statically known.
      *
      * @param permissions
      */
@@ -1348,29 +1228,23 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         _permissions = permissions;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Add a permission to this context.
-     * The collection of permissions set here are used for all classes
-     * loaded by this context.  This is simpler that creating a
-     * security policy file, as not all code sources may be statically
-     * known.
+     * The collection of permissions set here are used for all classes loaded by this context.
+     * This is simpler that creating a security policy file, as not all code sources may be statically known.
      *
      * @param permission
      */
     public void addPermission(Permission permission) {
-        if (_permissions == null)
+        if (_permissions == null) {
             _permissions = new Permissions();
+        }
         _permissions.add(permission);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Handler request.
-     * Determine the path within the context and then call
-     * handle(pathInContext,request,response).
+     * Determine the path within the context and then call handle(pathInContext,request,response).
      *
      * @param request
      * @param response
@@ -1378,19 +1252,17 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
      * @throws HttpException
      * @throws IOException
      */
-    public void handle(HttpRequest request,
-                       HttpResponse response)
-            throws HttpException, IOException {
-        if (!isStarted() || _gracefulStop)
+    public void handle(HttpRequest request, HttpResponse response) throws HttpException, IOException {
+        if (!isStarted() || _gracefulStop) {
             return;
-
+        }
         // reject requests by real host
         if (_hosts != null && _hosts.size() > 0) {
             Object o = request.getHttpConnection().getConnection();
             if (o instanceof Socket) {
                 Socket s = (Socket) o;
                 if (!_hosts.contains(s.getLocalAddress())) {
-                    if (log.isDebugEnabled()) log.debug(s.getLocalAddress() + " not in " + _hosts);
+                    log.debug("{} not in {}", s.getLocalAddress(), _hosts);
                     return;
                 }
             }
@@ -1401,8 +1273,9 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
             synchronized (_statsLock) {
                 _requests++;
                 _requestsActive++;
-                if (_requestsActive > _requestsActiveMax)
+                if (_requestsActive > _requestsActiveMax) {
                     _requestsActiveMax = _requestsActive;
+                }
             }
         }
 
@@ -1412,22 +1285,18 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
             throw new HttpException(HttpResponse.__400_Bad_Request);
         }
 
-        if (_contextPath.length() > 1)
+        if (_contextPath.length() > 1) {
             pathInContext = pathInContext.substring(_contextPath.length());
-
-        if (_redirectNullPath && (pathInContext == null ||
-                pathInContext.length() == 0)) {
+        }
+        if (_redirectNullPath && (pathInContext == null || pathInContext.length() == 0)) {
             StringBuffer buf = request.getRequestURL();
             buf.append("/");
             String q = request.getQuery();
-            if (q != null && q.length() != 0)
+            if (q != null && q.length() != 0) {
                 buf.append("?" + q);
-
+            }
             response.sendRedirect(buf.toString());
-            if (log.isDebugEnabled())
-                log.debug(this + " consumed all of path " +
-                        request.getPath() +
-                        ", redirect to " + buf.toString());
+            log.debug("{} consumed all of path {}, redirect to {}", this, request.getPath(), buf.toString());
             return;
         }
 
@@ -1445,12 +1314,11 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         try {
             handle(pathInContext, pathParams, request, response);
         } finally {
-            if (_userRealm != null && request.hasUserPrincipal())
+            if (_userRealm != null && request.hasUserPrincipal()) {
                 _userRealm.disassociate(request.getUserPrincipal());
+            }
         }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Handler request.
@@ -1464,11 +1332,7 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
      * @throws HttpException
      * @throws IOException
      */
-    public void handle(String pathInContext,
-                       String pathParams,
-                       HttpRequest request,
-                       HttpResponse response)
-            throws HttpException, IOException {
+    public void handle(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws HttpException, IOException {
         Object old_scope = null;
         try {
             old_scope = enterContextScope(request, response);
@@ -1481,26 +1345,20 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
                     continue;
                 }
                 if (!handler.isStarted()) {
-                    if (log.isDebugEnabled())
-                        log.debug(handler + " not started in " + this);
+                    log.debug("{} not started in {}", handler, this);
                     continue;
                 }
-                if (log.isDebugEnabled())
-                    log.debug("Handler " + handler);
+                log.debug("Handler {}", handler);
                 handler.handle(pathInContext, pathParams, request, response);
                 if (request.isHandled()) {
-                    if (log.isDebugEnabled())
-                        log.debug("Handled by " + handler);
+                    log.debug("Handled by {}", handler);
                     return;
                 }
             }
-            return;
         } finally {
             leaveContextScope(request, response, old_scope);
         }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Enter the context scope.
@@ -1521,8 +1379,9 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
             scope._httpContext = c;
         }
 
-        if (_loader != null)
+        if (_loader != null) {
             thread.setContextClassLoader(_loader);
+        }
         response.setHttpContext(this);
 
         return scope;
@@ -1536,8 +1395,7 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
      */
     public void leaveContextScope(HttpRequest request, HttpResponse response, Object oldScope) {
         if (oldScope == null) {
-            Thread.currentThread()
-                    .setContextClassLoader(HttpContext.class.getClassLoader());
+            Thread.currentThread().setContextClassLoader(HttpContext.class.getClassLoader());
             response.setHttpContext(null);
         } else {
             Scope old = (Scope) oldScope;
@@ -1546,48 +1404,44 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         }
     }
 
-    /* ------------------------------------------------------------ */
     public String getHttpContextName() {
-        if (_contextName == null)
+        if (_contextName == null) {
             _contextName = (_vhosts.size() > 1 ? (_vhosts.toString() + ":") : "") + _contextPath;
+        }
         return _contextName;
     }
 
-    /* ------------------------------------------------------------ */
     public void setHttpContextName(String s) {
         _contextName = s;
     }
 
-    /* ------------------------------------------------------------ */
     public String toString() {
         return "HttpContext[" + getContextPath() + "," + getHttpContextName() + "]";
     }
 
-    /* ------------------------------------------------------------ */
     public String toString(boolean detail) {
-        return "HttpContext[" + getContextPath() + "," + getHttpContextName() + "]" +
-                (detail ? ("=" + _handlers) : "");
+        return "HttpContext[" + getContextPath() + "," + getHttpContextName() + "]"
+                + (detail ? ("=" + _handlers) : "");
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
-    protected synchronized void doStart()
-            throws Exception {
-        if (isStarted())
+    protected synchronized void doStart() throws Exception {
+        if (isStarted()) {
             return;
-
-        if (_httpServer.getServerClasses() != null)
+        }
+        if (_httpServer.getServerClasses() != null) {
             _serverClasses = _httpServer.getServerClasses();
-        if (_httpServer.getSystemClasses() != null)
+        }
+        if (_httpServer.getSystemClasses() != null) {
             _systemClasses = _httpServer.getSystemClasses();
+        }
 
         _resources.start();
 
         statsReset();
 
-        if (_httpServer == null)
+        if (_httpServer == null) {
             throw new IllegalStateException("No server for " + this);
+        }
 
         // start the context itself
         _resources.getMimeMap();
@@ -1596,8 +1450,9 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         // Setup realm
         if (_userRealm == null && _authenticator != null) {
             _userRealm = _httpServer.getRealm(_realmName);
-            if (_userRealm == null)
-                log.warn("No Realm: " + _realmName);
+            if (_userRealm == null) {
+                log.warn("No Realm: {}", _realmName);
+            }
         }
 
         // setup the context loader
@@ -1605,19 +1460,19 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
 
         // Set attribute if needed
         String attr = getInitParameter(__fileClassPathAttr);
-        if (attr != null && attr.length() > 0)
+        if (attr != null && attr.length() > 0) {
             setAttribute(attr, getFileClassPath());
-
+        }
         // Start the handlers
         Thread thread = Thread.currentThread();
         ClassLoader lastContextLoader = thread.getContextClassLoader();
         try {
-            if (_loader != null)
+            if (_loader != null) {
                 thread.setContextClassLoader(_loader);
-
-            if (_requestLog != null)
+            }
+            if (_requestLog != null) {
                 _requestLog.start();
-
+            }
             startHandlers();
         } finally {
             thread.setContextClassLoader(lastContextLoader);
@@ -1626,36 +1481,30 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
 
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Start the handlers.
-     * This is called by start after the classloader has been
-     * initialized and set as the thread context loader.
-     * It may be specialized to provide custom handling
-     * before any handlers are started.
+     * This is called by start after the classloader has been initialized and set as the thread context loader.
+     * It may be specialized to provide custom handling before any handlers are started.
      *
      * @throws Exception
      */
-    protected void startHandlers()
-            throws Exception {
+    protected void startHandlers() throws Exception {
         // Prepare a multi exception
         MultiException mx = new MultiException();
 
         Iterator handlers = _handlers.iterator();
         while (handlers.hasNext()) {
             HttpHandler handler = (HttpHandler) handlers.next();
-            if (!handler.isStarted())
+            if (!handler.isStarted()) {
                 try {
                     handler.start();
                 } catch (Exception e) {
                     mx.add(e);
                 }
+            }
         }
         mx.ifExceptionThrow();
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Stop the context.
@@ -1663,14 +1512,13 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
      * @param graceful If true and statistics are on, then this method will wait
      *                 for requestsActive to go to zero before calling stop()
      */
-    public void stop(boolean graceful)
-            throws InterruptedException {
+    public void stop(boolean graceful) throws InterruptedException {
         boolean gs = _gracefulStop;
         try {
             _gracefulStop = true;
 
             // wait for all requests to complete.
-            while (graceful && _statsOn && _requestsActive > 0 && _httpServer != null)
+            while (graceful && _statsOn && _requestsActive > 0 && _httpServer != null) {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
@@ -1678,31 +1526,28 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
                 } catch (Exception e) {
                     //
                 }
-
+            }
             stop();
         } finally {
             _gracefulStop = gs;
         }
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Stop the context.
      */
-    protected void doStop()
-            throws Exception {
-        if (_httpServer == null)
+    protected void doStop() throws Exception {
+        if (_httpServer == null) {
             throw new InterruptedException("Destroy called");
-
+        }
         synchronized (this) {
             // Notify the container for the stop
             Thread thread = Thread.currentThread();
             ClassLoader lastContextLoader = thread.getContextClassLoader();
             try {
-                if (_loader != null)
+                if (_loader != null) {
                     thread.setContextClassLoader(_loader);
+                }
                 Iterator handlers = _handlers.iterator();
                 while (handlers.hasNext()) {
                     HttpHandler handler = (HttpHandler) handlers.next();
@@ -1715,8 +1560,9 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
                     }
                 }
 
-                if (_requestLog != null)
+                if (_requestLog != null) {
                     _requestLog.stop();
+                }
             } finally {
                 thread.setContextClassLoader(lastContextLoader);
             }
@@ -1733,37 +1579,37 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         _resources.stop();
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Destroy a context.
-     * Destroy a context and remove it from the HttpServer. The
-     * HttpContext must be stopped before it can be destroyed.
+     * Destroy a context and remove it from the HttpServer. The HttpContext must be stopped before it can be destroyed.
      */
     public void destroy() {
-        if (isStarted())
+        if (isStarted()) {
             throw new IllegalStateException("Started");
+        }
 
-        if (_httpServer != null)
+        if (_httpServer != null) {
             _httpServer.removeContext(this);
-
+        }
         _httpServer = null;
 
-        if (_handlers != null)
+        if (_handlers != null) {
             _handlers.clear();
-
+        }
         _handlers = null;
         _parent = null;
         _loader = null;
-        if (_attributes != null)
+        if (_attributes != null) {
             _attributes.clear();
+        }
         _attributes = null;
-        if (_initParams != null)
+        if (_initParams != null) {
             _initParams.clear();
+        }
         _initParams = null;
-        if (_vhosts != null)
+        if (_vhosts != null) {
             _vhosts.clear();
+        }
         _vhosts = null;
         _hosts = null;
         _tmpDir = null;
@@ -1773,12 +1619,13 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         removeComponent(_resources);
         if (_resources != null) {
             _resources.flushCache();
-            if (_resources.isStarted())
+            if (_resources.isStarted()) {
                 try {
                     _resources.stop();
                 } catch (Exception e) {
                     //
                 }
+            }
             _resources.destroy();
         }
         _resources = null;
@@ -1787,13 +1634,9 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
 
     }
 
-    /* ------------------------------------------------------------ */
     public RequestLog getRequestLog() {
         return _requestLog;
     }
-
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Set the request log.
@@ -1804,26 +1647,20 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         _requestLog = log;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Send an error response.
-     * This method may be specialized to provide alternative error handling for
-     * errors generated by the container.  The default implemenation calls HttpResponse.sendError
+     * This method may be specialized to provide alternative error handling for errors generated by the container.
+     * The default implemenation calls HttpResponse.sendError
      *
      * @param response the response to send
      * @param code     The error code
      * @param msg      The message for the error or null for the default
      * @throws IOException Problem sending response.
      */
-    public void sendError(HttpResponse response, int code, String msg)
-            throws IOException {
+    public void sendError(HttpResponse response, int code, String msg) throws IOException {
         response.sendError(code, msg);
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     public boolean getStatsOn() {
         return _statsOn;
     }
@@ -1834,21 +1671,20 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
      * @param on If true, statistics will be recorded for this context.
      */
     public void setStatsOn(boolean on) {
-        log.info("setStatsOn " + on + " for " + this);
+        log.info("setStatsOn {} for {}", on, this);
         _statsOn = on;
         statsReset();
     }
 
-    /* ------------------------------------------------------------ */
     public long getStatsOnMs() {
         return _statsOn ? (System.currentTimeMillis() - _statsStartedAt) : 0;
     }
 
-    /* ------------------------------------------------------------ */
     public void statsReset() {
         synchronized (_statsLock) {
-            if (_statsOn)
+            if (_statsOn) {
                 _statsStartedAt = System.currentTimeMillis();
+            }
             _requests = 0;
             _requestsActiveMax = _requestsActive;
             _responses1xx = 0;
@@ -1859,18 +1695,13 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return Get the number of requests handled by this context
-     * since last call of statsReset(). If setStatsOn(false) then this
-     * is undefined.
+     * since last call of statsReset(). If setStatsOn(false) then this is undefined.
      */
     public int getRequests() {
         return _requests;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return Number of requests currently active.
@@ -1880,28 +1711,20 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         return _requestsActive;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Maximum number of active requests
-     * since statsReset() called. Undefined if setStatsOn(false).
+     * @return Maximum number of active requests since statsReset() called. Undefined if setStatsOn(false).
      */
     public int getRequestsActiveMax() {
         return _requestsActiveMax;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Get the number of responses with a 2xx status returned
-     * by this context since last call of statsReset(). Undefined if
-     * if setStatsOn(false).
+     * @return Get the number of responses with a 2xx status returned by this context since last call of statsReset().
+     * Undefined if setStatsOn(false).
      */
     public int getResponses1xx() {
         return _responses1xx;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return Get the number of responses with a 100 status returned
@@ -1912,103 +1735,89 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         return _responses2xx;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Get the number of responses with a 3xx status returned
-     * by this context since last call of statsReset(). Undefined if
-     * if setStatsOn(false).
+     * @return Get the number of responses with a 3xx status returned by this context since last call of statsReset().
+     * Undefined if setStatsOn(false).
      */
     public int getResponses3xx() {
         return _responses3xx;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Get the number of responses with a 4xx status returned
-     * by this context since last call of statsReset(). Undefined if
-     * if setStatsOn(false).
+     * @return Get the number of responses with a 4xx status returned by this context since last call of statsReset().
+     * Undefined if setStatsOn(false).
      */
     public int getResponses4xx() {
         return _responses4xx;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Get the number of responses with a 5xx status returned
-     * by this context since last call of statsReset(). Undefined if
-     * if setStatsOn(false).
+     * @return Get the number of responses with a 5xx status returned by this context since last call of statsReset().
+     * Undefined if setStatsOn(false).
      */
     public int getResponses5xx() {
         return _responses5xx;
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
-     * Log a request and response.
-     * Statistics are also collected by this method.
+     * Log a request and response. Statistics are also collected by this method.
      *
      * @param request
      * @param response
      */
-    public void log(HttpRequest request,
-                    HttpResponse response,
-                    int length) {
+    public void log(HttpRequest request, HttpResponse response, int length) {
         if (_statsOn) {
             synchronized (_statsLock) {
-                if (--_requestsActive < 0)
+                if (--_requestsActive < 0) {
                     _requestsActive = 0;
-
+                }
                 if (response != null) {
                     switch (response.getStatus() / 100) {
-                    case 1:
-                        _responses1xx++;
-                        break;
-                    case 2:
-                        _responses2xx++;
-                        break;
-                    case 3:
-                        _responses3xx++;
-                        break;
-                    case 4:
-                        _responses4xx++;
-                        break;
-                    case 5:
-                        _responses5xx++;
-                        break;
+                        case 1:
+                            _responses1xx++;
+                            break;
+                        case 2:
+                            _responses2xx++;
+                            break;
+                        case 3:
+                            _responses3xx++;
+                            break;
+                        case 4:
+                            _responses4xx++;
+                            break;
+                        case 5:
+                            _responses5xx++;
+                            break;
                     }
                 }
             }
         }
 
-        if (_requestLog != null &&
-                request != null &&
-                response != null)
+        if (_requestLog != null && request != null && response != null) {
             _requestLog.log(request, response, length);
-        else if (_httpServer != null)
-            _httpServer.log(request, response, length);
+        } else {
+            if (_httpServer != null) {
+                _httpServer.log(request, response, length);
+            }
+        }
     }
 
-    /*
-     * @see net.lightbody.bmp.proxy.jetty.http.HttpHandler#getName()
+    /**
+     * @see net.lightbody.bmp.proxy.jetty.http.HttpHandler#getName() .
      */
     public String getName() {
         return this.getContextPath();
     }
 
-    /*
-     * @see net.lightbody.bmp.proxy.jetty.http.HttpHandler#getHttpContext()
+    /**
+     * @see net.lightbody.bmp.proxy.jetty.http.HttpHandler#getHttpContext() .
      */
     public HttpContext getHttpContext() {
         return this;
     }
 
-    /*
-     * @see net.lightbody.bmp.proxy.jetty.http.HttpHandler#initialize(net.lightbody.bmp.proxy.jetty.http.HttpContext)
+    /**
+     * @see net.lightbody.bmp.proxy.jetty.http.HttpHandler#initialize(net.lightbody.bmp.proxy.jetty.http.HttpContext) .
      */
     public void initialize(HttpContext context) {
         throw new UnsupportedOperationException();
@@ -2147,8 +1956,8 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
         _resources.setTypeEncoding(mimeType, encoding);
     }
 
-    /* ------------------------------------------------------------ */
-    /* Class to save scope of nested context calls
+    /**
+     * Class to save scope of nested context calls.
      */
     private static class Scope {
         ClassLoader _classLoader;
