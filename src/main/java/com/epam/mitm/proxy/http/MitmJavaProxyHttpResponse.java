@@ -1,4 +1,4 @@
-package net.lightbody.bmp.proxy.http;
+package com.epam.mitm.proxy.http;
 
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.proxy.jetty.util.URI;
@@ -18,7 +18,6 @@ public class MitmJavaProxyHttpResponse {
     private final URI proxyRequestURI;
     private final HttpResponse response;
     private final boolean contentMatched;
-    private final String verificationText;
     private final String errorMessage;
     private final String body;
     private final String contentType;
@@ -28,7 +27,7 @@ public class MitmJavaProxyHttpResponse {
     private ByteArrayOutputStream bos;
 
     public MitmJavaProxyHttpResponse(int status, HarEntry entry, HttpRequestBase method, URI proxyRequestURI, HttpResponse response,
-                                     boolean contentMatched, String verificationText, String errorMessage,
+                                     boolean contentMatched, String errorMessage,
                                      String body, String contentType, String charSet,
                                      ByteArrayOutputStream bos, OutputStream os, boolean responseVolatile) {
         this.entry = entry;
@@ -36,7 +35,6 @@ public class MitmJavaProxyHttpResponse {
         this.proxyRequestURI = proxyRequestURI;
         this.response = response;
         this.contentMatched = contentMatched;
-        this.verificationText = verificationText;
         this.errorMessage = errorMessage;
         this.body = body;
         this.contentType = contentType;

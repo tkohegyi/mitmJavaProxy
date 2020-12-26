@@ -1,7 +1,7 @@
 package com.epam.mitm.proxy.help;
 
-import net.lightbody.bmp.proxy.http.MitmJavaProxyHttpRequest;
-import net.lightbody.bmp.proxy.http.RequestInterceptor;
+import com.epam.mitm.proxy.http.MitmJavaProxyHttpRequest;
+import com.epam.mitm.proxy.RequestInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

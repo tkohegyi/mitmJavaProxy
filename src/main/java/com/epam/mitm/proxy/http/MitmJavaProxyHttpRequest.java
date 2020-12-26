@@ -1,6 +1,8 @@
-package net.lightbody.bmp.proxy.http;
+package com.epam.mitm.proxy.http;
 
 import com.epam.mitm.idgenerator.TimeStampBasedIdGenerator;
+import net.lightbody.bmp.proxy.http.BrowserMobHttpClient;
+import net.lightbody.bmp.proxy.http.RequestCallback;
 import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 import net.lightbody.bmp.proxy.util.Base64;
 import net.lightbody.bmp.proxy.util.ClonedInputStream;
@@ -38,7 +40,6 @@ public class MitmJavaProxyHttpRequest {
     private final HttpRequest proxyRequest;
     private final String wilmaMessageId = TIME_STAMP_BASED_ID_GENERATOR.nextIdentifier();
     private int expectedStatusCode;
-    private String verificationText;
     private StringEntity stringEntity;
     private ByteArrayEntity byteArrayEntity;
     private InputStreamEntity inputStreamEntity;
@@ -51,7 +52,7 @@ public class MitmJavaProxyHttpRequest {
     private InputStream playGround;
     private boolean responseVolatile = false;
 
-    protected MitmJavaProxyHttpRequest(final HttpRequestBase method, final BrowserMobHttpClient client, final int expectedStatusCode,
+    public MitmJavaProxyHttpRequest(final HttpRequestBase method, final BrowserMobHttpClient client, final int expectedStatusCode,
                                        final boolean collectAdditionalInfo, final HttpRequest proxyRequest) {
         this.method = method;
         this.client = client;
@@ -100,14 +101,6 @@ public class MitmJavaProxyHttpRequest {
         }
 
         inputStreamEntity = new InputStreamEntity(is, length);
-    }
-
-    public String getVerificationText() {
-        return verificationText;
-    }
-
-    public void setVerificationText(final String verificationText) {
-        this.verificationText = verificationText;
     }
 
     public HttpRequestBase getMethod() {

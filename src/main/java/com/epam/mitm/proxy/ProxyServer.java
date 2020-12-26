@@ -11,8 +11,6 @@ import net.lightbody.bmp.core.har.HarPage;
 import net.lightbody.bmp.core.util.ThreadUtils;
 import net.lightbody.bmp.proxy.BrowserMobProxyHandler;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpClient;
-import net.lightbody.bmp.proxy.http.RequestInterceptor;
-import net.lightbody.bmp.proxy.http.ResponseInterceptor;
 import net.lightbody.bmp.proxy.jetty.http.HttpContext;
 import net.lightbody.bmp.proxy.jetty.http.HttpListener;
 import net.lightbody.bmp.proxy.jetty.http.SocketListener;

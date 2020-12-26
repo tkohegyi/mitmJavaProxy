@@ -1,6 +1,10 @@
 package net.lightbody.bmp.proxy.http;
 
 import com.epam.mitm.proxy.ProxyServer;
+import com.epam.mitm.proxy.RequestInterceptor;
+import com.epam.mitm.proxy.ResponseInterceptor;
+import com.epam.mitm.proxy.http.MitmJavaProxyHttpRequest;
+import com.epam.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarCookie;
 import net.lightbody.bmp.core.har.HarEntry;
@@ -386,7 +390,6 @@ public class BrowserMobHttpClient {
         RequestCallback callback = req.getRequestCallback();
 
         HttpRequestBase method = req.getMethod();
-        String verificationText = req.getVerificationText();
         String url = method.getURI().toString();
 
         // process any rewrite requests
@@ -429,9 +432,6 @@ public class BrowserMobHttpClient {
         OutputStream os = req.getOutputStream();
         if (os == null) {
             os = new CappedByteArrayOutputStream(MAX_BUFFER_SIZE);
-        }
-        if (verificationText != null) {
-            contentMatched = false;
         }
 
         // link the object up now, before we make the request, so that if we get cut off (ie: favicon.ico request and browser shuts down)
@@ -622,68 +622,56 @@ public class BrowserMobHttpClient {
         String contentType = null;
 
         if (response != null) {
-            try {
-                Header contentTypeHdr = response.getFirstHeader("Content-Type");
-                if (contentTypeHdr != null) {
-                    contentType = contentTypeHdr.getValue();
-                    entry.getResponse().getContent().setMimeType(contentType);
+            Header contentTypeHdr = response.getFirstHeader("Content-Type");
+            if (contentTypeHdr != null) {
+                contentType = contentTypeHdr.getValue();
+                entry.getResponse().getContent().setMimeType(contentType);
 
-                    ByteArrayOutputStream copy = null;
-                    boolean enableWorkWithCopy = false;
-                    if (!isResponseVolatile && captureContent && os != null && os instanceof ClonedOutputStream) {
-                        copy = ((ClonedOutputStream) os).getOutput();
-                        enableWorkWithCopy = true;
-                    }
-                    if (isResponseVolatile && captureContent && bos != null) {
-                        enableWorkWithCopy = true;
-                        copy = bos;
-                    }
-                    if (captureContent && enableWorkWithCopy) {
-                        if (entry.getResponse().getBodySize() != 0 && (gzipping || deflating)) {
-                            // ok, we need to decompress it before we can put it in the har file
-                            try {
-                                InputStream temp = null;
-                                if (gzipping) {
-                                    temp = new GZIPInputStream(new ByteArrayInputStream(copy.toByteArray()));
-                                } else if (deflating) {
-                                    //RAW deflate only
-                                    // WARN : if system is using zlib<=1.1.4 the stream must be append with a dummy byte
-                                    // that is not required for zlib>1.1.4 (not mentioned on current Inflater javadoc)
-                                    temp = new InflaterInputStream(new ByteArrayInputStream(copy.toByteArray()), new Inflater(true));
-                                }
-                                copy = new ByteArrayOutputStream();
-                                IOUtils.copy(temp, copy);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
+                ByteArrayOutputStream copy = null;
+                boolean enableWorkWithCopy = false;
+                if (!isResponseVolatile && captureContent && os != null && os instanceof ClonedOutputStream) {
+                    copy = ((ClonedOutputStream) os).getOutput();
+                    enableWorkWithCopy = true;
+                }
+                if (isResponseVolatile && captureContent && bos != null) {
+                    enableWorkWithCopy = true;
+                    copy = bos;
+                }
+                if (captureContent && enableWorkWithCopy) {
+                    if (entry.getResponse().getBodySize() != 0 && (gzipping || deflating)) {
+                        // ok, we need to decompress it before we can put it in the har file
+                        try {
+                            InputStream temp = null;
+                            if (gzipping) {
+                                temp = new GZIPInputStream(new ByteArrayInputStream(copy.toByteArray()));
+                            } else if (deflating) {
+                                //RAW deflate only
+                                // WARN : if system is using zlib<=1.1.4 the stream must be append with a dummy byte
+                                // that is not required for zlib>1.1.4 (not mentioned on current Inflater javadoc)
+                                temp = new InflaterInputStream(new ByteArrayInputStream(copy.toByteArray()), new Inflater(true));
                             }
-                        }
-
-                        if (contentType != null && (contentType.startsWith("text/") || contentType.startsWith("application/x-javascript"))
-                                || contentType.startsWith("application/javascript") || contentType.startsWith("application/json")
-                                || contentType.startsWith("application/xml") || contentType.startsWith("application/xhtml+xml")
-                                || contentType.startsWith("application/soap+xml")) {
-                            entry.getResponse().getContent().setText(new String(copy.toByteArray()));
-                        } else if (captureBinaryContent) {
-                            entry.getResponse().getContent().setText(Base64.byteArrayToBase64(copy.toByteArray()));
+                            copy = new ByteArrayOutputStream();
+                            IOUtils.copy(temp, copy);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
                         }
                     }
 
-                    NameValuePair nvp = contentTypeHdr.getElements()[0].getParameterByName("charset");
-
-                    if (nvp != null) {
-                        charSet = nvp.getValue();
+                    if (contentType != null && (contentType.startsWith("text/") || contentType.startsWith("application/x-javascript"))
+                            || contentType.startsWith("application/javascript") || contentType.startsWith("application/json")
+                            || contentType.startsWith("application/xml") || contentType.startsWith("application/xhtml+xml")
+                            || contentType.startsWith("application/soap+xml")) {
+                        entry.getResponse().getContent().setText(new String(copy.toByteArray()));
+                    } else if (captureBinaryContent) {
+                        entry.getResponse().getContent().setText(Base64.byteArrayToBase64(copy.toByteArray()));
                     }
                 }
 
-                if (os instanceof ByteArrayOutputStream) {
-                    responseBody = ((ByteArrayOutputStream) os).toString(charSet);
+                NameValuePair nvp = contentTypeHdr.getElements()[0].getParameterByName("charset");
 
-                    if (verificationText != null) {
-                        contentMatched = responseBody.contains(verificationText);
-                    }
+                if (nvp != null) {
+                    charSet = nvp.getValue();
                 }
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);
             }
         }
 
@@ -755,7 +743,7 @@ public class BrowserMobHttpClient {
             }
         }
 
-        return new MitmJavaProxyHttpResponse(statusCode, entry, method, req.getProxyRequest().getURI(), response, contentMatched, verificationText, errorMessage,
+        return new MitmJavaProxyHttpResponse(statusCode, entry, method, req.getProxyRequest().getURI(), response, contentMatched, errorMessage,
                 entry.getResponse().getContent().getText(), contentType, charSet, bos, os, isResponseVolatile);
     }
 
