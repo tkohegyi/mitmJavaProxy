@@ -19,9 +19,6 @@ import net.lightbody.bmp.proxy.jetty.util.TypeUtil;
 
 import java.io.IOException;
 
-
-/* ------------------------------------------------------------ */
-
 /**
  * Exception for known HTTP error status.
  *
@@ -29,7 +26,7 @@ import java.io.IOException;
  * @version $Revision: 1.5 $
  */
 public class HttpException extends IOException {
-    private int _code;
+    private final int _code;
 
     public HttpException() {
         _code = HttpResponse.__400_Bad_Request;

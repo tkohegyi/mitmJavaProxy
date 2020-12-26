@@ -373,8 +373,7 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
      * then only requests from HttpListeners for hosts in this array are accepted by this context.
      * Unlike virutal hosts, this value is not used by HttpServer for matching a request to a context.
      */
-    public void setHosts(String[] hosts)
-            throws UnknownHostException {
+    public void setHosts(String[] hosts) throws UnknownHostException {
         if (hosts == null || hosts.length == 0) {
             _hosts = null;
         } else {
