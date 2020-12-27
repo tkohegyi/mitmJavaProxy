@@ -117,14 +117,12 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
     private String _realmName;
     private Authenticator _authenticator;
     private RequestLog _requestLog;
-    private String[] _welcomes =
-            {
-                    "welcome.html",
-                    "index.html",
-                    "index.htm",
-                    "index.jsp"
-            };
-    /* ------------------------------------------------------------ */
+    private String[] _welcomes = {
+            "welcome.html",
+            "index.html",
+            "index.htm",
+            "index.jsp"
+    };
     private transient boolean _gracefulStop;
     private transient ClassLoader _parent;
     private transient ClassLoader _loader;

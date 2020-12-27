@@ -15,13 +15,13 @@
 
 package net.lightbody.bmp.proxy.jetty.http;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.CachedResource;
 import net.lightbody.bmp.proxy.jetty.util.LifeCycle;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.Resource;
 import net.lightbody.bmp.proxy.jetty.util.StringUtil;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -31,20 +31,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-
-/* ------------------------------------------------------------ */
-
 /**
  * @author Greg Wilkins
  * @version $Id: ResourceCache.java,v 1.13 2006/04/04 22:28:02 gregwilkins Exp $
  */
-public class ResourceCache implements LifeCycle,
-        Serializable {
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
+public class ResourceCache implements LifeCycle, Serializable {
+
     private final static Map __dftMimeMap = new HashMap();
     private final static Map __encodings = new HashMap();
-    private static Log log = LogFactory.getLog(ResourceCache.class);
+    private final Logger log = LoggerFactory.getLogger(ResourceCache.class);
 
     static {
         ResourceBundle mime = ResourceBundle.getBundle("net/lightbody/bmp/proxy/jetty/http/mime");
@@ -61,8 +56,6 @@ public class ResourceCache implements LifeCycle,
         }
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     // TODO - handle this
     // These attributes are serialized by WebApplicationContext, which needs
     // to be updated if you add to these
@@ -71,17 +64,14 @@ public class ResourceCache implements LifeCycle,
     protected transient int _cacheSize;
     protected transient CachedMetaData _mostRecentlyUsed;
     protected transient CachedMetaData _leastRecentlyUsed;
-    private int _maxCachedFileSize = 1 * 1024;
-    private int _maxCacheSize = 1 * 1024;
-    /* ------------------------------------------------------------ */
+    private int _maxCachedFileSize = 1024;
+    private int _maxCacheSize = 1024;
+    
     private Resource _resourceBase;
     private Map _mimeMap;
     private Map _encodingMap;
-    /* ------------------------------------------------------------ */
+    
     private transient boolean _started;
-
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -90,63 +80,47 @@ public class ResourceCache implements LifeCycle,
         _cache = new HashMap();
     }
 
-
-    /* ------------------------------------------------------------ */
-    private void readObject(java.io.ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         _cache = new HashMap();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set the Resource Base.
-     * The base resource is the Resource to use as a relative base
-     * for all context resources. The ResourceBase attribute is a
-     * string version of the baseResource.
-     * If a relative file is passed, it is converted to a file
-     * URL based on the current working directory.
+     * The base resource is the Resource to use as a relative base for all context resources. The ResourceBase
+     * attribute is a string version of the baseResource.
+     * If a relative file is passed, it is converted to a file URL based on the current working directory.
      *
-     * @return The file or URL to use as the base for all resources
-     * within the context.
+     * @return The file or URL to use as the base for all resources within the context.
      */
     public String getResourceBase() {
-        if (_resourceBase == null)
+        if (_resourceBase == null) {
             return null;
+        }
         return _resourceBase.toString();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set the Resource Base.
-     * The base resource is the Resource to use as a relative base
-     * for all context resources. The ResourceBase attribute is a
-     * string version of the baseResource.
-     * If a relative file is passed, it is converted to a file
-     * URL based on the current working directory.
+     * The base resource is the Resource to use as a relative base for all context resources. The ResourceBase attribute
+     * is a string version of the baseResource.
+     * If a relative file is passed, it is converted to a file URL based on the current working directory.
      *
      * @param resourceBase A URL prefix or directory name.
      */
     public void setResourceBase(String resourceBase) {
         try {
             _resourceBase = Resource.newResource(resourceBase);
-            if (log.isDebugEnabled()) log.debug("resourceBase=" + _resourceBase + " for " + this);
+            log.debug("resourceBase={} for {}", _resourceBase, this);
         } catch (IOException e) {
             log.debug(LogSupport.EXCEPTION, e);
             throw new IllegalArgumentException(resourceBase + ":" + e.toString());
         }
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
-     * Get the base resource.
-     * The base resource is the Resource to use as a relative base
-     * for all context resources. The ResourceBase attribute is a
-     * string version of the baseResource.
+     * Get the base resource. The base resource is the Resource to use as a relative base for all context resources.
+     * The ResourceBase attribute is a string version of the baseResource.
      *
      * @return The resourceBase as a Resource instance
      */
@@ -154,13 +128,9 @@ public class ResourceCache implements LifeCycle,
         return _resourceBase;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Set the base resource.
-     * The base resource is the Resource to use as a relative base
-     * for all context resources. The ResourceBase attribute is a
-     * string version of the baseResource.
+     * Set the base resource. The base resource is the Resource to use as a relative base for all context resources.
+     * The ResourceBase attribute is a string version of the baseResource.
      *
      * @param base The resourceBase as a Resource instance
      */
@@ -168,53 +138,43 @@ public class ResourceCache implements LifeCycle,
         _resourceBase = base;
     }
 
-
-    /* ------------------------------------------------------------ */
     public int getMaxCachedFileSize() {
         return _maxCachedFileSize;
     }
 
-    /* ------------------------------------------------------------ */
     public void setMaxCachedFileSize(int maxCachedFileSize) {
         _maxCachedFileSize = maxCachedFileSize;
         _cache.clear();
     }
 
-    /* ------------------------------------------------------------ */
     public int getMaxCacheSize() {
         return _maxCacheSize;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public void setMaxCacheSize(int maxCacheSize) {
         _maxCacheSize = maxCacheSize;
         _cache.clear();
     }
 
-    /* ------------------------------------------------------------ */
     public void flushCache() {
         _cache.clear();
         System.gc();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Get a resource from the context.
-     * Cached Resources are returned if the resource fits within the LRU
-     * cache.  Directories may have CachedResources returned, but the
-     * caller must use the CachedResource.setCachedData method to set the
-     * formatted directory content.
+     * Get a resource from the context. Cached Resources are returned if the resource fits within the LRU cache.
+     * Directories may have CachedResources returned, but the caller must use the CachedResource.setCachedData method
+     * to set the formatted directory content.
      *
      * @param pathInContext
      * @return Resource
      * @throws IOException
      */
-    public Resource getResource(String pathInContext)
-            throws IOException {
+    public Resource getResource(String pathInContext) throws IOException {
         if (log.isTraceEnabled()) log.trace("getResource " + pathInContext);
-        if (_resourceBase == null)
+        if (_resourceBase == null) {
             return null;
+        }
 
         Resource resource = null;
 
@@ -225,21 +185,21 @@ public class ResourceCache implements LifeCycle,
             if (cached != null) {
                 if (log.isTraceEnabled()) log.trace("CACHE HIT: " + cached);
                 CachedMetaData cmd = (CachedMetaData) cached.getAssociate();
-                if (cmd != null && cmd.isValid())
+                if (cmd != null && cmd.isValid()) {
                     return cached;
+                }
             }
 
             // Make the resource
             resource = _resourceBase.addPath(_resourceBase.encode(pathInContext));
             if (log.isTraceEnabled()) log.trace("CACHE MISS: " + resource);
-            if (resource == null)
+            if (resource == null) {
                 return null;
-
+            }
 
             // Check for file aliasing
             if (resource.getAlias() != null) {
-                log.warn("Alias request of '" + resource.getAlias() +
-                        "' for '" + resource + "'");
+                log.warn("Alias request of '{}' for '{}'", resource.getAlias(), resource);
                 return null;
             }
 
@@ -247,25 +207,30 @@ public class ResourceCache implements LifeCycle,
             long len = resource.length();
             if (resource.exists()) {
                 // Is it badly named?
-                if (!resource.isDirectory() && pathInContext.endsWith("/"))
+                if (!resource.isDirectory() && pathInContext.endsWith("/")) {
                     return null;
+                }
 
                 // Guess directory length.
                 if (resource.isDirectory()) {
-                    if (resource.list() != null)
+                    if (resource.list() != null) {
                         len = resource.list().length * 100;
-                    else
+                    } else {
                         len = 0;
+                    }
                 }
 
                 // Is it cacheable?
                 if (len > 0 && len < _maxCachedFileSize && len < _maxCacheSize) {
                     int needed = _maxCacheSize - (int) len;
-                    while (_cacheSize > needed)
+                    while (_cacheSize > needed) {
                         _leastRecentlyUsed.invalidate();
+                    }
 
                     cached = resource.cache();
-                    if (log.isTraceEnabled()) log.trace("CACHED: " + resource);
+                    if (log.isTraceEnabled()) {
+                        log.trace("CACHED: " + resource);
+                    }
                     new CachedMetaData(cached, pathInContext);
                     return cached;
                 }
@@ -277,16 +242,12 @@ public class ResourceCache implements LifeCycle,
         return resource;
     }
 
-
-    /* ------------------------------------------------------------ */
     public synchronized Map getMimeMap() {
         return _mimeMap;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Also sets the org.mortbay.http.mimeMap context attribute
+     * Also sets the org.mortbay.http.mimeMap context attribute.
      *
      * @param mimeMap
      */
@@ -294,14 +255,11 @@ public class ResourceCache implements LifeCycle,
         _mimeMap = mimeMap;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get the MIME type by filename extension.
      *
      * @param filename A file name
-     * @return MIME type matching the longest dot extension of the
-     * file name.
+     * @return MIME type matching the longest dot extension of the file name.
      */
     public String getMimeByExtension(String filename) {
         String type = null;
@@ -311,43 +269,44 @@ public class ResourceCache implements LifeCycle,
             while (type == null) {
                 i = filename.indexOf(".", i + 1);
 
-                if (i < 0 || i >= filename.length())
+                if (i < 0 || i >= filename.length()) {
                     break;
+                }
 
                 String ext = StringUtil.asciiToLowerCase(filename.substring(i + 1));
-                if (_mimeMap != null)
+                if (_mimeMap != null) {
                     type = (String) _mimeMap.get(ext);
-                if (type == null)
+                }
+                if (type == null) {
                     type = (String) __dftMimeMap.get(ext);
+                }
             }
         }
 
         if (type == null) {
-            if (_mimeMap != null)
+            if (_mimeMap != null) {
                 type = (String) _mimeMap.get("*");
-            if (type == null)
+            }
+            if (type == null) {
                 type = (String) __dftMimeMap.get("*");
+            }
         }
 
         return type;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Set a mime mapping
+     * Set a mime mapping.
      *
      * @param extension
      * @param type
      */
     public void setMimeMapping(String extension, String type) {
-        if (_mimeMap == null)
+        if (_mimeMap == null) {
             _mimeMap = new HashMap();
+        }
         _mimeMap.put(StringUtil.asciiToLowerCase(extension), type);
     }
-
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get the map of mime type to char encoding.
@@ -355,16 +314,14 @@ public class ResourceCache implements LifeCycle,
      * @return Map of mime type to character encodings.
      */
     public synchronized Map getEncodingMap() {
-        if (_encodingMap == null)
+        if (_encodingMap == null) {
             _encodingMap = Collections.unmodifiableMap(__encodings);
+        }
         return _encodingMap;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Set the map of mime type to char encoding.
-     * Also sets the org.mortbay.http.encodingMap context attribute
+     * Set the map of mime type to char encoding. Also sets the org.mortbay.http.encodingMap context attribute
      *
      * @param encodingMap Map of mime type to character encodings.
      */
@@ -372,24 +329,21 @@ public class ResourceCache implements LifeCycle,
         _encodingMap = encodingMap;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get char encoding by mime type.
      *
      * @param type A mime type.
-     * @return The prefered character encoding for that type if known.
+     * @return The preferred character encoding for that type if known.
      */
     public String getEncodingByMimeType(String type) {
         String encoding = null;
 
-        if (type != null)
+        if (type != null) {
             encoding = (String) _encodingMap.get(type);
+        }
 
         return encoding;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Set the encoding that should be used for a mimeType.
@@ -401,22 +355,18 @@ public class ResourceCache implements LifeCycle,
         getEncodingMap().put(mimeType, encoding);
     }
 
-    /* ------------------------------------------------------------ */
-    public synchronized void start()
-            throws Exception {
-        if (isStarted())
+    public synchronized void start() throws Exception {
+        if (isStarted()) {
             return;
+        }
         getMimeMap();
         getEncodingMap();
         _started = true;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public boolean isStarted() {
         return _started;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Stop the context.
@@ -427,24 +377,18 @@ public class ResourceCache implements LifeCycle,
         _cache.clear();
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Destroy a context.
-     * Destroy a context and remove it from the HttpServer. The
-     * HttpContext must be stopped before it can be destroyed.
+     * Destroy a context and remove it from the HttpServer. The HttpContext must be stopped before it can be destroyed.
      */
     public void destroy() {
-        if (isStarted())
+        if (isStarted()) {
             throw new IllegalStateException("Started");
+        }
 
         setMimeMap(null);
         _encodingMap = null;
     }
-
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get Resource MetaData.
@@ -454,13 +398,11 @@ public class ResourceCache implements LifeCycle,
      */
     public ResourceMetaData getResourceMetaData(Resource resource) {
         Object o = resource.getAssociate();
-        if (o instanceof ResourceMetaData)
+        if (o instanceof ResourceMetaData) {
             return (ResourceMetaData) o;
+        }
         return new ResourceMetaData(resource);
     }
-
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
 
     /**
      * MetaData associated with a context Resource.
@@ -488,8 +430,6 @@ public class ResourceCache implements LifeCycle,
         }
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     private class CachedMetaData extends ResourceMetaData {
         String _lastModified;
         String _encoding;
@@ -510,16 +450,15 @@ public class ResourceCache implements LifeCycle,
 
             _next = _mostRecentlyUsed;
             _mostRecentlyUsed = this;
-            if (_next != null)
+            if (_next != null) {
                 _next._prev = this;
+            }
             _prev = null;
-            if (_leastRecentlyUsed == null)
+            if (_leastRecentlyUsed == null) {
                 _leastRecentlyUsed = this;
-
+            }
             _cache.put(_key, resource);
-
             _cacheSize += _cached.length();
-
         }
 
         public String getLength() {
@@ -534,9 +473,8 @@ public class ResourceCache implements LifeCycle,
             return _encoding;
         }
 
-        /* ------------------------------------------------------------ */
-        boolean isValid()
-                throws IOException {
+        
+        boolean isValid() throws IOException {
             if (_cached.isUptoDate()) {
                 if (_mostRecentlyUsed != this) {
                     CachedMetaData tp = _prev;
@@ -544,17 +482,21 @@ public class ResourceCache implements LifeCycle,
 
                     _next = _mostRecentlyUsed;
                     _mostRecentlyUsed = this;
-                    if (_next != null)
+                    if (_next != null) {
                         _next._prev = this;
+                    }
                     _prev = null;
 
-                    if (tp != null)
+                    if (tp != null) {
                         tp._next = tn;
-                    if (tn != null)
+                    }
+                    if (tn != null) {
                         tn._prev = tp;
+                    }
 
-                    if (_leastRecentlyUsed == this && tp != null)
+                    if (_leastRecentlyUsed == this && tp != null) {
                         _leastRecentlyUsed = tp;
+                    }
                 }
                 return true;
             }
@@ -569,20 +511,21 @@ public class ResourceCache implements LifeCycle,
             _cacheSize = _cacheSize - (int) _cached.length();
 
 
-            if (_mostRecentlyUsed == this)
+            if (_mostRecentlyUsed == this) {
                 _mostRecentlyUsed = _next;
-            else
+            } else {
                 _prev._next = _next;
+            }
 
-            if (_leastRecentlyUsed == this)
+            if (_leastRecentlyUsed == this) {
                 _leastRecentlyUsed = _prev;
-            else
+            } else {
                 _next._prev = _prev;
+            }
 
             _prev = null;
             _next = null;
         }
     }
-
-
+    
 }

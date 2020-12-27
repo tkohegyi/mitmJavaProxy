@@ -15,16 +15,13 @@
 
 package net.lightbody.bmp.proxy.jetty.http;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LazyList;
-import net.lightbody.bmp.proxy.jetty.util.LogSupport;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Enumeration;
 import java.util.List;
 import java.util.StringTokenizer;
-
-/* ------------------------------------------------------------ */
 
 /**
  * Byte range inclusive of end points.
@@ -49,8 +46,7 @@ import java.util.StringTokenizer;
  * @version $version$
  */
 public class InclusiveByteRange {
-    private static Log log = LogFactory.getLog(InclusiveByteRange.class);
-
+    private static final Logger log = LoggerFactory.getLogger(InclusiveByteRange.class);
 
     long first = 0;
     long last = 0;
@@ -83,15 +79,16 @@ public class InclusiveByteRange {
                     long last = -1;
                     int d = t.indexOf('-');
                     if (d < 0 || t.indexOf("-", d + 1) >= 0) {
-                        if ("bytes".equals(t))
+                        if ("bytes".equals(t)) {
                             continue;
-                        log.warn("Bad range format: " + t);
+                        }
+                        log.warn("Bad range format: {}", t);
                         continue headers;
                     } else if (d == 0) {
-                        if (d + 1 < t.length())
+                        if (d + 1 < t.length()) {
                             last = Long.parseLong(t.substring(d + 1).trim());
-                        else {
-                            log.warn("Bad range format: " + t);
+                        } else {
+                            log.warn("Bad range format: {}", t);
                             continue headers;
                         }
                     } else if (d + 1 < t.length()) {
@@ -101,37 +98,32 @@ public class InclusiveByteRange {
                         first = Long.parseLong(t.substring(0, d).trim());
 
 
-                    if (first == -1 && last == -1)
+                    if (first == -1 && last == -1) {
                         continue headers;
+                    }
 
-                    if (first != -1 && last != -1 && (first > last))
+                    if (first != -1 && last != -1 && (first > last)) {
                         continue headers;
+                    }
 
                     if (first < size) {
-                        InclusiveByteRange range = new
-                                InclusiveByteRange(first, last);
+                        InclusiveByteRange range = new InclusiveByteRange(first, last);
                         satRanges = LazyList.add(satRanges, range);
                     }
                 }
             } catch (Exception e) {
-                log.warn("Bad range format: " + t);
-                LogSupport.ignore(log, e);
+                log.warn("Bad range format: {}", t);
             }
         }
         return LazyList.getList(satRanges, true);
     }
 
-    /* ------------------------------------------------------------ */
     public static String to416HeaderRangeString(long size) {
         StringBuffer sb = new StringBuffer(40);
         sb.append("bytes */");
         sb.append(size);
         return sb.toString();
     }
-
-
-
-    /* ------------------------------------------------------------ */
 
     public long getFirst() {
         return first;
@@ -141,33 +133,32 @@ public class InclusiveByteRange {
         return last;
     }
 
-    /* ------------------------------------------------------------ */
     public long getFirst(long size) {
         if (first < 0) {
             long tf = size - last;
-            if (tf < 0)
+            if (tf < 0) {
                 tf = 0;
+            }
             return tf;
         }
         return first;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public long getLast(long size) {
-        if (first < 0)
+        if (first < 0) {
             return size - 1;
+        }
 
-        if (last < 0 || last >= size)
+        if (last < 0 || last >= size) {
             return size - 1;
+        }
         return last;
     }
 
-    /* ------------------------------------------------------------ */
     public long getSize(long size) {
         return getLast(size) - getFirst(size) + 1;
     }
 
-    /* ------------------------------------------------------------ */
     public String toHeaderRangeString(long size) {
         StringBuffer sb = new StringBuffer(40);
         sb.append("bytes ");
@@ -179,7 +170,6 @@ public class InclusiveByteRange {
         return sb.toString();
     }
 
-    /* ------------------------------------------------------------ */
     public String toString() {
         StringBuffer sb = new StringBuffer(60);
         sb.append(Long.toString(first));
@@ -187,7 +177,6 @@ public class InclusiveByteRange {
         sb.append(Long.toString(last));
         return sb.toString();
     }
-
 
 }
 

@@ -15,11 +15,11 @@
 
 package net.lightbody.bmp.proxy.jetty.http;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LazyList;
 import net.lightbody.bmp.proxy.jetty.util.SingletonList;
 import net.lightbody.bmp.proxy.jetty.util.StringMap;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Externalizable;
 import java.util.HashMap;
@@ -28,12 +28,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-/* ------------------------------------------------------------ */
-
 /**
  * URI path map to Object.
- * This mapping implements the path specification recommended
- * in the 2.2 Servlet API.
+ * This mapping implements the path specification recommended in the 2.2 Servlet API.
  * <p>
  * Path specifications can be of the following forms:<PRE>
  * /foo/bar           - an exact path specification.
@@ -47,13 +44,11 @@ import java.util.StringTokenizer;
  * <LI>Longest suffix match.
  * <LI>default.
  * </NL>
- * Multiple path specifications can be mapped by providing a list of
- * specifications.  The list is separated by the characters specified
- * in the "org.mortbay.http.PathMap.separators" System property, which
- * defaults to :
+ * Multiple path specifications can be mapped by providing a list of specifications.  
+ * The list is separated by the characters specified in the "org.mortbay.http.PathMap.separators" System property, 
+ * which defaults to :
  * <p>
- * Note that this is a very different mapping to that provided by PathMap
- * in Jetty2.
+ * Note that this is a very different mapping to that provided by PathMap in Jetty2.
  * <p>
  * This class is not synchronized for get's.  If concurrent modifications are
  * possible then it should be synchronized at a higher level.
@@ -62,14 +57,11 @@ import java.util.StringTokenizer;
  * @version $Id: PathMap.java,v 1.25 2005/08/13 00:01:24 gregwilkins Exp $
  */
 public class PathMap extends HashMap implements Externalizable {
-    private static Log log = LogFactory.getLog(PathMap.class);
-
-    /* ------------------------------------------------------------ */
+    private final Logger log = LoggerFactory.getLogger(PathMap.class);
+    
     private static String __pathSpecSeparators =
             System.getProperty("net.lightbody.bmp.proxy.jetty.http.PathMap.separators", ":,");
 
-    /* ------------------------------------------------------------ */
-    /* --------------------------------------------------------------- */
     StringMap _prefixMap = new StringMap();
     StringMap _suffixMap = new StringMap();
     StringMap _exactMap = new StringMap();
@@ -78,6 +70,7 @@ public class PathMap extends HashMap implements Externalizable {
     Map.Entry _default = null;
     Set _entrySet;
     boolean _nodefault = false;
+
     /**
      * Construct empty PathMap.
      */
@@ -85,8 +78,6 @@ public class PathMap extends HashMap implements Externalizable {
         super(11);
         _entrySet = entrySet();
     }
-
-    /* --------------------------------------------------------------- */
 
     /**
      * Construct empty PathMap.
@@ -97,8 +88,6 @@ public class PathMap extends HashMap implements Externalizable {
         _nodefault = nodefault;
     }
 
-    /* --------------------------------------------------------------- */
-
     /**
      * Construct empty PathMap.
      */
@@ -106,8 +95,6 @@ public class PathMap extends HashMap implements Externalizable {
         super(capacity);
         _entrySet = entrySet();
     }
-
-    /* --------------------------------------------------------------- */
 
     /**
      * Construct from dictionary PathMap.
@@ -117,13 +104,10 @@ public class PathMap extends HashMap implements Externalizable {
         _entrySet = entrySet();
     }
 
-    /* --------------------------------------------------------------- */
-
     /**
      * Set the path spec separator.
-     * Multiple path specification may be included in a single string
-     * if they are separated by the characters set in this string.
-     * The default value is ":," or whatever has been set by the
+     * Multiple path specification may be included in a single string if they are separated by the characters
+     * set in this string. The default value is ":," or whatever has been set by the
      * system property org.mortbay.http.PathMap.separators
      *
      * @param s separators
@@ -135,48 +119,54 @@ public class PathMap extends HashMap implements Externalizable {
     /**
      * @return true if match.
      */
-    public static boolean match(String pathSpec, String path)
-            throws IllegalArgumentException {
+    public static boolean match(String pathSpec, String path) throws IllegalArgumentException {
         char c = pathSpec.charAt(0);
         if (c == '/') {
-            if (pathSpec.length() == 1 || pathSpec.equals(path))
+            if (pathSpec.length() == 1 || pathSpec.equals(path)) {
                 return true;
+            }
 
-            if (pathSpec.endsWith("/*") &&
-                    pathSpec.regionMatches(0, path, 0, pathSpec.length() - 2))
+            if (pathSpec.endsWith("/*") && pathSpec.regionMatches(0, path, 0, pathSpec.length() - 2)) {
                 return true;
+            }
 
-            if (path.startsWith(pathSpec) && path.charAt(pathSpec.length()) == ';')
+            if (path.startsWith(pathSpec) && path.charAt(pathSpec.length()) == ';') {
                 return true;
-        } else if (c == '*')
-            return path.regionMatches(path.length() - pathSpec.length() + 1,
-                    pathSpec, 1, pathSpec.length() - 1);
+            }
+        } else {
+            if (c == '*') {
+                return path.regionMatches(path.length() - pathSpec.length() + 1,
+                        pathSpec, 1, pathSpec.length() - 1);
+            }
+        }
         return false;
     }
 
     /**
      * @return true if match.
      */
-    public static boolean match(String pathSpec, String path, boolean noDefault)
-            throws IllegalArgumentException {
+    public static boolean match(String pathSpec, String path, boolean noDefault) throws IllegalArgumentException {
         char c = pathSpec.charAt(0);
         if (c == '/') {
-            if (!noDefault && pathSpec.length() == 1 || pathSpec.equals(path))
+            if (!noDefault && pathSpec.length() == 1 || pathSpec.equals(path)) {
                 return true;
+            }
 
-            if (pathSpec.endsWith("/*") &&
-                    pathSpec.regionMatches(0, path, 0, pathSpec.length() - 2))
+            if (pathSpec.endsWith("/*") && pathSpec.regionMatches(0, path, 0, pathSpec.length() - 2)) {
                 return true;
+            }
 
-            if (path.startsWith(pathSpec) && path.charAt(pathSpec.length()) == ';')
+            if (path.startsWith(pathSpec) && path.charAt(pathSpec.length()) == ';') {
                 return true;
-        } else if (c == '*')
-            return path.regionMatches(path.length() - pathSpec.length() + 1,
-                    pathSpec, 1, pathSpec.length() - 1);
+            }
+        } else {
+            if (c == '*') {
+                return path.regionMatches(path.length() - pathSpec.length() + 1,
+                        pathSpec, 1, pathSpec.length() - 1);
+            }
+        }
         return false;
     }
-
-    /* --------------------------------------------------------------- */
 
     /**
      * Return the portion of a path that matches a path spec.
@@ -187,27 +177,31 @@ public class PathMap extends HashMap implements Externalizable {
         char c = pathSpec.charAt(0);
 
         if (c == '/') {
-            if (pathSpec.length() == 1)
+            if (pathSpec.length() == 1) {
                 return path;
+            }
 
-            if (pathSpec.equals(path))
+            if (pathSpec.equals(path)) {
                 return path;
+            }
 
-            if (pathSpec.endsWith("/*") &&
-                    pathSpec.regionMatches(0, path, 0, pathSpec.length() - 2))
+            if (pathSpec.endsWith("/*") && pathSpec.regionMatches(0, path, 0, pathSpec.length() - 2)) {
                 return path.substring(0, pathSpec.length() - 2);
+            }
 
-            if (path.startsWith(pathSpec) && path.charAt(pathSpec.length()) == ';')
+            if (path.startsWith(pathSpec) && path.charAt(pathSpec.length()) == ';') {
                 return path;
-        } else if (c == '*') {
-            if (path.regionMatches(path.length() - (pathSpec.length() - 1),
-                    pathSpec, 1, pathSpec.length() - 1))
-                return path;
+            }
+        } else {
+            if (c == '*') {
+                if (path.regionMatches(path.length() - (pathSpec.length() - 1),
+                    pathSpec, 1, pathSpec.length() - 1)) {
+                    return path;
+                }
+            }
         }
         return null;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Return the portion of a path that is after a path spec.
@@ -218,24 +212,23 @@ public class PathMap extends HashMap implements Externalizable {
         char c = pathSpec.charAt(0);
 
         if (c == '/') {
-            if (pathSpec.length() == 1)
+            if (pathSpec.length() == 1) {
                 return null;
+            }
 
-            if (pathSpec.equals(path))
+            if (pathSpec.equals(path)) {
                 return null;
+            }
 
-            if (pathSpec.endsWith("/*") &&
-                    pathSpec.regionMatches(0, path, 0, pathSpec.length() - 2)) {
-                if (path.length() == pathSpec.length() - 2)
+            if (pathSpec.endsWith("/*") && pathSpec.regionMatches(0, path, 0, pathSpec.length() - 2)) {
+                if (path.length() == pathSpec.length() - 2) {
                     return null;
+                }
                 return path.substring(pathSpec.length() - 2);
             }
         }
         return null;
     }
-
-
-    /* --------------------------------------------------------------- */
 
     /**
      * Relative path.
@@ -245,39 +238,36 @@ public class PathMap extends HashMap implements Externalizable {
      * @param path     the additional path
      * @return base plus path with pathspec removed
      */
-    public static String relativePath(String base,
-                                      String pathSpec,
-                                      String path) {
+    public static String relativePath(String base, String pathSpec, String path) {
         String info = pathInfo(pathSpec, path);
-        if (info == null)
+        if (info == null) {
             info = path;
-
-        if (info.startsWith("./"))
+        }
+        if (info.startsWith("./")) {
             info = info.substring(2);
-        if (base.endsWith("/"))
-            if (info.startsWith("/"))
+        }
+        if (base.endsWith("/")) {
+            if (info.startsWith("/")) {
                 path = base + info.substring(1);
-            else
+            } else {
                 path = base + info;
-        else if (info.startsWith("/"))
-            path = base + info;
-        else
-            path = base + "/" + info;
+            }
+        } else {
+            if (info.startsWith("/")) {
+                path = base + info;
+            } else {
+                path = base + "/" + info;
+            }
+        }
         return path;
     }
 
-    /* --------------------------------------------------------------- */
-
-    /* ------------------------------------------------------------ */
-    public void writeExternal(java.io.ObjectOutput out)
-            throws java.io.IOException {
+    public void writeExternal(java.io.ObjectOutput out) throws java.io.IOException {
         HashMap map = new HashMap(this);
         out.writeObject(map);
     }
 
-    /* ------------------------------------------------------------ */
-    public void readExternal(java.io.ObjectInput in)
-            throws java.io.IOException, ClassNotFoundException {
+    public void readExternal(java.io.ObjectInput in) throws java.io.IOException, ClassNotFoundException {
         HashMap map = (HashMap) in.readObject();
         this.putAll(map);
     }
@@ -285,8 +275,7 @@ public class PathMap extends HashMap implements Externalizable {
     /**
      * Add a single path match to the PathMap.
      *
-     * @param pathSpec The path specification, or comma separated list of
-     *                 path specifications.
+     * @param pathSpec The path specification, or comma separated list of path specifications.
      * @param object   The object the path maps to
      */
     public synchronized Object put(Object pathSpec, Object object) {
@@ -297,7 +286,7 @@ public class PathMap extends HashMap implements Externalizable {
             String spec = tok.nextToken();
 
             if (!spec.startsWith("/") && !spec.startsWith("*.")) {
-                log.warn("PathSpec " + spec + ". must start with '/' or '*.'");
+                log.warn("PathSpec {}. must start with '/' or '*.'", spec);
                 spec = "/" + spec;
             }
 
@@ -316,22 +305,20 @@ public class PathMap extends HashMap implements Externalizable {
                 } else if (spec.startsWith("*."))
                     _suffixMap.put(spec.substring(2), entry);
                 else if (spec.equals("/")) {
-                    if (_nodefault)
+                    if (_nodefault) {
                         _exactMap.put(spec, entry);
-                    else {
+                    } else {
                         _default = entry;
-                        _defaultSingletonList =
-                                SingletonList.newSingletonList(_default);
+                        _defaultSingletonList = SingletonList.newSingletonList(_default);
                     }
-                } else
+                } else {
                     _exactMap.put(spec, entry);
+                }
             }
         }
 
         return old;
     }
-
-    /* --------------------------------------------------------------- */
 
     /**
      * Get object matched by the path.
@@ -341,12 +328,11 @@ public class PathMap extends HashMap implements Externalizable {
      */
     public Object match(String path) {
         Map.Entry entry = getMatch(path);
-        if (entry != null)
+        if (entry != null) {
             return entry.getValue();
+        }
         return null;
     }
-
-    /* --------------------------------------------------------------- */
 
     /**
      * Get the entry mapped by the best specification.
@@ -357,50 +343,53 @@ public class PathMap extends HashMap implements Externalizable {
     public Map.Entry getMatch(String path) {
         Map.Entry entry;
 
-        if (path == null)
+        if (path == null) {
             return null;
+        }
 
         int l = path.indexOf(';');
         if (l < 0) {
             l = path.indexOf('?');
-            if (l < 0)
+            if (l < 0) {
                 l = path.length();
+            }
         }
 
         // try exact match
         entry = _exactMap.getEntry(path, 0, l);
-        if (entry != null)
+        if (entry != null) {
             return (Map.Entry) entry.getValue();
+        }
 
         // prefix search
         int i = l;
         while ((i = path.lastIndexOf('/', i - 1)) >= 0) {
             entry = _prefixMap.getEntry(path, 0, i);
-            if (entry != null)
+            if (entry != null) {
                 return (Map.Entry) entry.getValue();
+            }
         }
 
         // Prefix Default
-        if (_prefixDefault != null)
+        if (_prefixDefault != null) {
             return _prefixDefault;
+        }
 
         // Extension search
         i = 0;
         while ((i = path.indexOf('.', i + 1)) > 0) {
             entry = _suffixMap.getEntry(path, i + 1, l - i - 1);
-            if (entry != null)
+            if (entry != null) {
                 return (Map.Entry) entry.getValue();
+            }
         }
 
         // Default
         return _default;
     }
 
-    /* --------------------------------------------------------------- */
-
     /**
-     * Get all entries matched by the path.
-     * Best match first.
+     * Get all entries matched by the path. Best match first.
      *
      * @param path Path to match
      * @return List of Map.Entry instances key=pathSpec
@@ -415,40 +404,46 @@ public class PathMap extends HashMap implements Externalizable {
         int l = path.indexOf(';');
         if (l < 0) {
             l = path.indexOf('?');
-            if (l < 0)
+            if (l < 0) {
                 l = path.length();
+            }
         }
 
         // try exact match
         entry = _exactMap.getEntry(path, 0, l);
-        if (entry != null)
+        if (entry != null) {
             entries = LazyList.add(entries, entry.getValue());
+        }
 
         // prefix search
         int i = l - 1;
         while ((i = path.lastIndexOf('/', i - 1)) >= 0) {
             entry = _prefixMap.getEntry(path, 0, i);
-            if (entry != null)
+            if (entry != null) {
                 entries = LazyList.add(entries, entry.getValue());
+            }
         }
 
         // Prefix Default
-        if (_prefixDefault != null)
+        if (_prefixDefault != null) {
             entries = LazyList.add(entries, _prefixDefault);
+        }
 
         // Extension search
         i = 0;
         while ((i = path.indexOf('.', i + 1)) > 0) {
             entry = _suffixMap.getEntry(path, i + 1, l - i - 1);
-            if (entry != null)
+            if (entry != null) {
                 entries = LazyList.add(entries, entry.getValue());
+            }
         }
 
         // Default
         if (_default != null) {
             // Optimization for just the default
-            if (entries == null)
+            if (entries == null) {
                 return _defaultSingletonList;
+            }
 
             entries = LazyList.add(entries, _default);
         }
@@ -456,15 +451,12 @@ public class PathMap extends HashMap implements Externalizable {
         return LazyList.getList(entries);
     }
 
-    /* --------------------------------------------------------------- */
-
-    /* --------------------------------------------------------------- */
     public synchronized Object remove(Object pathSpec) {
         if (pathSpec != null) {
             String spec = (String) pathSpec;
-            if (spec.equals("/*"))
+            if (spec.equals("/*")) {
                 _prefixDefault = null;
-            else if (spec.endsWith("/*")) {
+            } else if (spec.endsWith("/*")) {
                 _prefixMap.remove(spec.substring(0, spec.length() - 2));
                 _exactMap.remove(spec.substring(0, spec.length() - 1));
                 _exactMap.remove(spec.substring(0, spec.length() - 2));
@@ -473,16 +465,13 @@ public class PathMap extends HashMap implements Externalizable {
             else if (spec.equals("/")) {
                 _default = null;
                 _defaultSingletonList = null;
-            } else
+            } else {
                 _exactMap.remove(spec);
+            }
         }
         return super.remove(pathSpec);
     }
 
-
-    /* ------------------------------------------------------------ */
-
-    /* --------------------------------------------------------------- */
     public void clear() {
         _exactMap = new StringMap();
         _prefixMap = new StringMap();
@@ -492,9 +481,6 @@ public class PathMap extends HashMap implements Externalizable {
         super.clear();
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     private static class Entry implements Map.Entry {
         private Object key;
         private Object value;
@@ -518,8 +504,9 @@ public class PathMap extends HashMap implements Externalizable {
         }
 
         public String toString() {
-            if (string == null)
+            if (string == null) {
                 string = key + "=" + value;
+            }
             return string;
         }
     }
