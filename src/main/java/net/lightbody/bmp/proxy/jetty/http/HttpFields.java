@@ -15,16 +15,13 @@
 
 package net.lightbody.bmp.proxy.jetty.http;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.DateCache;
 import net.lightbody.bmp.proxy.jetty.util.LazyList;
 import net.lightbody.bmp.proxy.jetty.util.LineInput;
-import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.QuotedStringTokenizer;
 import net.lightbody.bmp.proxy.jetty.util.StringMap;
 import net.lightbody.bmp.proxy.jetty.util.StringUtil;
 import net.lightbody.bmp.proxy.jetty.util.URI;
-import org.apache.commons.logging.Log;
 
 import javax.servlet.http.Cookie;
 import java.io.IOException;
@@ -47,24 +44,22 @@ import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
-/* ------------------------------------------------------------ */
-/** HTTP Fields.
+/** 
+ * HTTP Fields.
  * A collection of HTTP header and or Trailer fields.
- * This class is not synchronized and needs to be protected from
- * concurrent access.
+ * This class is not synchronized and needs to be protected from concurrent access.
  *
- * This class is not synchronized as it is expected that modifications
- * will only be performed by a single thread.
+ * This class is not synchronized as it is expected that modifications will only be performed by a single thread.
  *
  * @version $Id: HttpFields.java,v 1.77 2006/11/22 20:02:15 gregwilkins Exp $
  * @author Greg Wilkins (gregw)
+ *
+ * NOTE FOR WILMA CHANGES: This is the most sensitive file for changes - DO NOT AUTOFORMAT THE CODE.
  */
 public class HttpFields
 {
-    private static Log log = LogFactory.getLog(HttpFields.class);
-        
-    /* ------------------------------------------------------------ */
-    /** General Fields.
+    /**
+     * General Fields.
      */
     public final static String
         __CacheControl = "Cache-Control",
@@ -78,8 +73,8 @@ public class HttpFields
         __Via = "Via",
         __Warning = "Warning";
         
-    /* ------------------------------------------------------------ */
-    /** Entity Fields.
+    /** 
+     * Entity Fields.
      */
     public final static String
         __Allow = "Allow",
@@ -93,8 +88,8 @@ public class HttpFields
         __Expires = "Expires",
         __LastModified = "Last-Modified";
     
-    /* ------------------------------------------------------------ */
-    /** Request Fields.
+    /** 
+     * Request Fields.
      */
     public final static String
         __Accept = "Accept",
@@ -121,9 +116,8 @@ public class HttpFields
         __UserAgent = "User-Agent",
         __XForwardedFor = "X-Forwarded-For";
     
-
-    /* ------------------------------------------------------------ */
-    /** Response Fields.
+    /** 
+     * Response Fields.
      */
     public final static String
         __AcceptRanges = "Accept-Ranges",
@@ -136,9 +130,9 @@ public class HttpFields
         __ServletEngine = "Servlet-Engine",
         __Vary = "Vary",
         __WwwAuthenticate = "WWW-Authenticate";
-     
-    /* ------------------------------------------------------------ */
-    /** Other Fields.
+
+    /**
+     * Other Fields.
      */
     public final static String
         __Cookie = "Cookie",
@@ -148,8 +142,9 @@ public class HttpFields
         __Identity ="identity",
         __SoapAction ="SOAPAction";
 
-    /* ------------------------------------------------------------ */
-    /** Private class to hold Field name info
+    
+    /**
+     * Private class to hold Field name info
      */
     private static final class FieldInfo
     {
@@ -159,10 +154,8 @@ public class HttpFields
         int _hashCode;
         static int __hashCode;
         
-        FieldInfo(String name, boolean inline)
-        {
-            synchronized(FieldInfo.class)
-            {
+        FieldInfo(String name, boolean inline) {
+            synchronized(FieldInfo.class) {
                 _name = name;
                 _lname = StringUtil.asciiToLowerCase(name);
                 _inlineValues = inline;
@@ -176,45 +169,35 @@ public class HttpFields
                         if (!name.equals(_lname)) {
                             __info.put(_lname, this);
                         }
-                    }
-                    else {
+                    } else {
                         _hashCode = oldInfo._hashCode;
                     }
                 }
             }
         }
 
-        public String toString()
-        {
+        public String toString() {
             return "[" + _name + "," + _hashCode + "," + _inlineValues + "]";
         }
 
-        public int hashCode()
-        {
+        public int hashCode() {
             return _hashCode;
         }
 
-        public boolean equals(Object o)
-        {
+        public boolean equals(Object o) {
             if (o == null || !(o instanceof FieldInfo)) {
                 return false;
             }
             FieldInfo fi = (FieldInfo)o;
-            return
-                fi == this ||
-                fi._hashCode == _hashCode ||
-                fi._name.equals(_name);
+            return fi == this || fi._hashCode == _hashCode || fi._name.equals(_name);
         }
     }
 
-    /* ------------------------------------------------------------ */
     private static final StringMap __info = new StringMap(true);
     private static final StringMap __values = new StringMap(true);
     private static final int __maxCacheSize = 128;
-    
-    /* ------------------------------------------------------------ */
-    static
-    {
+
+    static {
         // Initialize FieldInfo's with special values.
         // In order of most frequently used.
         new FieldInfo(__Host,false);
@@ -270,29 +253,25 @@ public class HttpFields
         new FieldInfo(__ETag,false);
         new FieldInfo(__RetryAfter,false);
     }
-    
-    /* ------------------------------------------------------------ */
-    private static FieldInfo getFieldInfo(String name)
-    {
+
+    private static FieldInfo getFieldInfo(String name) {
         FieldInfo info = (FieldInfo)__info.get(name);
         if (info == null) {
             info = new FieldInfo(name, false);
         }
         return info;
     }
-    
-    /* ------------------------------------------------------------ */
-    private static FieldInfo getFieldInfo(char[] name,int offset,int length)
-    {
+
+    private static FieldInfo getFieldInfo(char[] name,int offset,int length) {
         Map.Entry entry = __info.getEntry(name,offset,length);
         if (entry == null) {
             return new FieldInfo(new String(name, offset, length), false);
         }
         return (FieldInfo) entry.getValue();
     }
-    
-    /* ------------------------------------------------------------ */
-    /** Fields Values.
+
+    /**
+     * Fields Values.
      */    
     public final static String __Chunked = "chunked";
     public final static String __Close = "close";
@@ -314,21 +293,17 @@ public class HttpFields
         __values.put("300", "300");
         __values.put("ISO-8859-1, utf-8;q=0.66, *;q=0.66", "ISO-8859-1, utf-8;q=0.66, *;q=0.66");
     }
-    
-    /* ------------------------------------------------------------ */
+
     public final static String __separators = ", \t";    
 
-    /* ------------------------------------------------------------ */
     public final static char[] __CRLF = {'\015', '\012'};
     public final static char[] __COLON = {':', ' '};
 
-    /* ------------------------------------------------------------ */
     private static String[] DAYS= { "Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-    private static String[] MONTHS= { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan" };
+    private static String[] MONTHS= { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan" };
 
-    /* ------------------------------------------------------------ */
-    /** Format HTTP date
+    /**
+     * Format HTTP date
      * "EEE, dd MMM yyyy HH:mm:ss 'GMT'" or 
      * "EEE, dd-MMM-yy HH:mm:ss 'GMT'"for cookies
      */
@@ -340,8 +315,8 @@ public class HttpFields
         return buf.toString();
     } 
 
-    /* ------------------------------------------------------------ */
-    /** Format HTTP date
+    /**
+     * Format HTTP date
      * "EEE, dd MMM yyyy HH:mm:ss 'GMT'" or 
      * "EEE, dd-MMM-yy HH:mm:ss 'GMT'"for cookies
      */
@@ -351,8 +326,8 @@ public class HttpFields
         return buf.toString();
     }
 
-    /* ------------------------------------------------------------ */
-    /** Format HTTP date
+    /**
+     * Format HTTP date
      * "EEE, dd MMM yyyy HH:mm:ss 'GMT'" or 
      * "EEE, dd-MMM-yy HH:mm:ss 'GMT'"for cookies
      */
@@ -363,8 +338,8 @@ public class HttpFields
         return buf.toString();
     } 
 
-    /* ------------------------------------------------------------ */
-    /** Format HTTP date
+    /**
+     * Format HTTP date
      * "EEE, dd MMM yyyy HH:mm:ss 'GMT'" or 
      * "EEE, dd-MMM-yy HH:mm:ss 'GMT'"for cookies
      */
@@ -412,11 +387,9 @@ public class HttpFields
         buf.append(" GMT");
     }    
 
-    /* -------------------------------------------------------------- */
     private static TimeZone __GMT = TimeZone.getTimeZone("GMT");
     public final static DateCache __dateCache = new DateCache("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US);
     
-    /* ------------------------------------------------------------ */
     private final static String __dateReceiveFmt[] = {
         "EEE, dd MMM yyyy HH:mm:ss zzz",
         "EEE, dd-MMM-yy HH:mm:ss zzz",
@@ -441,10 +414,6 @@ public class HttpFields
     
     public final static String __01Jan1970 = HttpFields.formatDate(0,false);
 
-
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     private static final class Field {
         FieldInfo _info;
         String _value;
@@ -452,7 +421,6 @@ public class HttpFields
         Field _prev;
         int _version;
 
-        /* ------------------------------------------------------------ */
         Field(FieldInfo info, String value, int version) {
             _info=info;
             _value=value;
@@ -461,9 +429,7 @@ public class HttpFields
             _version=version;
         }
         
-        /* ------------------------------------------------------------ */
-        Field(FieldInfo info, char[] buf, int offset, int length, int version)
-        {
+        Field(FieldInfo info, char[] buf, int offset, int length, int version) {
             Map.Entry valueEntry = __values.getEntry(buf, offset, length);
             String value = null;
             if (valueEntry != null) {
@@ -477,25 +443,19 @@ public class HttpFields
             _prev = null;
             _version = version;
         }
-        
-        /* ------------------------------------------------------------ */
+
         public boolean equals(Object o) {
-            return (o instanceof Field) &&
-                o == this &&
-                _version == ((Field)o)._version;
+            return (o instanceof Field) && o == this && _version == ((Field)o)._version;
         }
 
-        /* ------------------------------------------------------------ */
         public int hashCode() {
             return _info.hashCode() * _version;
         }
-        
-        /* ------------------------------------------------------------ */
+
         void clear() {
             _version=-1;
         }
-        
-        /* ------------------------------------------------------------ */
+
         void destroy() {
             _info = null;
             _value = null;
@@ -503,22 +463,19 @@ public class HttpFields
             _prev = null;
             _version = -1;
         }
-        
-        /* ------------------------------------------------------------ */
+
         void reset(String value, int version) {
             _value = value;
             _version = version;
         }
-        
-        /* ------------------------------------------------------------ */
-        /** Reassign a value to this field.
-         * Checks if the value is the same as that in the char array, if so
-         * then just reuse existing value.
+
+        /**
+         * Reassign a value to this field.
+         * Checks if the value is the same as that in the char array, if so then just reuse existing value.
          */
         void reset(char[] buf, int offset, int length, int version) {
             _version = version;
-            if (!StringUtil.equals(_value, buf, offset, length))
-            {
+            if (!StringUtil.equals(_value, buf, offset, length)) {
                 Map.Entry valueEntry = __values.getEntry(buf, offset, length);
                 String value = null;
                 if (valueEntry != null) {
@@ -530,8 +487,6 @@ public class HttpFields
             }
         }
 
-        
-        /* ------------------------------------------------------------ */
         void write(Writer writer, int version) throws IOException {
             if (_info == null || _version != version) {
                 return;
@@ -560,24 +515,16 @@ public class HttpFields
             }
         }
 
-        /* ------------------------------------------------------------ */
-        String getDisplayName()
-        {
+        String getDisplayName() {
             return _info._name;
         }
-        
-        /* ------------------------------------------------------------ */
-        public String toString()
-        {
-            return ("[" +
-                (_prev == null?"":"<-") +
-                getDisplayName() + "=" + _value +
-                (_next == null ? "" : "->") +
-                "]");
+
+        public String toString() {
+            return ("[" + (_prev == null?"":"<-") + getDisplayName() + "=" + _value + (_next == null ? "" : "->") + "]");
         }
     }
     
-    /* ------------------------------------------------------------ */
+    
     private static Float __one = new Float("1.0");
     private static Float __zero = new Float("0.0");
     private static StringMap __qualities = new StringMap();
@@ -600,7 +547,6 @@ public class HttpFields
         __qualities.put("0.0", __zero);
     }
     
-    /* -------------------------------------------------------------- */
     private ArrayList _fields = new ArrayList(15);
     private int[] _index = new int[__maxCacheSize];
     private int _version;
@@ -608,32 +554,27 @@ public class HttpFields
     private StringBuffer _dateBuffer;
     private HttpCal _calendar;
 
-    /* ------------------------------------------------------------ */
-    /** Constructor. 
+    /**
+     * Constructor.
      */
     public HttpFields() {
         Arrays.fill(_index,-1);
     }
 
-    
-    /* ------------------------------------------------------------ */
     public int size() {
         return _fields.size();
     }
     
-    /* -------------------------------------------------------------- */
-    /** Get enumeration of header _names.
-     * Returns an enumeration of strings representing the header _names
-     * for this request. 
+    /**
+     * Get enumeration of header _names.
+     * Returns an enumeration of strings representing the header _names for this request.
      */
     public Enumeration getFieldNames() {
-        return new Enumeration()
-            {
+        return new Enumeration() {
                 int i = 0;
                 Field field = null;
 
-                public boolean hasMoreElements()
-                {
+                public boolean hasMoreElements() {
                     if (field != null) {
                         return true;
                     }
@@ -657,21 +598,18 @@ public class HttpFields
                 }
             };
     }
-    
-    /* ------------------------------------------------------------ */
+
     Field getField(String name) {
         FieldInfo info = getFieldInfo(name);
         return getField(info,true);
     }
-        
-    /* ------------------------------------------------------------ */
+
     Field getField(FieldInfo info, boolean getValid) {
         int hi = info.hashCode();
         
         if (hi < _index.length) {
             if (_index[hi] >= 0) {
                 Field field = (Field)(_fields.get(_index[hi]));
-                
                 return (field != null && (!getValid || field._version == _version)) ? field : null;
             }
         } else {
@@ -683,17 +621,14 @@ public class HttpFields
         }
         return null;
     }    
-    
-    /* ------------------------------------------------------------ */
+
     public boolean containsKey(String name) {
         FieldInfo info=getFieldInfo(name);
         return getField(info,true) != null;
     }
     
-    /* -------------------------------------------------------------- */
     /**
-     * @return the value of a field, or null if not found. For
-     * multiple fields of the same name, only the first is returned.
+     * @return the value of a field, or null if not found. For multiple fields of the same name, only the first is returned.
      * @param name the case-insensitive field name
      */
     public String get(String name) {
@@ -705,13 +640,12 @@ public class HttpFields
         return null;
     }
     
-    /* -------------------------------------------------------------- */
-    /** Get multi headers
+    /**
+     * Get multi headers
      * @return Enumeration of the values, or null if no such header.
      * @param name the case-insensitive field name
      */
-    public Enumeration getValues(String name)
-    {
+    public Enumeration getValues(String name) {
         FieldInfo info = getFieldInfo(name);
         final Field field = getField(info,true);
 
@@ -741,11 +675,10 @@ public class HttpFields
         return null;
     }
     
-    /* -------------------------------------------------------------- */
-    /** Get multi field values with separator.
-     * The multiple values can be represented as separate headers of
-     * the same name, or by a single header using the separator(s), or
-     * a combination of both. Separators may be quoted.
+    /**
+     * Get multi field values with separator.
+     * The multiple values can be represented as separate headers of the same name, or by a single header using the separator(s),
+     * or a combination of both. Separators may be quoted.
      * @param name the case-insensitive field name
      * @param separators String of separators.
      * @return Enumeration of the values, or null if no such header.
@@ -785,13 +718,12 @@ public class HttpFields
             };
     }
     
-    /* -------------------------------------------------------------- */
-    /** Set a field.
+    /**
+     * Set a field.
      * @param name the name of the field
      * @param value the value of the field. If null the field is cleared.
      */
-    public String put(String name, String value)
-    {
+    public String put(String name, String value) {
         if (value == null) {
             return remove(name);
         }
@@ -821,8 +753,8 @@ public class HttpFields
     }
     
         
-    /* -------------------------------------------------------------- */
-    /** Set a field.
+    /**
+     * Set a field.
      * @param name the name of the field
      * @param list the List value of the field. If null the field is cleared.
      */
@@ -850,15 +782,12 @@ public class HttpFields
         }
     }
 
-    
-    /* -------------------------------------------------------------- */
-    /** Add to or set a field.
-     * If the field is allowed to have multiple values, add will add
-     * multiple headers of the same name.
+    /**
+     * Add to or set a field.
+     * If the field is allowed to have multiple values, add will add multiple headers of the same name.
      * @param name the name of the field
      * @param value the value of the field.
-     * @exception IllegalArgumentException If the name is a single
-     *            valued field and already has a value.
+     * @exception IllegalArgumentException If the name is a single valued field and already has a value.
      */
     public void add(String name, String value) throws IllegalArgumentException {
         if (value == null) {
@@ -892,13 +821,12 @@ public class HttpFields
             _fields.add(field);
         }
     }
-    
-    /* ------------------------------------------------------------ */
-    /** Remove a field.
+
+    /**
+     * Remove a field.
      * @param name 
      */
-    public String remove(String name)
-    {
+    public String remove(String name) {
         String old = null;
         FieldInfo info = getFieldInfo(name);
         Field field = getField(info,true);
@@ -914,10 +842,9 @@ public class HttpFields
         return old;
     }
    
-    /* -------------------------------------------------------------- */
-    /** Get a header as an integer value.
-     * Returns the value of an integer field or -1 if not found.
-     * The case of the field name is ignored.
+    /**
+     * Get a header as an integer value.
+     * Returns the value of an integer field or -1 if not found. The case of the field name is ignored.
      * @param name the case-insensitive field name
      * @exception NumberFormatException If bad integer found
      */
@@ -929,10 +856,9 @@ public class HttpFields
         return -1;
     }
     
-    /* -------------------------------------------------------------- */
-    /** Get a header as a date value.
-     * Returns the value of a date field, or -1 if not found.
-     * The case of the field name is ignored.
+    /**
+     * Get a header as a date value.
+     * Returns the value of a date field, or -1 if not found. The case of the field name is ignored.
      * @param name the case-insensitive field name
      */
     public long getDateField(String name) {
@@ -957,7 +883,7 @@ public class HttpFields
                 Date date = (Date)_dateReceive[i].parseObject(val);
                 return date.getTime();
             } catch(java.lang.Exception e) {
-                LogSupport.ignore(log, e);
+                //
             }
         }
         if (val.endsWith(" GMT")) {
@@ -967,7 +893,7 @@ public class HttpFields
                     Date date = (Date)_dateReceive[i].parseObject(val);
                     return date.getTime();
                 } catch(java.lang.Exception e) {
-                    LogSupport.ignore(log, e);
+                    //
                 }
             }
         }
@@ -975,7 +901,6 @@ public class HttpFields
         throw new IllegalArgumentException(val);
     }
     
-    /* -------------------------------------------------------------- */
     /**
      * Sets the value of an integer field.
      * @param name the field name
@@ -985,7 +910,6 @@ public class HttpFields
         put(name, Integer.toString(value));
     }
 
-    /* -------------------------------------------------------------- */
     /**
      * Sets the value of a date field.
      * @param name the field name
@@ -995,7 +919,6 @@ public class HttpFields
         putDateField(name, date.getTime());
     }
     
-    /* -------------------------------------------------------------- */
     /**
      * Adds the value of a date field.
      * @param name the field name
@@ -1005,7 +928,6 @@ public class HttpFields
         addDateField(name, date.getTime());
     }
     
-    /* -------------------------------------------------------------- */
     /**
      * Adds the value of a date field.
      * @param name the field name
@@ -1022,7 +944,6 @@ public class HttpFields
         add(name, _dateBuffer.toString());
     }
     
-    /* -------------------------------------------------------------- */
     /**
      * Sets the value of a date field.
      * @param name the field name
@@ -1039,8 +960,8 @@ public class HttpFields
         put(name, _dateBuffer.toString());
     }
 
-    /* -------------------------------------------------------------- */
-    /** Read HttpHeaders from inputStream.
+    /**
+     * Read HttpHeaders from inputStream.
      */
     public void read(LineInput in) throws IOException {
         Field last = null;
@@ -1149,8 +1070,8 @@ public class HttpFields
     }
 
     
-    /* -------------------------------------------------------------- */
-    /* Write Extra HTTP headers.
+    /**
+     * Write Extra HTTP headers.
      */
     public void write(Writer writer) throws IOException {
         synchronized (writer) {
@@ -1165,19 +1086,20 @@ public class HttpFields
     }
     
     
-    /* -------------------------------------------------------------- */
     public String toString() {
         try {
             StringWriter writer = new StringWriter();
             write(writer);
             return writer.toString();
         } catch(Exception e) {
+            //
         }
         return null;
     }
 
-    /* ------------------------------------------------------------ */
-    /** Clear the header.
+    
+    /**
+     * Clear the header.
      */
     public void clear() {
         _version++;
@@ -1192,8 +1114,8 @@ public class HttpFields
         }
     }
     
-    /* ------------------------------------------------------------ */
-    /** Destroy the header.
+    /**
+     * Destroy the header.
      * Help the garbage collector by null everything that we can.
      */
     public void destroy() {
@@ -1210,19 +1132,17 @@ public class HttpFields
         _dateReceive = null;
     }
     
-    /* ------------------------------------------------------------ */
-    /** Get field value parameters.
-     * Some field values can have parameters.  This method separates
-     * the value from the parameters and optionally populates a
-     * map with the parameters. For example:<PRE>
+    /**
+     * Get field value parameters.
+     * Some field values can have parameters. This method separates the value from the parameters and optionally
+     * populates a map with the parameters. For example:<PRE>
      *   FieldName : Value ; param1=val1 ; param2=val2
      * </PRE>
      * @param value The Field value, possibly with parameters.
      * @param parameters A map to populate with the parameters, or null
      * @return The value.
      */
-    public static String valueParameters(String value, Map parameters)
-    {
+    public static String valueParameters(String value, Map parameters) {
         if (value == null) {
             return null;
         }
@@ -1250,7 +1170,6 @@ public class HttpFields
         return value.substring(0, i).trim();
     }
 
-    /* ------------------------------------------------------------ */
     public static Float getQuality(String value) {
         if (value == null) {
             return __zero;
@@ -1281,13 +1200,13 @@ public class HttpFields
         return q;
     }
 
-    /* ------------------------------------------------------------ */
-    /** List values in quality order.
+    /**
+     * List values in quality order.
      * @param enm Enumeration of values with quality parameters
      * @return values in quality order.
      */
     public static List qualityList(Enumeration enm) {
-        if(enm == null || !enm.hasMoreElements()) {
+        if (enm == null || !enm.hasMoreElements()) {
             return Collections.EMPTY_LIST;
         }
         Object list = null;
@@ -1330,8 +1249,8 @@ public class HttpFields
         return vl;
     }
 
-    /* ------------------------------------------------------------ */
-    /** Format a set cookie value
+    /**
+     * Format a set cookie value
      * @param cookie The cookie.
      */
     public void addSetCookie(Cookie cookie) {
@@ -1406,8 +1325,8 @@ public class HttpFields
         add(__SetCookie, name_value_params);
     }
 
-    /* ------------------------------------------------------------ */
-    /** Add fields from another HttpFields instance.
+    /**
+     * Add fields from another HttpFields instance.
      * Single valued fields are replaced, while all others are added.
      * @param fields 
      */
@@ -1425,18 +1344,14 @@ public class HttpFields
         }
     }
 
-    /* ------------------------------------------------------------ */
     /** 
-     * return an iterator for field name:value pairs
+     * return an iterator for field name:value pairs.
      * @return an HttpFields.Iterator
      */
     public Iterator iterator() {
         return new EntryIterator();
     }
-
     
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     public class Entry {
         protected int _i;
         
@@ -1453,8 +1368,6 @@ public class HttpFields
         }
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     private class EntryIterator implements Iterator {
         protected int _i = 0;
 
@@ -1471,24 +1384,23 @@ public class HttpFields
         }
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* handle 1.3 protected methods                        */
+    /**
+     * handle 1.3 protected methods.
+     */
     private static class HttpCal extends GregorianCalendar {
         HttpCal() {
             super(__GMT);
         }
 
-        /* ------------------------------------------------------------------------------- */
         /**
-         * @see java.util.Calendar#setTimeInMillis(long)
+         * @see java.util.Calendar#setTimeInMillis(long) .
          */
         public void setTimeInMillis(long arg0) {
             super.setTimeInMillis(arg0);
         }
-        /* ------------------------------------------------------------------------------- */
+
         /**
-         * @see java.util.Calendar#getTimeInMillis()
+         * @see java.util.Calendar#getTimeInMillis() .
          */
         public long getTimeInMillis() {
             return super.getTimeInMillis();
