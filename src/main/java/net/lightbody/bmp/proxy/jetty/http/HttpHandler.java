@@ -20,9 +20,6 @@ import net.lightbody.bmp.proxy.jetty.util.LifeCycle;
 import java.io.IOException;
 import java.io.Serializable;
 
-
-/* ------------------------------------------------------------ */
-
 /**
  * HTTP handler.
  * The HTTP Handler interface is implemented by classes that wish to
@@ -40,42 +37,30 @@ import java.io.Serializable;
  * @see net.lightbody.bmp.proxy.jetty.http.HttpContext
  */
 public interface HttpHandler extends LifeCycle, Serializable {
-    /* ------------------------------------------------------------ */
-
     /**
      * Get the name of the handler.
      *
      * @return The name of the handler used for logging and reporting.
      */
-    public String getName();
+    String getName();
 
-    /* ------------------------------------------------------------ */
-    public HttpContext getHttpContext();
+    HttpContext getHttpContext();
 
-    /* ------------------------------------------------------------ */
-    public void initialize(HttpContext context);
-
-    /* ------------------------------------------------------------ */
+    void initialize(HttpContext context);
 
     /**
      * Handle a request.
      * <p>
-     * Note that Handlers are tried in order until one has handled the
-     * request. i.e. until request.isHandled() returns true.
+     * Note that Handlers are tried in order until one has handled the request. i.e. until request.isHandled() returns true.
      * <p>
-     * In broad terms this means, either a response has been commited
-     * or request.setHandled(true) has been called.
+     * In broad terms this means, either a response has been commited or request.setHandled(true) has been called.
      *
      * @param pathInContext The context path
      * @param pathParams    Path parameters such as encoded Session ID
      * @param request       The HttpRequest request
      * @param response      The HttpResponse response
      */
-    public void handle(String pathInContext,
-                       String pathParams,
-                       HttpRequest request,
-                       HttpResponse response)
-            throws HttpException, IOException;
+    void handle(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws IOException;
 }
 
 

@@ -1,12 +1,9 @@
 package net.lightbody.bmp.proxy.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.Date;
 
 public class IOUtils {
     private static final int BUFFER = 4096;
@@ -20,63 +17,6 @@ public class IOUtils {
 
         out.close();
         in.close();
-    }
-
-    public static Stats copyWithStats(InputStream is, OutputStream os, BandwidthSimulator simulator, boolean copyOutputForReadingLater) throws IOException {
-        Date timeToFirstByte = null;
-
-        byte[] buffer = new byte[BUFFER];
-        int length;
-        int bytes = 0;
-
-        ByteArrayInputStream bais = null;
-
-        try {
-            ByteArrayOutputStream baos = null;
-            if (copyOutputForReadingLater) {
-                baos = new ByteArrayOutputStream();
-            }
-
-            // read the first byte
-            int maxBytes = Math.min(simulator.maximumBytes(bytes), buffer.length);
-            int firstByte = is.read();
-            os.write(firstByte);
-            if (copyOutputForReadingLater) {
-                baos.write(firstByte);
-            }
-            bytes++;
-            timeToFirstByte = new Date();
-
-            do {
-                length = is.read(buffer, 0, maxBytes);
-                if (length != -1) {
-                    bytes += length;
-                    os.write(buffer, 0, length);
-                    if (copyOutputForReadingLater) {
-                        baos.write(buffer, 0, length);
-                    }
-                }
-                maxBytes = Math.min(simulator.maximumBytes(bytes), buffer.length);
-            } while (length != -1);
-
-            if (copyOutputForReadingLater) {
-                bais = new ByteArrayInputStream(baos.toByteArray());
-            }
-        } finally {
-            try {
-                is.close();
-            } catch (IOException e) {
-                // ok to ignore
-            }
-
-            try {
-                os.close();
-            } catch (IOException e) {
-                // ok to ignore
-            }
-        }
-
-        return new Stats(bytes, timeToFirstByte, bais);
     }
 
     public static String readFully(InputStream in) throws IOException {
@@ -105,27 +45,4 @@ public class IOUtils {
         return sb.toString();
     }
 
-    public static class Stats {
-        private long bytesCopied;
-        private Date timeToFirstByte;
-        private InputStream copy;
-
-        public Stats(long bytesCopied, Date timeToFirstByte, InputStream copy) {
-            this.bytesCopied = bytesCopied;
-            this.timeToFirstByte = timeToFirstByte;
-            this.copy = copy;
-        }
-
-        public long getBytesCopied() {
-            return bytesCopied;
-        }
-
-        public Date getTimeToFirstByte() {
-            return timeToFirstByte;
-        }
-
-        public InputStream getCopy() {
-            return copy;
-        }
-    }
 }

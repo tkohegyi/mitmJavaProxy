@@ -17,20 +17,15 @@ package net.lightbody.bmp.proxy.jetty.http;
 
 import javax.servlet.http.Cookie;
 
-/* ------------------------------------------------------------ */
-
 /**
  * HttpOnlyCookie.
  * <p>
- * This derivation of javax.servlet.http.Cookie can be used to indicate
- * that the microsoft httponly extension should be used.
+ * This derivation of javax.servlet.http.Cookie can be used to indicate that the microsoft httponly extension should be used.
  * The addSetCookie method on HttpFields checks for this type.
  *
  * @author gregw
  */
 public class HttpOnlyCookie extends Cookie {
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param name
@@ -39,5 +34,4 @@ public class HttpOnlyCookie extends Cookie {
     public HttpOnlyCookie(String name, String value) {
         super(name, value);
     }
-
 }

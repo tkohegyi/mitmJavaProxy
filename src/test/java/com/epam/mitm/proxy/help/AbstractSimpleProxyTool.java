@@ -131,11 +131,9 @@ public abstract class AbstractSimpleProxyTool {
         }
     }
 
-    protected ResponseInfo httpGetWithApacheClient(HttpHost host, String resourceUrl, boolean isProxied, boolean callHeadFirst)
-            throws Exception {
+    protected ResponseInfo httpGetWithApacheClient(HttpHost host, String resourceUrl, boolean isProxied, boolean callHeadFirst) throws Exception {
         final CloseableHttpClient httpClient = TestUtils.buildHttpClient(isProxied, proxyServer.getPort());
         try {
-
             Integer contentLength = null;
             if (callHeadFirst) {
                 HttpHead request = new HttpHead(resourceUrl);

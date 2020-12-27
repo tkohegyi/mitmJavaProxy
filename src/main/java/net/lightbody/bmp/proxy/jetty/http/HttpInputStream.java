@@ -15,10 +15,10 @@
 
 package net.lightbody.bmp.proxy.jetty.http;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LineInput;
 import net.lightbody.bmp.proxy.jetty.util.StringUtil;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -26,38 +26,28 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
-
-/* ------------------------------------------------------------ */
-
 /**
  * HTTP Chunking InputStream.
- * This FilterInputStream acts as a BufferedInputStream until
- * setChunking(true) is called.  Once chunking is
- * enabled, the raw stream is chunk decoded as per RFC2616.
+ * This FilterInputStream acts as a BufferedInputStream until setChunking(true) is called.  Once chunking is enabled,
+ * the raw stream is chunk decoded as per RFC2616.
  * <p>
- * The "8859-1" encoding is used on underlying LineInput instance for
- * line based reads from the raw stream.
+ * The "8859-1" encoding is used on underlying LineInput instance for line based reads from the raw stream.
  * <p>
- * This class is not synchronized and should be synchronized
- * explicitly if an instance is used by multiple threads.
+ * This class is not synchronized and should be synchronized explicitly if an instance is used by multiple threads.
  *
  * @author Greg Wilkins (gregw)
  * @version $Id: HttpInputStream.java,v 1.13 2005/08/23 20:02:26 gregwilkins Exp $
  * @see net.lightbody.bmp.proxy.jetty.util.LineInput
  */
 public class HttpInputStream extends FilterInputStream {
-    private static Log log = LogFactory.getLog(HttpInputStream.class);
+    private static final ClosedStream __closedStream = new ClosedStream();
 
-    /* ------------------------------------------------------------ */
-    private static ClosedStream __closedStream = new ClosedStream();
+    private final Logger log = LoggerFactory.getLogger(HttpInputStream.class);
 
-    /* ------------------------------------------------------------ */
     private ChunkingInputStream _deChunker;
     private LineInput _realIn;
     private boolean _chunking;
     private OutputStream _expectContinues;
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -65,8 +55,6 @@ public class HttpInputStream extends FilterInputStream {
     public HttpInputStream(InputStream in) {
         this(in, 4096);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -76,22 +64,17 @@ public class HttpInputStream extends FilterInputStream {
         try {
             _realIn = new LineInput(in, bufferSize, StringUtil.__ISO_8859_1);
         } catch (UnsupportedEncodingException e) {
-            log.fatal(e);
+            log.error(e.getMessage(), e);
             System.exit(1);
         }
         this.in = _realIn;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @param expectContinues The expectContinues to set.
      */
     public OutputStream getExpectContinues() {
         return _expectContinues;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param expectContinues The expectContinues to set.
@@ -100,49 +83,48 @@ public class HttpInputStream extends FilterInputStream {
         _expectContinues = expectContinues;
     }
 
-    /* ------------------------------------------------------------ */
-    /*
-     * @see java.io.InputStream#read()
+    /**
+     * @see java.io.InputStream#read() .
      */
     public int read() throws IOException {
-        if (_expectContinues != null)
+        if (_expectContinues != null) {
             expectContinues();
+        }
         return super.read();
     }
 
-    /* ------------------------------------------------------------ */
-    /*
-     * @see java.io.InputStream#read(byte[], int, int)
+    
+    /**
+     * @see java.io.InputStream#read(byte[], int, int) .
      */
     public int read(byte[] b, int off, int len) throws IOException {
-        if (_expectContinues != null)
+        if (_expectContinues != null) {
             expectContinues();
+        }
         return super.read(b, off, len);
     }
 
-    /* ------------------------------------------------------------ */
-    /*
-     * @see java.io.InputStream#read(byte[])
+    /**
+     * @see java.io.InputStream#read(byte[]) .
      */
     public int read(byte[] b) throws IOException {
-        if (_expectContinues != null)
+        if (_expectContinues != null) {
             expectContinues();
+        }
         return super.read(b);
     }
-
-    /* ------------------------------------------------------------ */
-    /*
-     * @see java.io.InputStream#skip(long)
+    
+    /**
+     * @see java.io.InputStream#skip(long) .
      */
     public long skip(long n) throws IOException {
-        if (_expectContinues != null)
+        if (_expectContinues != null) {
             expectContinues();
+        }
         return super.skip(n);
     }
 
-    /* ------------------------------------------------------------ */
-    private void expectContinues()
-            throws IOException {
+    private void expectContinues() throws IOException {
         try {
             if (available() <= 0) {
                 _expectContinues.write(HttpResponse.__Continue);
@@ -151,15 +133,11 @@ public class HttpInputStream extends FilterInputStream {
         } finally {
             _expectContinues = null;
         }
-
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get the raw stream.
-     * A stream without filters or chunking is returned. This stream
-     * may still be buffered and uprocessed bytes may be in the buffer.
+     * A stream without filters or chunking is returned. This stream may still be buffered and uprocessed bytes may be in the buffer.
      *
      * @return Raw InputStream.
      */
@@ -167,11 +145,8 @@ public class HttpInputStream extends FilterInputStream {
         return _realIn;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Get Filter InputStream.
-     * Get the current top of the InputStream filter stack
+     * Get Filter InputStream. Get the current top of the InputStream filter stack.
      *
      * @return InputStream.
      */
@@ -179,80 +154,63 @@ public class HttpInputStream extends FilterInputStream {
         return in;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set Filter InputStream.
-     * Set input filter stream, which should be constructed to wrap
-     * the stream returned from get FilterStream.
+     * Set input filter stream, which should be constructed to wrap the stream returned from get FilterStream.
      */
     public void setFilterStream(InputStream filter) {
         in = filter;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Get chunking mode
+     * Get chunking mode.
      */
     public boolean isChunking() {
         return _chunking;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set chunking mode.
      * Chunking can only be turned off with a call to resetStream().
      *
-     * @throws IllegalStateException Checking cannot be set if
-     *                               a content length has been set.
+     * @throws IllegalStateException Checking cannot be set if a content length has been set.
      */
-    public void setChunking()
-            throws IllegalStateException {
-        if (_realIn.getByteLimit() >= 0)
+    public void setChunking() throws IllegalStateException {
+        if (_realIn.getByteLimit() >= 0) {
             throw new IllegalStateException("Has Content-Length");
-        if (_deChunker == null)
+        }
+        if (_deChunker == null) {
             _deChunker = new ChunkingInputStream(_realIn);
+        }
         in = _deChunker;
 
         _chunking = true;
         _deChunker._trailer = null;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Reset the stream.
-     * Turn chunking off and disable all filters.
+     * Reset the stream. Turn chunking off and disable all filters.
      *
-     * @throws IllegalStateException The stream cannot be reset if
-     *                               there is some unread chunked input or a content length greater
-     *                               than zero remaining.
+     * @throws IllegalStateException The stream cannot be reset if there is some unread chunked input
+     * or a content length greater than zero remaining.
      */
-    public void resetStream()
-            throws IllegalStateException {
-        if ((_deChunker != null && _deChunker._chunkSize > 0) ||
-                _realIn.getByteLimit() > 0)
+    public void resetStream() throws IllegalStateException {
+        if ((_deChunker != null && _deChunker._chunkSize > 0) || _realIn.getByteLimit() > 0) {
             throw new IllegalStateException("Unread input");
-        if (log.isTraceEnabled()) log.trace("resetStream()");
+        }
+        log.trace("resetStream()");
         in = _realIn;
-        if (_deChunker != null)
+        if (_deChunker != null) {
             _deChunker.resetStream();
+        }
         _chunking = false;
         _realIn.setByteLimit(-1);
     }
-
-    /* ------------------------------------------------------------ */
-    public void close()
-            throws IOException {
+    
+    public void close() throws IOException {
         in = __closedStream;
     }
 
-
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     void unsafeSetContentLength(int len) {
         _realIn.setByteLimit(len);
     }
@@ -266,44 +224,36 @@ public class HttpInputStream extends FilterInputStream {
         return _realIn.getByteLimit();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Set the content length.
-     * Only this number of bytes can be read before EOF is returned.
+     * Set the content length. Only this number of bytes can be read before EOF is returned.
      *
      * @param len length.
      */
     public void setContentLength(int len) {
-        if (_chunking && len >= 0 && getExpectContinues() == null)
+        if (_chunking && len >= 0 && getExpectContinues() == null) {
             throw new IllegalStateException("Chunking");
+        }
         _realIn.setByteLimit(len);
     }
 
-    /* ------------------------------------------------------------ */
     public HttpFields getTrailer() {
         return _deChunker._trailer;
     }
 
-    /* ------------------------------------------------------------ */
     public void destroy() {
-        if (_realIn != null)
+        if (_realIn != null) {
             _realIn.destroy();
+        }
         _realIn = null;
         _deChunker = null;
         _expectContinues = null;
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * A closed input stream.
      */
     private static class ClosedStream extends InputStream {
-        /* ------------------------------------------------------------ */
-        public int read()
-                throws IOException {
+        public int read() throws IOException {
             return -1;
         }
     }

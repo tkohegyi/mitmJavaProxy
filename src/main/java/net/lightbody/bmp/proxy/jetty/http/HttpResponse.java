@@ -15,12 +15,12 @@
 
 package net.lightbody.bmp.proxy.jetty.http;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.StringUtil;
 import net.lightbody.bmp.proxy.jetty.util.TypeUtil;
 import net.lightbody.bmp.proxy.jetty.util.UrlEncoded;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.Cookie;
 import java.io.IOException;
@@ -29,24 +29,19 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 
-
-/* ------------------------------------------------------------ */
-
 /**
  * HTTP Response.
- * This class manages the headers, trailers and content streams
- * of a HTTP response. It can be used for receiving or generating
- * requests.
+ * This class manages the headers, trailers and content streams of a HTTP response.
+ * It can be used for receiving or generating requests.
  * <p>
- * This class is not synchronized. It should be explicitly
- * synchronized if it is used by multiple threads.
+ * This class is not synchronized. It should be explicitly synchronized if it is used by multiple threads.
  *
  * @author Greg Wilkins (gregw)
  * @version $Id: HttpResponse.java,v 1.61 2005/10/26 08:10:14 gregwilkins Exp $
  * @see HttpRequest
  */
 public class HttpResponse extends HttpMessage {
-    public final static int
+    public static final int
             __100_Continue = 100,
             __101_Switching_Protocols = 101,
             __102_Processing = 102,
@@ -93,25 +88,22 @@ public class HttpResponse extends HttpMessage {
             __504_Gateway_Timeout = 504,
             __505_HTTP_Version_Not_Supported = 505,
             __507_Insufficient_Storage = 507;
-    /* -------------------------------------------------------------- */
+    
     public final static HashMap __statusMsg = new HashMap();
-    /* ------------------------------------------------------------ */
+    
     static byte[] __Continue;
-    private static Log log = LogFactory.getLog(HttpResponse.class);
+    private static final Logger log = LoggerFactory.getLogger(HttpResponse.class);
 
     static {
         // Build error code map using reflection
         try {
-            Field[] fields = net.lightbody.bmp.proxy.jetty.http.HttpResponse.class
-                    .getDeclaredFields();
+            Field[] fields = net.lightbody.bmp.proxy.jetty.http.HttpResponse.class.getDeclaredFields();
             for (int f = fields.length; f-- > 0; ) {
                 int m = fields[f].getModifiers();
                 String name = fields[f].getName();
-                if (Modifier.isFinal(m) &&
-                        Modifier.isStatic(m) &&
-                        fields[f].getType().equals(Integer.TYPE) &&
-                        name.startsWith("__") &&
-                        Character.isDigit(name.charAt(2))) {
+                if (Modifier.isFinal(m) && Modifier.isStatic(m)
+                        && fields[f].getType().equals(Integer.TYPE) && name.startsWith("__")
+                        && Character.isDigit(name.charAt(2))) {
                     String message = name.substring(6);
                     message = message.replace('_', ' ');
                     __statusMsg.put(fields[f].get(null), message);
@@ -126,17 +118,14 @@ public class HttpResponse extends HttpMessage {
         try {
             __Continue = "HTTP/1.1 100 Continue\015\012\015\012".getBytes(StringUtil.__ISO_8859_1);
         } catch (Exception e) {
-            log.fatal(e);
+            log.error(e.getMessage(), e);
             System.exit(1);
         }
     }
 
-    /* -------------------------------------------------------------- */
     private int _status = __200_OK;
     private String _reason;
     private HttpContext _httpContext;
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -146,8 +135,6 @@ public class HttpResponse extends HttpMessage {
         _dotVersion = 1;
         _state = __MSG_EDITABLE;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -161,10 +148,8 @@ public class HttpResponse extends HttpMessage {
         _state = __MSG_EDITABLE;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Get the HttpContext handling this reponse.
+     * Get the HttpContext handling this response.
      *
      * @return The HttpContext that is handling this request.
      */
@@ -172,18 +157,14 @@ public class HttpResponse extends HttpMessage {
         return _httpContext;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Set the HttpContext handling this reponse.
+     * Set the HttpContext handling this response.
      *
-     * @param context The HttpContext handling this reponse.
+     * @param context The HttpContext handling this response.
      */
     public void setHttpContext(HttpContext context) {
         _httpContext = context;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return true if the message has been modified.
@@ -192,20 +173,17 @@ public class HttpResponse extends HttpMessage {
         return _status != __200_OK || super.isDirty();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Reset the response.
-     * Clears any data that exists in the buffer as well as the status
-     * code. If the response has been committed, this method throws an
-     * <code>IllegalStateException</code>.
+     * Clears any data that exists in the buffer as well as the status code. If the response has been committed,
+     * this method throws an <code>IllegalStateException</code>.
      *
-     * @throws IllegalStateException if the response has already been
-     *                               committed
+     * @throws IllegalStateException if the response has already been committed
      */
     public void reset() {
-        if (isCommitted())
+        if (isCommitted()) {
             throw new IllegalStateException("Already committed");
+        }
 
         try {
             ((HttpOutputStream) getOutputStream()).resetBuffer();
@@ -214,16 +192,14 @@ public class HttpResponse extends HttpMessage {
             super.reset();
 
             setField(HttpFields.__Date, getRequest().getTimeStampStr());
-            if (!Version.isParanoid())
+            if (!Version.isParanoid()) {
                 setField(HttpFields.__Server, Version.getDetail());
+            }
         } catch (Exception e) {
             log.warn(LogSupport.EXCEPTION, e);
             throw new IllegalStateException(e.toString());
         }
     }
-
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @deprecated use getHttpRequest()
@@ -232,21 +208,17 @@ public class HttpResponse extends HttpMessage {
         return getHttpRequest();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Get the HTTP Request.
-     * Get the HTTP Request associated with this response.
+     * Get the HTTP Request. Get the HTTP Request associated with this response.
      *
      * @return associated request
      */
     public HttpRequest getHttpRequest() {
-        if (_connection == null)
+        if (_connection == null) {
             return null;
+        }
         return _connection.getRequest();
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Not Implemented.
@@ -254,21 +226,18 @@ public class HttpResponse extends HttpMessage {
      * @param in
      * @throws IOException
      */
-    public void readHeader(HttpInputStream in)
-            throws IOException {
+    public void readHeader(HttpInputStream in) {
         _state = __MSG_BAD;
         log.warn(LogSupport.NOT_IMPLEMENTED);
     }
-
-
-    /* -------------------------------------------------------------- */
-    public void writeHeader(Writer writer)
-            throws IOException {
-        if (_state != __MSG_EDITABLE)
-            throw new IllegalStateException(__state[_state] +
-                    " is not EDITABLE");
-        if (_header == null)
+    
+    public void writeHeader(Writer writer) throws IOException {
+        if (_state != __MSG_EDITABLE) {
+            throw new IllegalStateException(__state[_state] + " is not EDITABLE");
+        }
+        if (_header == null) {
             throw new IllegalStateException("Response is destroyed");
+        }
 
         if (getHttpRequest().getDotVersion() >= 0) {
             _state = __MSG_BAD;
@@ -284,125 +253,103 @@ public class HttpResponse extends HttpMessage {
         }
         _state = __MSG_SENDING;
     }
-
-    /* -------------------------------------------------------------- */
+    
     public int getStatus() {
         return _status;
     }
-
-    /* -------------------------------------------------------------- */
+    
     public void setStatus(int status) {
         _status = status;
     }
-
-    /* -------------------------------------------------------------- */
+    
     public String getReason() {
-        if (_reason != null)
+        if (_reason != null) {
             return _reason;
+        }
         _reason = (String) __statusMsg.get(TypeUtil.newInteger(_status));
-        if (_reason == null)
+        if (_reason == null) {
             _reason = "unknown";
+        }
         return _reason;
     }
-
-    /* -------------------------------------------------------------- */
+    
     public void setReason(String reason) {
         _reason = reason;
     }
-
-
-    /* -------------------------------------------------------------- */
+    
     public void setStatus(int code, String message) {
         setStatus(code);
         Integer code_integer = TypeUtil.newInteger(code);
         if (message == null) {
             message = (String) __statusMsg.get(code_integer);
-            if (message == null)
+            if (message == null) {
                 message = "" + code;
+            }
             setReason(message);
-        } else
+        } else {
             setReason(UrlEncoded.encodeString(message));
+        }
     }
-
-
-    /* ------------------------------------------------------------- */
 
     /**
      * Send Error Response.
      */
-    public void sendError(int code, String message)
-            throws IOException {
+    public void sendError(int code, String message) throws IOException {
         setStatus(code, message);
 
         // Generate normal error page.
         HttpRequest request = getHttpRequest();
 
         // If we are allowed to have a body 
-        if (code != __204_No_Content &&
-                code != __304_Not_Modified &&
-                code != __206_Partial_Content &&
-                code >= 200) {
+        if (code != __204_No_Content && code != __304_Not_Modified && code != __206_Partial_Content && code >= 200) {
             if (getHttpContext() != null) {
-                Object o =
-                        getHttpContext().getAttribute(HttpContext.__ErrorHandler);
-                if (o != null && o instanceof HttpHandler)
+                Object o = getHttpContext().getAttribute(HttpContext.__ErrorHandler);
+                if (o != null && o instanceof HttpHandler) {
                     ((HttpHandler) o).handle(request.getPath(), null, request, this);
+                }
             }
-        } else if (code != __206_Partial_Content) {
-            _header.remove(HttpFields.__ContentType);
-            _header.remove(HttpFields.__ContentLength);
-            _characterEncoding = null;
-            _mimeType = null;
+        } else {
+            if (code != __206_Partial_Content) {
+                _header.remove(HttpFields.__ContentType);
+                _header.remove(HttpFields.__ContentLength);
+                _characterEncoding = null;
+                _mimeType = null;
+            }
         }
-
         commit();
     }
 
-
-
-    /* ------------------------------------------------------------- */
-
     /**
-     * Sends an error response to the client using the specified status
-     * code and no default message.
+     * Sends an error response to the client using the specified status code and no default message.
      *
      * @param code the status code
      * @throws IOException If an I/O error has occurred.
      */
-    public void sendError(int code)
-            throws IOException {
+    public void sendError(int code) throws IOException {
         sendError(code, null);
     }
 
-    /* ------------------------------------------------------------- */
-
     /**
-     * Sends a redirect response to the client using the specified redirect
-     * location URL.
+     * Sends a redirect response to the client using the specified redirect location URL.
      *
      * @param location the redirect location URL
      * @throws IOException If an I/O error has occurred.
      */
-    public void sendRedirect(String location)
-            throws IOException {
-        if (isCommitted())
+    public void sendRedirect(String location) throws IOException {
+        if (isCommitted()) {
             throw new IllegalStateException("Commited");
+        }
         _header.put(HttpFields.__Location, location);
         setStatus(__302_Moved_Temporarily);
         commit();
     }
 
-    /* -------------------------------------------------------------- */
-
     /**
      * Add a Set-Cookie field.
      */
-    public void addSetCookie(String name,
-                             String value) {
+    public void addSetCookie(String name, String value) {
         _header.addSetCookie(new Cookie(name, value));
     }
-
-    /* -------------------------------------------------------------- */
 
     /**
      * Add a Set-Cookie field.
@@ -411,25 +358,19 @@ public class HttpResponse extends HttpMessage {
         _header.addSetCookie(cookie);
     }
 
-
-    /* ------------------------------------------------------------ */
     public void completing() {
         getHttpConnection().completing();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @throws IOException
      */
-    public void commit()
-            throws IOException {
-        if (!isCommitted())
+    public void commit() throws IOException {
+        if (!isCommitted()) {
             getOutputStream().flush();
+        }
         getHttpConnection().commit();
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Recycle the response.
@@ -441,8 +382,6 @@ public class HttpResponse extends HttpMessage {
         _httpContext = null;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Destroy the response.
      * Help the garbage collector by null everything that we can.
@@ -453,6 +392,3 @@ public class HttpResponse extends HttpMessage {
     }
 
 }
-
-
-

@@ -15,11 +15,11 @@
 
 package net.lightbody.bmp.proxy.jetty.http;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.QuotedStringTokenizer;
 import net.lightbody.bmp.proxy.jetty.util.TypeUtil;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,24 +33,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-/* ------------------------------------------------------------ */
-
 /**
  * HTTP Message base.
- * This class forms the basis of HTTP requests and replies. It provides
- * header fields, content and optional trailer fields, while managing the
- * state of the message.
+ * This class forms the basis of HTTP requests and replies. It provides header fields, content and optional trailer fields,
+ * while managing the state of the message.
  *
  * @author Greg Wilkins (gregw)
  * @version $Id: HttpMessage.java,v 1.41 2006/04/04 22:28:02 gregwilkins Exp $
  */
 
 public abstract class HttpMessage {
-    /* ------------------------------------------------------------ */
     public final static String __SCHEME = "http";
     public final static String __SSL_SCHEME = "https";
-    /* ------------------------------------------------------------ */
+    
     public final static String __HTTP_0_9 = "HTTP/0.9";
     public final static String __HTTP_1_0 = "HTTP/1.0";
     public final static String __HTTP_1_1 = "HTTP/1.1";
@@ -64,8 +59,7 @@ public abstract class HttpMessage {
             __MSG_RECEIVED = 2,  // Received from connection.
             __MSG_SENDING = 3,   // Headers sent.
             __MSG_SENT = 4;      // Entity and trailers sent.
-    public final static String[] __state =
-            {
+    public final static String[] __state = {
                     "EDITABLE",
                     "BAD",
                     "RECEIVED",
@@ -73,10 +67,8 @@ public abstract class HttpMessage {
                     "SENT"
             };
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    private static Log log = LogFactory.getLog(HttpMessage.class);
-    /* ------------------------------------------------------------ */
+    private final Logger log = LoggerFactory.getLogger(HttpMessage.class);
+    
     protected int _state = __MSG_EDITABLE;
     protected String _version;
     protected int _dotVersion;
@@ -86,13 +78,12 @@ public abstract class HttpMessage {
     protected String _mimeType;
     protected Object _wrapper;
     protected Map _attributes;
+
     /**
      * Constructor.
      */
     protected HttpMessage() {
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -100,8 +91,6 @@ public abstract class HttpMessage {
     protected HttpMessage(HttpConnection connection) {
         _connection = connection;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get an associated wrapper object.
@@ -112,44 +101,36 @@ public abstract class HttpMessage {
         return _wrapper;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set a wrapper object.
-     * A wrapper object is an object associated with this message and
-     * presents it with an different interface. The
-     * primary example of a HttpRequest facade is ServletHttpRequest.
-     * A single facade object may be associated with the message with
-     * this call and retrieved with the getFacade method.
+     * A wrapper object is an object associated with this message and presents it with an different interface.
+     * The primary example of a HttpRequest facade is ServletHttpRequest.
+     * A single facade object may be associated with the message with this call and retrieved with the getFacade method.
      */
     public void setWrapper(Object wrapper) {
         _wrapper = wrapper;
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     protected void reset() {
         _state = __MSG_EDITABLE;
         _header.clear();
     }
 
-    /* ------------------------------------------------------------ */
     public HttpConnection getHttpConnection() {
         return _connection;
     }
 
-    /* ------------------------------------------------------------ */
     public InputStream getInputStream() {
-        if (_connection == null)
+        if (_connection == null) {
             return null;
+        }
         return _connection.getInputStream();
     }
 
-    /* ------------------------------------------------------------ */
     public OutputStream getOutputStream() {
-        if (_connection == null)
+        if (_connection == null) {
             return null;
+        }
         return _connection.getOutputStream();
     }
 
@@ -169,12 +150,9 @@ public abstract class HttpMessage {
         return _state;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set the message state.
-     * This method should be used by experts only as it can prevent
-     * normal handling of a request/response.
+     * This method should be used by experts only as it can prevent normal handling of a request/response.
      *
      * @param state The new state
      * @return the last state.
@@ -185,8 +163,6 @@ public abstract class HttpMessage {
         return last;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get the protocol version.
      *
@@ -196,9 +172,6 @@ public abstract class HttpMessage {
         return _version;
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Set the request version
      *
@@ -206,8 +179,9 @@ public abstract class HttpMessage {
      * @throws IllegalStateException message is not EDITABLE
      */
     public void setVersion(String version) {
-        if (_state != __MSG_EDITABLE)
+        if (_state != __MSG_EDITABLE) {
             throw new IllegalStateException("Not EDITABLE");
+        }
         if (version.equalsIgnoreCase(__HTTP_1_1)) {
             _dotVersion = 1;
             _version = __HTTP_1_1;
@@ -217,10 +191,10 @@ public abstract class HttpMessage {
         } else if (version.equalsIgnoreCase(__HTTP_0_9)) {
             _dotVersion = -1;
             _version = __HTTP_0_9;
-        } else
+        } else {
             throw new IllegalArgumentException("Unknown version");
+        }
     }
-    /* ------------------------------------------------------------ */
 
     /**
      * Get the protocol version.
@@ -231,8 +205,6 @@ public abstract class HttpMessage {
         return _dotVersion;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get field names.
      *
@@ -241,8 +213,6 @@ public abstract class HttpMessage {
     public Enumeration getFieldNames() {
         return _header.getFieldNames();
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Does the header or trailer contain a field?
@@ -254,12 +224,9 @@ public abstract class HttpMessage {
         return _header.containsKey(name);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get a message field.
-     * Get a field from a message header. If no header field is found,
-     * trailer fields are searched.
+     * Get a field from a message header. If no header field is found, trailer fields are searched.
      *
      * @param name The field name
      * @return field value or null
@@ -267,8 +234,6 @@ public abstract class HttpMessage {
     public String getField(String name) {
         return _header.get(name);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get a multi valued message field.
@@ -280,8 +245,6 @@ public abstract class HttpMessage {
     public Enumeration getFieldValues(String name) {
         return _header.getValues(name);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get a multi valued message field.
@@ -295,23 +258,19 @@ public abstract class HttpMessage {
         return _header.getValues(name, separators);
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Set a field value.
-     * If the message is editable, then a header field is set. Otherwise
-     * if the message is sending and a HTTP/1.1 version, then a trailer
-     * field is set.
+     * If the message is editable, then a header field is set. Otherwise if the message is sending and a HTTP/1.1 version,
+     * then a trailer field is set.
      *
      * @param name  Name of field
      * @param value New value of field
      * @return Old value of field
      */
     public String setField(String name, String value) {
-        if (_state != __MSG_EDITABLE)
+        if (_state != __MSG_EDITABLE) {
             return null;
-
+        }
         if (HttpFields.__ContentType.equalsIgnoreCase(name)) {
             String old = _header.get(name);
             setContentType(value);
@@ -321,50 +280,40 @@ public abstract class HttpMessage {
         return _header.put(name, value);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set a multi-value field value.
-     * If the message is editable, then a header field is set. Otherwise
-     * if the meesage is sending and a HTTP/1.1 version, then a trailer
-     * field is set.
+     * If the message is editable, then a header field is set. Otherwise if the message is sending and a HTTP/1.1 version,
+     * then a trailer field is set.
      *
      * @param name  Name of field
      * @param value New values of field
      */
     public void setField(String name, List value) {
-        if (_state != __MSG_EDITABLE)
+        if (_state != __MSG_EDITABLE) {
             return;
+        }
         _header.put(name, value);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Add to a multi-value field value.
-     * If the message is editable, then a header field is set. Otherwise
-     * if the meesage is sending and a HTTP/1.1 version, then a trailer
-     * field is set.
+     * If the message is editable, then a header field is set. Otherwise if the meesage is sending and a HTTP/1.1 version,
+     * then a trailer field is set.
      *
      * @param name  Name of field
      * @param value New value to add to the field
-     * @throws IllegalStateException Not editable or sending 1.1
-     *                               with trailers
+     * @throws IllegalStateException Not editable or sending 1.1 with trailers
      */
-    public void addField(String name, String value)
-            throws IllegalStateException {
-        if (_state != __MSG_EDITABLE)
+    public void addField(String name, String value) throws IllegalStateException {
+        if (_state != __MSG_EDITABLE) {
             return;
+        }
         _header.add(name, value);
     }
 
-    /* -------------------------------------------------------------- */
-
     /**
-     * Get a field as an integer value.
-     * Look in header and trailer fields.
-     * Returns the value of an integer field, or -1 if not found.
-     * The case of the field name is ignored.
+     * Get a field as an integer value. Look in header and trailer fields.
+     * Returns the value of an integer field, or -1 if not found. The case of the field name is ignored.
      *
      * @param name the case-insensitive field name
      */
@@ -372,22 +321,18 @@ public abstract class HttpMessage {
         return _header.getIntField(name);
     }
 
-    /* -------------------------------------------------------------- */
-
     /**
-     * Sets the value of an integer field.
-     * Header or Trailer fields are set depending on message state.
+     * Sets the value of an integer field. Header or Trailer fields are set depending on message state.
      *
      * @param name  the field name
      * @param value the field integer value
      */
     public void setIntField(String name, int value) {
-        if (_state != __MSG_EDITABLE)
+        if (_state != __MSG_EDITABLE) {
             return;
+        }
         _header.put(name, TypeUtil.toString(value));
     }
-
-    /* -------------------------------------------------------------- */
 
     /**
      * Adds the value of an integer field.
@@ -397,18 +342,15 @@ public abstract class HttpMessage {
      * @param value the field integer value
      */
     public void addIntField(String name, int value) {
-        if (_state != __MSG_EDITABLE)
+        if (_state != __MSG_EDITABLE) {
             return;
+        }
         _header.add(name, TypeUtil.toString(value));
     }
 
-    /* -------------------------------------------------------------- */
-
     /**
-     * Get a header as a date value.
-     * Look in header and trailer fields.
-     * Returns the value of a date field, or -1 if not found.
-     * The case of the field name is ignored.
+     * Get a header as a date value. Look in header and trailer fields.
+     * Returns the value of a date field, or -1 if not found. The case of the field name is ignored.
      *
      * @param name the case-insensitive field name
      */
@@ -416,38 +358,31 @@ public abstract class HttpMessage {
         return _header.getDateField(name);
     }
 
-
-    /* -------------------------------------------------------------- */
-
     /**
-     * Sets the value of a date field.
-     * Header or Trailer fields are set depending on message state.
+     * Sets the value of a date field. Header or Trailer fields are set depending on message state.
      *
      * @param name the field name
      * @param date the field date value
      */
     public void setDateField(String name, Date date) {
-        if (_state != __MSG_EDITABLE)
+        if (_state != __MSG_EDITABLE) {
             return;
+        }
         _header.putDateField(name, date);
     }
 
-    /* -------------------------------------------------------------- */
-
     /**
-     * Adds the value of a date field.
-     * Header or Trailer fields are set depending on message state.
+     * Adds the value of a date field. Header or Trailer fields are set depending on message state.
      *
      * @param name the field name
      * @param date the field date value
      */
     public void addDateField(String name, Date date) {
-        if (_state != __MSG_EDITABLE)
+        if (_state != __MSG_EDITABLE) {
             return;
+        }
         _header.addDateField(name, date);
     }
-
-    /* -------------------------------------------------------------- */
 
     /**
      * Sets the value of a date field.
@@ -457,48 +392,40 @@ public abstract class HttpMessage {
      * @param date the field date value
      */
     public void setDateField(String name, long date) {
-        if (_state != __MSG_EDITABLE)
+        if (_state != __MSG_EDITABLE) {
             return;
+        }
         _header.putDateField(name, date);
     }
 
-    /* -------------------------------------------------------------- */
-
     /**
-     * Add the value of a date field.
-     * Header or Trailer fields are set depending on message state.
+     * Add the value of a date field. Header or Trailer fields are set depending on message state.
      *
      * @param name the field name
      * @param date the field date value
-     * @throws IllegalStateException Not editable or sending 1.1
-     *                               with trailers
+     * @throws IllegalStateException Not editable or sending 1.1 with trailers
      */
     public void addDateField(String name, long date) {
-        if (_state != __MSG_EDITABLE)
+        if (_state != __MSG_EDITABLE) {
             return;
+        }
         _header.addDateField(name, date);
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Remove a field.
-     * If the message is editable, then a header field is removed. Otherwise
-     * if the message is sending and a HTTP/1.1 version, then a trailer
-     * field is removed.
+     * If the message is editable, then a header field is removed. Otherwise if the message is sending and a HTTP/1.1 version,
+     * then a trailer field is removed.
      *
      * @param name Name of field
      * @return Old value of field
      */
-    public String removeField(String name)
-            throws IllegalStateException {
-        if (_state != __MSG_EDITABLE)
+    public String removeField(String name) throws IllegalStateException {
+        if (_state != __MSG_EDITABLE) {
             return null;
+        }
         return _header.remove(name);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get the HTTP header fields.
@@ -506,28 +433,23 @@ public abstract class HttpMessage {
      * @return Header or null
      */
     public HttpFields getHeader() {
-        if (_state != __MSG_EDITABLE)
+        if (_state != __MSG_EDITABLE) {
             throw new IllegalStateException("Can't get header in " + __state[_state]);
-
+        }
         return _header;
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* -------------------------------------------------------------- */
     public int getContentLength() {
         return getIntField(HttpFields.__ContentLength);
     }
 
-    /* ------------------------------------------------------------ */
     public void setContentLength(int len) {
         setIntField(HttpFields.__ContentLength, len);
     }
 
     /**
      * Character Encoding.
-     * The character encoding is extracted from the ContentType field
-     * when set.
+     * The character encoding is extracted from the ContentType field when set.
      *
      * @return Character Encoding or null
      */
@@ -535,48 +457,41 @@ public abstract class HttpMessage {
         return _characterEncoding;
     }
 
-    /* -------------------------------------------------------------- */
-
     /**
      * Set Character Encoding.
      *
-     * @param encoding An encoding that can override the encoding set
-     *                 from the ContentType field.
+     * @param encoding An encoding that can override the encoding set from the ContentType field.
      */
     public void setCharacterEncoding(String encoding, boolean setField) {
-        if (isCommitted())
+        if (isCommitted()) {
             return;
-
+        }
         if (encoding == null) {
             // Clear any encoding.
             if (_characterEncoding != null) {
                 _characterEncoding = null;
-                if (setField)
+                if (setField) {
                     _header.put(HttpFields.__ContentType, _mimeType);
+                }
             }
         } else {
             // No, so just add this one to the mimetype
             _characterEncoding = encoding;
             if (setField && _mimeType != null) {
                 _header.put(HttpFields.__ContentType,
-                        _mimeType + ";charset=" +
-                                QuotedStringTokenizer.quote(_characterEncoding, ";= "));
+                        _mimeType + ";charset=" + QuotedStringTokenizer.quote(_characterEncoding, ";= "));
             }
         }
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* -------------------------------------------------------------- */
     public String getContentType() {
         return getField(HttpFields.__ContentType);
     }
 
-    /* ------------------------------------------------------------ */
     public void setContentType(String contentType) {
-        if (isCommitted())
+        if (isCommitted()) {
             return;
-
+        }
         if (contentType == null) {
             _mimeType = null;
             _header.remove(HttpFields.__ContentType);
@@ -593,29 +508,26 @@ public abstract class HttpMessage {
                 if (i1 >= 0) {
                     i1 += 8;
                     int i2 = contentType.indexOf(' ', i1);
-                    _characterEncoding = (0 < i2)
-                            ? contentType.substring(i1, i2)
-                            : contentType.substring(i1);
+                    _characterEncoding = (0 < i2) ? contentType.substring(i1, i2) : contentType.substring(i1);
                     _characterEncoding = QuotedStringTokenizer.unquote(_characterEncoding);
-                } else // No encoding in the params.
-                {
-                    if (_characterEncoding != null)
+                } else { // No encoding in the params.
+                    if (_characterEncoding != null) {
                         // Add any previously set encoding.
                         contentType += ";charset=" + QuotedStringTokenizer.quote(_characterEncoding, ";= ");
+                    }
                 }
-            } else // No encoding and no other params
-            {
+            } else { // No encoding and no other params
                 _mimeType = contentType;
                 // Add any previously set encoding.
-                if (_characterEncoding != null)
+                if (_characterEncoding != null) {
                     contentType += ";charset=" + QuotedStringTokenizer.quote(_characterEncoding, ";= ");
+                }
             }
 
             _header.put(HttpFields.__ContentType, contentType);
         }
     }
 
-    /* ------------------------------------------------------------ */
     public void updateMimeType() {
         _mimeType = null;
         _characterEncoding = null;
@@ -634,9 +546,7 @@ public abstract class HttpMessage {
                 if (i1 >= 0) {
                     i1 += 8;
                     int i2 = contentType.indexOf(' ', i1);
-                    _characterEncoding = (0 < i2)
-                            ? contentType.substring(i1, i2)
-                            : contentType.substring(i1);
+                    _characterEncoding = (0 < i2) ? contentType.substring(i1, i2) : contentType.substring(i1);
                     _characterEncoding = QuotedStringTokenizer.unquote(_characterEncoding);
                 }
             } else {
@@ -655,8 +565,6 @@ public abstract class HttpMessage {
         return _mimeType;
     }
 
-    /* -------------------------------------------------------------- */
-
     /**
      * Recycle the message.
      */
@@ -668,11 +576,10 @@ public abstract class HttpMessage {
         _connection = connection;
         _characterEncoding = null;
         _mimeType = null;
-        if (_attributes != null)
+        if (_attributes != null) {
             _attributes.clear();
+        }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Destroy the message.
@@ -680,12 +587,11 @@ public abstract class HttpMessage {
      */
     public void destroy() {
         recycle(null);
-        if (_header != null)
+        if (_header != null) {
             _header.destroy();
+        }
         _header = null;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Convert to String.
@@ -708,20 +614,13 @@ public abstract class HttpMessage {
         return writer.toString();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Write the message header.
      *
      * @param writer
      */
-    abstract void writeHeader(Writer writer)
-            throws IOException;
+    abstract void writeHeader(Writer writer) throws IOException;
 
-
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     public boolean isCommitted() {
         return _state == __MSG_SENDING || _state == __MSG_SENT;
     }
@@ -734,8 +633,6 @@ public abstract class HttpMessage {
         return _state != __MSG_EDITABLE || (out != null && out.isWritten());
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get a request attribute.
      *
@@ -743,12 +640,11 @@ public abstract class HttpMessage {
      * @return Attribute value
      */
     public Object getAttribute(String name) {
-        if (_attributes == null)
+        if (_attributes == null) {
             return null;
+        }
         return _attributes.get(name);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Set a request attribute.
@@ -758,12 +654,11 @@ public abstract class HttpMessage {
      * @return Previous Attribute value
      */
     public Object setAttribute(String name, Object attribute) {
-        if (_attributes == null)
+        if (_attributes == null) {
             _attributes = new HashMap(11);
+        }
         return _attributes.put(name, attribute);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get Attribute names.
@@ -771,12 +666,11 @@ public abstract class HttpMessage {
      * @return Enumeration of Strings
      */
     public Enumeration getAttributeNames() {
-        if (_attributes == null)
+        if (_attributes == null) {
             return Collections.enumeration(Collections.EMPTY_LIST);
+        }
         return Collections.enumeration(_attributes.keySet());
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Remove a request attribute.
@@ -784,15 +678,12 @@ public abstract class HttpMessage {
      * @param name Attribute name
      */
     public void removeAttribute(String name) {
-        if (_attributes != null)
+        if (_attributes != null) {
             _attributes.remove(name);
+        }
     }
-
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
+    
     public interface HeaderWriter {
-        void writeHeader(HttpMessage httpMessage)
-                throws IOException;
+        void writeHeader(HttpMessage httpMessage) throws IOException;
     }
 }
