@@ -17,8 +17,6 @@ package net.lightbody.bmp.proxy.jetty.http;
 
 import java.security.Principal;
 
-/* ------------------------------------------------------------ */
-
 /**
  * User Realm.
  * <p>
@@ -32,18 +30,13 @@ import java.security.Principal;
  * @see SSORealm
  */
 public interface UserRealm {
-    /* ------------------------------------------------------------ */
-    public String getName();
-
-    /* ------------------------------------------------------------ */
+    String getName();
 
     /**
      * Get the principal for a username.
      * This method is not guaranteed to return a Principal for non-authenticated users.
      */
-    public Principal getPrincipal(String username);
-
-    /* ------------------------------------------------------------ */
+    Principal getPrincipal(String username);
 
     /**
      * Authenticate a users credentials.
@@ -61,9 +54,7 @@ public interface UserRealm {
      *                    FORM authentication).
      * @return The authenticated UserPrincipal.
      */
-    public Principal authenticate(String username, Object credentials, HttpRequest request);
-
-    /* ------------------------------------------------------------ */
+    Principal authenticate(String username, Object credentials, HttpRequest request);
 
     /**
      * Re Authenticate a Principal.
@@ -77,9 +68,7 @@ public interface UserRealm {
      *
      * @return True if this user is still authenticated.
      */
-    public boolean reauthenticate(Principal user);
-
-    /* ------------------------------------------------------------ */
+    boolean reauthenticate(Principal user);
 
     /**
      * Check if the user is in a role.
@@ -87,9 +76,7 @@ public interface UserRealm {
      * @param role A role name.
      * @return True if the user can act in that role.
      */
-    public boolean isUserInRole(Principal user, String role);
-
-    /* ------------------------------------------------------------ */
+    boolean isUserInRole(Principal user, String role);
 
     /**
      * Dissassociate the calling context with a Principal.
@@ -101,9 +88,7 @@ public interface UserRealm {
      *
      * @param user A UserPrincipal allocated from this realm.
      */
-    public void disassociate(Principal user);
-
-    /* ------------------------------------------------------------ */
+    void disassociate(Principal user);
 
     /**
      * Push role onto a Principal.
@@ -114,10 +99,7 @@ public interface UserRealm {
      * @return A new UserPrincipal object that wraps the passed user, but
      * with the added role.
      */
-    public Principal pushRole(Principal user, String role);
-
-
-    /* ------------------------------------------------------------ */
+    Principal pushRole(Principal user, String role);
 
     /**
      * Pop role from a Principal.
@@ -126,9 +108,7 @@ public interface UserRealm {
      * @return The principal without the role.  Most often this will be the
      * original UserPrincipal passed.
      */
-    public Principal popRole(Principal user);
-
-    /* ------------------------------------------------------------ */
+    Principal popRole(Principal user);
 
     /**
      * logout a user Principal.
@@ -136,6 +116,6 @@ public interface UserRealm {
      *
      * @param user A Principal previously returned from this realm
      */
-    public void logout(Principal user);
+    void logout(Principal user);
 
 }

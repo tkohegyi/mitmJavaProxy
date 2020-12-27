@@ -19,8 +19,6 @@ import net.lightbody.bmp.proxy.jetty.util.Credential;
 
 import java.security.Principal;
 
-/* ------------------------------------------------------------ */
-
 /**
  * Single Sign On Realm.
  * This interface is a mix-in interface for the UserRealm interface. If an
@@ -45,8 +43,7 @@ public interface SSORealm {
      * @param response The response to SSO.
      * @return A credential if available for SSO authenticated requests.
      */
-    public Credential getSingleSignOn(HttpRequest request,
-                                      HttpResponse response);
+    Credential getSingleSignOn(HttpRequest request, HttpResponse response);
 
     /**
      * Set SSO principal and credential.
@@ -60,15 +57,12 @@ public interface SSORealm {
      * @param credential The credentials used to authenticate.
      */
 
-    public void setSingleSignOn(HttpRequest request,
-                                HttpResponse response,
-                                Principal principal,
-                                Credential credential);
+    void setSingleSignOn(HttpRequest request, HttpResponse response, Principal principal, Credential credential);
 
     /**
      * Clear SSO for user.
      *
      * @param username The user to clear.
      */
-    public void clearSingleSignOn(String username);
+    void clearSingleSignOn(String username);
 }

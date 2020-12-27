@@ -17,12 +17,12 @@
 package net.lightbody.bmp.proxy.jetty.http;
 
 import net.lightbody.bmp.proxy.jetty.jetty.servlet.ServletSSL;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.Password;
 import net.lightbody.bmp.proxy.jetty.util.Resource;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -41,13 +41,10 @@ import java.security.KeyStore;
 import java.security.Security;
 import java.security.cert.X509Certificate;
 
-/* ------------------------------------------------------------ */
-
 /**
  * JSSE Socket Listener.
  * <p>
- * This is heavily based on the work from Court Demas, which in turn is based on the work from Forge
- * Research.
+ * This is heavily based on the work from Court Demas, which in turn is based on the work from Forge Research.
  *
  * @author Greg Wilkins (gregw@mortbay.com)
  * @author Court Demas (court@kiwiconsulting.com)
@@ -59,8 +56,7 @@ public class SslListener extends SocketListener {
     /**
      * Default value for the keystore location path.
      */
-    public static final String DEFAULT_KEYSTORE = System.getProperty("user.home") + File.separator
-            + ".keystore";
+    public static final String DEFAULT_KEYSTORE = System.getProperty("user.home") + File.separator + ".keystore";
     /**
      * String name of keystore password property.
      */
@@ -73,11 +69,11 @@ public class SslListener extends SocketListener {
      * The name of the SSLSession attribute that will contain any cached information.
      */
     static final String CACHED_INFO_ATTR = CachedInfo.class.getName();
-    private static Log log = LogFactory.getLog(SslListener.class);
+    private static final Logger log = LoggerFactory.getLogger(SslListener.class);
     /**
      * Default value for the cipher Suites.
      */
-    private String cipherSuites[] = null;
+    private String[] cipherSuites = null;
     private String _keystore = DEFAULT_KEYSTORE;
     private transient Password _password;
     private transient Password _keypassword;
@@ -88,10 +84,6 @@ public class SslListener extends SocketListener {
     private String _keystoreType = "JKS"; // type of the key store
     private String _provider = null;
 
-
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      */
@@ -99,8 +91,6 @@ public class SslListener extends SocketListener {
         super();
         setDefaultScheme(HttpMessage.__SSL_SCHEME);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -135,8 +125,7 @@ public class SslListener extends SocketListener {
             int length = javaxCerts.length;
             X509Certificate[] javaCerts = new X509Certificate[length];
 
-            java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory
-                    .getInstance("X.509");
+            java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory.getInstance("X.509");
             for (int i = 0; i < length; i++) {
                 byte bytes[] = javaxCerts[i].getEncoded();
                 ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
@@ -152,9 +141,6 @@ public class SslListener extends SocketListener {
         }
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     public String[] getCipherSuites() {
         return cipherSuites;
     }
@@ -166,67 +152,52 @@ public class SslListener extends SocketListener {
         this.cipherSuites = cipherSuites;
     }
 
-    /* ------------------------------------------------------------ */
     public void setPassword(String password) {
         _password = Password.getPassword(PASSWORD_PROPERTY, password, null);
     }
 
-    /* ------------------------------------------------------------ */
     public void setKeyPassword(String password) {
         _keypassword = Password.getPassword(KEYPASSWORD_PROPERTY, password, null);
     }
 
-    /* ------------------------------------------------------------ */
     public String getAlgorithm() {
         return (this._algorithm);
     }
 
-    /* ------------------------------------------------------------ */
     public void setAlgorithm(String algorithm) {
         this._algorithm = algorithm;
     }
 
-    /* ------------------------------------------------------------ */
     public String getProtocol() {
         return _protocol;
     }
 
-    /* ------------------------------------------------------------ */
     public void setProtocol(String protocol) {
         _protocol = protocol;
     }
 
-    /* ------------------------------------------------------------ */
     public String getKeystore() {
         return _keystore;
     }
 
-    /* ------------------------------------------------------------ */
     public void setKeystore(String keystore) {
         _keystore = keystore;
     }
 
-    /* ------------------------------------------------------------ */
     public String getKeystoreType() {
         return (_keystoreType);
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     public void setKeystoreType(String keystoreType) {
         _keystoreType = keystoreType;
     }
 
-    /* ------------------------------------------------------------ */
     public boolean getNeedClientAuth() {
         return _needClientAuth;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Set the value of the needClientAuth property
+     * Set the value of the needClientAuth property.
      *
      * @param needClientAuth true iff we require client certificate authentication.
      */
@@ -234,23 +205,18 @@ public class SslListener extends SocketListener {
         _needClientAuth = needClientAuth;
     }
 
-    /* ------------------------------------------------------------ */
     public boolean getWantClientAuth() {
         return _wantClientAuth;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Set the value of the needClientAuth property
+     * Set the value of the needClientAuth property.
      *
      * @param wantClientAuth true iff we would like client certificate authentication.
      */
     public void setWantClientAuth(boolean wantClientAuth) {
         _wantClientAuth = wantClientAuth;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * By default, we're integral, given we speak SSL. But, if we've been told about an integral
@@ -276,11 +242,7 @@ public class SslListener extends SocketListener {
         return confidentialPort == 0 || confidentialPort == getPort();
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
-    protected SSLServerSocketFactory createFactory()
-            throws Exception {
+    protected SSLServerSocketFactory createFactory() throws Exception {
         SSLContext context;
         if (_provider == null) {
             context = SSLContext.getInstance(_protocol);
@@ -298,15 +260,12 @@ public class SslListener extends SocketListener {
         return context.getServerSocketFactory();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param p_address
      * @param p_acceptQueueSize
      * @return @exception IOException
      */
-    protected ServerSocket newServerSocket(InetAddrPort p_address, int p_acceptQueueSize)
-            throws IOException {
+    protected ServerSocket newServerSocket(InetAddrPort p_address, int p_acceptQueueSize) throws IOException {
         SSLServerSocketFactory factory = null;
         SSLServerSocket socket = null;
 
@@ -328,7 +287,7 @@ public class SslListener extends SocketListener {
             if (cipherSuites != null && cipherSuites.length > 0) {
                 socket.setEnabledCipherSuites(cipherSuites);
                 for (int i = 0; i < cipherSuites.length; i++) {
-                    log.debug("SslListener enabled ciphersuite: " + cipherSuites[i]);
+                    log.debug("SslListener enabled ciphersuite: {}", cipherSuites[i]);
                 }
             }
         } catch (IOException e) {
@@ -339,8 +298,6 @@ public class SslListener extends SocketListener {
         }
         return socket;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param p_serverSocket

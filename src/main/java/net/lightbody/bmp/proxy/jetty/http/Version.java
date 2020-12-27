@@ -15,30 +15,24 @@
 
 package net.lightbody.bmp.proxy.jetty.http;
 
-
-/* ------------------------------------------------------------ */
-
 /**
  * Jetty version.
  * <p>
- * This class sets the version data returned in the Server and
- * Servlet-Container headers.   If the
- * java.org.mortbay.http.Version.paranoid System property is set to
- * true, then this information is suppressed.
+ * This class sets the version data returned in the Server and Servlet-Container headers.
+ * If the java.org.mortbay.http.Version.paranoid System property is set to true, then this information is suppressed.
  *
  * @author Greg Wilkins (gregw)
  * @version $Revision: 1.16 $
  */
 public class Version {
-    private static boolean __paranoid =
-            Boolean.getBoolean("net.lightbody.bmp.proxy.jetty.http.Version.paranoid");
+    private static final boolean __paranoid = Boolean.getBoolean("net.lightbody.bmp.proxy.jetty.http.Version.paranoid");
 
-    private static String __Version = "Jetty/5.1";
-    private static String __VersionImpl = __Version + ".x";
-    private static String __VersionDetail = "Unknown";
-    private static String __notice = "This application is using software from the " +
+    private static final String __Version = "Jetty/5.1";
+    private static final String __notice = "This application is using software from the " +
             __Version +
             " HTTP server and servlet container.\nJetty is Copyright (c) Mort Bay Consulting Pty. Ltd. (Australia) and others.\nJetty is distributed under an open source license.\nThe license and standard release of Jetty are available from http://jetty.jetty.org\n";
+    private static String __VersionImpl = __Version + ".x";
+    private static String __VersionDetail = "Unknown";
 
     static {
         updateVersion();
@@ -69,8 +63,9 @@ public class Version {
 
     public static void updateVersion() {
         Package p = Version.class.getPackage();
-        if (p != null && p.getImplementationVersion() != null)
+        if (p != null && p.getImplementationVersion() != null) {
             __VersionImpl = "Jetty/" + p.getImplementationVersion();
+        }
 
         if (!__paranoid) {
             __VersionDetail = __VersionImpl +

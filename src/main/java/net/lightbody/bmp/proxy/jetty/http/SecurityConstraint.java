@@ -16,17 +16,15 @@
 package net.lightbody.bmp.proxy.jetty.http;
 
 import net.lightbody.bmp.proxy.jetty.jetty.servlet.FormAuthenticator;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LazyList;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.List;
-
-/* ------------------------------------------------------------ */
 
 /**
  * Describe an auth and/or data constraint.
@@ -35,24 +33,21 @@ import java.util.List;
  * @version $Revision: 1.44 $
  */
 public class SecurityConstraint implements Cloneable, Serializable {
-    /* ------------------------------------------------------------ */
-    public final static String __BASIC_AUTH = "BASIC";
-    public final static String __FORM_AUTH = "FORM";
-    public final static String __DIGEST_AUTH = "DIGEST";
-    public final static String __CERT_AUTH = "CLIENT_CERT";
-    public final static String __CERT_AUTH2 = "CLIENT-CERT";
-    /* ------------------------------------------------------------ */
-    public final static int DC_UNSET = -1, DC_NONE = 0, DC_INTEGRAL = 1, DC_CONFIDENTIAL = 2;
-    /* ------------------------------------------------------------ */
-    public final static String NONE = "NONE";
-    public final static String ANY_ROLE = "*";
-    public final static Nobody __NOBODY = new Nobody();
+    
+    public static final String __BASIC_AUTH = "BASIC";
+    public static final String __FORM_AUTH = "FORM";
+    public static final String __DIGEST_AUTH = "DIGEST";
+    public static final String __CERT_AUTH = "CLIENT_CERT";
+    public static final String __CERT_AUTH2 = "CLIENT-CERT";
+    
+    public static final int DC_UNSET = -1, DC_NONE = 0, DC_INTEGRAL = 1, DC_CONFIDENTIAL = 2;
+    
+    public static final String NONE = "NONE";
+    public static final String ANY_ROLE = "*";
+    public static final Nobody __NOBODY = new Nobody();
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    private static Log log = LogFactory.getLog(SecurityConstraint.class);
-    /* ------------------------------------------------------------ */
+    private static final Logger log = LoggerFactory.getLogger(SecurityConstraint.class);
+
     private String _name;
     private Object _methods;
     private Object _roles;
@@ -61,13 +56,12 @@ public class SecurityConstraint implements Cloneable, Serializable {
     private boolean _authenticate = false;
     private transient List _umMethods;
     private transient List _umRoles;
+
     /**
      * Constructor.
      */
     public SecurityConstraint() {
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Conveniance Constructor.
@@ -79,8 +73,6 @@ public class SecurityConstraint implements Cloneable, Serializable {
         setName(name);
         addRole(role);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Check security contraints
@@ -95,14 +87,8 @@ public class SecurityConstraint implements Cloneable, Serializable {
      * @throws HttpException
      * @throws IOException
      */
-    public static boolean check(
-            List constraints,
-            Authenticator authenticator,
-            UserRealm realm,
-            String pathInContext,
-            HttpRequest request,
-            HttpResponse response)
-            throws HttpException, IOException {
+    public static boolean check(List constraints, Authenticator authenticator, UserRealm realm, String pathInContext,
+            HttpRequest request, HttpResponse response) throws HttpException, IOException {
         // Combine data and auth constraints
         int dataConstraint = DC_NONE;
         Object roles = null;
@@ -113,15 +99,18 @@ public class SecurityConstraint implements Cloneable, Serializable {
             SecurityConstraint sc = (SecurityConstraint) constraints.get(c);
 
             // Check the method applies
-            if (!sc.forMethod(request.getMethod()))
+            if (!sc.forMethod(request.getMethod())) {
                 continue;
+            }
 
             // Combine data constraints.
             if (dataConstraint > DC_UNSET && sc.hasDataConstraint()) {
-                if (sc.getDataConstraint() > dataConstraint)
+                if (sc.getDataConstraint() > dataConstraint) {
                     dataConstraint = sc.getDataConstraint();
-            } else
+                }
+            } else {
                 dataConstraint = DC_UNSET; // ignore all other data constraints
+            }
 
             // Combine auth constraints.
             if (!unauthenticated && !forbidden) {
@@ -145,9 +134,7 @@ public class SecurityConstraint implements Cloneable, Serializable {
         }
 
         // Does this forbid everything?
-        if (forbidden &&
-                (!(authenticator instanceof FormAuthenticator) ||
-                        !((FormAuthenticator) authenticator).isLoginOrErrorPage(pathInContext))) {
+        if (forbidden && (!(authenticator instanceof FormAuthenticator) || !((FormAuthenticator) authenticator).isLoginOrErrorPage(pathInContext))) {
             HttpContext.sendContextError(response, HttpResponse.__403_Forbidden, null);
             return false;
         }
@@ -159,44 +146,48 @@ public class SecurityConstraint implements Cloneable, Serializable {
 
             switch (dataConstraint) {
             case SecurityConstraint.DC_INTEGRAL:
-                if (listener.isIntegral(connection))
+                if (listener.isIntegral(connection)) {
                     break;
+                }
 
                 if (listener.getIntegralPort() > 0) {
-                    String url =
-                            listener.getIntegralScheme()
+                    String url = listener.getIntegralScheme()
                                     + "://"
                                     + request.getHost()
                                     + ":"
                                     + listener.getIntegralPort()
                                     + request.getPath();
-                    if (request.getQuery() != null)
+                    if (request.getQuery() != null) {
                         url += "?" + request.getQuery();
+                    }
                     response.setContentLength(0);
                     response.sendRedirect(url);
-                } else
+                } else {
                     HttpContext.sendContextError(response, HttpResponse.__403_Forbidden, null);
+                }
                 return false;
 
             case SecurityConstraint.DC_CONFIDENTIAL:
-                if (listener.isConfidential(connection))
+                if (listener.isConfidential(connection)) {
                     break;
+                }
 
                 if (listener.getConfidentialPort() > 0) {
-                    String url =
-                            listener.getConfidentialScheme()
+                    String url = listener.getConfidentialScheme()
                                     + "://"
                                     + request.getHost()
                                     + ":"
                                     + listener.getConfidentialPort()
                                     + request.getPath();
-                    if (request.getQuery() != null)
+                    if (request.getQuery() != null) {
                         url += "?" + request.getQuery();
+                    }
 
                     response.setContentLength(0);
                     response.sendRedirect(url);
-                } else
+                } else {
                     HttpContext.sendContextError(response, HttpResponse.__403_Forbidden, null);
+                }
                 return false;
 
             default:
@@ -218,24 +209,30 @@ public class SecurityConstraint implements Cloneable, Serializable {
             if (request.getAuthType() != null && request.getAuthUser() != null) {
                 // TODO - is this still needed???
                 user = request.getUserPrincipal();
-                if (user == null)
+                if (user == null) {
                     user = realm.authenticate(request.getAuthUser(), null, request);
-                if (user == null && authenticator != null)
+                }
+                if (user == null && authenticator != null) {
                     user = authenticator.authenticate(realm, pathInContext, request, response);
+                }
             } else if (authenticator != null) {
                 // User authenticator.
                 user = authenticator.authenticate(realm, pathInContext, request, response);
             } else {
                 // don't know how authenticate
-                log.warn("Mis-configured Authenticator for " + request.getPath());
+                log.warn("Mis-configured Authenticator for {}", request.getPath());
                 HttpContext.sendContextError(response, HttpResponse.__500_Internal_Server_Error, "Configuration error");
             }
 
             // If we still did not get a user
-            if (user == null)
+            if (user == null) {
                 return false; // Auth challenge or redirection already sent
-            else if (user == __NOBODY)
-                return true; // The Nobody user indicates authentication in transit.
+            }
+            else {
+                if (user == __NOBODY) {
+                    return true; // The Nobody user indicates authentication in transit.
+                }
+            }
 
             if (roles != ANY_ROLE) {
                 boolean inRole = false;
@@ -247,11 +244,12 @@ public class SecurityConstraint implements Cloneable, Serializable {
                 }
 
                 if (!inRole) {
-                    log.warn("AUTH FAILURE: role for " + user.getName());
-                    if ("BASIC".equalsIgnoreCase(authenticator.getAuthMethod()))
+                    log.warn("AUTH FAILURE: role for {}", user.getName());
+                    if ("BASIC".equalsIgnoreCase(authenticator.getAuthMethod())) {
                         ((BasicAuthenticator) authenticator).sendChallenge(realm, response);
-                    else
+                    } else {
                         HttpContext.sendContextError(response, HttpResponse.__403_Forbidden, "User not in required role");
+                    }
                     return false; // role failed.
                 }
             }
@@ -262,8 +260,6 @@ public class SecurityConstraint implements Cloneable, Serializable {
         return true;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param name
      */
@@ -271,45 +267,39 @@ public class SecurityConstraint implements Cloneable, Serializable {
         _name = name;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param method
      */
     public synchronized void addMethod(String method) {
         _methods = LazyList.add(_methods, method);
     }
-
-    /* ------------------------------------------------------------ */
+    
     public List getMethods() {
-        if (_umMethods == null && _methods != null)
+        if (_umMethods == null && _methods != null) {
             _umMethods = Collections.unmodifiableList(LazyList.getList(_methods));
+        }
         return _umMethods;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param method Method name.
-     * @return True if this constraint applies to the method. If no
-     * method has been set, then the constraint applies to all methods.
+     * @return True if this constraint applies to the method. If no method has been set, then the constraint applies to all methods.
      */
     public boolean forMethod(String method) {
-        if (_methods == null)
+        if (_methods == null) {
             return true;
-        for (int i = 0; i < LazyList.size(_methods); i++)
-            if (LazyList.get(_methods, i).equals(method))
+        }
+        for (int i = 0; i < LazyList.size(_methods); i++) {
+            if (LazyList.get(_methods, i).equals(method)) {
                 return true;
+            }
+        }
         return false;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @param role The rolename.  If the rolename is '*' all other
-     *             roles are removed and anyRole is set true and subsequent
-     *             addRole calls are ignored.
-     *             Authenticate is forced true by this call.
+     * @param role The rolename. If the rolename is '*' all other roles are removed and anyRole is set true
+     *             and subsequent addRole calls are ignored. Authenticate is forced true by this call.
      */
     public synchronized void addRole(String role) {
         _authenticate = true;
@@ -317,11 +307,12 @@ public class SecurityConstraint implements Cloneable, Serializable {
             _roles = null;
             _umRoles = null;
             _anyRole = true;
-        } else if (!_anyRole)
-            _roles = LazyList.add(_roles, role);
+        } else {
+            if (!_anyRole) {
+                _roles = LazyList.add(_roles, role);
+            }
+        }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return True if any user role is permitted.
@@ -329,8 +320,6 @@ public class SecurityConstraint implements Cloneable, Serializable {
     public boolean isAnyRole() {
         return _anyRole;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return List of roles for this constraint.
@@ -341,8 +330,6 @@ public class SecurityConstraint implements Cloneable, Serializable {
         return _umRoles;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param role
      * @return True if the constraint contains the role.
@@ -351,16 +338,12 @@ public class SecurityConstraint implements Cloneable, Serializable {
         return LazyList.contains(_roles, role);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return True if the constraint requires request authentication
      */
     public boolean getAuthenticate() {
         return _authenticate;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param authenticate True if users must be authenticated
@@ -369,8 +352,6 @@ public class SecurityConstraint implements Cloneable, Serializable {
         _authenticate = authenticate;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return True if authentication required but no roles set
      */
@@ -378,16 +359,12 @@ public class SecurityConstraint implements Cloneable, Serializable {
         return _authenticate && !_anyRole && LazyList.size(_roles) == 0;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return Data constrain indicator: 0=DC+NONE, 1=DC_INTEGRAL & 2=DC_CONFIDENTIAL
      */
     public int getDataConstraint() {
         return _dataConstraint;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param c
@@ -398,8 +375,6 @@ public class SecurityConstraint implements Cloneable, Serializable {
         _dataConstraint = c;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return True if a data constraint has been set.
      */
@@ -407,16 +382,13 @@ public class SecurityConstraint implements Cloneable, Serializable {
         return _dataConstraint >= DC_NONE;
     }
 
-    /* ------------------------------------------------------------ */
-    public Object clone()
-            throws CloneNotSupportedException {
+    public Object clone() throws CloneNotSupportedException {
         SecurityConstraint sc = (SecurityConstraint) super.clone();
         sc._umMethods = null;
         sc._umRoles = null;
         return sc;
     }
 
-    /* ------------------------------------------------------------ */
     public String toString() {
         return "SC{"
                 + _name
@@ -429,8 +401,6 @@ public class SecurityConstraint implements Cloneable, Serializable {
                 ? "NONE}"
                 : (_dataConstraint == DC_INTEGRAL ? "INTEGRAL}" : "CONFIDENTIAL}"));
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Nobody user.
