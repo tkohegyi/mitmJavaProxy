@@ -1,0 +1,15 @@
+language: java
+jdk:
+ - openjdk13
+before_install:
+ - chmod +x gradlew
+install:
+ - mkdir $HOME/localrepo/
+script:
+ - ./gradlew build sonarqube
+branches:
+  only:
+  - master
+notifications:
+  email:
+  - tkohegyi2@gmail.com

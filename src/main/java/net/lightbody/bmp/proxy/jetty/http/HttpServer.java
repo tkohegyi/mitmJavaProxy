@@ -17,7 +17,6 @@ package net.lightbody.bmp.proxy.jetty.http;
 
 import net.lightbody.bmp.proxy.jetty.http.handler.NotFoundHandler;
 import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.Container;
 import net.lightbody.bmp.proxy.jetty.util.EventProvider;
 import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
@@ -28,7 +27,8 @@ import net.lightbody.bmp.proxy.jetty.util.Resource;
 import net.lightbody.bmp.proxy.jetty.util.StringMap;
 import net.lightbody.bmp.proxy.jetty.util.ThreadPool;
 import net.lightbody.bmp.proxy.jetty.util.URI;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -46,8 +46,7 @@ import java.util.WeakHashMap;
 
 /**
  * HTTP Server.
- * Services HTTP requests by maintaining a mapping between
- * a collection of HttpListeners which generate requests and
+ * Services HTTP requests by maintaining a mapping between a collection of HttpListeners which generate requests and
  * HttpContexts which contain collections of HttpHandlers.
  * <p>
  * This class is configured by API calls. The org.mortbay.jetty.Server class uses XML configuration files to
@@ -65,15 +64,16 @@ import java.util.WeakHashMap;
  * @see BmpServer
  */
 public class HttpServer extends Container implements LifeCycle, EventProvider, Serializable {
-    private static Log log = LogFactory.getLog(HttpServer.class);
 
-    private static WeakHashMap __servers = new WeakHashMap();
-    private static Collection __roServers = Collections.unmodifiableCollection(__servers.keySet());
-    private static String[] __noVirtualHost = new String[1];
+    private static final WeakHashMap __servers = new WeakHashMap();
+    private static final Collection __roServers = Collections.unmodifiableCollection(__servers.keySet());
+    private static final String[] __noVirtualHost = new String[1];
+
+    private final Logger log = LoggerFactory.getLogger(HttpServer.class);
+    private final HashMap _realmMap = new HashMap(3);
 
     private List _listeners = new ArrayList(3);
 
-    private HashMap _realmMap = new HashMap(3);
     private StringMap _virtualHostMap = new StringMap();
     private boolean _trace = false;
     private RequestLog _requestLog;
@@ -214,8 +214,7 @@ public class HttpServer extends Container implements LifeCycle, EventProvider, S
     }
 
     /**
-     * Create and add a SocketListener.
-     * Conveniance method.
+     * Create and add a SocketListener. Conveniance method.
      *
      * @param address
      * @return the HttpListener.
@@ -226,14 +225,13 @@ public class HttpServer extends Container implements LifeCycle, EventProvider, S
     }
 
     /**
-     * Create and add a SocketListener.
-     * Conveniance method.
+     * Create and add a SocketListener. Conveniance method.
      *
      * @param address
      * @return the HttpListener.
      * @throws IOException
      */
-    public HttpListener addListener(InetAddrPort address) throws IOException {
+    public HttpListener addListener(InetAddrPort address) {
         HttpListener listener = new SocketListener(address);
         listener.setHttpServer(this);
         _listeners.add(listener);
@@ -429,7 +427,6 @@ public class HttpServer extends Container implements LifeCycle, EventProvider, S
                 hc = (HttpContext) contextList.get(i);
             }
         }
-
         return hc;
     }
 
@@ -500,9 +497,7 @@ public class HttpServer extends Container implements LifeCycle, EventProvider, S
         // Add the context to the list
         contextList.add(context);
 
-        if (log.isDebugEnabled()) {
-            log.debug("Added " + context + " for host " + (virtualHost == null ? "*" : virtualHost));
-        }
+        log.debug("Added {} for host {}", context, (virtualHost == null ? "*" : virtualHost));
     }
 
     synchronized void addMappings(HttpContext context) {
@@ -721,9 +716,8 @@ public class HttpServer extends Container implements LifeCycle, EventProvider, S
     /**
      * Stop all listeners then all contexts.
      *
-     * @param graceful If true and statistics are on for a context,
-     *                 then this method will wait for requestsActive to go to zero
-     *                 before stopping that context.
+     * @param graceful If true and statistics are on for a context, then this method will wait for requestsActive
+     *                 to go to zero before stopping that context.
      */
     public synchronized void stop(boolean graceful) throws InterruptedException {
         boolean ov = _gracefulStop;
@@ -736,12 +730,10 @@ public class HttpServer extends Container implements LifeCycle, EventProvider, S
     }
 
     /**
-     * Join the listeners.
-     * Join all listeners that are instances of ThreadPool.
+     * Join the listeners. Join all listeners that are instances of ThreadPool.
      *
-     * @throws InterruptedException
      */
-    public void join() throws InterruptedException {
+    public void join() {
         for (int l = 0; l < _listeners.size(); l++) {
             HttpListener listener = (HttpListener) _listeners.get(l);
             if (listener.isStarted() && listener instanceof ThreadPool) {
@@ -751,8 +743,7 @@ public class HttpServer extends Container implements LifeCycle, EventProvider, S
     }
 
     /**
-     * Define a virtual host alias.
-     * All requests to the alias are handled the same as request for the virtualHost.
+     * Define a virtual host alias. All requests to the alias are handled the same as request for the virtualHost.
      *
      * @param virtualHost Host name or IP
      * @param alias       Alias hostname or IP
@@ -836,9 +827,7 @@ public class HttpServer extends Container implements LifeCycle, EventProvider, S
                         for (int j = 0; j < contextList.size(); j++) {
                             HttpContext context = (HttpContext) contextList.get(j);
 
-                            if (log.isDebugEnabled()) {
-                                log.debug("Try " + context + "," + j);
-                            }
+                            log.debug("Try {},{}", context, j);
 
                             context.handle(request, response);
                             if (request.isHandled()) {
@@ -1009,7 +998,7 @@ public class HttpServer extends Container implements LifeCycle, EventProvider, S
     }
 
     public void setStatsOn(boolean on) {
-        log.info("Statistics on = " + on + " for " + this);
+        log.info("Statistics on = {} for {}", on, this);
         _statsOn = on;
     }
 
@@ -1230,8 +1219,7 @@ public class HttpServer extends Container implements LifeCycle, EventProvider, S
     }
 
     /**
-     * Save the HttpServer.
-     * The server is saved by serialization to the given filename or URL.
+     * Save the HttpServer. The server is saved by serialization to the given filename or URL.
      *
      * @param saveat A file or URL to save the configuration at.
      * @throws MalformedURLException
@@ -1243,7 +1231,7 @@ public class HttpServer extends Container implements LifeCycle, EventProvider, S
         out.writeObject(this);
         out.flush();
         out.close();
-        log.info("Saved " + this + " to " + resource);
+        log.info("Saved {} to {}", this, resource);
     }
 
     /**

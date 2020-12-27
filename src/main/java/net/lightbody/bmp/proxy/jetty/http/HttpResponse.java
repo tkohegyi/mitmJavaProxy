@@ -30,8 +30,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 
 /**
- * HTTP Response.
- * This class manages the headers, trailers and content streams of a HTTP response.
+ * HTTP Response. This class manages the headers, trailers and content streams of a HTTP response.
  * It can be used for receiving or generating requests.
  * <p>
  * This class is not synchronized. It should be explicitly synchronized if it is used by multiple threads.

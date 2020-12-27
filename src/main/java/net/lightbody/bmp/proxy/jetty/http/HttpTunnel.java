@@ -15,10 +15,7 @@
 
 package net.lightbody.bmp.proxy.jetty.http;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.IO;
-import net.lightbody.bmp.proxy.jetty.util.LogSupport;
-import org.apache.commons.logging.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,13 +23,10 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.Socket;
 
-/* ------------------------------------------------------------ */
-
 /**
  * HTTP Tunnel.
- * A HTTP Tunnel can be used to take over a HTTP connection in order to
- * tunnel another protocol over it.  The prime example is the CONNECT method
- * handled by the ProxyHandler to setup a SSL tunnel between the client and
+ * A HTTP Tunnel can be used to take over a HTTP connection in order to tunnel another protocol over it.
+ * The prime example is the CONNECT method handled by the ProxyHandler to setup a SSL tunnel between the client and
  * the real server.
  *
  * @author Greg Wilkins (gregw)
@@ -40,7 +34,6 @@ import java.net.Socket;
  * @see HttpConnection
  */
 public class HttpTunnel {
-    private static Log log = LogFactory.getLog(HttpTunnel.class);
 
     private Thread _thread;
     private int _timeoutMs;
@@ -50,15 +43,11 @@ public class HttpTunnel {
     private InputStream _in;
     private OutputStream _out;
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      */
     protected HttpTunnel() {
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -72,25 +61,22 @@ public class HttpTunnel {
         _socket = socket;
         _sIn = in;
         _sOut = out;
-        if (_sIn == null)
+        if (_sIn == null) {
             _sIn = _socket.getInputStream();
-        if (_sOut == null)
+        }
+        if (_sOut == null) {
             _sOut = socket.getOutputStream();
+        }
         _timeoutMs = 30000;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Copy Stream in to Stream for byteCount bytes or until EOF or exception.
      *
      * @return Copied bytes count or -1 if no bytes were read *and* EOF was reached
      */
-    public static int copyBytes(InputStream in,
-                                OutputStream out,
-                                long byteCount)
-            throws IOException {
-        byte buffer[] = new byte[IO.bufferSize];
+    public static int copyBytes(InputStream in, OutputStream out, long byteCount) throws IOException {
+        byte[] buffer = new byte[IO.bufferSize];
         int len = IO.bufferSize;
         int totalCount = 0;
 
@@ -98,22 +84,24 @@ public class HttpTunnel {
             totalCount = (int) byteCount;
             while (byteCount > 0) {
                 try {
-                    if (byteCount < IO.bufferSize)
+                    if (byteCount < IO.bufferSize) {
                         len = in.read(buffer, 0, (int) byteCount);
-                    else
+                    } else {
                         len = in.read(buffer, 0, IO.bufferSize);
-                    if (len == -1 && totalCount == byteCount)
+                    }
+                    if (len == -1 && totalCount == byteCount) {
                         totalCount = (int) byteCount - 1;
+                    }
                 } catch (InterruptedIOException e) {
-                    if (totalCount == byteCount)
+                    if (totalCount == byteCount) {
                         throw e;
-                    LogSupport.ignore(log, e);
+                    }
                     len = 0;
                 }
 
-                if (len <= 0)
+                if (len <= 0) {
                     break;
-
+                }
                 byteCount -= len;
                 out.write(buffer, 0, len);
             }
@@ -122,12 +110,13 @@ public class HttpTunnel {
             while (len > 0) {
                 try {
                     len = in.read(buffer, 0, IO.bufferSize);
-                    if (len == -1 && totalCount == 0)
+                    if (len == -1 && totalCount == 0) {
                         totalCount = -1;
+                    }
                 } catch (InterruptedIOException e) {
-                    if (totalCount == 0)
+                    if (totalCount == 0) {
                         throw e;
-                    LogSupport.ignore(log, e);
+                    }
                     len = 0;
                 }
                 if (len > 0) {
@@ -141,10 +130,8 @@ public class HttpTunnel {
 
     /**
      * handle method.
-     * This method is called by the HttpConnection.handleNext() method if
-     * this HttpTunnel has been set on that connection.
-     * The default implementation of this method copies between the HTTP
-     * socket and the socket passed in the constructor.
+     * This method is called by the HttpConnection.handleNext() method if this HttpTunnel has been set on that connection.
+     * The default implementation of this method copies between the HTTP socket and the socket passed in the constructor.
      *
      * @param in
      * @param out
@@ -159,7 +146,7 @@ public class HttpTunnel {
 
             copydata(_sIn, _out);
         } catch (Exception e) {
-            LogSupport.ignore(log, e);
+            //
         } finally {
             try {
                 _in.close();
@@ -171,16 +158,12 @@ public class HttpTunnel {
                     _sOut.close();
                 }
             } catch (Exception e) {
-                LogSupport.ignore(log, e);
+                //
             }
             copy.interrupt();
         }
     }
 
-
-    /* ------------------------------------------------------------------- */
-
-    /* ------------------------------------------------------------ */
     private void copydata(InputStream in, OutputStream out) throws java.io.IOException {
         long timestamp = 0;
         long byteCount = 0;
@@ -192,18 +175,16 @@ public class HttpTunnel {
                     return;
                 }
             } catch (InterruptedIOException e) {
-                LogSupport.ignore(log, e);
-                if (timestamp == 0)
+                if (timestamp == 0) {
                     timestamp = System.currentTimeMillis();
-                else if (_timeoutMs > 0 && (System.currentTimeMillis() - timestamp) > _timeoutMs)
-                    throw e;
+                } else {
+                    if (_timeoutMs > 0 && (System.currentTimeMillis() - timestamp) > _timeoutMs) {
+                        throw e;
+                    }
+                }
             }
         }
     }
-
-
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
 
     /**
      * @return Returns the socket.
@@ -212,9 +193,6 @@ public class HttpTunnel {
         return _socket;
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * @return Returns the timeoutMs.
      */
@@ -222,16 +200,12 @@ public class HttpTunnel {
         return _timeoutMs;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param timeoutMs The timeoutMs to set.
      */
     public void setTimeoutMs(int timeoutMs) {
         _timeoutMs = timeoutMs;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Copy thread.
@@ -242,7 +216,7 @@ public class HttpTunnel {
             try {
                 copydata(_in, _sOut);
             } catch (Exception e) {
-                LogSupport.ignore(log, e);
+                //
             } finally {
                 try {
                     _out.close();
@@ -254,7 +228,7 @@ public class HttpTunnel {
                         _sIn.close();
                     }
                 } catch (Exception e) {
-                    LogSupport.ignore(log, e);
+                    //
                 }
                 _thread.interrupt();
             }
