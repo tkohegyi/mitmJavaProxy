@@ -15,8 +15,8 @@
 
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -42,7 +42,7 @@ public class IO extends ThreadPool {
             CRLF_BYTES = {(byte) '\015', (byte) '\012'};
     /* ------------------------------------------------------------------- */
     public static int bufferSize = Integer.getInteger("net.lightbody.bmp.proxy.jetty.util.IO.bufferSize", 8192).intValue();
-    private static Log log = LogFactory.getLog(IO.class);
+    private static final Logger log = LoggerFactory.getLogger(IO.class);
     private static NullOS __nullStream = new NullOS();
     private static NullWrite __nullWriter = new NullWrite();
 
@@ -226,7 +226,7 @@ public class IO extends ThreadPool {
             if (is != null)
                 is.close();
         } catch (IOException e) {
-            LogSupport.ignore(log, e);
+            //
         }
     }
 
@@ -240,7 +240,7 @@ public class IO extends ThreadPool {
             if (os != null)
                 os.close();
         } catch (IOException e) {
-            LogSupport.ignore(log, e);
+
         }
     }
 
@@ -262,14 +262,13 @@ public class IO extends ThreadPool {
             else
                 copy(job.read, job.write, -1);
         } catch (IOException e) {
-            LogSupport.ignore(log, e);
             try {
                 if (job.out != null)
                     job.out.close();
                 if (job.write != null)
                     job.write.close();
             } catch (IOException e2) {
-                LogSupport.ignore(log, e2);
+                //
             }
         }
     }
@@ -282,7 +281,7 @@ public class IO extends ThreadPool {
             try {
                 __instance.start();
             } catch (Exception e) {
-                log.fatal(e);
+                log.error(e.getMessage(), e);
                 System.exit(1);
             }
         }

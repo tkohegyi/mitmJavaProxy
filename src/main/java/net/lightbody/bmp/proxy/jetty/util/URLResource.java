@@ -14,9 +14,6 @@
 // ========================================================================
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,8 +33,6 @@ import java.security.Permission;
  * @version $Id: URLResource.java,v 1.9 2005/08/13 00:01:28 gregwilkins Exp $
  */
 public class URLResource extends Resource {
-    private static Log log = LogFactory.getLog(URLResource.class);
-
     protected URL _url;
     protected String _urlString;
     protected transient URLConnection _connection;
@@ -56,7 +51,7 @@ public class URLResource extends Resource {
             try {
                 _connection = _url.openConnection();
             } catch (IOException e) {
-                LogSupport.ignore(log, e);
+                //
             }
         }
         return _connection != null;
@@ -72,7 +67,7 @@ public class URLResource extends Resource {
             try {
                 _in.close();
             } catch (IOException e) {
-                LogSupport.ignore(log, e);
+                //
             }
             _in = null;
         }
@@ -93,7 +88,7 @@ public class URLResource extends Resource {
                     _in = _connection.getInputStream();
             }
         } catch (IOException e) {
-            LogSupport.ignore(log, e);
+            //
         }
         return _in != null;
     }
@@ -161,7 +156,7 @@ public class URLResource extends Resource {
         try {
             return new File(_url.getFile());
         } catch (Exception e) {
-            LogSupport.ignore(log, e);
+            //
         }
 
         // Don't know the file
@@ -245,8 +240,7 @@ public class URLResource extends Resource {
      * Returns the resource contained inside the current resource with the
      * given name
      */
-    public Resource addPath(String path)
-            throws IOException, MalformedURLException {
+    public Resource addPath(String path) throws IOException {
         if (path == null)
             return null;
 

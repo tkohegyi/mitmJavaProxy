@@ -14,9 +14,6 @@
 // ========================================================================
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.JarURLConnection;
@@ -28,7 +25,6 @@ import java.util.jar.JarFile;
 
 /* ------------------------------------------------------------ */
 class JarFileResource extends JarResource {
-    private static Log log = LogFactory.getLog(JarFileResource.class);
     transient JarFile _jarFile;
     transient File _file;
     transient String[] _list;
@@ -102,7 +98,6 @@ class JarFileResource extends JarResource {
             try {
                 return newResource(file_url).exists();
             } catch (Exception e) {
-                LogSupport.ignore(log, e);
                 return false;
             }
         }
@@ -127,7 +122,6 @@ class JarFileResource extends JarResource {
                             ((JarURLConnection)
                                     ((new URL(_jarUrl)).openConnection())).getJarFile();
                 } catch (Exception e) {
-                    LogSupport.ignore(log, e);
                 }
             }
 
@@ -197,7 +191,7 @@ class JarFileResource extends JarResource {
                     jarFile = ((JarURLConnection)
                             ((new URL(_jarUrl)).openConnection())).getJarFile();
                 } catch (Exception e) {
-                    LogSupport.ignore(log, e);
+                    //
                 }
             }
 

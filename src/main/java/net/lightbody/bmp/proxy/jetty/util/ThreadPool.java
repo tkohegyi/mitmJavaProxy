@@ -14,8 +14,8 @@
 // ========================================================================
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 /* ------------------------------------------------------------ */
@@ -39,11 +39,11 @@ import java.io.Serializable;
 public class ThreadPool implements LifeCycle, Serializable {
     public static final String __DAEMON = "net.lightbody.bmp.proxy.jetty.util.ThreadPool.daemon";
     public static final String __PRIORITY = "net.lightbody.bmp.proxy.jetty.util.ThreadPool.priority";
-    static Log log = LogFactory.getLog(ThreadPool.class);
+    private static final Logger log = LoggerFactory.getLogger(ThreadPool.class);
     static private int __pool = 0;
     /* ------------------------------------------------------------------- */
     private Pool _pool;
-    private Object _join = "";
+    private final Object _join = "";
     private transient boolean _started;
 
     /* ------------------------------------------------------------------- */
@@ -322,7 +322,7 @@ public class ThreadPool implements LifeCycle, Serializable {
                     if (isStarted() && _pool != null)
                         _join.wait(30000);
                 } catch (Exception e) {
-                    LogSupport.ignore(log, e);
+                    //
                 }
             }
         }
@@ -495,7 +495,7 @@ public class ThreadPool implements LifeCycle, Serializable {
                     else if (run == null && _pool != null)
                         _pool.shrink();
                 } catch (InterruptedException e) {
-                    LogSupport.ignore(log, e);
+                    //
                 } finally {
                     synchronized (this) {
                         boolean got = run != null;
@@ -505,7 +505,7 @@ public class ThreadPool implements LifeCycle, Serializable {
                             if (got && _pool != null)
                                 _pool.put(this);
                         } catch (InterruptedException e) {
-                            LogSupport.ignore(log, e);
+                            //
                         }
                     }
                 }

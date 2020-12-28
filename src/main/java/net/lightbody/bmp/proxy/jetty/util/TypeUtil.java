@@ -15,8 +15,8 @@
 
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -41,15 +41,14 @@ public class TypeUtil {
     private static final HashMap class2Name = new HashMap();
     /* ------------------------------------------------------------ */
     private static final HashMap class2Value = new HashMap();
-    private static Log log = LogFactory.getLog(TypeUtil.class);
+    private static final Logger log = LoggerFactory.getLogger(TypeUtil.class);
     /* ------------------------------------------------------------ */
-    private static Class[] stringArg = {java.lang.String.class};
+    private static final Class[] stringArg = {java.lang.String.class};
     /* ------------------------------------------------------------ */
-    private static int intCacheSize =
-            Integer.getInteger("net.lightbody.bmp.proxy.jetty.util.TypeUtil.IntegerCacheSize", 600).intValue();
-    private static Integer[] integerCache = new Integer[intCacheSize];
-    private static String[] integerStrCache = new String[intCacheSize];
-    private static Integer minusOne = new Integer(-1);
+    private static final int intCacheSize = Integer.getInteger("net.lightbody.bmp.proxy.jetty.util.TypeUtil.IntegerCacheSize", 600);
+    private static final Integer[] integerCache = new Integer[intCacheSize];
+    private static final String[] integerStrCache = new String[intCacheSize];
+    private static final Integer minusOne = -1;
 
     static {
         name2Class.put("boolean", java.lang.Boolean.TYPE);
@@ -124,8 +123,7 @@ public class TypeUtil {
         try {
             Class[] s = {java.lang.String.class};
 
-            class2Value.put(java.lang.Boolean.TYPE,
-                    java.lang.Boolean.class.getMethod("valueOf", s));
+            class2Value.put(java.lang.Boolean.TYPE, java.lang.Boolean.class.getMethod("valueOf", s));
             class2Value.put(java.lang.Byte.TYPE,
                     java.lang.Byte.class.getMethod("valueOf", s));
             class2Value.put(java.lang.Double.TYPE,
@@ -207,15 +205,12 @@ public class TypeUtil {
             Constructor c = type.getConstructor(stringArg);
             return c.newInstance(new Object[]{value});
         } catch (NoSuchMethodException e) {
-            LogSupport.ignore(log, e);
         } catch (IllegalAccessException e) {
-            LogSupport.ignore(log, e);
         } catch (InstantiationException e) {
-            LogSupport.ignore(log, e);
         } catch (InvocationTargetException e) {
-            if (e.getTargetException() instanceof Error)
+            if (e.getTargetException() instanceof Error) {
                 throw (Error) (e.getTargetException());
-            LogSupport.ignore(log, e);
+            }
         }
         return null;
     }

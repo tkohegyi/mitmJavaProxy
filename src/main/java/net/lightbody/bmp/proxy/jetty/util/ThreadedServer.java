@@ -15,8 +15,8 @@
 
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +43,7 @@ import java.net.UnknownHostException;
  * @version $Id: ThreadedServer.java,v 1.41 2005/12/10 00:38:20 gregwilkins Exp $
  */
 abstract public class ThreadedServer extends ThreadPool {
-    private static Log log = LogFactory.getLog(ThreadedServer.class);
+    private static final Logger log = LoggerFactory.getLogger(ThreadedServer.class);
 
     /* ------------------------------------------------------------------- */
     private InetAddrPort _address = null;
@@ -403,7 +403,6 @@ abstract public class ThreadedServer extends ThreadPool {
      * Accept socket connection. May be overriden by derived class to create specialist
      * serversockets (eg SSL).
      *
-     * @param serverSocket
      * @param timeout      The time to wait for a connection. Normally passed the ThreadPool maxIdleTime.
      * @return Accepted Socket
      */
@@ -426,16 +425,15 @@ abstract public class ThreadedServer extends ThreadPool {
                     else
                         s.setSoLinger(false, 0);
                 } catch (Exception e) {
-                    LogSupport.ignore(log, e);
+                    //
                 }
             }
             return s;
         } catch (java.net.SocketException e) {
             // TODO - this is caught and ignored due strange
             // exception from linux java1.2.v1a
-            LogSupport.ignore(log, e);
         } catch (InterruptedIOException e) {
-            LogSupport.ignore(log, e);
+            //
         } catch (IOException e) {
             log.warn(LogSupport.EXCEPTION, e);
         }
@@ -552,7 +550,7 @@ abstract public class ThreadedServer extends ThreadPool {
             try {
                 ((Socket) job).close();
             } catch (Exception e) {
-                LogSupport.ignore(log, e);
+                //
             }
         }
         super.stopJob(thread, job);

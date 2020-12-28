@@ -15,8 +15,8 @@
 
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,7 +33,7 @@ import java.io.OutputStream;
  * @version $Revision: 1.18 $
  */
 public class ByteBufferOutputStream extends OutputStream {
-    private static Log log = LogFactory.getLog(ByteBufferOutputStream.class);
+    private static final Logger log = LoggerFactory.getLogger(ByteBufferOutputStream.class);
 
     protected byte[] _buf;
 
@@ -257,8 +257,6 @@ public class ByteBufferOutputStream extends OutputStream {
      * The capacity is not checked.
      *
      * @param b
-     * @param offset
-     * @param length
      * @throws IOException
      */
     public void postwrite(byte b)

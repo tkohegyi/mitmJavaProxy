@@ -14,8 +14,8 @@
 // ========================================================================
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
@@ -42,7 +42,7 @@ public class URI
         implements Cloneable {
     public static final String __CHARSET = System.getProperty("net.lightbody.bmp.proxy.jetty.util.URI.charset", StringUtil.__UTF_8);
     public static final boolean __CHARSET_IS_DEFAULT = __CHARSET.equals(StringUtil.__UTF_8);
-    private static Log log = LogFactory.getLog(URI.class);
+    private static final Logger log = LoggerFactory.getLogger(URI.class);
     /* ------------------------------------------------------------ */
     private String _uri;
     private String _scheme;
@@ -616,9 +616,7 @@ public class URI
             } else
                 _query = null;
         } catch (Exception e) {
-            LogSupport.ignore(log, e);
-            throw new IllegalArgumentException("Malformed URI '" + uri +
-                    "' : " + e.toString());
+            throw new IllegalArgumentException("Malformed URI '" + uri + "' : " + e.toString());
         }
     }
 

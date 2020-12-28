@@ -14,10 +14,10 @@
 // ========================================================================
 package net.lightbody.bmp.proxy.jetty.xml;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LazyList;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -52,7 +52,7 @@ import java.util.StringTokenizer;
  * @version $Id: XmlParser.java,v 1.21 2005/10/25 07:53:22 gregwilkins Exp $
  */
 public class XmlParser {
-    private static Log log = LogFactory.getLog(XmlParser.class);
+    private static final Logger log = LoggerFactory.getLogger(XmlParser.class);
     private Map _redirectMap = new HashMap();
     private SAXParser _parser;
     private String _xpath;
@@ -102,8 +102,6 @@ public class XmlParser {
             } catch (Exception e) {
                 if (validating)
                     log.warn("Schema validation may not be supported: ", e);
-                else
-                    LogSupport.ignore(log, e);
             }
             _parser.getXMLReader().setFeature("http://xml.org/sax/features/validation", validating);
             _parser.getXMLReader().setFeature("http://xml.org/sax/features/namespaces", validating);
@@ -695,7 +693,7 @@ public class XmlParser {
                     is.setSystemId(sid);
                     return is;
                 } catch (IOException e) {
-                    LogSupport.ignore(log, e);
+                    //
                 }
             }
             return null;

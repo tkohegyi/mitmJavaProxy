@@ -15,8 +15,8 @@
 
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
@@ -41,7 +41,7 @@ import java.util.Map;
  * @see java.net.URLEncoder
  */
 public class UrlEncoded extends MultiMap {
-    private static Log log = LogFactory.getLog(UrlEncoded.class);
+    private static final Logger log = LoggerFactory.getLogger(UrlEncoded.class);
 
     /* ----------------------------------------------------------------- */
     public UrlEncoded(UrlEncoded url) {

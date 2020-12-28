@@ -14,8 +14,8 @@
 // ========================================================================
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +40,7 @@ import java.util.Date;
  * @version $Id: Resource.java,v 1.31 2005/10/21 11:36:56 gregwilkins Exp $
  */
 public abstract class Resource implements Serializable {
-    private static Log log = LogFactory.getLog(Resource.class);
+    private static final Logger log = LoggerFactory.getLogger(Resource.class);
 
     Object _associate;
 

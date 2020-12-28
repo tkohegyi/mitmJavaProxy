@@ -15,13 +15,13 @@
 
 package net.lightbody.bmp.proxy.jetty.xml;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
 import net.lightbody.bmp.proxy.jetty.util.Loader;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.Resource;
 import net.lightbody.bmp.proxy.jetty.util.TypeUtil;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -51,18 +51,18 @@ import java.util.Map;
  * @version $Id: XmlConfiguration.java,v 1.28 2005/08/13 08:12:14 gregwilkins Exp $
  */
 public class XmlConfiguration {
-    private static Log log = LogFactory.getLog(XmlConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(XmlConfiguration.class);
 
-    private static Class[] __primitives = {Boolean.TYPE, Character.TYPE, Byte.TYPE, Short.TYPE,
+    private static final Class[] __primitives = {Boolean.TYPE, Character.TYPE, Byte.TYPE, Short.TYPE,
             Integer.TYPE, Long.TYPE, Float.TYPE, Double.TYPE, Void.TYPE};
 
-    private static Class[] __primitiveHolders = {Boolean.class, Character.class, Byte.class,
+    private static final Class[] __primitiveHolders = {Boolean.class, Character.class, Byte.class,
             Short.class, Integer.class, Long.class, Float.class, Double.class, Void.class};
 
     /* ------------------------------------------------------------ */
     private static XmlParser __parser;
-    private XmlParser.Node _config;
-    private Map _idMap = new HashMap();
+    private final XmlParser.Node _config;
+    private final Map _idMap = new HashMap();
 
     /**
      * Constructor. Reads the XML configuration file.
@@ -249,10 +249,8 @@ public class XmlConfiguration {
             log.warn("Exception at " + node.toString(), e.getTargetException());
             throw e;
         } catch (Error e) {
-            log.debug(node);
             throw e;
         } catch (Exception e) {
-            log.debug(node);
             if (e instanceof NoSuchMethodException) throw (NoSuchMethodException) e;
             if (e instanceof InvocationTargetException) throw (InvocationTargetException) e;
             if (e instanceof IllegalAccessException) throw (IllegalAccessException) e;
@@ -293,11 +291,11 @@ public class XmlConfiguration {
             set.invoke(obj, arg);
             return;
         } catch (IllegalArgumentException e) {
-            LogSupport.ignore(log, e);
+            //
         } catch (IllegalAccessException e) {
-            LogSupport.ignore(log, e);
+            //
         } catch (NoSuchMethodException e) {
-            LogSupport.ignore(log, e);
+            //
         }
 
         // Try for native match
@@ -308,13 +306,13 @@ public class XmlConfiguration {
             set.invoke(obj, arg);
             return;
         } catch (NoSuchFieldException e) {
-            LogSupport.ignore(log, e);
+            //
         } catch (IllegalArgumentException e) {
-            LogSupport.ignore(log, e);
+            //
         } catch (IllegalAccessException e) {
-            LogSupport.ignore(log, e);
+            //
         } catch (NoSuchMethodException e) {
-            LogSupport.ignore(log, e);
+            //
         }
 
         // Try a field
@@ -325,7 +323,7 @@ public class XmlConfiguration {
                 return;
             }
         } catch (NoSuchFieldException e) {
-            LogSupport.ignore(log, e);
+            //
         }
 
         // Search for a match by trying all the set methods
@@ -339,9 +337,9 @@ public class XmlConfiguration {
                     sets[s].invoke(obj, arg);
                     return;
                 } catch (IllegalArgumentException e) {
-                    LogSupport.ignore(log, e);
+                    //
                 } catch (IllegalAccessException e) {
-                    LogSupport.ignore(log, e);
+                    //
                 }
             }
         }
@@ -363,11 +361,11 @@ public class XmlConfiguration {
                 set.invoke(obj, arg);
                 return;
             } catch (NoSuchMethodException e) {
-                LogSupport.ignore(log, e);
+                //
             } catch (IllegalAccessException e) {
-                LogSupport.ignore(log, e);
+                //
             } catch (InstantiationException e) {
-                LogSupport.ignore(log, e);
+                //
             }
         }
 
@@ -484,9 +482,9 @@ public class XmlConfiguration {
                 n = methods[c].invoke(obj, arg);
                 called = true;
             } catch (IllegalAccessException e) {
-                LogSupport.ignore(log, e);
+                //
             } catch (IllegalArgumentException e) {
-                LogSupport.ignore(log, e);
+                //
             }
             if (called) {
                 if (id != null) _idMap.put(id, n);
@@ -541,11 +539,11 @@ public class XmlConfiguration {
                 n = constructors[c].newInstance(arg);
                 called = true;
             } catch (IllegalAccessException e) {
-                LogSupport.ignore(log, e);
+                //
             } catch (InstantiationException e) {
-                LogSupport.ignore(log, e);
+                //
             } catch (IllegalArgumentException e) {
-                LogSupport.ignore(log, e);
+                //
             }
             if (called) {
                 if (id != null) _idMap.put(id, n);

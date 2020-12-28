@@ -15,8 +15,8 @@
 
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
 
@@ -40,7 +40,7 @@ import java.security.MessageDigest;
  * @see Password
  */
 public abstract class Credential {
-    static Log log = LogFactory.getLog(Credential.class);
+    private static final Logger log = LoggerFactory.getLogger(Credential.class);
 
     /* ------------------------------------------------------------ */
 

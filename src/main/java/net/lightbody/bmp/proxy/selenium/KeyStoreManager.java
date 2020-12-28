@@ -1,8 +1,8 @@
 package net.lightbody.bmp.proxy.selenium;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -58,7 +58,7 @@ import java.util.HashMap;
 public class KeyStoreManager {
 
     public static final String _caPrivKeyAlias = "signingCertPrivKey";
-    static Log log = LogFactory.getLog(KeyStoreManager.class);
+    private final Logger log = LoggerFactory.getLogger(KeyStoreManager.class);
     public final String RSA_KEYGEN_ALGO = "RSA";
     public final String DSA_KEYGEN_ALGO = "DSA";
     //private final String EXPORTED_CERT_NAME = "mitmProxy.cer";
@@ -239,23 +239,12 @@ public class KeyStoreManager {
      * Creates, writes and loads a new keystore and CA root certificate.
      */
     protected void createKeystore() {
-
-        java.security.cert.Certificate signingCert = null;
-        PrivateKey caPrivKey = null;
-
         if (_caCert == null || _caPrivKey == null) {
-            try {
-                throw new RuntimeException("Ups, tried to create a Cert");
-            } catch (Exception e) {
-                log.error("Fatal error creating/storing keystore or signing cert.", e);
-                throw new Error(e);
-            }
+            log.error("Fatal error creating/storing keystore or signing cert.");
+            throw new RuntimeException("Ups, tried to create a Cert");
         } else {
             log.debug("Successfully loaded keystore.");
-            log.debug(_caCert);
-
         }
-
     }
 
     /**

@@ -15,8 +15,8 @@
 
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.FilterInputStream;
@@ -54,7 +54,7 @@ import java.io.UnsupportedEncodingException;
 public class LineInput extends FilterInputStream {
     private final static int LF = 10;
     private final static int CR = 13;
-    private static Log log = LogFactory.getLog(LineInput.class);
+    private static final Logger log = LoggerFactory.getLogger(LineInput.class);
     /* ------------------------------------------------------------ */
     private byte _buf[];
     private ByteBuffer _byteBuffer;

@@ -16,8 +16,8 @@
 package net.lightbody.bmp.proxy.jetty.util;
 
 import net.lightbody.bmp.proxy.jetty.http.HttpContext;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -37,7 +37,7 @@ import java.util.EventListener;
  * @version $Id: Container.java,v 1.4 2005/08/13 08:49:59 gregwilkins Exp $
  */
 public abstract class Container implements LifeCycle, EventProvider, Serializable {
-    private static Log log = LogFactory.getLog(Container.class);
+    private static final Logger log = LoggerFactory.getLogger(Container.class);
 
     private Object _eventListeners;
     private Object _components;

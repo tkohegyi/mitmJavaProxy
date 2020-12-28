@@ -14,8 +14,8 @@
 // ========================================================================
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,7 +49,7 @@ import java.security.Permission;
  * @version $Revision: 1.31 $
  */
 public class FileResource extends URLResource {
-    private static Log log = LogFactory.getLog(Credential.class);
+    private static final Logger log = LoggerFactory.getLogger(FileResource.class);
     private static boolean __checkAliases;
 
     static {
@@ -77,7 +77,6 @@ public class FileResource extends URLResource {
             // Try standard API to convert URL to file.
             _file = new File(new URI(url.toString()));
         } catch (Exception e) {
-            LogSupport.ignore(log, e);
             try {
                 // Assume that File.toURL produced unencoded chars. So try
                 // encoding them.
@@ -85,7 +84,6 @@ public class FileResource extends URLResource {
                         "file:" + net.lightbody.bmp.proxy.jetty.util.URI.encodePath(url.toString().substring(5));
                 _file = new File(new URI(urls));
             } catch (Exception e2) {
-                LogSupport.ignore(log, e2);
 
                 // Still can't get the file.  Doh! try good old hack!
                 checkConnection();

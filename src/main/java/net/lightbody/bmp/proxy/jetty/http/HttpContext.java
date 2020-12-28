@@ -17,7 +17,6 @@ package net.lightbody.bmp.proxy.jetty.http;
 
 import net.lightbody.bmp.proxy.jetty.http.ResourceCache.ResourceMetaData;
 import net.lightbody.bmp.proxy.jetty.http.handler.ErrorPageHandler;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.Container;
 import net.lightbody.bmp.proxy.jetty.util.EventProvider;
 import net.lightbody.bmp.proxy.jetty.util.IO;
@@ -1567,7 +1566,6 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Ev
             // TODO this is a poor test
             if (_loader instanceof ContextLoader) {
                 ((ContextLoader) _loader).destroy();
-                LogFactory.release(_loader);
             }
 
             _loader = null;

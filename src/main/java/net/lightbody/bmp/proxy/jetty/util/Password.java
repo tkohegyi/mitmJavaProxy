@@ -15,8 +15,8 @@
 
 package net.lightbody.bmp.proxy.jetty.util;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -49,7 +49,7 @@ import java.io.IOException;
  * @version $Id: Password.java,v 1.13 2005/08/13 00:01:28 gregwilkins Exp $
  */
 public class Password extends Credential {
-    private static Log log = LogFactory.getLog(Password.class);
+    private static final Logger log = LoggerFactory.getLogger(Password.class);
 
     private String _pw;
 
