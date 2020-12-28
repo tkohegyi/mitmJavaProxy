@@ -20,9 +20,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-
-/* ------------------------------------------------------------ */
-
 /**
  * An in-memory implementation of SessionManager.
  *
@@ -30,31 +27,24 @@ import java.util.Random;
  * @version $Id: HashSessionManager.java,v 1.16 2004/05/09 20:32:27 gregwilkins Exp $
  */
 public class HashSessionManager extends AbstractSessionManager {
-    /* ------------------------------------------------------------ */
+    
     public HashSessionManager() {
         super();
     }
 
-    /* ------------------------------------------------------------ */
     public HashSessionManager(Random random) {
         super(random);
     }
 
-    /* ------------------------------------------------------------ */
     protected AbstractSessionManager.Session newSession(HttpServletRequest request) {
         return new Session(request);
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     protected class Session extends AbstractSessionManager.Session {
-        /* ------------------------------------------------------------- */
         protected Session(HttpServletRequest request) {
             super(request);
         }
 
-        /* ------------------------------------------------------------ */
         protected Map newAttributeMap() {
             return new HashMap(3);
         }

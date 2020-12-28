@@ -15,12 +15,9 @@
 
 package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
-/* --------------------------------------------------------------------- */
-
 /**
  * Jetty Servlet SSL support utilities.
- * <p> A collection of utilities required to support the SSL
- * requirements of the Servlet 2.2 and 2.3 specs.
+ * <p> A collection of utilities required to support the SSL  requirements of the Servlet 2.2 and 2.3 specs.
  *
  * <p> Used by the SSL listener classes.
  *
@@ -28,16 +25,12 @@ package net.lightbody.bmp.proxy.jetty.jetty.servlet;
  * @version $Id: ServletSSL.java,v 1.5 2006/11/22 20:02:16 gregwilkins Exp $
  */
 public class ServletSSL {
-    /* ------------------------------------------------------------ */
 
     /**
-     * Given the name of a TLS/SSL cipher suite, return an int
-     * representing it effective stream cipher key strength.
-     * i.e. How much entropy material is in the key material being fed
-     * into the encryption routines.
+     * Given the name of a TLS/SSL cipher suite, return an int representing it effective stream cipher key strength.
+     * i.e. How much entropy material is in the key material being fed into the encryption routines.
      *
-     * <p> This is based on the information on effective key lengths
-     * in RFC 2246 - The TLS Protocol Version 1.0,
+     * <p> This is based on the information on effective key lengths in RFC 2246 - The TLS Protocol Version 1.0,
      * Appendix C. CipherSuite definitions:
      *
      * <pre>
@@ -57,29 +50,48 @@ public class ServletSSL {
      * @param cipherSuite String name of the TLS cipher suite.
      * @return int indicating the effective key entropy bit-length.
      */
-    public static final int deduceKeyLength(String cipherSuite) {
+    public static int deduceKeyLength(String cipherSuite) {
         // Roughly ordered from most common to least common.
-        if (cipherSuite == null)
+        if (cipherSuite == null) {
             return 0;
-        else if (cipherSuite.indexOf("WITH_AES_256_CBC_SHA") >= 0)
-            return 256;
-        else if (cipherSuite.indexOf("WITH_RC4_128_") >= 0)
-            return 128;
-        else if (cipherSuite.indexOf("WITH_AES_128_") >= 0)
-            return 128;
-        else if (cipherSuite.indexOf("WITH_RC4_40_") >= 0)
-            return 40;
-        else if (cipherSuite.indexOf("WITH_3DES_EDE_CBC_") >= 0)
-            return 168;
-        else if (cipherSuite.indexOf("WITH_IDEA_CBC_") >= 0)
-            return 128;
-        else if (cipherSuite.indexOf("WITH_RC2_CBC_40_") >= 0)
-            return 40;
-        else if (cipherSuite.indexOf("WITH_DES40_CBC_") >= 0)
-            return 40;
-        else if (cipherSuite.indexOf("WITH_DES_CBC_") >= 0)
-            return 56;
-        else
-            return 0;
+        } else {
+            if (cipherSuite.contains("WITH_AES_256_CBC_SHA")) {
+                return 256;
+            } else {
+                if (cipherSuite.contains("WITH_RC4_128_")) {
+                    return 128;
+                } else {
+                    if (cipherSuite.contains("WITH_AES_128_")) {
+                        return 128;
+                    } else {
+                        if (cipherSuite.contains("WITH_RC4_40_")) {
+                            return 40;
+                        } else {
+                            if (cipherSuite.contains("WITH_3DES_EDE_CBC_")) {
+                                return 168;
+                            } else {
+                                if (cipherSuite.contains("WITH_IDEA_CBC_")) {
+                                    return 128;
+                                } else {
+                                    if (cipherSuite.contains("WITH_RC2_CBC_40_")) {
+                                        return 40;
+                                    } else {
+                                        if (cipherSuite.contains("WITH_DES40_CBC_")) {
+                                            return 40;
+                                        } else {
+                                            if (cipherSuite.contains("WITH_DES_CBC_")) {
+                                                return 56;
+                                            } else {
+                                                return 0;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

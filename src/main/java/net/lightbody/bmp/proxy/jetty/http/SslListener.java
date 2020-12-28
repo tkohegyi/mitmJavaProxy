@@ -350,7 +350,7 @@ public class SslListener extends SocketListener {
                 keySize = cachedInfo.getKeySize();
                 certs = cachedInfo.getCerts();
             } else {
-                keySize = new Integer(ServletSSL.deduceKeyLength(cipherSuite));
+                keySize = ServletSSL.deduceKeyLength(cipherSuite);
                 certs = getCertChain(sslSession);
                 cachedInfo = new CachedInfo(keySize, certs);
                 sslSession.putValue(CACHED_INFO_ATTR, cachedInfo);

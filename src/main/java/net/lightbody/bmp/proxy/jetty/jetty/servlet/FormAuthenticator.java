@@ -21,11 +21,11 @@ import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
 import net.lightbody.bmp.proxy.jetty.http.SSORealm;
 import net.lightbody.bmp.proxy.jetty.http.SecurityConstraint;
 import net.lightbody.bmp.proxy.jetty.http.UserRealm;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.Credential;
 import net.lightbody.bmp.proxy.jetty.util.Password;
 import net.lightbody.bmp.proxy.jetty.util.URI;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,8 +35,6 @@ import javax.servlet.http.HttpSessionBindingListener;
 import java.io.IOException;
 import java.io.Serializable;
 import java.security.Principal;
-
-/* ------------------------------------------------------------ */
 
 /**
  * FORM Authentication Authenticator.
@@ -49,29 +47,26 @@ import java.security.Principal;
  * @version $Id: FormAuthenticator.java,v 1.32 2005/08/13 00:01:27 gregwilkins Exp $
  */
 public class FormAuthenticator implements Authenticator {
-    /* ------------------------------------------------------------ */
-    public final static String __J_URI = "net.lightbody.bmp.proxy.jetty.jetty.URI";
-    public final static String __J_AUTHENTICATED = "net.lightbody.bmp.proxy.jetty.jetty.Auth";
-    public final static String __J_SECURITY_CHECK = "j_security_check";
-    public final static String __J_USERNAME = "j_username";
-    public final static String __J_PASSWORD = "j_password";
-    static Log log = LogFactory.getLog(FormAuthenticator.class);
+    
+    public static final String __J_URI = "net.lightbody.bmp.proxy.jetty.jetty.URI";
+    public static final String __J_AUTHENTICATED = "net.lightbody.bmp.proxy.jetty.jetty.Auth";
+    public static final String __J_SECURITY_CHECK = "j_security_check";
+    public static final String __J_USERNAME = "j_username";
+    public static final String __J_PASSWORD = "j_password";
+    private static final Logger log = LoggerFactory.getLogger(FormAuthenticator.class);
     private String _formErrorPage;
     private String _formErrorPath;
     private String _formLoginPage;
     private String _formLoginPath;
 
-    /* ------------------------------------------------------------ */
     public String getAuthMethod() {
         return HttpServletRequest.FORM_AUTH;
     }
 
-    /* ------------------------------------------------------------ */
     public String getLoginPage() {
         return _formLoginPage;
     }
 
-    /* ------------------------------------------------------------ */
     public void setLoginPage(String path) {
         if (!path.startsWith("/")) {
             log.warn("form-login-page must start with /");
@@ -79,16 +74,15 @@ public class FormAuthenticator implements Authenticator {
         }
         _formLoginPage = path;
         _formLoginPath = path;
-        if (_formLoginPath.indexOf('?') > 0)
+        if (_formLoginPath.indexOf('?') > 0) {
             _formLoginPath = _formLoginPath.substring(0, _formLoginPath.indexOf('?'));
+        }
     }
 
-    /* ------------------------------------------------------------ */
     public String getErrorPage() {
         return _formErrorPage;
     }
 
-    /* ------------------------------------------------------------ */
     public void setErrorPage(String path) {
         if (path == null || path.trim().length() == 0) {
             _formErrorPath = null;
@@ -101,24 +95,18 @@ public class FormAuthenticator implements Authenticator {
             _formErrorPage = path;
             _formErrorPath = path;
 
-            if (_formErrorPath != null && _formErrorPath.indexOf('?') > 0)
+            if (_formErrorPath.indexOf('?') > 0) {
                 _formErrorPath = _formErrorPath.substring(0, _formErrorPath.indexOf('?'));
+            }
         }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Perform form authentication.
-     * Called from SecurityHandler.
+     * Perform form authentication. Called from SecurityHandler.
      *
      * @return UserPrincipal if authenticated else null.
      */
-    public Principal authenticate(UserRealm realm,
-                                  String pathInContext,
-                                  HttpRequest httpRequest,
-                                  HttpResponse httpResponse)
-            throws IOException {
+    public Principal authenticate(UserRealm realm, String pathInContext, HttpRequest httpRequest, HttpResponse httpResponse) throws IOException {
         HttpServletRequest request = (ServletHttpRequest) httpRequest.getWrapper();
         HttpServletResponse response = httpResponse == null ? null : (HttpServletResponse) httpResponse.getWrapper();
 
@@ -142,13 +130,14 @@ public class FormAuthenticator implements Authenticator {
             String nuri = (String) session.getAttribute(__J_URI);
             if (nuri == null || nuri.length() == 0) {
                 nuri = request.getContextPath();
-                if (nuri.length() == 0)
+                if (nuri.length() == 0) {
                     nuri = "/";
+                }
             }
 
             if (form_cred._userPrincipal != null) {
                 // Authenticated OK
-                if (log.isDebugEnabled()) log.debug("Form authentication OK for " + form_cred._jUserName);
+                log.debug("Form authentication OK for {}", form_cred._jUserName);
                 session.removeAttribute(__J_URI); // Remove popped return URI.
                 httpRequest.setAuthType(SecurityConstraint.__FORM_AUTH);
                 httpRequest.setAuthUser(form_cred._jUserName);
@@ -169,12 +158,10 @@ public class FormAuthenticator implements Authenticator {
                     response.sendRedirect(response.encodeRedirectURL(nuri));
                 }
             } else if (response != null) {
-                if (log.isDebugEnabled()) log.debug("Form authentication FAILED for " + form_cred._jUserName);
+                log.debug("Form authentication FAILED for {}", form_cred._jUserName);
                 if (_formErrorPage != null) {
                     response.setContentLength(0);
-                    response.sendRedirect(response.encodeRedirectURL
-                            (URI.addPaths(request.getContextPath(),
-                                    _formErrorPage)));
+                    response.sendRedirect(response.encodeRedirectURL(URI.addPaths(request.getContextPath(), _formErrorPage)));
                 } else {
                     response.sendError(HttpResponse.__403_Forbidden);
                 }
@@ -206,13 +193,14 @@ public class FormAuthenticator implements Authenticator {
 
             // If this credential is still authenticated
             if (form_cred._userPrincipal != null) {
-                if (log.isDebugEnabled()) log.debug("FORM Authenticated for " + form_cred._userPrincipal.getName());
+                log.debug("FORM Authenticated for {}", form_cred._userPrincipal.getName());
                 httpRequest.setAuthType(SecurityConstraint.__FORM_AUTH);
                 httpRequest.setAuthUser(form_cred._userPrincipal.getName());
                 httpRequest.setUserPrincipal(form_cred._userPrincipal);
                 return form_cred._userPrincipal;
-            } else
+            } else {
                 session.setAttribute(__J_AUTHENTICATED, null);
+            }
         } else if (realm instanceof SSORealm) {
             // Try a single sign on.
             Credential cred = ((SSORealm) realm).getSingleSignOn(httpRequest, httpResponse);
@@ -221,9 +209,10 @@ public class FormAuthenticator implements Authenticator {
                 form_cred = new FormCredential();
                 form_cred._userPrincipal = request.getUserPrincipal();
                 form_cred._jUserName = form_cred._userPrincipal.getName();
-                if (cred != null)
+                if (cred != null) {
                     form_cred._jPassword = cred.toString();
-                if (log.isDebugEnabled()) log.debug("SSO for " + form_cred._userPrincipal);
+                }
+                log.debug("SSO for {}", form_cred._userPrincipal);
 
                 httpRequest.setAuthType(SecurityConstraint.__FORM_AUTH);
                 session.setAttribute(__J_AUTHENTICATED, form_cred);
@@ -232,32 +221,30 @@ public class FormAuthenticator implements Authenticator {
         }
 
         // Don't authenticate authform or errorpage
-        if (isLoginOrErrorPage(pathInContext))
+        if (isLoginOrErrorPage(pathInContext)) {
             return SecurityConstraint.__NOBODY;
+        }
 
         // redirect to login page
         if (response != null) {
-            if (httpRequest.getQuery() != null)
+            if (httpRequest.getQuery() != null) {
                 uri += "?" + httpRequest.getQuery();
+            }
             session.setAttribute(__J_URI,
                     request.getScheme() +
                             "://" + request.getServerName() +
                             ":" + request.getServerPort() +
                             URI.addPaths(request.getContextPath(), uri));
             response.setContentLength(0);
-            response.sendRedirect(response.encodeRedirectURL(URI.addPaths(request.getContextPath(),
-                    _formLoginPage)));
+            response.sendRedirect(response.encodeRedirectURL(URI.addPaths(request.getContextPath(), _formLoginPage)));
         }
 
         return null;
     }
 
     public boolean isLoginOrErrorPage(String pathInContext) {
-        return pathInContext != null &&
-                (pathInContext.equals(_formErrorPath) || pathInContext.equals(_formLoginPath));
+        return pathInContext != null && (pathInContext.equals(_formErrorPath) || pathInContext.equals(_formLoginPath));
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * FORM Authentication credential holder.
@@ -272,28 +259,31 @@ public class FormAuthenticator implements Authenticator {
             _jUserName = user;
             _jPassword = password;
             _userPrincipal = realm.authenticate(user, password, request);
-            if (_userPrincipal != null)
+            if (_userPrincipal != null) {
                 _realm = realm;
+            }
         }
 
         void authenticate(UserRealm realm, HttpRequest request) {
             _userPrincipal = realm.authenticate(_jUserName, _jPassword, request);
-            if (_userPrincipal != null)
+            if (_userPrincipal != null) {
                 _realm = realm;
+            }
         }
-
 
         public void valueBound(HttpSessionBindingEvent event) {
         }
 
         public void valueUnbound(HttpSessionBindingEvent event) {
-            if (log.isDebugEnabled()) log.debug("Logout " + _jUserName);
+            log.debug("Logout {}", _jUserName);
 
-            if (_realm instanceof SSORealm)
+            if (_realm instanceof SSORealm) {
                 ((SSORealm) _realm).clearSingleSignOn(_jUserName);
+            }
 
-            if (_realm != null && _userPrincipal != null)
+            if (_realm != null && _userPrincipal != null) {
                 _realm.logout(_userPrincipal);
+            }
         }
 
         public int hashCode() {
@@ -301,12 +291,11 @@ public class FormAuthenticator implements Authenticator {
         }
 
         public boolean equals(Object o) {
-            if (!(o instanceof FormCredential))
+            if (!(o instanceof FormCredential)) {
                 return false;
+            }
             FormCredential fc = (FormCredential) o;
-            return
-                    _jUserName.equals(fc._jUserName) &&
-                            _jPassword.equals(fc._jPassword);
+            return _jUserName.equals(fc._jUserName) && _jPassword.equals(fc._jPassword);
         }
 
         public String toString() {

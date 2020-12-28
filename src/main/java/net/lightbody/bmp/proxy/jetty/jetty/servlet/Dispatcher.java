@@ -15,13 +15,12 @@
 
 package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
-import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.MultiMap;
 import net.lightbody.bmp.proxy.jetty.util.StringMap;
 import net.lightbody.bmp.proxy.jetty.util.URI;
 import net.lightbody.bmp.proxy.jetty.util.WriterOutputStream;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletOutputStream;
@@ -41,8 +40,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/* ------------------------------------------------------------ */
-
 /**
  * Servlet RequestDispatcher.
  *
@@ -54,16 +51,14 @@ public class Dispatcher {
      * Dispatch types
      */
     public static final int __DEFAULT = 0;
-
-
-    /* ------------------------------------------------------------ */
+    
     public static final int __REQUEST = 1;
     public static final int __FORWARD = 2;
     public static final int __INCLUDE = 4;
     public static final int __ERROR = 8;
     public static final int __ALL = 15;
     /**
-     * Dispatch include attribute names
+     * Dispatch include attribute names.
      */
     public final static String __INCLUDE_REQUEST_URI = "javax.servlet.include.request_uri";
     public final static String __INCLUDE_CONTEXT_PATH = "javax.servlet.include.context_path";
@@ -71,7 +66,7 @@ public class Dispatcher {
     public final static String __INCLUDE_PATH_INFO = "javax.servlet.include.path_info";
     public final static String __INCLUDE_QUERY_STRING = "javax.servlet.include.query_string";
     /**
-     * Dispatch include attribute names
+     * Dispatch include attribute names.
      */
     public final static String __FORWARD_REQUEST_URI = "javax.servlet.forward.request_uri";
     public final static String __FORWARD_CONTEXT_PATH = "javax.servlet.forward.context_path";
@@ -79,7 +74,7 @@ public class Dispatcher {
     public final static String __FORWARD_PATH_INFO = "javax.servlet.forward.path_info";
     public final static String __FORWARD_QUERY_STRING = "javax.servlet.forward.query_string";
     public final static StringMap __managedAttributes = new StringMap();
-    static Log log = LogFactory.getLog(Dispatcher.class);
+    private final Logger log = LoggerFactory.getLogger(Dispatcher.class);
 
     static {
         __managedAttributes.put(__INCLUDE_REQUEST_URI, __INCLUDE_REQUEST_URI);
@@ -102,79 +97,33 @@ public class Dispatcher {
     String _pathInContext;
     String _query;
 
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * Constructor.
-     * /** Constructor.
-     *
-     * @param servletHandler
-     * @param uriInContext   Encoded uriInContext
-     * @param pathInContext  Encoded pathInContext
-     * @param query
-     * @throws IllegalStateException
-     */
-    Dispatcher(ServletHandler servletHandler,
-               String uriInContext,
-               String pathInContext,
-               String query,
-               Map.Entry entry)
-            throws IllegalStateException {
-        if (log.isDebugEnabled()) log.debug("Dispatcher for " + servletHandler + "," + uriInContext + "," + query);
-
-        _servletHandler = servletHandler;
-        _uriInContext = uriInContext;
-        _pathInContext = pathInContext;
-        _query = query;
-        _pathSpec = (String) entry.getKey();
-        _holder = (ServletHolder) entry.getValue();
-    }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * Constructor.
-     *
-     * @param servletHandler
-     * @param name
-     */
-    Dispatcher(ServletHandler servletHandler, String name)
-            throws IllegalStateException {
-        _servletHandler = servletHandler;
-        _holder = _servletHandler.getServletHolder(name);
-        if (_holder == null)
-            throw new IllegalStateException("No named servlet handler in context");
-    }
-
     /**
      * Dispatch type from name
      */
     public static int type(String type) {
-        if ("request".equalsIgnoreCase(type))
+        if ("request".equalsIgnoreCase(type)) {
             return __REQUEST;
-        if ("forward".equalsIgnoreCase(type))
+        }
+        if ("forward".equalsIgnoreCase(type)) {
             return __FORWARD;
-        if ("include".equalsIgnoreCase(type))
+        }
+        if ("include".equalsIgnoreCase(type)) {
             return __INCLUDE;
-        if ("error".equalsIgnoreCase(type))
+        }
+        if ("error".equalsIgnoreCase(type)) {
             return __ERROR;
+        }
         throw new IllegalArgumentException(type);
     }
-
-    /* ------------------------------------------------------------ */
+    
     public boolean isNamed() {
         return _pathInContext == null;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public String toString() {
         return "Dispatcher[" + _pathSpec + "," + _holder + "]";
     }
-
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
+    
     class DispatcherRequest extends HttpServletRequestWrapper {
         DispatcherResponse _response;
         int _filterType;
@@ -187,18 +136,14 @@ public class Dispatcher {
         HttpSession _xSession;
         ServletHttpRequest _servletHttpRequest;
         String _query;
-
-        /* ------------------------------------------------------------ */
-        DispatcherRequest(HttpServletRequest httpServletRequest,
-                          ServletHttpRequest servletHttpRequest,
-                          int filterType) {
+        
+        DispatcherRequest(HttpServletRequest httpServletRequest, ServletHttpRequest servletHttpRequest, int filterType) {
             super(httpServletRequest);
             _servletHttpRequest = servletHttpRequest;
             _filterType = filterType;
 
             // Is this being dispatched to a different context?
-            _xContext =
-                    servletHttpRequest.getServletHandler() != _servletHandler;
+            _xContext = servletHttpRequest.getServletHandler() != _servletHandler;
             if (_xContext) {
                 // Look for an existing or requested session ID.
                 HttpSession session = httpServletRequest.getSession(false);
@@ -209,70 +154,67 @@ public class Dispatcher {
                 // Look for that session in new context to access it.
                 if (session_id != null) {
                     _xSession = _servletHandler.getHttpSession(session_id);
-                    if (_xSession != null)
+                    if (_xSession != null) {
                         ((SessionManager.Session) _xSession).access();
+                    }
                 }
             }
         }
-
-        /* ------------------------------------------------------------ */
+        
         boolean crossContext() {
             return _xContext;
         }
-
-        /* ------------------------------------------------------------ */
+        
         void setPaths(String cp, String sp, String pi) {
             _contextPath = (cp.length() == 1 && cp.charAt(0) == '/') ? "" : cp;
             _servletPath = sp;
             _pathInfo = pi;
         }
-
-        /* ------------------------------------------------------------ */
+        
         void setQuery(String q) {
             this._query = q;
         }
-
-        /* ------------------------------------------------------------ */
+        
         int getFilterType() {
             return _filterType;
         }
-
-        /* ------------------------------------------------------------ */
+        
         String getPathInContext() {
-            if (_pathInContext != null)
+            if (_pathInContext != null) {
                 return _pathInContext;
-            else
+            }
+            else {
                 return URI.addPaths(getServletPath(), getPathInfo());
+            }
         }
-
-        /* ------------------------------------------------------------ */
+        
         public String getRequestURI() {
-            if (_filterType == Dispatcher.__INCLUDE || isNamed())
+            if (_filterType == Dispatcher.__INCLUDE || isNamed()) {
                 return super.getRequestURI();
+            }
             return URI.addPaths(_contextPath, _uriInContext);
         }
-
-        /* ------------------------------------------------------------ */
+        
         public StringBuffer getRequestURL() {
-            if (_filterType == Dispatcher.__INCLUDE || isNamed())
+            if (_filterType == Dispatcher.__INCLUDE || isNamed()) {
                 return super.getRequestURL();
+            }
             StringBuffer buf = getRootURL();
-            if (_contextPath.length() > 0)
+            if (_contextPath.length() > 0) {
                 buf.append(_contextPath);
+            }
             buf.append(_uriInContext);
             return buf;
         }
-
-
-        /* ------------------------------------------------------------ */
+        
         public String getPathTranslated() {
             String info = getPathInfo();
-            if (info == null)
+            if (info == null) {
                 return null;
+            }
             return getRealPath(info);
         }
-
-        /* ------------------------------------------------------------ */
+        
         StringBuffer getRootURL() {
             StringBuffer buf = super.getRequestURL();
             int d = 3;
@@ -284,81 +226,79 @@ public class Dispatcher {
             }
             return buf;
         }
-
-        /* ------------------------------------------------------------ */
+        
         public String getContextPath() {
             return (_filterType == Dispatcher.__INCLUDE || isNamed()) ? super.getContextPath() : _contextPath;
         }
-
-        /* ------------------------------------------------------------ */
+        
         public String getServletPath() {
             return (_filterType == Dispatcher.__INCLUDE || isNamed()) ? super.getServletPath() : _servletPath;
         }
-
-        /* ------------------------------------------------------------ */
+        
         public String getPathInfo() {
             return (_filterType == Dispatcher.__INCLUDE || isNamed()) ? super.getPathInfo() : _pathInfo;
         }
-
-        /* ------------------------------------------------------------ */
+        
         public String getQueryString() {
-            if (this._query == null)
+            if (this._query == null) {
                 return super.getQueryString();
+            }
             return this._query;
         }
-
-        /* ------------------------------------------------------------ */
+        
         void setParameters(MultiMap parameters) {
             _parameters = parameters;
         }
-
-        /* -------------------------------------------------------------- */
+        
         public Enumeration getParameterNames() {
-            if (_parameters == null)
+            if (_parameters == null) {
                 return super.getParameterNames();
-
+            }
             return Collections.enumeration(_parameters.keySet());
         }
 
-        /* -------------------------------------------------------------- */
         public String getParameter(String name) {
-            if (_parameters == null)
+            if (_parameters == null) {
                 return super.getParameter(name);
+            }
             return (String) _parameters.getValue(name, 0);
         }
 
-        /* -------------------------------------------------------------- */
+        
         public String[] getParameterValues(String name) {
-            if (_parameters == null)
+            if (_parameters == null) {
                 return super.getParameterValues(name);
+            }
             List l = _parameters.getValues(name);
-            if (l == null)
+            if (l == null) {
                 return null;
+            }
             return (String[]) l.toArray(new String[l.size()]);
         }
 
-        /* -------------------------------------------------------------- */
         public Map getParameterMap() {
-            if (_parameters == null)
+            if (_parameters == null) {
                 return super.getParameterMap();
-
+            }
             return _parameters.toStringArrayMap();
         }
 
-        /* ------------------------------------------------------------ */
+        
         public void setAttribute(String name, Object value) {
             if (__managedAttributes.containsKey(name)) {
-                if (_attributes == null)
+                if (_attributes == null) {
                     _attributes = new HashMap(3);
+                }
                 _attributes.put(name, value);
-            } else
+            } else {
                 super.setAttribute(name, value);
+            }
         }
-
-        /* ------------------------------------------------------------ */
+        
         public Object getAttribute(String name) {
-            if (_attributes != null && _attributes.containsKey(name))
+            if (_attributes != null && _attributes.containsKey(name)) {
                 return _attributes.get(name);
+            }
 
             if (_filterType == Dispatcher.__INCLUDE && !isNamed()) {
                 if (name.equals(__INCLUDE_PATH_INFO)) return _pathInfo;
@@ -375,41 +315,47 @@ public class Dispatcher {
             }
 
             if (_filterType != Dispatcher.__INCLUDE && !isNamed()) {
-                if (name.equals(__FORWARD_PATH_INFO))
+                if (name.equals(__FORWARD_PATH_INFO)) {
                     return _servletHttpRequest.getPathInfo();
-                if (name.equals(__FORWARD_REQUEST_URI))
+                }
+                if (name.equals(__FORWARD_REQUEST_URI)) {
                     return _servletHttpRequest.getRequestURI();
-                if (name.equals(__FORWARD_SERVLET_PATH))
+                }
+                if (name.equals(__FORWARD_SERVLET_PATH)) {
                     return _servletHttpRequest.getServletPath();
-                if (name.equals(__FORWARD_CONTEXT_PATH))
+                }
+                if (name.equals(__FORWARD_CONTEXT_PATH)) {
                     return _servletHttpRequest.getContextPath();
-                if (name.equals(__FORWARD_QUERY_STRING))
+                }
+                if (name.equals(__FORWARD_QUERY_STRING)) {
                     return _servletHttpRequest.getQueryString();
+                }
             }
 
             return super.getAttribute(name);
         }
 
-        /* ------------------------------------------------------------ */
         public Enumeration getAttributeNames() {
             HashSet set = new HashSet();
             Enumeration e = super.getAttributeNames();
-            while (e.hasMoreElements())
+            while (e.hasMoreElements()) {
                 set.add(e.nextElement());
+            }
 
             if (_filterType == Dispatcher.__INCLUDE && !isNamed()) {
-                if (_pathInfo != null)
+                if (_pathInfo != null) {
                     set.add(__INCLUDE_PATH_INFO);
-                else
+                } else {
                     set.remove(__INCLUDE_PATH_INFO);
+                }
                 set.add(__INCLUDE_REQUEST_URI);
                 set.add(__INCLUDE_SERVLET_PATH);
                 set.add(__INCLUDE_CONTEXT_PATH);
-                if (Dispatcher.this._query != null)
+                if (Dispatcher.this._query != null) {
                     set.add(__INCLUDE_QUERY_STRING);
-                else
+                } else {
                     set.remove(__INCLUDE_QUERY_STRING);
-
+                }
             } else {
                 set.remove(__INCLUDE_PATH_INFO);
                 set.remove(__INCLUDE_REQUEST_URI);
@@ -419,27 +365,28 @@ public class Dispatcher {
             }
 
             if (_filterType != Dispatcher.__INCLUDE && !isNamed()) {
-                if (_servletHttpRequest.getPathInfo() != null)
+                if (_servletHttpRequest.getPathInfo() != null) {
                     set.add(__FORWARD_PATH_INFO);
-                else
+                } else {
                     set.remove(__FORWARD_PATH_INFO);
+                }
 
                 set.add(__FORWARD_REQUEST_URI);
                 set.add(__FORWARD_SERVLET_PATH);
                 set.add(__FORWARD_CONTEXT_PATH);
-                if (_servletHttpRequest.getQueryString() != null)
+                if (_servletHttpRequest.getQueryString() != null) {
                     set.add(__FORWARD_QUERY_STRING);
-                else
+                } else {
                     set.remove(__FORWARD_QUERY_STRING);
+                }
             }
 
-            if (_attributes != null)
+            if (_attributes != null) {
                 set.addAll(_attributes.keySet());
+            }
 
             return Collections.enumeration(set);
         }
-
-        /* ------------------------------------------------------------ */
 
         /**
          * If the request attribute "org.mortbay.jetty.servlet.Dispatcher.shared_session" is set, then
@@ -448,33 +395,35 @@ public class Dispatcher {
         public HttpSession getSession(boolean create) {
             if (_xContext) {
                 if (_xSession == null) {
-                    if (getAttribute("net.lightbody.bmp.proxy.jetty.jetty.servlet.Dispatcher.shared_session") != null)
+                    if (getAttribute("net.lightbody.bmp.proxy.jetty.jetty.servlet.Dispatcher.shared_session") != null) {
                         _xSession = super.getSession(create);
-                    else {
+                    } else {
                         log.debug("Ctx dispatch session");
 
                         String rsid = getRequestedSessionId();
                         if (rsid == null) {
                             HttpSession session = super.getSession(false);
-                            if (session != null)
+                            if (session != null) {
                                 rsid = session.getId();
+                            }
                         }
                         _xSession = _servletHandler.getHttpSession(rsid);
                         if (create && _xSession == null) {
                             _xSession = _servletHandler.newHttpSession(this);
                             Cookie cookie = _servletHandler.getSessionManager().getSessionCookie(_xSession, isSecure());
-                            if (cookie != null)
+                            if (cookie != null) {
                                 _servletHttpRequest.getHttpRequest().getHttpResponse().addSetCookie(cookie);
+                            }
                         }
                     }
 
                 }
                 return _xSession;
-            } else
+            } else {
                 return super.getSession(create);
+            }
         }
 
-        /* ------------------------------------------------------------ */
         public boolean isRequestedSessionIdValid() {
             if (_xContext) {
                 String requestedSessionid = super.getRequestedSessionId();
@@ -489,29 +438,27 @@ public class Dispatcher {
                 return super.isRequestedSessionIdValid();
             }
         }
-
-        /* ------------------------------------------------------------ */
+        
         public HttpSession getSession() {
             return getSession(true);
         }
-
-        /* ------------------------------------------------------------ */
+        
         public String getRealPath(String path) {
             return _servletHandler.getServletContext().getRealPath(path);
         }
-
-        /* ------------------------------------------------------------ */
+        
         public RequestDispatcher getRequestDispatcher(String url) {
-            if (url == null)
+            if (url == null) {
                 return null;
-
+            }
             if (!url.startsWith("/")) {
                 String relTo = URI.addPaths(getServletPath(), getPathInfo());
                 int slash = relTo.lastIndexOf("/");
-                if (slash > 1)
+                if (slash > 1) {
                     relTo = relTo.substring(0, slash + 1);
-                else
+                } else {
                     relTo = "/";
+                }
                 url = URI.addPaths(relTo, url);
             }
 
@@ -519,15 +466,13 @@ public class Dispatcher {
         }
 
         public String getMethod() {
-            if (this._filterType == Dispatcher.__ERROR)
+            if (this._filterType == Dispatcher.__ERROR) {
                 return net.lightbody.bmp.proxy.jetty.http.HttpRequest.__GET;
+            }
             return super.getMethod();
         }
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     class DispatcherResponse extends HttpServletResponseWrapper {
         DispatcherRequest _request;
         private ServletOutputStream _out = null;
@@ -535,113 +480,106 @@ public class Dispatcher {
         private boolean _flushNeeded = false;
         private boolean _include;
 
-        /* ------------------------------------------------------------ */
         DispatcherResponse(DispatcherRequest request, HttpServletResponse response) {
             super(response);
             _request = request;
             request._response = this;
             _include = _request._filterType == Dispatcher.__INCLUDE;
-
         }
 
-        /* ------------------------------------------------------------ */
-        public ServletOutputStream getOutputStream()
-                throws IOException {
-            if (_writer != null)
+        public ServletOutputStream getOutputStream() throws IOException {
+            if (_writer != null) {
                 throw new IllegalStateException("getWriter called");
+            }
 
             if (_out == null) {
                 try {
                     _out = super.getOutputStream();
                 } catch (IllegalStateException e) {
-                    LogSupport.ignore(log, e);
                     _flushNeeded = true;
                     _out = new ServletOut(new WriterOutputStream(super.getWriter()));
                 }
             }
 
-            if (_include)
+            if (_include) {
                 _out = new DontCloseServletOut(_out);
+            }
 
             return _out;
         }
 
-        /* ------------------------------------------------------------ */
-        public PrintWriter getWriter()
-                throws IOException {
-            if (_out != null)
+        
+        public PrintWriter getWriter() throws IOException {
+            if (_out != null) {
                 throw new IllegalStateException("getOutputStream called");
+            }
 
             if (_writer == null) {
                 try {
                     _writer = super.getWriter();
                 } catch (IllegalStateException e) {
-                    LogSupport.ignore(log, e);
                     _flushNeeded = true;
-                    _writer = new ServletWriter(super.getOutputStream(),
-                            getCharacterEncoding());
+                    _writer = new ServletWriter(super.getOutputStream(), getCharacterEncoding());
                 }
             }
 
-            if (_include)
+            if (_include) {
                 _writer = new DontCloseWriter(_writer);
+            }
             return _writer;
         }
 
-        /* ------------------------------------------------------------ */
         boolean isFlushNeeded() {
             return _flushNeeded;
         }
-
-        /* ------------------------------------------------------------ */
-        public void flushBuffer()
-                throws IOException {
-            if (_writer != null)
+        
+        public void flushBuffer() throws IOException {
+            if (_writer != null) {
                 _writer.flush();
-            if (_out != null)
+            }
+            if (_out != null) {
                 _out.flush();
+            }
             super.flushBuffer();
         }
-
-        /* ------------------------------------------------------------ */
-        public void close()
-                throws IOException {
-            if (_writer != null)
+        
+        public void close() throws IOException {
+            if (_writer != null) {
                 _writer.close();
-            if (_out != null)
+            }
+            if (_out != null) {
                 _out.close();
+            }
         }
 
-        /* ------------------------------------------------------------ */
         public void setLocale(Locale locale) {
-            if (!_include) super.setLocale(locale);
+            if (!_include) {
+                super.setLocale(locale);
+            }
         }
 
-        /* ------------------------------------------------------------ */
-        public void sendError(int status, String message)
-                throws IOException {
-            if (_request._filterType != Dispatcher.__ERROR && !_include)
+        public void sendError(int status, String message) throws IOException {
+            if (_request._filterType != Dispatcher.__ERROR && !_include) {
                 super.sendError(status, message);
+            }
         }
 
-        /* ------------------------------------------------------------ */
-        public void sendError(int status)
-                throws IOException {
-            if (_request._filterType != Dispatcher.__ERROR && !_include)
+        public void sendError(int status) throws IOException {
+            if (_request._filterType != Dispatcher.__ERROR && !_include) {
                 super.sendError(status);
+            }
         }
-
-        /* ------------------------------------------------------------ */
-        public void sendRedirect(String url)
-                throws IOException {
+        
+        public void sendRedirect(String url) throws IOException {
             if (!_include) {
                 if (!url.startsWith("http:/") && !url.startsWith("https:/")) {
                     StringBuffer buf = _request.getRootURL();
 
-                    if (url.startsWith("/"))
+                    if (url.startsWith("/")) {
                         buf.append(URI.canonicalPath(url));
-                    else
+                    } else {
                         buf.append(URI.canonicalPath(URI.addPaths(URI.parentPath(_request.getRequestURI()), url)));
+                    }
                     url = buf.toString();
                 }
 
@@ -649,47 +587,50 @@ public class Dispatcher {
             }
         }
 
-        /* ------------------------------------------------------------ */
         public void setDateHeader(String name, long value) {
-            if (!_include) super.setDateHeader(name, value);
+            if (!_include) {
+                super.setDateHeader(name, value);
+            }
         }
 
-        /* ------------------------------------------------------------ */
         public void setHeader(String name, String value) {
-            if (!_include) super.setHeader(name, value);
+            if (!_include) {
+                super.setHeader(name, value);
+            }
         }
 
-        /* ------------------------------------------------------------ */
         public void setIntHeader(String name, int value) {
-            if (!_include) super.setIntHeader(name, value);
+            if (!_include) {
+                super.setIntHeader(name, value);
+            }
         }
 
-        /* ------------------------------------------------------------ */
         public void addHeader(String name, String value) {
-            if (!_include) super.addHeader(name, value);
+            if (!_include) {
+                super.addHeader(name, value);
+            }
         }
 
-        /* ------------------------------------------------------------ */
         public void addDateHeader(String name, long value) {
-            if (!_include) super.addDateHeader(name, value);
+            if (!_include) {
+                super.addDateHeader(name, value);
+            }
         }
 
-        /* ------------------------------------------------------------ */
         public void addIntHeader(String name, int value) {
-            if (!_include) super.addIntHeader(name, value);
+            if (!_include) {
+                super.addIntHeader(name, value);
+            }
         }
 
-        /* ------------------------------------------------------------ */
         public void setStatus(int status) {
-            if (_request._filterType != Dispatcher.__ERROR && !_include)
+            if (_request._filterType != Dispatcher.__ERROR && !_include) {
                 super.setStatus(status);
+            }
         }
-
-        /* ------------------------------------------------------------ */
 
         /**
-         * The default behavior of this method is to call setStatus(int sc, String sm)
-         * on the wrapped response object.
+         * The default behavior of this method is to call setStatus(int sc, String sm) on the wrapped response object.
          *
          * @param status  the status code
          * @param message the status message
@@ -699,30 +640,30 @@ public class Dispatcher {
          * use <code>sendError(int, String)</code>.
          */
         public void setStatus(int status, String message) {
-            if (_request._filterType != Dispatcher.__ERROR && !_include)
+            if (_request._filterType != Dispatcher.__ERROR && !_include) {
                 super.setStatus(status, message);
+            }
         }
 
-        /* ------------------------------------------------------------ */
         public void setContentLength(int len) {
-            if (!_include) super.setContentLength(len);
+            if (!_include) {
+                super.setContentLength(len);
+            }
         }
 
-        /* ------------------------------------------------------------ */
         public void setContentType(String contentType) {
-            if (!_include) super.setContentType(contentType);
+            if (!_include) {
+                super.setContentType(contentType);
+            }
         }
 
-        /* ------------------------------------------------------------ */
         public void addCookie(Cookie cookie) {
-            if (!_include) super.addCookie(cookie);
+            if (!_include) {
+                super.addCookie(cookie);
+            }
         }
     }
 
-
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     private class DontCloseWriter extends PrintWriter {
         DontCloseWriter(PrintWriter writer) {
             super(writer);
@@ -732,9 +673,6 @@ public class Dispatcher {
         }
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     private class DontCloseServletOut extends ServletOut {
         DontCloseServletOut(ServletOutputStream output) {
             super(output);

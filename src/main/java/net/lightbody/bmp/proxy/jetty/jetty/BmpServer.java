@@ -18,17 +18,16 @@ package net.lightbody.bmp.proxy.jetty.jetty;
 import net.lightbody.bmp.proxy.jetty.http.HttpContext;
 import net.lightbody.bmp.proxy.jetty.http.HttpServer;
 import net.lightbody.bmp.proxy.jetty.jetty.servlet.ServletHttpContext;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.Resource;
 import net.lightbody.bmp.proxy.jetty.xml.XmlConfiguration;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 
 /**
@@ -48,7 +47,7 @@ import java.util.Iterator;
  * @see net.lightbody.bmp.proxy.jetty.jetty.servlet.ServletHttpContext
  */
 public class BmpServer extends HttpServer {
-    static Log log = LogFactory.getLog(BmpServer.class);
+    private static final Logger log = LoggerFactory.getLogger(BmpServer.class);
     private String _configuration;
 
     /**
@@ -63,7 +62,6 @@ public class BmpServer extends HttpServer {
      * @param configuration The filename or URL of the XML configuration file.
      */
     public void configure(String configuration) throws IOException {
-
         URL url = Resource.newResource(configuration).getURL();
         if (_configuration != null && _configuration.equals(url.toString())) {
             return;
@@ -119,9 +117,7 @@ public class BmpServer extends HttpServer {
                     shutdownHook.invoke(Runtime.getRuntime(), new Object[]{this});
                     this.hooked = true;
                 } catch (Exception e) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("No shutdown hook in JVM ", e);
-                    }
+                    log.debug("No shutdown hook in JVM ", e);
                 }
             }
         }

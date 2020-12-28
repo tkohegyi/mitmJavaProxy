@@ -15,7 +15,6 @@
 
 package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
-
 import net.lightbody.bmp.proxy.jetty.http.EOFException;
 import net.lightbody.bmp.proxy.jetty.http.HttpContext;
 import net.lightbody.bmp.proxy.jetty.http.HttpException;
@@ -25,14 +24,14 @@ import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
 import net.lightbody.bmp.proxy.jetty.http.PathMap;
 import net.lightbody.bmp.proxy.jetty.http.Version;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.ByteArrayISO8859Writer;
 import net.lightbody.bmp.proxy.jetty.util.Container;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.MultiException;
 import net.lightbody.bmp.proxy.jetty.util.Resource;
 import net.lightbody.bmp.proxy.jetty.util.URI;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.Servlet;
@@ -56,28 +55,22 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-
-/* --------------------------------------------------------------------- */
-
 /**
  * Servlet HttpHandler.
- * This handler maps requests to servlets that implement the
- * javax.servlet.http.HttpServlet API.
+ * This handler maps requests to servlets that implement the javax.servlet.http.HttpServlet API.
  * <p>
  * This handler does not implement the full J2EE features and is intended to
- * be used when a full web application is not required.  Specifically filters
- * and request wrapping are not supported.
+ * be used when a full web application is not required.  Specifically filters and request wrapping are not supported.
  * <p>
  * If a SessionManager is not added to the handler before it is
- * initialized, then a HashSessionManager with a standard
- * java.util.Random generator is created.
+ * initialized, then a HashSessionManager with a standard java.util.Random generator is created.
  * <p>
  *
  * @author Greg Wilkins
  * @version $Id: ServletHandler.java,v 1.133 2006/03/15 14:43:00 gregwilkins Exp $
  */
 public class ServletHandler extends Container implements HttpHandler {
-    /* ------------------------------------------------------------ */
+    
     public static final String __DEFAULT_SERVLET = "default";
     public static final String __J_S_CONTEXT_TEMPDIR = "javax.servlet.context.tempdir";
     public static final String __J_S_ERROR_EXCEPTION = "javax.servlet.error.exception";
@@ -86,11 +79,11 @@ public class ServletHandler extends Container implements HttpHandler {
     public static final String __J_S_ERROR_REQUEST_URI = "javax.servlet.error.request_uri";
     public static final String __J_S_ERROR_SERVLET_NAME = "javax.servlet.error.servlet_name";
     public static final String __J_S_ERROR_STATUS_CODE = "javax.servlet.error.status_code";
-    /* ------------------------------------------------------------ */
+    
     private static final boolean __Slosh2Slash = File.separatorChar == '\\';
-    private static Log log = LogFactory.getLog(ServletHandler.class);
-    private static String __AllowString = "GET, HEAD, POST, OPTIONS, TRACE";
-    /* ------------------------------------------------------------ */
+    private static final String __AllowString = "GET, HEAD, POST, OPTIONS, TRACE";
+    private final Logger log = LoggerFactory.getLogger(ServletHandler.class);
+    
     protected PathMap _servletMap = new PathMap();
     protected Map _nameMap = new HashMap();
     protected Map _attributes = new HashMap(3);
@@ -99,62 +92,53 @@ public class ServletHandler extends Container implements HttpHandler {
     protected SessionManager _sessionManager;
     protected transient Context _context;
     protected transient ClassLoader _loader;
-    protected transient Log _contextLog;
     protected transient HttpContext _httpContext;
-    /* ------------------------------------------------------------ */
+    
     private boolean _usingCookies = true;
     private boolean _autoInitializeServlets = true;
     private String _name;
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
      * Constructor.
      */
     public ServletHandler() {
         _context = new Context();
     }
-
-    /* ------------------------------------------------------------ */
+    
     public String getName() {
         if (_name == null) {
             _name = this.getClass().getName();
-            if (!log.isDebugEnabled())
+            if (!log.isDebugEnabled()) {
                 _name = _name.substring(_name.lastIndexOf('.') + 1);
+            }
         }
         return _name;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public void setName(String name) {
         _name = name;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public HttpContext getHttpContext() {
         return _httpContext;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public void initialize(HttpContext context) {
         SessionManager sessionManager = getSessionManager();
-
-
-        if (_httpContext != null && _httpContext != context)
+        
+        if (_httpContext != null && _httpContext != context) {
             throw new IllegalStateException("Can't initialize handler for different context");
+        }
         _httpContext = context;
 
         sessionManager.initialize(this);
     }
-
-    /* ------------------------------------------------------------ */
-    public void formAuthInit(String formLoginPage,
-                             String formErrorPage) {
+    
+    public void formAuthInit(String formLoginPage, String formErrorPage) {
         _formLoginPage = formLoginPage;
         _formErrorPage = formErrorPage;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public SessionManager getSessionManager() {
         if (_sessionManager == null) {
             _sessionManager = new HashSessionManager();
@@ -162,11 +146,11 @@ public class ServletHandler extends Container implements HttpHandler {
         }
         return _sessionManager;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public void setSessionManager(SessionManager sm) {
-        if (isStarted())
+        if (isStarted()) {
             throw new IllegalStateException("Started");
+        }
 
         int mii = 0;
         boolean setMii = false;
@@ -174,154 +158,106 @@ public class ServletHandler extends Container implements HttpHandler {
         if (_sessionManager != null) {
             mii = _sessionManager.getMaxInactiveInterval();
             setMii = true;
-            if (getHttpContext() != null)
+            if (getHttpContext() != null) {
                 _sessionManager.initialize(null);
+            }
             removeComponent(_sessionManager);
         }
 
         _sessionManager = sm;
 
         if (_sessionManager != null) {
-            if (getHttpContext() != null)
+            if (getHttpContext() != null) {
                 _sessionManager.initialize(this);
-            if (setMii)
+            }
+            if (setMii) {
                 _sessionManager.setMaxInactiveInterval(mii);
+            }
             addComponent(_sessionManager);
         }
 
         _sessionManager = sm;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public ServletContext getServletContext() {
         return _context;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public PathMap getServletMap() {
         return _servletMap;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public boolean isUsingCookies() {
         return _usingCookies;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @param uc If true, cookies are used for sessions
+     * @param uc If true, cookies are used for sessions.
      */
     public void setUsingCookies(boolean uc) {
         _usingCookies = uc;
     }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * Set the dynamic servlet path.
-     *
-     * @deprecated Use org.mortbay.jetty.servlet.Invoker
-     */
-    public void setDynamicServletPathSpec(String dynamicServletPathSpec) {
-        log.warn("setDynamicServletPathSpec is Deprecated.");
-    }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * Set dynamic servlet initial parameters.
-     *
-     * @deprecated Use org.mortbay.jetty.servlet.Invoker
-     */
-    public void setDynamicInitParams(Map initParams) {
-        log.warn("setDynamicInitParams is Deprecated.");
-    }
-
-    /**
-     * Set serving dynamic system servlets.
-     *
-     * @deprecated Use org.mortbay.jetty.servlet.Invoker
-     */
-    public void setServeDynamicSystemServlets(boolean b) {
-        log.warn("setServeDynamicSystemServlets is Deprecated.");
-    }
-
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
+    
     public ClassLoader getClassLoader() {
         return _loader;
     }
-
-    /* ------------------------------------------------------------ */
-    public ServletHolder newServletHolder(String name,
-                                          String servletClass,
-                                          String forcedPath) {
-        if (_nameMap.containsKey(name))
+    
+    public ServletHolder newServletHolder(String name, String servletClass, String forcedPath) {
+        if (_nameMap.containsKey(name)) {
             throw new IllegalArgumentException("Named servlet already exists: " + name);
+        }
 
         ServletHolder holder = new ServletHolder(this, name, servletClass, forcedPath);
         addServletHolder(holder);
 
         return holder;
     }
-
-    /* ------------------------------------------------------------ */
-    public ServletHolder newServletHolder(String name,
-                                          String servletClass) {
+    
+    public ServletHolder newServletHolder(String name, String servletClass) {
         return newServletHolder(name, servletClass, null);
     }
-
-    /* ------------------------------------------------------------ */
+    
     public ServletHolder getServletHolder(String name) {
         return (ServletHolder) _nameMap.get(name);
     }
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
-     * Map a servlet to a pathSpec
+     * Map a servlet to a pathSpec.
      *
      * @param pathSpec    The pathspec to map
      * @param servletName The name of the servlet, which must have already been added.
      * @return The servlet holder of the mapped servlet.
      */
-    public ServletHolder mapPathToServlet(String pathSpec,
-                                          String servletName) {
+    public ServletHolder mapPathToServlet(String pathSpec, String servletName) {
         ServletHolder holder = (ServletHolder) _nameMap.get(servletName);
 
         if (!pathSpec.startsWith("/") && !pathSpec.startsWith("*")) {
-            log.warn("pathSpec should start with '/' or '*' : " + pathSpec);
+            log.warn("pathSpec should start with '/' or '*' : {}", pathSpec);
             pathSpec = "/" + pathSpec;
         }
 
-        if (holder == null)
+        if (holder == null) {
             throw new IllegalArgumentException("Unknown servlet: " + servletName);
+        }
         _servletMap.put(pathSpec, holder);
         return holder;
     }
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
      * Add a servlet.
      *
      * @param name         The servlet name.
      * @param pathSpec     A path specification to map this servlet to.
      * @param servletClass The class name of the servlet.
-     * @param forcedPath   If non null, the request attribute
-     *                     javax.servlet.include.servlet_path will be set to this path before
-     *                     service is called.
+     * @param forcedPath   If non null, the request attribute javax.servlet.include.servlet_path 
+     *                     will be set to this path before service is called.
      * @return The ServletHolder for the servlet.
      */
-    public ServletHolder addServlet(String name,
-                                    String pathSpec,
-                                    String servletClass,
-                                    String forcedPath) {
+    public ServletHolder addServlet(String name, String pathSpec, String servletClass, String forcedPath) {
         ServletHolder holder = getServletHolder(name);
-        if (holder == null)
+        if (holder == null) {
             holder = newServletHolder(name, servletClass, forcedPath);
+        }
         mapPathToServlet(pathSpec, name);
         if (isStarted() && !holder.isStarted()) {
             try {
@@ -333,8 +269,6 @@ public class ServletHandler extends Container implements HttpHandler {
         return holder;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Add a servlet.
      *
@@ -343,15 +277,10 @@ public class ServletHandler extends Container implements HttpHandler {
      * @param servletClass The class name of the servlet.
      * @return The ServletHolder for the servlet.
      */
-    public ServletHolder addServlet(String name,
-                                    String pathSpec,
-                                    String servletClass) {
+    public ServletHolder addServlet(String name, String pathSpec, String servletClass) {
         return addServlet(name, pathSpec, servletClass, null);
     }
-
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
      * Add a servlet instance to this handler and map it to a pathspec.
      *
@@ -359,61 +288,52 @@ public class ServletHandler extends Container implements HttpHandler {
      * @param servletClass The class of the servlet
      * @return The created ServletHolder
      */
-    public ServletHolder addServlet(String pathSpec,
-                                    String servletClass) {
+    public ServletHolder addServlet(String pathSpec, String servletClass) {
         return addServlet(servletClass, pathSpec, servletClass, null);
     }
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
      * Register an existing ServletHolder with this handler.
      *
      * @param holder the ServletHolder to register.
      */
     public void addServletHolder(ServletHolder holder) {
-        ServletHolder existing = (ServletHolder)
-                _nameMap.get(holder.getName());
-        if (existing == null)
+        ServletHolder existing = (ServletHolder) _nameMap.get(holder.getName());
+        if (existing == null) {
             _nameMap.put(holder.getName(), holder);
-        else if (existing != holder)
-            throw new IllegalArgumentException("Holder already exists for name: " + holder.getName());
+        } else {
+            if (existing != holder) {
+                throw new IllegalArgumentException("Holder already exists for name: " + holder.getName());
+            }
+        }
         addComponent(holder);
     }
-
-    /* ------------------------------------------------------------ */
+    
     public boolean isAutoInitializeServlets() {
         return _autoInitializeServlets;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public void setAutoInitializeServlets(boolean b) {
         _autoInitializeServlets = b;
     }
-
-    /* ----------------------------------------------------------------- */
-    protected synchronized void doStart()
-            throws Exception {
-        if (isStarted())
+    
+    protected synchronized void doStart() throws Exception {
+        if (isStarted()) {
             return;
+        }
 
-        _contextLog = LogFactory.getLog("net.lightbody.bmp.proxy.jetty.jetty.context." + getHttpContext().getHttpContextName());
-
-        if (_contextLog == null)
-            _contextLog = log;
-
-        if (_sessionManager != null)
+        if (_sessionManager != null) {
             _sessionManager.start();
+        }
 
         // Initialize classloader
         _loader = getHttpContext().getClassLoader();
 
-        if (_autoInitializeServlets)
+        if (_autoInitializeServlets) {
             initializeServlets();
+        }
     }
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
      * Get Servlets.
      *
@@ -423,20 +343,16 @@ public class ServletHandler extends Container implements HttpHandler {
         // Sort and Initialize servlets
         HashSet holder_set = new HashSet(_nameMap.size());
         holder_set.addAll(_nameMap.values());
-        ServletHolder holders[] = (ServletHolder[])
-                holder_set.toArray(new ServletHolder[holder_set.size()]);
+        ServletHolder holders[] = (ServletHolder[]) holder_set.toArray(new ServletHolder[holder_set.size()]);
         java.util.Arrays.sort(holders);
         return holders;
     }
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
      * Initialize load-on-startup servlets.
      * Called automatically from start if autoInitializeServlet is true.
      */
-    public void initializeServlets()
-            throws Exception {
+    public void initializeServlets() throws Exception {
         MultiException mx = new MultiException();
 
         // Sort and Initialize servlets
@@ -451,18 +367,17 @@ public class ServletHandler extends Container implements HttpHandler {
         }
         mx.ifExceptionThrow();
     }
-
-    /* ----------------------------------------------------------------- */
-    protected synchronized void doStop()
-            throws Exception {
+    
+    protected synchronized void doStop() throws Exception {
         // Sort and Initialize servlets
         ServletHolder[] holders = getServlets();
 
         // Stop servlets
         for (int i = holders.length; i-- > 0; ) {
             try {
-                if (holders[i].isStarted())
+                if (holders[i].isStarted()) {
                     holders[i].stop();
+                }
             } catch (Exception e) {
                 log.warn(LogSupport.EXCEPTION, e);
             }
@@ -473,19 +388,15 @@ public class ServletHandler extends Container implements HttpHandler {
         _attributes.clear();
         _loader = null;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public HttpSession getHttpSession(String id) {
         return _sessionManager.getHttpSession(id);
     }
-
-    /* ------------------------------------------------------------ */
+    
     public HttpSession newHttpSession(HttpServletRequest request) {
         return _sessionManager.newHttpSession(request);
     }
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
      * Set the session timeout interval in seconds.
      *
@@ -494,8 +405,6 @@ public class ServletHandler extends Container implements HttpHandler {
     public void setSessionInactiveInterval(int seconds) {
         _sessionManager.setMaxInactiveInterval(seconds);
     }
-
-    /* ----------------------------------------------------------------- */
 
     /**
      * Handle request.
@@ -506,13 +415,10 @@ public class ServletHandler extends Container implements HttpHandler {
      * @param httpResponse
      * @throws IOException
      */
-    public void handle(String pathInContext,
-                       String pathParams,
-                       HttpRequest httpRequest,
-                       HttpResponse httpResponse)
-            throws IOException {
-        if (!isStarted())
+    public void handle(String pathInContext, String pathParams, HttpRequest httpRequest, HttpResponse httpResponse) throws IOException {
+        if (!isStarted()) {
             return;
+        }
 
         // Handle TRACE
         if (HttpRequest.__TRACE.equals(httpRequest.getMethod())) {
@@ -537,7 +443,7 @@ public class ServletHandler extends Container implements HttpHandler {
         // Look for the servlet
         Map.Entry servlet = getHolderEntry(pathInContext);
         ServletHolder servletHolder = servlet == null ? null : (ServletHolder) servlet.getValue();
-        if (log.isDebugEnabled()) log.debug("servlet=" + servlet);
+        log.debug("servlet={}", servlet);
 
         try {
             // Adjust request paths
@@ -551,13 +457,15 @@ public class ServletHandler extends Container implements HttpHandler {
             // Handle the session ID
             request.setRequestedSessionId(pathParams);
             HttpSession session = request.getSession(false);
-            if (session != null)
+            if (session != null) {
                 ((SessionManager.Session) session).access();
-            if (log.isDebugEnabled()) log.debug("session=" + session);
+            }
+            log.debug("session={}", session);
 
             // Do that funky filter and servlet thang!
-            if (servletHolder != null)
+            if (servletHolder != null) {
                 dispatch(pathInContext, request, response, servletHolder, Dispatcher.__REQUEST);
+            }
         } catch (Exception e) {
             log.debug(LogSupport.EXCEPTION, e);
 
@@ -565,29 +473,25 @@ public class ServletHandler extends Container implements HttpHandler {
             while (th instanceof ServletException) {
                 log.warn(LogSupport.EXCEPTION, th);
                 Throwable cause = ((ServletException) th).getRootCause();
-                if (cause == th || cause == null)
+                if (cause == th || cause == null) {
                     break;
+                }
                 th = cause;
             }
 
-            if (th instanceof HttpException)
+            if (th instanceof HttpException) {
                 throw (HttpException) th;
-            if (th instanceof EOFException)
+            }
+            if (th instanceof EOFException) {
                 throw (IOException) th;
-            else if (log.isDebugEnabled() || !(th instanceof java.io.IOException)) {
-                if (_contextLog != null) {
-                    if (th instanceof RuntimeException)
-                        _contextLog.error(httpRequest.getURI() + ": ", th);
-                    else
-                        _contextLog.warn(httpRequest.getURI() + ": ", th);
-                }
-
-                if (log.isDebugEnabled()) {
-                    if (th instanceof RuntimeException)
-                        log.error(httpRequest.getURI() + ": ", th);
-                    else
-                        log.warn(httpRequest.getURI() + ": ", th);
-                    log.debug(httpRequest);
+            }
+            else {
+                if (!(th instanceof java.io.IOException)) {
+                    if (th instanceof RuntimeException) {
+                        log.error("{}: ", httpRequest.getURI(), th);
+                    } else {
+                        log.warn("{}: ", httpRequest.getURI(), th);
+                    }
                 }
             }
 
@@ -597,40 +501,41 @@ public class ServletHandler extends Container implements HttpHandler {
                 request.setAttribute(ServletHandler.__J_S_ERROR_EXCEPTION, th);
                 if (th instanceof UnavailableException) {
                     UnavailableException ue = (UnavailableException) th;
-                    if (ue.isPermanent())
+                    if (ue.isPermanent()) {
                         response.sendError(HttpResponse.__404_Not_Found, e.getMessage());
-                    else
+                    } else {
                         response.sendError(HttpResponse.__503_Service_Unavailable, e.getMessage());
-                } else
+                    }
+                } else {
                     response.sendError(HttpResponse.__500_Internal_Server_Error, e.getMessage());
-            } else if (log.isDebugEnabled()) log.debug("Response already committed for handling " + th);
+                }
+            } else {
+                log.debug("Response already committed for handling {}", th);
+            }
         } catch (Error e) {
-            log.warn("Error for " + httpRequest.getURI(), e);
-            if (log.isDebugEnabled()) log.debug(httpRequest);
+            log.warn("Error for {}", httpRequest.getURI(), e);
 
             httpResponse.getHttpConnection().forceClose();
             if (!httpResponse.isCommitted()) {
                 request.setAttribute(ServletHandler.__J_S_ERROR_EXCEPTION_TYPE, e.getClass());
                 request.setAttribute(ServletHandler.__J_S_ERROR_EXCEPTION, e);
-                response.sendError(HttpResponse.__500_Internal_Server_Error,
-                        e.getMessage());
-            } else if (log.isDebugEnabled()) log.debug("Response already committed for handling ", e);
+                response.sendError(HttpResponse.__500_Internal_Server_Error, e.getMessage());
+            } else {
+                log.debug("Response already committed for handling ", e);
+            }
         } finally {
-            if (servletHolder != null && response != null) {
+            if (servletHolder != null) {
                 response.complete();
             }
         }
     }
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
      * Dispatch to a servletHolder.
      * This method may be specialized to insert extra handling in the
      * dispatch of a request to a specific servlet. This is used by
      * WebApplicatonHandler to implement dispatched filters.
-     * The default implementation simply calls
-     * ServletHolder.handle(request,response)
+     * The default implementation simply calls ServletHolder.handle(request,response)
      *
      * @param pathInContext The path used to select the servlet holder.
      * @param request
@@ -641,20 +546,11 @@ public class ServletHandler extends Container implements HttpHandler {
      * @throws UnavailableException
      * @throws IOException
      */
-    protected void dispatch(String pathInContext,
-                            HttpServletRequest request,
-                            HttpServletResponse response,
-                            ServletHolder servletHolder,
-                            int type)
-            throws ServletException,
-            UnavailableException,
-            IOException {
+    protected void dispatch(String pathInContext, HttpServletRequest request, HttpServletResponse response, 
+                            ServletHolder servletHolder, int type) throws ServletException, UnavailableException, IOException {
         servletHolder.handle(request, response);
     }
-
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
      * ServletHolder matching path.
      *
@@ -664,54 +560,52 @@ public class ServletHandler extends Container implements HttpHandler {
     public Map.Entry getHolderEntry(String pathInContext) {
         return _servletMap.getMatch(pathInContext);
     }
-
-
-    /* ------------------------------------------------------------ */
+    
     public Set getResourcePaths(String uriInContext) {
         try {
             uriInContext = URI.canonicalPath(uriInContext);
-            if (uriInContext == null)
+            if (uriInContext == null) {
                 return Collections.EMPTY_SET;
+            }
             Resource resource = getHttpContext().getResource(uriInContext);
-            if (resource == null || !resource.isDirectory())
+            if (resource == null || !resource.isDirectory()) {
                 return Collections.EMPTY_SET;
+            }
             String[] contents = resource.list();
-            if (contents == null || contents.length == 0)
+            if (contents == null || contents.length == 0) {
                 return Collections.EMPTY_SET;
+            }
             HashSet set = new HashSet(contents.length * 2);
-            for (int i = 0; i < contents.length; i++)
+            for (int i = 0; i < contents.length; i++) {
                 set.add(URI.addPaths(uriInContext, contents[i]));
+            }
             return set;
         } catch (Exception e) {
             e.printStackTrace();
-            LogSupport.ignore(log, e);
         }
 
         return Collections.EMPTY_SET;
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
-     * Get a Resource.
-     * If no resource is found, resource aliases are tried.
+     * Get a Resource. If no resource is found, resource aliases are tried.
      *
      * @param uriInContext
      * @return URL of the resource.
      * @throws MalformedURLException
      */
-    public URL getResource(String uriInContext)
-            throws MalformedURLException {
-        if (uriInContext == null || !uriInContext.startsWith("/"))
+    public URL getResource(String uriInContext) throws MalformedURLException {
+        if (uriInContext == null || !uriInContext.startsWith("/")) {
             throw new MalformedURLException(uriInContext);
+        }
 
         try {
             Resource resource = getHttpContext().getResource(uriInContext);
-            if (resource != null && resource.exists())
+            if (resource != null && resource.exists()) {
                 return resource.getURL();
+            }
         } catch (IllegalArgumentException e) {
-            LogSupport.ignore(log, e);
+            //
         } catch (MalformedURLException e) {
             throw e;
         } catch (IOException e) {
@@ -719,39 +613,43 @@ public class ServletHandler extends Container implements HttpHandler {
         }
         return null;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public InputStream getResourceAsStream(String uriInContext) {
-        if (uriInContext == null || !uriInContext.startsWith("/"))
+        if (uriInContext == null || !uriInContext.startsWith("/")) {
             return null;
+        }
         try {
             Resource resource = getHttpContext().getResource(uriInContext);
-            if (resource != null)
+            if (resource != null) {
                 return resource.getInputStream();
+            }
 
             uriInContext = URI.canonicalPath(uriInContext);
             URL url = getResource(uriInContext);
-            if (url != null)
+            if (url != null) {
                 return url.openStream();
+            }
         } catch (IOException e) {
-            LogSupport.ignore(log, e);
+            //
         }
         return null;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public String getRealPath(String path) {
-        if (log.isDebugEnabled()) log.debug("getRealPath of " + path + " in " + this);
+        log.debug("getRealPath of {} in {}", path, this);
 
-        if (__Slosh2Slash)
+        if (__Slosh2Slash) {
             path = path.replace('\\', '/');
+        }
         path = URI.canonicalPath(path);
-        if (path == null)
+        if (path == null) {
             return null;
+        }
 
         Resource baseResource = getHttpContext().getBaseResource();
-        if (baseResource == null)
+        if (baseResource == null) {
             return null;
+        }
 
         try {
             Resource resource = baseResource.addPath(path);
@@ -763,14 +661,9 @@ public class ServletHandler extends Container implements HttpHandler {
             return null;
         }
     }
-
-
-    /* ------------------------------------------------------------ */
-    protected void handleTrace(HttpServletRequest request,
-                               HttpServletResponse response)
-            throws IOException {
-        response.setHeader(HttpFields.__ContentType,
-                HttpFields.__MessageHttp);
+    
+    protected void handleTrace(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setHeader(HttpFields.__ContentType, HttpFields.__MessageHttp);
         OutputStream out = response.getOutputStream();
         ByteArrayISO8859Writer writer = new ByteArrayISO8859Writer();
         writer.write(request.toString());
@@ -779,11 +672,8 @@ public class ServletHandler extends Container implements HttpHandler {
         writer.writeTo(out);
         out.flush();
     }
-
-    /* ------------------------------------------------------------ */
-    protected void handleOptions(HttpServletRequest request,
-                                 HttpServletResponse response)
-            throws IOException {
+    
+    protected void handleOptions(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // Handle OPTIONS request for entire server
         if ("*".equals(request.getRequestURI())) {
             // 9.2
@@ -793,17 +683,13 @@ public class ServletHandler extends Container implements HttpHandler {
         } else
             response.sendError(HttpResponse.__404_Not_Found);
     }
-
-    /* ------------------------------------------------------------ */
+    
     public String getErrorPage(int status, ServletHttpRequest request) {
         return null;
     }
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
-     * Get context attribute.
-     * Tries ServletHandler attributes and then delegated to HttpContext.
+     * Get context attribute. Tries ServletHandler attributes and then delegated to HttpContext.
      *
      * @param name attribute name.
      * @return attribute
@@ -813,59 +699,52 @@ public class ServletHandler extends Container implements HttpHandler {
             // Initialize temporary directory
             Object t = getHttpContext().getAttribute(ServletHandler.__J_S_CONTEXT_TEMPDIR);
 
-            if (t instanceof File)
-                return (File) t;
+            if (t instanceof File) {
+                return t;
+            }
 
             return getHttpContext().getTempDirectory();
         }
 
-        if (_attributes.containsKey(name))
+        if (_attributes.containsKey(name)) {
             return _attributes.get(name);
+        }
         return getHttpContext().getAttribute(name);
     }
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
-     * Get context attribute names.
-     * Combines ServletHandler and HttpContext attributes.
+     * Get context attribute names. Combines ServletHandler and HttpContext attributes.
      */
     protected Enumeration getContextAttributeNames() {
-        if (_attributes.size() == 0)
+        if (_attributes.size() == 0) {
             return getHttpContext().getAttributeNames();
+        }
         HashSet set = new HashSet(_attributes.keySet());
         Enumeration e = getHttpContext().getAttributeNames();
-        while (e.hasMoreElements())
+        while (e.hasMoreElements()) {
             set.add(e.nextElement());
+        }
         return Collections.enumeration(set);
     }
-
-    /* ------------------------------------------------------------ */
-    /* Set a Servlet context attribute.
-     * Servlet Context attributes may hide HttpContext attributes.
+    
+    /** 
+     * Set a Servlet context attribute. Servlet Context attributes may hide HttpContext attributes.
      */
     protected void setContextAttribute(String name, Object value) {
         _attributes.put(name, value);
     }
-
-    /* ------------------------------------------------------------ */
-    /* Remove a Servlet context attribute.
-     * Servlet Context attributes may hide HttpContext attributes.
+    
+    /** Remove a Servlet context attribute. Servlet Context attributes may hide HttpContext attributes.
      */
     protected void removeContextAttribute(String name) {
         _attributes.remove(name);
     }
-
-
-    /* ----------------------------------------------------------------- */
-    public void handleTrace(HttpRequest request,
-                            HttpResponse response)
-            throws IOException {
+    
+    public void handleTrace(HttpRequest request, HttpResponse response) throws IOException {
         boolean trace = getHttpContext().getHttpServer().getTrace();
 
         // Handle TRACE by returning request header
-        response.setField(HttpFields.__ContentType,
-                HttpFields.__MessageHttp);
+        response.setField(HttpFields.__ContentType, HttpFields.__MessageHttp);
         if (trace) {
             OutputStream out = response.getOutputStream();
             ByteArrayISO8859Writer writer = new ByteArrayISO8859Writer();
@@ -877,8 +756,7 @@ public class ServletHandler extends Container implements HttpHandler {
         }
         request.setHandled(true);
     }
-
-    /* ----------------------------------------------------------------- */
+    
     public void destroy() {
         Iterator iter = _nameMap.values().iterator();
         while (iter.hasNext()) {
@@ -887,71 +765,60 @@ public class ServletHandler extends Container implements HttpHandler {
             removeComponent(sh);
         }
 
-        if (_sessionManager != null)
+        if (_sessionManager != null) {
             removeComponent(_sessionManager);
+        }
         _sessionManager = null;
         _context = null;
         super.destroy();
     }
-
-    /* ----------------------------------------------------------------- */
+    
     protected void finalize() throws Throwable {
         destroy();
     }
-
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
+    
     class Context implements ServletContext {
         @Override
         public String getContextPath() {
             return null;
         }
 
-        /* -------------------------------------------------------- */
         ServletHandler getServletHandler() {
             return ServletHandler.this;
         }
 
-        /* -------------------------------------------------------- */
         public ServletContext getContext(String uri) {
             ServletHandler handler = (ServletHandler)
                     getHttpContext().getHttpServer()
                             .findHandler(net.lightbody.bmp.proxy.jetty.jetty.servlet.ServletHandler.class,
                                     uri,
                                     getHttpContext().getVirtualHosts());
-            if (handler != null)
+            if (handler != null) {
                 return handler.getServletContext();
+            }
             return null;
         }
 
-        /* ------------------------------------------------------------ */
         public int getMajorVersion() {
             return 2;
         }
 
-        /* ------------------------------------------------------------ */
         public int getMinorVersion() {
             return 4;
         }
 
-        /* ------------------------------------------------------------ */
         public String getMimeType(String file) {
             return getHttpContext().getMimeByExtension(file);
         }
 
-        /* ------------------------------------------------------------ */
         public Set getResourcePaths(String uriInContext) {
             return ServletHandler.this.getResourcePaths(uriInContext);
         }
 
-        /* ------------------------------------------------------------ */
-        public URL getResource(String uriInContext)
-                throws MalformedURLException {
+        public URL getResource(String uriInContext) throws MalformedURLException {
             return ServletHandler.this.getResource(uriInContext);
         }
 
-        /* ------------------------------------------------------------ */
         public InputStream getResourceAsStream(String uriInContext) {
             return ServletHandler.this.getResourceAsStream(uriInContext);
         }
@@ -966,7 +833,6 @@ public class ServletHandler extends Container implements HttpHandler {
             throw new UnsupportedOperationException("This should not have been reached");
         }
 
-        /* ------------------------------------------------------------ */
         public String getRealPath(String path) {
             return ServletHandler.this.getRealPath(path);
         }
@@ -978,16 +844,12 @@ public class ServletHandler extends Container implements HttpHandler {
             return null;
         }
 
-        /* ------------------------------------------------------------ */
-
         /**
          * @deprecated
          */
         public Enumeration getServlets() {
             return Collections.enumeration(Collections.EMPTY_LIST);
         }
-
-        /* ------------------------------------------------------------ */
 
         /**
          * @deprecated
@@ -996,47 +858,33 @@ public class ServletHandler extends Container implements HttpHandler {
             return Collections.enumeration(Collections.EMPTY_LIST);
         }
 
-        /* ------------------------------------------------------------ */
-
         /**
-         * Servlet Log.
-         * Log message to servlet log. Use either the system log or a
-         * LogSinkset via the context attribute
-         * org.mortbay.jetty.servlet.Context.LogSink
+         * Servlet Log. Log message to servlet log. Use either the system log or a LogSinkset via the context attribute
+         * org.mortbay.jetty.servlet.Context.LogSink.
          *
          * @param msg
          */
         public void log(String msg) {
-            _contextLog.info(msg);
+            log.info(msg);
         }
-
-        /* ------------------------------------------------------------ */
 
         /**
-         * @deprecated As of Java Servlet API 2.1, use
-         * {@link #log(String message, Throwable throwable)}
-         * instead.
+         * @deprecated As of Java Servlet API 2.1, use {@link #log(String message, Throwable throwable)} instead.
          */
         public void log(Exception e, String msg) {
-            _contextLog.warn(msg, e);
+            log.warn(msg, e);
         }
 
-        /* ------------------------------------------------------------ */
         public void log(String msg, Throwable th) {
-            _contextLog.warn(msg, th);
+            log.warn(msg, th);
         }
 
-        /* ------------------------------------------------------------ */
         public String getServerInfo() {
             return Version.getImplVersion();
         }
 
-
-        /* ------------------------------------------------------------ */
-
         /**
-         * Get context init parameter.
-         * Delegated to HttpContext.
+         * Get context init parameter. Delegated to HttpContext.
          *
          * @param param param name
          * @return param value or null
@@ -1045,11 +893,8 @@ public class ServletHandler extends Container implements HttpHandler {
             return getHttpContext().getInitParameter(param);
         }
 
-        /* ------------------------------------------------------------ */
-
         /**
-         * Get context init parameter names.
-         * Delegated to HttpContext.
+         * Get context init parameter names. Delegated to HttpContext.
          *
          * @return Enumeration of names
          */
@@ -1057,12 +902,8 @@ public class ServletHandler extends Container implements HttpHandler {
             return getHttpContext().getInitParameterNames();
         }
 
-
-        /* ------------------------------------------------------------ */
-
         /**
-         * Get context attribute.
-         * Tries ServletHandler attributes and then delegated to HttpContext.
+         * Get context attribute. Tries ServletHandler attributes and then delegated to HttpContext.
          *
          * @param name attribute name.
          * @return attribute
@@ -1071,21 +912,15 @@ public class ServletHandler extends Container implements HttpHandler {
             return getContextAttribute(name);
         }
 
-        /* ------------------------------------------------------------ */
-
         /**
-         * Get context attribute names.
-         * Combines ServletHandler and HttpContext attributes.
+         * Get context attribute names. Combines ServletHandler and HttpContext attributes.
          */
         public Enumeration getAttributeNames() {
             return getContextAttributeNames();
         }
 
-        /* ------------------------------------------------------------ */
-
         /**
-         * Set context attribute names.
-         * Sets the ServletHandler attributes and may hide HttpContext attributes.
+         * Set context attribute names. Sets the ServletHandler attributes and may hide HttpContext attributes.
          *
          * @param name  attribute name.
          * @param value attribute value
@@ -1094,11 +929,8 @@ public class ServletHandler extends Container implements HttpHandler {
             setContextAttribute(name, value);
         }
 
-        /* ------------------------------------------------------------ */
-
         /**
-         * Remove context attribute.
-         * Puts a null into the ServletHandler attributes and may hide a HttpContext attribute.
+         * Remove context attribute. Puts a null into the ServletHandler attributes and may hide a HttpContext attribute.
          *
          * @param name attribute name.
          */
@@ -1112,7 +944,6 @@ public class ServletHandler extends Container implements HttpHandler {
             return null;
         }
 
-        /* ------------------------------------------------------------ */
         public String toString() {
             return "ServletContext[" + getHttpContext() + "]";
         }

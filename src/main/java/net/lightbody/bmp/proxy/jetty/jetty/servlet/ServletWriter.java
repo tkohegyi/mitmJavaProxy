@@ -16,10 +16,9 @@
 package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
 import net.lightbody.bmp.proxy.jetty.http.HttpOutputStream;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.IO;
-import net.lightbody.bmp.proxy.jetty.util.LogSupport;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -27,36 +26,27 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 
-
-/* ------------------------------------------------------------ */
-
 /**
- * Servlet PrintWriter.
- * This writer can be disabled.
- * It is crying out for optimization.
+ * Servlet PrintWriter. This writer can be disabled. It is crying out for optimization.
  *
  * @author Greg Wilkins (gregw)
  * @version $Revision: 1.16 $
  */
 class ServletWriter extends PrintWriter {
-    private static Log log = LogFactory.getLog(ServletWriter.class);
+    private final Logger log = LoggerFactory.getLogger(ServletWriter.class);
 
     String encoding = null;
-    OutputStream os = null;
+    OutputStream os;
     boolean written = false;
-
-    /* ------------------------------------------------------------ */
-    ServletWriter(OutputStream os)
-            throws IOException {
+    
+    ServletWriter(OutputStream os) throws IOException {
         super((os instanceof HttpOutputStream)
                 ? ((HttpOutputStream) os).getWriter(null)
                 : new OutputStreamWriter(os));
         this.os = os;
     }
 
-    /* ------------------------------------------------------------ */
-    ServletWriter(OutputStream os, String encoding)
-            throws IOException {
+    ServletWriter(OutputStream os, String encoding) throws IOException {
         super((os instanceof HttpOutputStream)
                 ? ((HttpOutputStream) os).getWriter(encoding)
                 : new OutputStreamWriter(os, encoding));
@@ -64,12 +54,10 @@ class ServletWriter extends PrintWriter {
         this.encoding = encoding;
     }
 
-    /* ------------------------------------------------------------ */
     public void disable() {
         out = IO.getNullWriter();
     }
 
-    /* ------------------------------------------------------------ */
     public void reset() {
         try {
             out = IO.getNullWriter();
@@ -77,19 +65,15 @@ class ServletWriter extends PrintWriter {
             out = new OutputStreamWriter(os, encoding);
             written = false;
         } catch (UnsupportedEncodingException e) {
-            log.fatal(e);
+            log.error(e.getMessage(), e);
             System.exit(1);
         }
     }
 
-
-    /* ------------------------------------------------------------ */
     public boolean isWritten() {
         return written;
     }
 
-
-    /* ------------------------------------------------------------ */
     public void print(boolean p) {
         written = true;
         super.print(p);
@@ -185,63 +169,62 @@ class ServletWriter extends PrintWriter {
         super.println(p);
     }
 
-
     public void write(int c) {
         try {
-            if (out == null)
+            if (out == null) {
                 throw new IOException("closed");
+            }
             written = true;
             out.write(c);
         } catch (IOException e) {
-            LogSupport.ignore(log, e);
             setError();
         }
     }
 
     public void write(char[] cbuf, int off, int len) {
         try {
-            if (out == null)
+            if (out == null) {
                 throw new IOException("closed");
+            }
             written = true;
             out.write(cbuf, off, len);
         } catch (IOException e) {
-            LogSupport.ignore(log, e);
             setError();
         }
     }
 
     public void write(char[] cbuf) {
         try {
-            if (out == null)
+            if (out == null) {
                 throw new IOException("closed");
+            }
             written = true;
             out.write(cbuf, 0, cbuf.length);
         } catch (IOException e) {
-            LogSupport.ignore(log, e);
             setError();
         }
     }
 
     public void write(String s, int off, int len) {
         try {
-            if (out == null)
+            if (out == null) {
                 throw new IOException("closed");
+            }
             written = true;
             out.write(s, off, len);
         } catch (IOException e) {
-            LogSupport.ignore(log, e);
             setError();
         }
     }
 
     public void write(String s) {
         try {
-            if (out == null)
+            if (out == null) {
                 throw new IOException("closed");
+            }
             written = true;
             out.write(s, 0, s.length());
         } catch (IOException e) {
-            LogSupport.ignore(log, e);
             setError();
         }
     }
