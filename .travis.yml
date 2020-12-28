@@ -6,7 +6,7 @@ before_install:
 install:
  - mkdir $HOME/localrepo/
 script:
- - ./gradlew build sonarqube
+ - ./gradlew build
 branches:
   only:
   - master
