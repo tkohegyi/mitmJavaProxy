@@ -23,9 +23,12 @@ If you're using Java, the easiest way to get started is to embed the project dir
         <type>pom</type>
     </dependency>
 
-The latest release is:
-
+Release
+------------
+Latest announced release is available here:
 [ ![Download](https://api.bintray.com/packages/epam/wilma/mitmJavaProxy/images/download.svg?version=2.0-0.14.13) ](https://bintray.com/epam/wilma/mitmJavaProxy/2.0-0.14.13/link)
+
+CI Build Status: [![Build Status](https://travis-ci.com/tkohegyi/mitmJavaProxy.svg?branch=master)](https://travis-ci.com/tkohegyi/mitmJavaProxy)
 
 HTTP Request Manipulation
 -------------------
