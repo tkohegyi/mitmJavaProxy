@@ -31,6 +31,7 @@ public class SimpleProxyResponseNotVolatileTest extends AbstractSimpleProxyTool 
         ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, GET_QUICK_RESPONSE, true, false);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
+        Thread.sleep(1000);
         assertEquals(1, responseCount.get());
         assertEquals(1, requestCount.get());
     }
@@ -40,6 +41,7 @@ public class SimpleProxyResponseNotVolatileTest extends AbstractSimpleProxyTool 
         ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, GET_QUICK_RESPONSE, true, false);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
+        Thread.sleep(1000);
         assertEquals(1, responseCount.get());
         assertEquals(1, requestCount.get());
     }

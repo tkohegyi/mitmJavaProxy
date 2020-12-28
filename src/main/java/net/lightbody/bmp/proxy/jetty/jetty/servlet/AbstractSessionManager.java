@@ -17,11 +17,11 @@ package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
 import com.epam.mitm.proxy.ProxyServer;
 import net.lightbody.bmp.proxy.jetty.http.HttpOnlyCookie;
-import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LazyList;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.MultiMap;
-import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
@@ -45,16 +45,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-
-/* ------------------------------------------------------------ */
-
 /**
  * An Abstract implementation of SessionManager.
- * The partial implementation of SessionManager interface provides
- * the majority of the handling required to implement a
- * SessionManager.  Concrete implementations of SessionManager based
- * on AbstractSessionManager need only implement the newSession method
- * to return a specialized version of the Session inner class that
+ * The partial implementation of SessionManager interface provides the majority of the handling required
+ * to implement a SessionManager. Concrete implementations of SessionManager based on AbstractSessionManager
+ * need only implement the newSession method to return a specialized version of the Session inner class that
  * provides an attribute Map.
  * <p>
  * If the property
@@ -66,13 +61,13 @@ import java.util.Random;
  * @version $Id: AbstractSessionManager.java,v 1.53 2006/11/22 20:01:10 gregwilkins Exp $
  */
 public abstract class AbstractSessionManager implements SessionManager {
-    /* ------------------------------------------------------------ */
+    
     public final static int __distantFuture = 60 * 60 * 24 * 7 * 52 * 20;
     private final static String __NEW_SESSION_ID = "net.lightbody.bmp.proxy.jetty.jetty.newSessionId";
-    /* ------------------------------------------------------------ */
+    
     /* global Map of ID to session */
     protected static MultiMap __allSessions = new MultiMap();
-    private static Log log = LogFactory.getLog(AbstractSessionManager.class);
+    private final Logger log = LoggerFactory.getLogger(AbstractSessionManager.class);
     protected transient ArrayList _sessionListeners = new ArrayList();
     protected transient ArrayList _sessionAttributeListeners = new ArrayList();
     protected transient Map _sessions;
@@ -85,7 +80,7 @@ public abstract class AbstractSessionManager implements SessionManager {
     protected boolean _secureCookies = false;
     protected boolean _httpOnly = false;
     protected boolean _invalidateGlobal = true;
-    /* ------------------------------------------------------------ */
+    
     // Setting of max inactive interval for new sessions
     // -1 means no timeout
     private int _dftMaxIdleSecs = -1;
@@ -93,44 +88,32 @@ public abstract class AbstractSessionManager implements SessionManager {
     private String _workerName;
     private transient SessionScavenger _scavenger = null;
 
-    /* ------------------------------------------------------------ */
     public AbstractSessionManager() {
         this(null);
     }
 
-    /* ------------------------------------------------------------ */
     public AbstractSessionManager(Random random) {
         _random = random;
         _weakRandom = false;
     }
 
-
-
-    /* ------------------------------------------------------------ */
-
     /**
      * @return True if requested session ID are first considered for new
-     * @deprecated use getCrossContextSessionIDs
-     * session IDs
+     * @deprecated use getCrossContextSessionIDs session IDs
      */
     public boolean getUseRequestedId() {
         return _crossContextSessionIDs;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set Use Requested ID.
      *
      * @param useRequestedId True if requested session ID are first considered for new
-     * @deprecated use setCrossContextSessionIDs
-     * session IDs
+     * @deprecated use setCrossContextSessionIDs session IDs
      */
     public void setUseRequestedId(boolean useRequestedId) {
         _crossContextSessionIDs = useRequestedId;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return True if cross context session IDs are first considered for new
@@ -140,54 +123,45 @@ public abstract class AbstractSessionManager implements SessionManager {
         return _crossContextSessionIDs;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Set Cross Context sessions IDs
      * This option activates a mode where a requested session ID can be used to create a
      * new session. This facilitates the sharing of session cookies when cross context
      * dispatches use sessions.
      *
-     * @param useRequestedId True if cross context session ID are first considered for new
-     *                       session IDs
+     * @param useRequestedId True if cross context session ID are first considered for new session IDs
      */
     public void setCrossContextSessionIDs(boolean useRequestedId) {
         _crossContextSessionIDs = useRequestedId;
     }
 
-    /* ------------------------------------------------------------ */
     public void initialize(ServletHandler handler) {
         _handler = handler;
     }
 
-    /* ------------------------------------------------------------ */
     public Map getSessionMap() {
         return Collections.unmodifiableMap(_sessions);
     }
 
-    /* ------------------------------------------------------------ */
     public int getSessions() {
         return _sessions.size();
     }
 
-    /* ------------------------------------------------------------ */
     public int getMinSessions() {
         return _minSessions;
     }
 
-    /* ------------------------------------------------------------ */
     public int getMaxSessions() {
         return _maxSessions;
     }
 
-    /* ------------------------------------------------------------ */
     public void resetStats() {
         _minSessions = _sessions.size();
         _maxSessions = _sessions.size();
     }
 
-    /* ------------------------------------------------------------ */
-    /* new Session ID.
+    /**
+     * new Session ID.
      * If the request has a requestedSessionID which is unique, that is used.
      * The session ID is created as a unique random long base 36.
      * If the request has a jvmRoute attribute, that is appended as a
@@ -203,11 +177,12 @@ public abstract class AbstractSessionManager implements SessionManager {
             // in this server and thus we are doing a cross context dispatch.
             if (_crossContextSessionIDs) {
                 String requested_id = (String) request.getAttribute(__NEW_SESSION_ID);
-                if (requested_id == null)
+                if (requested_id == null) {
                     requested_id = request.getRequestedSessionId();
-                if (requested_id != null &&
-                        requested_id != null && __allSessions.containsKey(requested_id) && !_sessions.containsKey(requested_id))
+                }
+                if (requested_id != null && __allSessions.containsKey(requested_id) && !_sessions.containsKey(requested_id)) {
                     return requested_id;
+                }
             }
 
             // pick a new unique ID!
@@ -217,30 +192,34 @@ public abstract class AbstractSessionManager implements SessionManager {
                         ? (hashCode() ^ Runtime.getRuntime().freeMemory() ^ _random.nextInt() ^ (((long) request.hashCode()) << 32))
                         : _random.nextLong();
                 r ^= created;
-                if (request != null && request.getRemoteAddr() != null)
+                if (request != null && request.getRemoteAddr() != null) {
                     r ^= request.getRemoteAddr().hashCode();
-                if (r < 0)
+                }
+                if (r < 0) {
                     r = -r;
+                }
                 id = Long.toString(r, 36);
 
                 String worker = (String) request.getAttribute("net.lightbody.bmp.proxy.jetty.http.ajp.JVMRoute");
-                if (worker != null)
+                if (worker != null) {
                     id += "." + worker;
-                else if (_workerName != null)
-                    id += "." + _workerName;
+                }
+                else {
+                    if (_workerName != null) {
+                        id += "." + _workerName;
+                    }
+                }
             }
             return id;
         }
     }
 
-    /* ------------------------------------------------------------ */
     public HttpSession getHttpSession(String id) {
         synchronized (this) {
             return (HttpSession) _sessions.get(id);
         }
     }
 
-    /* ------------------------------------------------------------ */
     public HttpSession newHttpSession(HttpServletRequest request) {
         Session session = newSession(request);
         session.setMaxInactiveInterval(_dftMaxIdleSecs);
@@ -248,23 +227,25 @@ public abstract class AbstractSessionManager implements SessionManager {
             synchronized (this) {
                 _sessions.put(session.getId(), session);
                 __allSessions.add(session.getId(), session);
-                if (_sessions.size() > this._maxSessions)
+                if (_sessions.size() > this._maxSessions) {
                     this._maxSessions = _sessions.size();
+                }
             }
         }
 
         HttpSessionEvent event = new HttpSessionEvent(session);
 
-        for (int i = 0; i < _sessionListeners.size(); i++)
-            ((HttpSessionListener) _sessionListeners.get(i))
-                    .sessionCreated(event);
+        for (int i = 0; i < _sessionListeners.size(); i++) {
+            ((HttpSessionListener) _sessionListeners.get(i)).sessionCreated(event);
+        }
 
-        if (getCrossContextSessionIDs())
+        if (getCrossContextSessionIDs()) {
             request.setAttribute(__NEW_SESSION_ID, session.getId());
+        }
         return session;
     }
 
-    /* ------------------------------------------------------------ */
+    
     public Cookie getSessionCookie(HttpSession session, boolean requestIsSecure) {
         if (_handler.isUsingCookies()) {
             Cookie cookie = _handler.getSessionManager().getHttpOnly()
@@ -273,17 +254,21 @@ public abstract class AbstractSessionManager implements SessionManager {
             String domain = _handler.getServletContext().getInitParameter(SessionManager.__SessionDomain);
             String maxAge = _handler.getServletContext().getInitParameter(SessionManager.__MaxAge);
             String path = _handler.getServletContext().getInitParameter(SessionManager.__SessionPath);
-            if (path == null)
+            if (path == null) {
                 path = getCrossContextSessionIDs() ? "/" : _handler.getHttpContext().getContextPath();
-            if (path == null || path.length() == 0)
+            }
+            if (path == null || path.length() == 0) {
                 path = "/";
+            }
 
-            if (domain != null)
+            if (domain != null) {
                 cookie.setDomain(domain);
-            if (maxAge != null)
+            }
+            if (maxAge != null) {
                 cookie.setMaxAge(Integer.parseInt(maxAge));
-            else
+            } else {
                 cookie.setMaxAge(-1);
+            }
 
             cookie.setSecure(requestIsSecure && getSecureCookies());
             cookie.setPath(path);
@@ -293,23 +278,17 @@ public abstract class AbstractSessionManager implements SessionManager {
         return null;
     }
 
-    /* ------------------------------------------------------------ */
     protected abstract Session newSession(HttpServletRequest request);
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get the workname.
-     * If set, the workername is dot appended to the session ID
-     * and can be used to assist session affinity in a load balancer.
+     * If set, the workername is dot appended to the session ID and can be used to assist session affinity in a load balancer.
      *
      * @return String or null
      */
     public String getWorkerName() {
         return _workerName;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Set the workname.
@@ -322,8 +301,6 @@ public abstract class AbstractSessionManager implements SessionManager {
         _workerName = workerName;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return seconds
      */
@@ -331,19 +308,15 @@ public abstract class AbstractSessionManager implements SessionManager {
         return _dftMaxIdleSecs;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param seconds
      */
     public void setMaxInactiveInterval(int seconds) {
         _dftMaxIdleSecs = seconds;
-        if (_dftMaxIdleSecs > 0 && _scavengePeriodMs > _dftMaxIdleSecs * 100)
+        if (_dftMaxIdleSecs > 0 && _scavengePeriodMs > _dftMaxIdleSecs * 100) {
             setScavengePeriod((_dftMaxIdleSecs + 9) / 10);
+        }
     }
-
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return seconds
@@ -352,32 +325,32 @@ public abstract class AbstractSessionManager implements SessionManager {
         return _scavengePeriodMs / 1000;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param seconds
      */
     public void setScavengePeriod(int seconds) {
-        if (seconds == 0)
+        if (seconds == 0) {
             seconds = 60;
+        }
 
         int old_period = _scavengePeriodMs;
         int period = seconds * 1000;
-        if (period > ProxyServer.PROXY_TIMEOUT)
+        if (period > ProxyServer.PROXY_TIMEOUT) {
             period = ProxyServer.PROXY_TIMEOUT;
-        if (period < 1000)
+        }
+        if (period < 1000) {
             period = 1000;
+        }
 
         if (period != old_period) {
             synchronized (this) {
                 _scavengePeriodMs = period;
-                if (_scavenger != null)
+                if (_scavenger != null) {
                     _scavenger.interrupt();
+                }
             }
         }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return Returns the httpOnly.
@@ -386,16 +359,12 @@ public abstract class AbstractSessionManager implements SessionManager {
         return _httpOnly;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param httpOnly The httpOnly to set.
      */
     public void setHttpOnly(boolean httpOnly) {
         _httpOnly = httpOnly;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return Returns the secureCookies.
@@ -404,8 +373,6 @@ public abstract class AbstractSessionManager implements SessionManager {
         return _secureCookies;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @param secureCookies The secureCookies to set.
      */
@@ -413,12 +380,9 @@ public abstract class AbstractSessionManager implements SessionManager {
         _secureCookies = secureCookies;
     }
 
-    /* ------------------------------------------------------------ */
     public boolean isInvalidateGlobal() {
         return _invalidateGlobal;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param global True if session invalidation should be global.
@@ -429,32 +393,29 @@ public abstract class AbstractSessionManager implements SessionManager {
         _invalidateGlobal = global;
     }
 
-    /* ------------------------------------------------------------ */
-    public void addEventListener(EventListener listener)
-            throws IllegalArgumentException {
-
-        if (listener instanceof HttpSessionAttributeListener)
+    public void addEventListener(EventListener listener) throws IllegalArgumentException {
+        if (listener instanceof HttpSessionAttributeListener) {
             _sessionAttributeListeners.add(listener);
-        if (listener instanceof HttpSessionListener)
+        }
+        if (listener instanceof HttpSessionListener) {
             _sessionListeners.add(listener);
+        }
     }
 
-    /* ------------------------------------------------------------ */
     public void removeEventListener(EventListener listener) {
-        if (listener instanceof HttpSessionAttributeListener)
+        if (listener instanceof HttpSessionAttributeListener) {
             _sessionAttributeListeners.remove(listener);
-        if (listener instanceof HttpSessionListener)
+        }
+        if (listener instanceof HttpSessionListener) {
             _sessionListeners.remove(listener);
+        }
     }
 
-    /* ------------------------------------------------------------ */
     public boolean isStarted() {
         return _scavenger != null;
     }
 
-    /* ------------------------------------------------------------ */
-    public void start()
-            throws Exception {
+    public void start() throws Exception {
         if (_random == null) {
             log.debug("New random session seed");
             try {
@@ -467,8 +428,9 @@ public abstract class AbstractSessionManager implements SessionManager {
             _random.setSeed(_random.nextLong() ^ System.currentTimeMillis() ^ hashCode() ^ Runtime.getRuntime().freeMemory());
         }
 
-        if (_sessions == null)
+        if (_sessions == null) {
             _sessions = new HashMap();
+        }
 
         // Start the session scavenger if we haven't already
         if (_scavenger == null) {
@@ -477,8 +439,6 @@ public abstract class AbstractSessionManager implements SessionManager {
         }
     }
 
-
-    /* ------------------------------------------------------------ */
     public void stop() {
         // Invalidate all sessions to cause unbind events
         ArrayList sessions = new ArrayList(_sessions.values());
@@ -491,26 +451,26 @@ public abstract class AbstractSessionManager implements SessionManager {
         // stop the scavenger
         SessionScavenger scavenger = _scavenger;
         _scavenger = null;
-        if (scavenger != null)
+        if (scavenger != null) {
             scavenger.interrupt();
+        }
     }
 
-    /* -------------------------------------------------------------- */
-
     /**
-     * Find sessions that have timed out and invalidate them.
-     * This runs in the SessionScavenger thread.
+     * Find sessions that have timed out and invalidate them. This runs in the SessionScavenger thread.
      */
     private void scavenge() {
         Thread thread = Thread.currentThread();
         ClassLoader old_loader = thread.getContextClassLoader();
         try {
-            if (_handler == null)
+            if (_handler == null) {
                 return;
+            }
 
             ClassLoader loader = _handler.getClassLoader();
-            if (loader != null)
+            if (loader != null) {
                 thread.setContextClassLoader(loader);
+            }
 
             long now = System.currentTimeMillis();
 
@@ -539,8 +499,9 @@ public abstract class AbstractSessionManager implements SessionManager {
                 if (idleTime > 0 && session._accessed + idleTime < System.currentTimeMillis()) {
                     session.invalidate();
                     int nbsess = this._sessions.size();
-                    if (nbsess < this._minSessions)
+                    if (nbsess < this._minSessions) {
                         this._minSessions = nbsess;
+                    }
                 }
             }
         } finally {
@@ -548,21 +509,13 @@ public abstract class AbstractSessionManager implements SessionManager {
         }
     }
 
-
-    /* ------------------------------------------------------------ */
     public Random getRandom() {
         return _random;
     }
 
-    /* ------------------------------------------------------------ */
     public void setRandom(Random random) {
         _random = random;
     }
-
-
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* -------------------------------------------------------------- */
 
     /**
      * SessionScavenger is a background thread that kills off old sessions
@@ -579,17 +532,14 @@ public abstract class AbstractSessionManager implements SessionManager {
                 while (isStarted()) {
                     try {
                         if (period != _scavengePeriodMs) {
-                            if (log.isDebugEnabled())
-                                log.debug("Session scavenger period = " + _scavengePeriodMs / 1000 + "s");
+                            log.debug("Session scavenger period = {}s", _scavengePeriodMs / 1000);
                             period = _scavengePeriodMs;
                         }
                         sleep(period > 1000 ? period : 1000);
                         AbstractSessionManager.this.scavenge();
                     } catch (InterruptedException ex) {
                         continue;
-                    } catch (Error e) {
-                        log.warn(LogSupport.EXCEPTION, e);
-                    } catch (Exception e) {
+                    } catch (Error| Exception e) {
                         log.warn(LogSupport.EXCEPTION, e);
                     }
                 }
@@ -601,10 +551,6 @@ public abstract class AbstractSessionManager implements SessionManager {
 
     }   // SessionScavenger
 
-
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     public abstract class Session implements SessionManager.Session {
         Map _values;
         boolean _invalid = false;
@@ -614,89 +560,84 @@ public abstract class AbstractSessionManager implements SessionManager {
         long _maxIdleMs = _dftMaxIdleSecs * 1000;
         String _id;
 
-        /* ------------------------------------------------------------- */
         protected Session(HttpServletRequest request) {
             _id = newSessionId(request, _created);
-            if (_dftMaxIdleSecs >= 0)
+            if (_dftMaxIdleSecs >= 0) {
                 _maxIdleMs = _dftMaxIdleSecs * 1000;
+            }
         }
-
-        /* ------------------------------------------------------------ */
+        
         protected abstract Map newAttributeMap();
-
-        /* ------------------------------------------------------------ */
+        
         public void access() {
             _newSession = false;
             _accessed = System.currentTimeMillis();
         }
-
-        /* ------------------------------------------------------------ */
+        
         public boolean isValid() {
             return !_invalid;
         }
-
-        /* ------------------------------------------------------------ */
+        
         public ServletContext getServletContext() {
             return _handler.getServletContext();
         }
 
-        /* ------------------------------------------------------------- */
-        public String getId()
-                throws IllegalStateException {
+        public String getId() throws IllegalStateException {
             return _id;
         }
 
-        /* ------------------------------------------------------------- */
-        public long getCreationTime()
-                throws IllegalStateException {
-            if (_invalid) throw new IllegalStateException();
+        public long getCreationTime() throws IllegalStateException {
+            if (_invalid) {
+                throw new IllegalStateException();
+            }
             return _created;
         }
 
-        /* ------------------------------------------------------------- */
-        public long getLastAccessedTime()
-                throws IllegalStateException {
-            if (_invalid) throw new IllegalStateException();
+        public long getLastAccessedTime() throws IllegalStateException {
+            if (_invalid) {
+                throw new IllegalStateException();
+            }
             return _accessed;
         }
 
-        /* ------------------------------------------------------------- */
         public int getMaxInactiveInterval() {
-            if (_invalid) throw new IllegalStateException();
+            if (_invalid) {
+                throw new IllegalStateException();
+            }
             return (int) (_maxIdleMs / 1000);
         }
 
-        /* ------------------------------------------------------------- */
-
-        /* ------------------------------------------------------------- */
         public void setMaxInactiveInterval(int secs) {
             _maxIdleMs = (long) secs * 1000;
-            if (_maxIdleMs > 0 && (_maxIdleMs / 10) < _scavengePeriodMs)
+            if (_maxIdleMs > 0 && (_maxIdleMs / 10) < _scavengePeriodMs) {
                 AbstractSessionManager.this.setScavengePeriod((secs + 9) / 10);
+            }
         }
 
         /**
          * @deprecated
          */
-        public HttpSessionContext getSessionContext()
-                throws IllegalStateException {
-            if (_invalid) throw new IllegalStateException();
+        public HttpSessionContext getSessionContext() throws IllegalStateException {
+            if (_invalid) {
+                throw new IllegalStateException();
+            }
             return SessionContext.NULL_IMPL;
         }
 
-        /* ------------------------------------------------------------- */
         public void invalidate() throws IllegalStateException {
-            if (log.isDebugEnabled()) log.debug("Invalidate session " + getId() + " in " + _handler.getHttpContext());
+            log.debug("Invalidate session {} in {}", getId(), _handler.getHttpContext());
             try {
                 // Notify listeners and unbind values
                 synchronized (this) {
-                    if (_invalid)
+                    if (_invalid) {
                         throw new IllegalStateException();
+                    }
 
                     if (_sessionListeners != null) {
                         HttpSessionEvent event = new HttpSessionEvent(this);
-                        for (int i = _sessionListeners.size(); i-- > 0; )
+                        for (int i = _sessionListeners.size(); i-- > 0; ) {
                             ((HttpSessionListener) _sessionListeners.get(i)).sessionDestroyed(event);
+                        }
                     }
 
                     if (_values != null) {
@@ -737,34 +678,38 @@ public abstract class AbstractSessionManager implements SessionManager {
             }
         }
 
-        /* ------------------------------------------------------------- */
-        public boolean isNew()
-                throws IllegalStateException {
-            if (_invalid) throw new IllegalStateException();
+        public boolean isNew() throws IllegalStateException {
+            if (_invalid) {
+                throw new IllegalStateException();
+            }
             return _newSession;
         }
 
-
-        /* ------------------------------------------------------------ */
         public synchronized Object getAttribute(String name) {
-            if (_invalid) throw new IllegalStateException();
-            if (_values == null)
+            if (_invalid) {
+                throw new IllegalStateException();
+            }
+            if (_values == null) {
                 return null;
+            }
             return _values.get(name);
         }
 
-        /* ------------------------------------------------------------ */
         public synchronized Enumeration getAttributeNames() {
-            if (_invalid) throw new IllegalStateException();
+            if (_invalid) {
+                throw new IllegalStateException();
+            }
             List names = _values == null ? Collections.EMPTY_LIST : new ArrayList(_values.keySet());
             return Collections.enumeration(names);
         }
 
-        /* ------------------------------------------------------------ */
         public synchronized void setAttribute(String name, Object value) {
-            if (_invalid) throw new IllegalStateException();
-            if (_values == null)
+            if (_invalid) {
+                throw new IllegalStateException();
+            }
+            if (_values == null) {
                 _values = newAttributeMap();
+            }
             Object oldValue = _values.put(name, value);
 
             if (value == null || !value.equals(oldValue)) {
@@ -773,13 +718,10 @@ public abstract class AbstractSessionManager implements SessionManager {
 
                 if (_sessionAttributeListeners.size() > 0) {
                     HttpSessionBindingEvent event =
-                            new HttpSessionBindingEvent(this, name,
-                                    oldValue == null ? value : oldValue);
+                            new HttpSessionBindingEvent(this, name, oldValue == null ? value : oldValue);
 
                     for (int i = 0; i < _sessionAttributeListeners.size(); i++) {
-                        HttpSessionAttributeListener l =
-                                (HttpSessionAttributeListener)
-                                        _sessionAttributeListeners.get(i);
+                        HttpSessionAttributeListener l = (HttpSessionAttributeListener) _sessionAttributeListeners.get(i);
 
                         if (oldValue == null)
                             l.attributeAdded(event);
@@ -792,100 +734,78 @@ public abstract class AbstractSessionManager implements SessionManager {
             }
         }
 
-        /* ------------------------------------------------------------ */
         public synchronized void removeAttribute(String name) {
-            if (_invalid) throw new IllegalStateException();
-            if (_values == null)
+            if (_invalid) {
+                throw new IllegalStateException();
+            }
+            if (_values == null) {
                 return;
+            }
 
             Object old = _values.remove(name);
             if (old != null) {
                 unbindValue(name, old);
                 if (_sessionAttributeListeners.size() > 0) {
-                    HttpSessionBindingEvent event =
-                            new HttpSessionBindingEvent(this, name, old);
+                    HttpSessionBindingEvent event = new HttpSessionBindingEvent(this, name, old);
 
                     for (int i = 0; i < _sessionAttributeListeners.size(); i++) {
-                        HttpSessionAttributeListener l =
-                                (HttpSessionAttributeListener)
-                                        _sessionAttributeListeners.get(i);
+                        HttpSessionAttributeListener l = (HttpSessionAttributeListener) _sessionAttributeListeners.get(i);
                         l.attributeRemoved(event);
                     }
                 }
             }
         }
 
-        /* ------------------------------------------------------------- */
-
         /**
-         * @deprecated As of Version 2.2, this method is
-         * replaced by {@link #getAttribute}
+         * @deprecated As of Version 2.2, this method is replaced by {@link #getAttribute}
          */
-        public Object getValue(String name)
-                throws IllegalStateException {
+        public Object getValue(String name) throws IllegalStateException {
             return getAttribute(name);
         }
 
-        /* ------------------------------------------------------------- */
-
         /**
-         * @deprecated As of Version 2.2, this method is
-         * replaced by {@link #getAttributeNames}
+         * @deprecated As of Version 2.2, this method is replaced by {@link #getAttributeNames}
          */
-        public synchronized String[] getValueNames()
-                throws IllegalStateException {
+        public synchronized String[] getValueNames() throws IllegalStateException {
             if (_invalid) throw new IllegalStateException();
-            if (_values == null)
+            if (_values == null) {
                 return new String[0];
+            }
             String[] a = new String[_values.size()];
             return (String[]) _values.keySet().toArray(a);
         }
 
-        /* ------------------------------------------------------------- */
-
         /**
-         * @deprecated As of Version 2.2, this method is
-         * replaced by {@link #setAttribute}
+         * @deprecated As of Version 2.2, this method is replaced by {@link #setAttribute}
          */
-        public void putValue(java.lang.String name,
-                             java.lang.Object value)
-                throws IllegalStateException {
+        public void putValue(java.lang.String name, java.lang.Object value) throws IllegalStateException {
             setAttribute(name, value);
         }
 
-        /* ------------------------------------------------------------- */
-
         /**
-         * @deprecated As of Version 2.2, this method is
-         * replaced by {@link #removeAttribute}
+         * @deprecated As of Version 2.2, this method is replaced by {@link #removeAttribute}
          */
-        public void removeValue(java.lang.String name)
-                throws IllegalStateException {
+        public void removeValue(java.lang.String name) throws IllegalStateException {
             removeAttribute(name);
         }
-
-        /* ------------------------------------------------------------- */
 
         /**
          * If value implements HttpSessionBindingListener, call valueBound()
          */
         private void bindValue(java.lang.String name, Object value) {
-            if (value != null && value instanceof HttpSessionBindingListener)
-                ((HttpSessionBindingListener) value)
-                        .valueBound(new HttpSessionBindingEvent(this, name));
+            if (value != null && value instanceof HttpSessionBindingListener) {
+                ((HttpSessionBindingListener) value).valueBound(new HttpSessionBindingEvent(this, name));
+            }
         }
-
-        /* ------------------------------------------------------------- */
 
         /**
          * If value implements HttpSessionBindingListener, call valueUnbound()
          */
         private void unbindValue(java.lang.String name, Object value) {
-            if (value != null && value instanceof HttpSessionBindingListener)
-                ((HttpSessionBindingListener) value)
-                        .valueUnbound(new HttpSessionBindingEvent(this, name));
+            if (value != null && value instanceof HttpSessionBindingListener) {
+                ((HttpSessionBindingListener) value).valueUnbound(new HttpSessionBindingEvent(this, name));
+            }
         }
     }
-
 
 }
