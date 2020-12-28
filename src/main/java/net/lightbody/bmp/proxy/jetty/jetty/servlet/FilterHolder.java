@@ -97,7 +97,7 @@ public class FilterHolder
 
         /* ------------------------------------------------------------ */
         public ServletContext getServletContext() {
-            return ((WebApplicationHandler) _httpHandler).getServletContext();
+            throw new RuntimeException("This should not have been reached");
         }
 
         /* -------------------------------------------------------- */

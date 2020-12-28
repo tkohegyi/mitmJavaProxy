@@ -15,22 +15,16 @@
 
 package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
-import net.lightbody.bmp.proxy.jetty.http.HttpConnection;
-import net.lightbody.bmp.proxy.jetty.http.PathMap;
 import net.lightbody.bmp.proxy.jetty.log.LogFactory;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
 import net.lightbody.bmp.proxy.jetty.util.MultiMap;
 import net.lightbody.bmp.proxy.jetty.util.StringMap;
 import net.lightbody.bmp.proxy.jetty.util.URI;
-import net.lightbody.bmp.proxy.jetty.util.UrlEncoded;
 import net.lightbody.bmp.proxy.jetty.util.WriterOutputStream;
 import org.apache.commons.logging.Log;
 
 import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
@@ -43,7 +37,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -56,7 +49,7 @@ import java.util.Map;
  * @author Greg Wilkins (gregw)
  * @version $Id: Dispatcher.java,v 1.92 2005/12/12 18:03:31 gregwilkins Exp $
  */
-public class Dispatcher implements RequestDispatcher {
+public class Dispatcher {
     /**
      * Dispatch types
      */
@@ -173,138 +166,6 @@ public class Dispatcher implements RequestDispatcher {
     public boolean isNamed() {
         return _pathInContext == null;
     }
-
-    /* ------------------------------------------------------------ */
-    public void include(ServletRequest servletRequest,
-                        ServletResponse servletResponse)
-            throws ServletException, IOException {
-        dispatch(servletRequest, servletResponse, Dispatcher.__INCLUDE);
-    }
-
-    /* ------------------------------------------------------------ */
-    public void forward(ServletRequest servletRequest,
-                        ServletResponse servletResponse)
-            throws ServletException, IOException {
-        dispatch(servletRequest, servletResponse, Dispatcher.__FORWARD);
-    }
-
-    /* ------------------------------------------------------------ */
-    void error(ServletRequest servletRequest,
-               ServletResponse servletResponse)
-            throws ServletException, IOException {
-        dispatch(servletRequest, servletResponse, Dispatcher.__ERROR);
-    }
-
-    /* ------------------------------------------------------------ */
-    void dispatch(ServletRequest servletRequest,
-                  ServletResponse servletResponse,
-                  int type)
-            throws ServletException, IOException {
-        HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
-        HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
-
-        HttpConnection httpConnection =
-                _servletHandler.getHttpContext().getHttpConnection();
-        ServletHttpRequest servletHttpRequest =
-                (ServletHttpRequest) httpConnection.getRequest().getWrapper();
-
-        // wrap the request and response
-        DispatcherRequest request = new DispatcherRequest(httpServletRequest,
-                servletHttpRequest,
-                type);
-        DispatcherResponse response = new DispatcherResponse(request,
-                httpServletResponse);
-
-        if (type == Dispatcher.__FORWARD)
-            servletResponse.resetBuffer();
-
-        // Merge parameters
-        String query = _query;
-        MultiMap parameters = null;
-        if (query != null) {
-            Map old_params = httpServletRequest.getParameterMap();
-
-            // Add the parameters
-            parameters = new MultiMap();
-            UrlEncoded.decodeTo(query, parameters, request.getCharacterEncoding());
-
-            if (old_params != null && old_params.size() > 0) {
-                // Merge old parameters.
-                Iterator iter = old_params.entrySet().iterator();
-                while (iter.hasNext()) {
-                    Map.Entry entry = (Map.Entry) iter.next();
-                    String name = (String) entry.getKey();
-                    String[] values = (String[]) entry.getValue();
-                    for (int i = 0; i < values.length; i++)
-                        parameters.add(name, values[i]);
-                }
-            }
-
-            request.setParameters(parameters);
-
-            String old_query = httpServletRequest.getQueryString();
-            if (old_query != null)
-                request.setQuery(query + "&" + old_query);
-            else
-                request.setQuery(query);
-        }
-
-        Object old_scope = null;
-        try {
-            if (request.crossContext()) {
-                // Setup new _context
-                old_scope =
-                        _servletHandler.getHttpContext()
-                                .enterContextScope(httpConnection.getRequest(), httpConnection.getResponse());
-            }
-
-            if (isNamed()) {
-                // No further modifications required.
-                if (_servletHandler instanceof WebApplicationHandler) {
-                    JSR154Filter filter = ((WebApplicationHandler) _servletHandler).getJsr154Filter();
-                    if (filter != null && filter.isUnwrappedDispatchSupported()) {
-                        filter.setDispatch(request, response);
-                        _servletHandler.dispatch(null, httpServletRequest, httpServletResponse, _holder, type);
-                    } else
-                        _servletHandler.dispatch(null, request, response, _holder, type);
-                } else
-                    _servletHandler.dispatch(null, request, response, _holder, type);
-            } else {
-                // Adjust servlet paths
-                request.setPaths(_servletHandler.getHttpContext().getContextPath(),
-                        PathMap.pathMatch(_pathSpec, _pathInContext),
-                        PathMap.pathInfo(_pathSpec, _pathInContext));
-
-
-                // are we wrap over or wrap under
-                if (_servletHandler instanceof WebApplicationHandler) {
-                    JSR154Filter filter = ((WebApplicationHandler) _servletHandler).getJsr154Filter();
-                    if (filter != null && filter.isUnwrappedDispatchSupported()) {
-                        filter.setDispatch(request, response);
-                        _servletHandler.dispatch(_pathInContext, httpServletRequest, httpServletResponse, _holder, type);
-                    } else
-                        _servletHandler.dispatch(_pathInContext, request, response, _holder, type);
-                } else
-                    _servletHandler.dispatch(_pathInContext, request, response, _holder, type);
-
-
-                if (type != Dispatcher.__INCLUDE)
-                    response.close();
-                else if (response.isFlushNeeded())
-                    response.flushBuffer();
-            }
-        } finally {
-            // restore _context
-            if (request.crossContext())
-                _servletHandler.getHttpContext()
-                        .leaveContextScope(httpConnection.getRequest(),
-                                httpConnection.getResponse(),
-                                old_scope);
-        }
-    }
-
-
-    /* ------------------------------------------------------------ */
 
     /* ------------------------------------------------------------ */
     public String toString() {

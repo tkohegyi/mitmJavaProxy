@@ -147,13 +147,15 @@ public abstract class AbstractComplexProxyTool {
             final HttpResponse response = httpClient.execute(host, request);
             final HttpEntity resEntity = response.getEntity();
             return new ResponseInfo(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity));
+        } catch (Exception e) {
+            LOGGER.error(e.getLocalizedMessage(), e);
+            throw e;
         } finally {
             httpClient.close();
         }
     }
 
-    protected ResponseInfo httpGetWithApacheClient(HttpHost host, String resourceUrl, boolean isProxied, boolean callHeadFirst)
-            throws Exception {
+    protected ResponseInfo httpGetWithApacheClient(HttpHost host, String resourceUrl, boolean isProxied, boolean callHeadFirst) throws Exception {
         final CloseableHttpClient httpClient = TestUtils.buildHttpClient(isProxied, proxyServer.getPort());
         try {
 
@@ -176,6 +178,9 @@ public abstract class AbstractComplexProxyTool {
                         Integer.valueOf(response.getFirstHeader("Content-Length").getValue()));
             }
             return new ResponseInfo(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity));
+        } catch (Exception e) {
+            LOGGER.error(e.getLocalizedMessage(), e);
+            throw e;
         } finally {
             httpClient.close();
         }

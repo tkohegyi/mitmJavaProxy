@@ -75,7 +75,6 @@ import java.util.Set;
  *
  * @author Greg Wilkins
  * @version $Id: ServletHandler.java,v 1.133 2006/03/15 14:43:00 gregwilkins Exp $
- * @see net.lightbody.bmp.proxy.jetty.jetty.servlet.WebApplicationHandler
  */
 public class ServletHandler extends Container implements HttpHandler {
     /* ------------------------------------------------------------ */
@@ -765,83 +764,6 @@ public class ServletHandler extends Container implements HttpHandler {
         }
     }
 
-    /* ------------------------------------------------------------ */
-    public RequestDispatcher getRequestDispatcher(String uriInContext) {
-        if (uriInContext == null)
-            return null;
-
-        if (!uriInContext.startsWith("/"))
-            return null;
-
-        try {
-            String query = null;
-            int q = 0;
-            if ((q = uriInContext.indexOf('?')) > 0) {
-                query = uriInContext.substring(q + 1);
-                uriInContext = uriInContext.substring(0, q);
-            }
-            if ((q = uriInContext.indexOf(';')) > 0)
-                uriInContext = uriInContext.substring(0, q);
-
-            String pathInContext = URI.canonicalPath(URI.decodePath(uriInContext));
-            Map.Entry entry = getHolderEntry(pathInContext);
-            if (entry != null)
-                return new Dispatcher(ServletHandler.this,
-                        uriInContext,
-                        pathInContext,
-                        query,
-                        entry);
-        } catch (Exception e) {
-            LogSupport.ignore(log, e);
-        }
-        return null;
-    }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * Get Named dispatcher.
-     *
-     * @param name The name of the servlet. If null or empty string, the
-     *             containers default servlet is returned.
-     * @return Request dispatcher for the named servlet.
-     */
-    public RequestDispatcher getNamedDispatcher(String name) {
-        if (name == null || name.length() == 0)
-            name = __DEFAULT_SERVLET;
-
-        try {
-            return new Dispatcher(ServletHandler.this, name);
-        } catch (Exception e) {
-            LogSupport.ignore(log, e);
-        }
-
-        return null;
-    }
-
-
-    /* ------------------------------------------------------------ */
-    protected void notFound(HttpServletRequest request,
-                            HttpServletResponse response)
-            throws IOException {
-        if (log.isDebugEnabled()) log.debug("Not Found " + request.getRequestURI());
-        String method = request.getMethod();
-
-        // Not found special requests.
-        if (method.equals(HttpRequest.__GET) ||
-                method.equals(HttpRequest.__HEAD) ||
-                method.equals(HttpRequest.__POST)) {
-            response.sendError(HttpResponse.__404_Not_Found);
-        } else if (method.equals(HttpRequest.__TRACE))
-            handleTrace(request, response);
-        else if (method.equals(HttpRequest.__OPTIONS))
-            handleOptions(request, response);
-        else {
-            // Unknown METHOD
-            response.setHeader(HttpFields.__Allow, __AllowString);
-            response.sendError(HttpResponse.__405_Method_Not_Allowed);
-        }
-    }
 
     /* ------------------------------------------------------------ */
     protected void handleTrace(HttpServletRequest request,
@@ -1034,22 +956,20 @@ public class ServletHandler extends Container implements HttpHandler {
             return ServletHandler.this.getResourceAsStream(uriInContext);
         }
 
+        @Override
+        public RequestDispatcher getRequestDispatcher(String path) {
+            throw new UnsupportedOperationException("This should not have been reached");
+        }
+
+        @Override
+        public RequestDispatcher getNamedDispatcher(String name) {
+            throw new UnsupportedOperationException("This should not have been reached");
+        }
+
         /* ------------------------------------------------------------ */
         public String getRealPath(String path) {
             return ServletHandler.this.getRealPath(path);
         }
-
-        /* ------------------------------------------------------------ */
-        public RequestDispatcher getRequestDispatcher(String uriInContext) {
-            return ServletHandler.this.getRequestDispatcher(uriInContext);
-        }
-
-        /* ------------------------------------------------------------ */
-        public RequestDispatcher getNamedDispatcher(String name) {
-            return ServletHandler.this.getNamedDispatcher(name);
-        }
-
-        /* ------------------------------------------------------------ */
 
         /**
          * @deprecated
@@ -1186,10 +1106,9 @@ public class ServletHandler extends Container implements HttpHandler {
             removeContextAttribute(name);
         }
 
-        /* ------------------------------------------------------------ */
+        @Override
         public String getServletContextName() {
-            if (getHttpContext() instanceof WebApplicationContext)
-                return ((WebApplicationContext) getHttpContext()).getDisplayName();
+            //here there was some code in bmp that was cut out for Wilma
             return null;
         }
 

@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Locale;
 
 /* ------------------------------------------------------------ */
@@ -372,36 +373,7 @@ public class ServletHttpResponse implements HttpServletResponse {
             // handle normally
             _httpResponse.sendError(status, message);
         } else {
-            _httpResponse.setStatus(status, message);
-
-            if (message == null) {
-                message = (String) HttpResponse.__statusMsg.get(TypeUtil.newInteger(status));
-                if (message == null)
-                    message = "" + status;
-            }
-
-            // handle error page
-            ServletHolder holder = _servletHttpRequest.getServletHolder();
-            if (holder != null)
-                _servletHttpRequest.setAttribute(ServletHandler.__J_S_ERROR_SERVLET_NAME,
-                        holder.getName());
-            _servletHttpRequest.setAttribute(ServletHandler.__J_S_ERROR_REQUEST_URI,
-                    _servletHttpRequest.getRequestURI());
-            _servletHttpRequest.setAttribute(ServletHandler.__J_S_ERROR_STATUS_CODE,
-                    new Integer(status));
-            _servletHttpRequest.setAttribute(ServletHandler.__J_S_ERROR_MESSAGE,
-                    message);
-
-            RequestDispatcher dispatcher =
-                    _servletHttpRequest.getServletHandler().getServletContext()
-                            .getRequestDispatcher(error_page);
-
-            try {
-                ((Dispatcher) dispatcher).error(_servletHttpRequest, this);
-            } catch (ServletException e) {
-                log.warn(LogSupport.EXCEPTION, e);
-                _httpResponse.sendError(status, message);
-            }
+            throw new UnsupportedEncodingException("This code part should not have been reached.");
         }
         complete();
     }
