@@ -18,7 +18,6 @@ package net.lightbody.bmp.proxy.jetty.http;
 import net.lightbody.bmp.proxy.jetty.http.handler.NotFoundHandler;
 import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
 import net.lightbody.bmp.proxy.jetty.util.Container;
-import net.lightbody.bmp.proxy.jetty.util.EventProvider;
 import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
 import net.lightbody.bmp.proxy.jetty.util.LifeCycle;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
@@ -63,7 +62,7 @@ import java.util.WeakHashMap;
  * @see HttpListener
  * @see BmpServer
  */
-public class HttpServer extends Container implements LifeCycle, EventProvider, Serializable {
+public class HttpServer extends Container implements LifeCycle, Serializable {
 
     private static final WeakHashMap __servers = new WeakHashMap();
     private static final Collection __roServers = Collections.unmodifiableCollection(__servers.keySet());

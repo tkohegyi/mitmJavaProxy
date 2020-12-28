@@ -18,7 +18,6 @@ package net.lightbody.bmp.proxy.jetty.http;
 import net.lightbody.bmp.proxy.jetty.http.ResourceCache.ResourceMetaData;
 import net.lightbody.bmp.proxy.jetty.http.handler.ErrorPageHandler;
 import net.lightbody.bmp.proxy.jetty.util.Container;
-import net.lightbody.bmp.proxy.jetty.util.EventProvider;
 import net.lightbody.bmp.proxy.jetty.util.IO;
 import net.lightbody.bmp.proxy.jetty.util.LazyList;
 import net.lightbody.bmp.proxy.jetty.util.LifeCycle;
@@ -70,7 +69,7 @@ import java.util.StringTokenizer;
  * @see HttpHandler
  * @see net.lightbody.bmp.proxy.jetty.jetty.servlet.ServletHttpContext
  */
-public class HttpContext extends Container implements LifeCycle, HttpHandler, EventProvider, Serializable {
+public class HttpContext extends Container implements LifeCycle, HttpHandler, Serializable {
     /**
      * File class path attribute.
      * If this name is set as a context init parameter, then the attribute

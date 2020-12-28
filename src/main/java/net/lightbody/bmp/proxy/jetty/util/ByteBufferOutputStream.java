@@ -21,13 +21,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/* ------------------------------------------------------------ */
-
 /**
  * ByteBuffer OutputStream.
  * This stream is similar to the java.io.ByteArrayOutputStream,
- * except that it maintains a reserve of bytes at the start of the
- * buffer and allows efficient prepending of data.
+ * except that it maintains a reserve of bytes at the start of the buffer and allows efficient prepending of data.
  *
  * @author Greg Wilkins (gregw)
  * @version $Revision: 1.18 $
@@ -48,7 +45,7 @@ public class ByteBufferOutputStream extends OutputStream {
     private int _end;
 
     /**
-     * The last byte of data written to the buffer
+     * The last byte of data written to the buffer.
      * _start <= _pos <= _end
      */
     private int _pos;
@@ -58,16 +55,12 @@ public class ByteBufferOutputStream extends OutputStream {
     private boolean _resized;
     private boolean _fixed;
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      */
     public ByteBufferOutputStream() {
         this(4096, 0, 0);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -78,8 +71,6 @@ public class ByteBufferOutputStream extends OutputStream {
         this(capacity, 0, 0);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      *
@@ -89,8 +80,6 @@ public class ByteBufferOutputStream extends OutputStream {
     public ByteBufferOutputStream(int capacity, int preReserve) {
         this(capacity, preReserve, 0);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -108,16 +97,12 @@ public class ByteBufferOutputStream extends OutputStream {
         _postReserve = postReserve;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return True if the buffer cannot be expanded
      */
     public boolean isFixed() {
         return _fixed;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param fixed True if the buffer cannot be expanded
@@ -126,16 +111,12 @@ public class ByteBufferOutputStream extends OutputStream {
         _fixed = fixed;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return The size of valid data in the buffer.
      */
     public int size() {
         return _pos - _start;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return The size of the buffer.
@@ -144,16 +125,12 @@ public class ByteBufferOutputStream extends OutputStream {
         return _buf.length;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return The capacity of the buffer excluding pre and post reserves.
      */
     public int capacity() {
         return _end - _start;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return The available capacity of the buffer excluding pre and post
@@ -163,16 +140,12 @@ public class ByteBufferOutputStream extends OutputStream {
         return _end - _pos;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return The current pre reserve.
      */
     public int preReserve() {
         return _start;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @return The current post reserve.
@@ -181,36 +154,26 @@ public class ByteBufferOutputStream extends OutputStream {
         return _buf.length - _end;
     }
 
-    /* ------------------------------------------------------------ */
-    public void writeTo(OutputStream out)
-            throws IOException {
+    public void writeTo(OutputStream out) throws IOException {
         out.write(_buf, _start, _pos - _start);
     }
 
-    /* ------------------------------------------------------------ */
-    public void write(int b)
-            throws IOException {
+    public void write(int b) throws IOException {
         ensureSpareCapacity(1);
         _buf[_pos++] = (byte) b;
     }
 
-    /* ------------------------------------------------------------ */
-    public void write(byte[] b)
-            throws IOException {
+    public void write(byte[] b) throws IOException {
         ensureSpareCapacity(b.length);
         System.arraycopy(b, 0, _buf, _pos, b.length);
         _pos += b.length;
     }
 
-    /* ------------------------------------------------------------ */
-    public void write(byte[] b, int offset, int length)
-            throws IOException {
+    public void write(byte[] b, int offset, int length) throws IOException {
         ensureSpareCapacity(length);
         System.arraycopy(b, offset, _buf, _pos, length);
         _pos += length;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Write byte to start of the buffer.
@@ -222,8 +185,6 @@ public class ByteBufferOutputStream extends OutputStream {
         _buf[--_start] = (byte) b;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Write byte array to start of the buffer.
      *
@@ -234,8 +195,6 @@ public class ByteBufferOutputStream extends OutputStream {
         System.arraycopy(b, 0, _buf, _start - b.length, b.length);
         _start -= b.length;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Write byte range to start of the buffer.
@@ -250,8 +209,6 @@ public class ByteBufferOutputStream extends OutputStream {
         _start -= length;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Write bytes into the postreserve.
      * The capacity is not checked.
@@ -259,12 +216,9 @@ public class ByteBufferOutputStream extends OutputStream {
      * @param b
      * @throws IOException
      */
-    public void postwrite(byte b)
-            throws IOException {
+    public void postwrite(byte b) {
         _buf[_pos++] = b;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Write bytes into the postreserve.
@@ -275,54 +229,47 @@ public class ByteBufferOutputStream extends OutputStream {
      * @param length
      * @throws IOException
      */
-    public void postwrite(byte[] b, int offset, int length)
-            throws IOException {
+    public void postwrite(byte[] b, int offset, int length) {
         System.arraycopy(b, offset, _buf, _pos, length);
         _pos += length;
     }
 
-    /* ------------------------------------------------------------ */
     public void flush()
             throws IOException {
     }
 
-    /* ------------------------------------------------------------ */
     public void resetStream() {
         _pos = _preReserve;
         _start = _preReserve;
     }
 
-    /* ------------------------------------------------------------ */
     public void reset(int reserve) {
         _preReserve = reserve;
         _pos = _preReserve;
         _start = _preReserve;
     }
 
-    /* ------------------------------------------------------------ */
-    public void close()
-            throws IOException {
+    public void close() throws IOException {
         flush();
     }
 
-    /* ------------------------------------------------------------ */
     public void destroy() {
-        if (!_resized)
+        if (!_resized) {
             ByteArrayPool.returnByteArray(_buf);
+        }
         _buf = null;
     }
 
-    /* ------------------------------------------------------------ */
     public void ensureReserve(int n) {
         if (n > _start) {
-            if (log.isDebugEnabled()) log.debug("Reserve: " + n + ">" + _start);
+            log.debug("Reserve: {}>{}", n, _start);
             if ((_pos + n) < _end) {
-                if (log.isDebugEnabled()) log.debug("Shift reserve: " + _pos + "+" + n + "<" + _end);
+                log.debug("Shift reserve: {}+{}<{}", _pos, n, _end);
                 System.arraycopy(_buf, _start, _buf, n, _pos - _start);
                 _pos = _pos + n - _start;
                 _start = n;
             } else {
-                if (log.isDebugEnabled()) log.debug("New reserve: " + _pos + "+" + n + ">=" + _end);
+                log.debug("New reserve: {}+{}>={}", _pos, n, _end);
                 byte[] buf = new byte[_buf.length + n - _start];
                 System.arraycopy(_buf, _start, buf, n, _pos - _start);
                 _pos = n + _pos - _start;
@@ -333,29 +280,27 @@ public class ByteBufferOutputStream extends OutputStream {
         }
     }
 
-
-    /* ------------------------------------------------------------ */
-    public void ensureSize(int bufSize)
-            throws IOException {
+    public void ensureSize(int bufSize) throws IOException {
         ensureSize(bufSize, _preReserve, _postReserve);
     }
 
-    /* ------------------------------------------------------------ */
-    public void ensureSize(int bufSize, int pre, int post)
-            throws IOException {
+    public void ensureSize(int bufSize, int pre, int post) {
         // Do we have space?
         if (bufSize > _buf.length || pre > _preReserve || post > _postReserve) {
             // Make a bigger buffer if we are allowed.
-            if (_fixed)
+            if (_fixed) {
                 throw new IllegalStateException("Fixed");
+            }
 
             byte[] old = _buf;
             _buf = ByteArrayPool.getByteArray(bufSize);
 
-            if (_pos > _start)
+            if (_pos > _start) {
                 System.arraycopy(old, _start, _buf, pre, _pos - _start);
-            if (!_resized)
+            }
+            if (!_resized) {
                 ByteArrayPool.returnByteArray(old);
+            }
 
             _end = _buf.length - post;
             _preReserve = pre;
@@ -365,36 +310,36 @@ public class ByteBufferOutputStream extends OutputStream {
         }
     }
 
-    /* ------------------------------------------------------------ */
-    public void ensureSpareCapacity(int n)
-            throws IOException {
+    public void ensureSpareCapacity(int n) throws IOException {
         // Do we have space?
         if (n > spareCapacity()) {
             // No, then try flushing what we do have
-            if (_pos > _start)
+            if (_pos > _start) {
                 flush();
+            }
 
             ensureCapacity(n);
         }
     }
 
-    /* ------------------------------------------------------------ */
-    public void ensureCapacity(int n)
-            throws IOException {
+    public void ensureCapacity(int n) {
         // Do we have space?
         if (n > capacity()) {
             // Make a bigger buffer if we are allowed.
-            if (_fixed)
+            if (_fixed) {
                 throw new IllegalStateException("Fixed");
+            }
 
             int new_size = ((n + _preReserve + _postReserve + 4095) / 4096) * 4096;
 
             byte[] old = _buf;
             _buf = new byte[new_size];
-            if (_pos > _start)
+            if (_pos > _start) {
                 System.arraycopy(old, _start, _buf, _start, _pos - _start);
-            if (!_resized)
+            }
+            if (!_resized) {
                 ByteArrayPool.returnByteArray(old);
+            }
 
             _end = _buf.length - _postReserve;
             _resized = true;

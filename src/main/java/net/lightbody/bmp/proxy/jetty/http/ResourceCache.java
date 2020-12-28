@@ -171,7 +171,7 @@ public class ResourceCache implements LifeCycle, Serializable {
      * @throws IOException
      */
     public Resource getResource(String pathInContext) throws IOException {
-        if (log.isTraceEnabled()) log.trace("getResource " + pathInContext);
+        log.trace("getResource " + pathInContext);
         if (_resourceBase == null) {
             return null;
         }

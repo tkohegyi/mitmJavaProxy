@@ -17,10 +17,8 @@ package net.lightbody.bmp.proxy.jetty.util;
 
 import java.io.ByteArrayOutputStream;
 
-/* ------------------------------------------------------------ */
-
 /**
- * ByteArrayOutputStream with public internals
+ * ByteArrayOutputStream with public internals.
  *
  * @author Greg Wilkins (gregw)
  * @version $Revision: 1.2 $
