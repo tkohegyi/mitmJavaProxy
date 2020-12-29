@@ -23,9 +23,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 
-
-/* ------------------------------------------------------------ */
-
 /**
  * Dechunk input.
  * Or limit content length.

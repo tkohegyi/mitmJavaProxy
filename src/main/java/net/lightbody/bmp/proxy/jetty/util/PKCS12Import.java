@@ -49,8 +49,7 @@ import java.util.Enumeration;
 public class PKCS12Import {
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
-            System.err.println(
-                    "usage: java PKCS12Import {pkcs12file} [newjksfile]");
+            System.err.println("usage: java PKCS12Import {pkcs12file} [newjksfile]");
             System.exit(1);
         }
 
@@ -63,14 +62,12 @@ public class PKCS12Import {
         }
 
         if (!fileIn.canRead()) {
-            System.err.println(
-                    "Unable to access input keystore: " + fileIn.getPath());
+            System.err.println("Unable to access input keystore: " + fileIn.getPath());
             System.exit(2);
         }
 
         if (fileOut.exists() && !fileOut.canWrite()) {
-            System.err.println(
-                    "Output file is not writable: " + fileOut.getPath());
+            System.err.println("Output file is not writable: " + fileOut.getPath());
             System.exit(2);
         }
 
@@ -85,9 +82,7 @@ public class PKCS12Import {
 
         kspkcs12.load(new FileInputStream(fileIn), inphrase);
 
-        ksjks.load(
-                (fileOut.exists())
-                        ? new FileInputStream(fileOut) : null, outphrase);
+        ksjks.load((fileOut.exists()) ? new FileInputStream(fileOut) : null, outphrase);
 
         Enumeration eAliases = kspkcs12.aliases();
         int n = 0;

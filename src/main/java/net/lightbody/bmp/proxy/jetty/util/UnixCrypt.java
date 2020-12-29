@@ -26,8 +26,6 @@
 
 package net.lightbody.bmp.proxy.jetty.util;
 
-/* ------------------------------------------------------------ */
-
 /** Unix Crypt.
  * Implements the one way cryptography used by Unix systems for
  * simple password protection.
@@ -45,7 +43,8 @@ public class UnixCrypt extends Object {
             57, 49, 41, 33, 25, 17, 9, 1,
             59, 51, 43, 35, 27, 19, 11, 3,
             61, 53, 45, 37, 29, 21, 13, 5,
-            63, 55, 47, 39, 31, 23, 15, 7};
+            63, 55, 47, 39, 31, 23, 15, 7
+    };
 
     /* The final permutation is the inverse of IP - no table is necessary */
     private static final byte[] ExpandTr = {    /* expansion operation */
@@ -56,7 +55,8 @@ public class UnixCrypt extends Object {
             16, 17, 18, 19, 20, 21,
             20, 21, 22, 23, 24, 25,
             24, 25, 26, 27, 28, 29,
-            28, 29, 30, 31, 32, 1};
+            28, 29, 30, 31, 32, 1
+    };
 
     private static final byte[] PC1 = {        /* permuted choice table 1 */
             57, 49, 41, 33, 25, 17, 9,
@@ -67,10 +67,12 @@ public class UnixCrypt extends Object {
             63, 55, 47, 39, 31, 23, 15,
             7, 62, 54, 46, 38, 30, 22,
             14, 6, 61, 53, 45, 37, 29,
-            21, 13, 5, 28, 20, 12, 4};
+            21, 13, 5, 28, 20, 12, 4
+    };
 
     private static final byte[] Rotates = {    /* PC1 rotation schedule */
-            1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1};
+            1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1
+    };
 
 
     private static final byte[] PC2 = {        /* permuted choice table 2 */
@@ -82,7 +84,8 @@ public class UnixCrypt extends Object {
             0, 0, 41, 52, 31, 37, 47, 55,
             0, 0, 30, 40, 51, 45, 33, 48,
             0, 0, 44, 49, 39, 56, 34, 53,
-            0, 0, 46, 42, 50, 36, 29, 32};
+            0, 0, 46, 42, 50, 36, 29, 32
+    };
 
     private static final byte[][] S = {    /* 48->32 bit substitution tables */
             /* S[1]			*/
@@ -124,7 +127,8 @@ public class UnixCrypt extends Object {
             {13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7,
                     1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2,
                     7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8,
-                    2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11}};
+                    2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11}
+    };
 
     private static final byte[] P32Tr = {    /* 32-bit permutation function */
             16, 7, 20, 21,
@@ -134,7 +138,8 @@ public class UnixCrypt extends Object {
             2, 8, 24, 14,
             32, 27, 3, 9,
             19, 13, 30, 6,
-            22, 11, 4, 25};
+            22, 11, 4, 25
+    };
 
     private static final byte[] CIFP = {    /* compressed/interleaved permutation */
             1, 2, 3, 4, 17, 18, 19, 20,
@@ -145,7 +150,8 @@ public class UnixCrypt extends Object {
             33, 34, 35, 36, 49, 50, 51, 52,
             37, 38, 39, 40, 53, 54, 55, 56,
             41, 42, 43, 44, 57, 58, 59, 60,
-            45, 46, 47, 48, 61, 62, 63, 64};
+            45, 46, 47, 48, 61, 62, 63, 64
+    };
 
     private static final byte[] ITOA64 = {        /* 0..63 => ascii-64 */
             (byte) '.', (byte) '/', (byte) '0', (byte) '1', (byte) '2', (byte) '3', (byte) '4', (byte) '5',
@@ -155,43 +161,47 @@ public class UnixCrypt extends Object {
             (byte) 'U', (byte) 'V', (byte) 'W', (byte) 'X', (byte) 'Y', (byte) 'Z', (byte) 'a', (byte) 'b',
             (byte) 'c', (byte) 'd', (byte) 'e', (byte) 'f', (byte) 'g', (byte) 'h', (byte) 'i', (byte) 'j',
             (byte) 'k', (byte) 'l', (byte) 'm', (byte) 'n', (byte) 'o', (byte) 'p', (byte) 'q', (byte) 'r',
-            (byte) 's', (byte) 't', (byte) 'u', (byte) 'v', (byte) 'w', (byte) 'x', (byte) 'y', (byte) 'z'};
+            (byte) 's', (byte) 't', (byte) 'u', (byte) 'v', (byte) 'w', (byte) 'x', (byte) 'y', (byte) 'z'
+    };
 
-    /* =====  Tables that are initialized at run time  ==================== */
+    /** =====  Tables that are initialized at run time  ==================== */
 
     private static byte[] A64TOI = new byte[128];    /* ascii-64 => 0..63 */
 
-    /* Initial key schedule permutation */
+    /** Initial key schedule permutation */
     private static long[][] PC1ROT = new long[16][16];
 
-    /* Subsequent key schedule rotation permutations */
+    /** Subsequent key schedule rotation permutations */
     private static long[][][] PC2ROT = new long[2][16][16];
 
-    /* Initial permutation/expansion table */
+    /** Initial permutation/expansion table */
     private static long[][] IE3264 = new long[8][16];
 
-    /* Table that combines the S, P, and E operations.  */
+    /** Table that combines the S, P, and E operations.  */
     private static long[][] SPE = new long[8][64];
 
-    /* compressed/interleaved => final permutation table */
+    /** compressed/interleaved => final permutation table */
     private static long[][] CF6464 = new long[16][16];
-
-
-    /* ==================================== */
 
     static {
         byte[] perm = new byte[64];
         byte[] temp = new byte[64];
 
         // inverse table.
-        for (int i = 0; i < 64; i++) A64TOI[ITOA64[i]] = (byte) i;
+        for (int i = 0; i < 64; i++) {
+            A64TOI[ITOA64[i]] = (byte) i;
+        }
 
         // PC1ROT - bit reverse, then PC1, then Rotate, then PC2
-        for (int i = 0; i < 64; i++) perm[i] = (byte) 0;
-        ;
+        for (int i = 0; i < 64; i++) {
+            perm[i] = (byte) 0;
+        }
+
         for (int i = 0; i < 64; i++) {
             int k;
-            if ((k = (int) PC2[i]) == 0) continue;
+            if ((k = (int) PC2[i]) == 0) {
+                continue;
+            }
             k += Rotates[0] - 1;
             if ((k % 28) < Rotates[0]) k -= 28;
             k = (int) PC1[k];
@@ -209,11 +219,15 @@ public class UnixCrypt extends Object {
             int k;
             for (int i = 0; i < 64; i++) perm[i] = temp[i] = 0;
             for (int i = 0; i < 64; i++) {
-                if ((k = (int) PC2[i]) == 0) continue;
+                if ((k = (int) PC2[i]) == 0) {
+                    continue;
+                }
                 temp[k - 1] = (byte) (i + 1);
             }
             for (int i = 0; i < 64; i++) {
-                if ((k = (int) PC2[i]) == 0) continue;
+                if ((k = (int) PC2[i]) == 0) {
+                    continue;
+                }
                 k += j;
                 if ((k % 28) <= j) k -= 28;
                 perm[i] = temp[k];
@@ -226,8 +240,14 @@ public class UnixCrypt extends Object {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 int k = (j < 2) ? 0 : IP[ExpandTr[i * 6 + j - 2] - 1];
-                if (k > 32) k -= 32;
-                else if (k > 0) k--;
+                if (k > 32) {
+                    k -= 32;
+                }
+                else {
+                    if (k > 0) {
+                        k--;
+                    }
+                }
                 if (k > 0) {
                     k--;
                     k = (k | 0x07) - (k & 0x07);
@@ -253,8 +273,9 @@ public class UnixCrypt extends Object {
         init_perm(CF6464, perm, 8);
 
         // SPE table
-        for (int i = 0; i < 48; i++)
+        for (int i = 0; i < 48; i++) {
             perm[i] = P32Tr[ExpandTr[i] - 1];
+        }
         for (int t = 0; t < 8; t++) {
             for (int j = 0; j < 64; j++) {
                 int k = (((j >> 0) & 0x01) << 5) | (((j >> 1) & 0x01) << 3) |
@@ -263,13 +284,18 @@ public class UnixCrypt extends Object {
                 k = S[t][k];
                 k = (((k >> 3) & 0x01) << 0) | (((k >> 2) & 0x01) << 1) |
                         (((k >> 1) & 0x01) << 2) | (((k >> 0) & 0x01) << 3);
-                for (int i = 0; i < 32; i++) temp[i] = 0;
-                for (int i = 0; i < 4; i++) temp[4 * t + i] = (byte) ((k >> i) & 0x01);
+                for (int i = 0; i < 32; i++) {
+                    temp[i] = 0;
+                }
+                for (int i = 0; i < 4; i++) {
+                    temp[4 * t + i] = (byte) ((k >> i) & 0x01);
+                }
                 long kk = 0;
-                for (int i = 24; --i >= 0; )
+                for (int i = 24; --i >= 0; ) {
                     kk = ((kk << 1) |
                             ((long) temp[perm[i] - 1]) << 32 |
                             ((long) temp[perm[i + 24] - 1]));
+                }
 
                 SPE[t][j] = to_six_bit(kk);
             }
@@ -277,7 +303,7 @@ public class UnixCrypt extends Object {
     }
 
     /**
-     * You can't call the constructer.
+     * You can't call the constructor.
      */
     private UnixCrypt() {
     }

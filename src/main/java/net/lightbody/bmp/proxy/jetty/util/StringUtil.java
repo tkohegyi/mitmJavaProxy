@@ -15,26 +15,20 @@
 
 package net.lightbody.bmp.proxy.jetty.util;
 
-// ====================================================================
-
 /**
  * Fast String Utilities.
  * <p>
- * These string utilities provide both conveniance methods and
- * performance improvements over most standard library versions. The
- * main aim of the optimizations is to avoid object creation unless
- * absolutely required.
+ * These string utilities provide both conveniance methods and performance improvements over 
+ * most standard library versions. The main aim of the optimizations is to avoid object creation unless absolutely required.
  *
  * @author Greg Wilkins (gregw)
  * @version $Revision: 1.16 $
  */
 public class StringUtil {
-    public static final String __LINE_SEPARATOR =
-            System.getProperty("line.separator", "\n");
 
-    public final static String __ISO_8859_1;
-    public final static String __UTF_8 = "UTF-8";
-    private static char[] lowercases = {
+    public static final String __ISO_8859_1;
+    public static final String __UTF_8 = "UTF-8";
+    private static final char[] lowercases = {
             '\000', '\001', '\002', '\003', '\004', '\005', '\006', '\007',
             '\010', '\011', '\012', '\013', '\014', '\015', '\016', '\017',
             '\020', '\021', '\022', '\023', '\024', '\025', '\026', '\027',
@@ -54,9 +48,9 @@ public class StringUtil {
 
     static {
         String iso = System.getProperty("ISO_8859_1");
-        if (iso != null)
+        if (iso != null) {
             __ISO_8859_1 = iso;
-        else {
+        } else {
             try {
                 new String(new byte[]{(byte) 20}, "ISO-8859-1");
                 iso = "ISO-8859-1";
@@ -67,10 +61,8 @@ public class StringUtil {
         }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * fast lower case conversion. Only works on ascii (not unicode)
+     * fast lower case conversion. Only works on ascii (not unicode).
      *
      * @param s the string to convert
      * @return a lower case version of s
@@ -93,76 +85,43 @@ public class StringUtil {
         }
 
         while (i-- > 0) {
-            if (c[i] <= 127)
+            if (c[i] <= 127) {
                 c[i] = lowercases[c[i]];
+            }
         }
 
         return c == null ? s : new String(c);
     }
 
-
-    /* ------------------------------------------------------------ */
-    public static boolean startsWithIgnoreCase(String s, String w) {
-        if (w == null)
-            return true;
-
-        if (s == null || s.length() < w.length())
-            return false;
-
-        for (int i = 0; i < w.length(); i++) {
-            char c1 = s.charAt(i);
-            char c2 = w.charAt(i);
-            if (c1 != c2) {
-                if (c1 <= 127)
-                    c1 = lowercases[c1];
-                if (c2 <= 127)
-                    c2 = lowercases[c2];
-                if (c1 != c2)
-                    return false;
-            }
-        }
-        return true;
-    }
-
-    /* ------------------------------------------------------------ */
     public static boolean endsWithIgnoreCase(String s, String w) {
-        if (w == null)
+        if (w == null) {
             return true;
+        }
 
         int sl = s.length();
         int wl = w.length();
 
-        if (s == null || sl < wl)
+        if (s == null || sl < wl) {
             return false;
+        }
 
         for (int i = wl; i-- > 0; ) {
             char c1 = s.charAt(--sl);
             char c2 = w.charAt(i);
             if (c1 != c2) {
-                if (c1 <= 127)
+                if (c1 <= 127) {
                     c1 = lowercases[c1];
-                if (c2 <= 127)
+                }
+                if (c2 <= 127) {
                     c2 = lowercases[c2];
-                if (c1 != c2)
+                }
+                if (c1 != c2) {
                     return false;
+                }
             }
         }
         return true;
     }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * returns the next index of a character from the chars string
-     */
-    public static int indexFrom(String s, String chars) {
-        for (int i = 0; i < s.length(); i++)
-            if (chars.indexOf(s.charAt(i)) >= 0)
-                return i;
-        return -1;
-    }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * replace substrings within string.
@@ -170,8 +129,9 @@ public class StringUtil {
     public static String replace(String s, String sub, String with) {
         int c = 0;
         int i = s.indexOf(sub, c);
-        if (i == -1)
+        if (i == -1) {
             return s;
+        }
 
         StringBuffer buf = new StringBuffer(s.length() + with.length());
 
@@ -182,14 +142,13 @@ public class StringUtil {
                 c = i + sub.length();
             } while ((i = s.indexOf(sub, c)) != -1);
 
-            if (c < s.length())
+            if (c < s.length()) {
                 buf.append(s.substring(c, s.length()));
+            }
 
             return buf.toString();
         }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Remove single or double quotes.
@@ -198,46 +157,40 @@ public class StringUtil {
         return QuotedStringTokenizer.unquote(s);
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
-     * Append substring to StringBuffer
+     * Append substring to StringBuffer.
      *
      * @param buf    StringBuffer to append to
      * @param s      String to append from
      * @param offset The offset of the substring
      * @param length The length of the substring
      */
-    public static void append(StringBuffer buf,
-                              String s,
-                              int offset,
-                              int length) {
+    public static void append(StringBuffer buf, String s, int offset, int length) {
         synchronized (buf) {
             int end = offset + length;
             for (int i = offset; i < end; i++) {
-                if (i >= s.length())
+                if (i >= s.length()) {
                     break;
+                }
                 buf.append(s.charAt(i));
             }
         }
     }
 
-
-    /* ------------------------------------------------------------ */
     public static void append(StringBuffer buf, byte b, int base) {
         int bi = 0xff & b;
         int c = '0' + (bi / base) % base;
-        if (c > '9')
+        if (c > '9') {
             c = 'a' + (c - '0' - 10);
+        }
         buf.append((char) c);
         c = '0' + bi % base;
-        if (c > '9')
+        if (c > '9') {
             c = 'a' + (c - '0' - 10);
+        }
         buf.append((char) c);
     }
 
-    /* ------------------------------------------------------------ */
     public static void append2digits(StringBuffer buf, int i) {
         if (i < 100) {
             buf.append((char) (i / 10 + '0'));
@@ -245,27 +198,15 @@ public class StringUtil {
         }
     }
 
-    /* ------------------------------------------------------------ */
-
-    /**
-     * Return a non null string.
-     *
-     * @param s String
-     * @return The string passed in or empty string if it is null.
-     */
-    public static String nonNull(String s) {
-        if (s == null)
-            return "";
-        return s;
-    }
-
-    /* ------------------------------------------------------------ */
     public static boolean equals(String s, char[] buf, int offset, int length) {
-        if (s.length() != length)
+        if (s.length() != length) {
             return false;
-        for (int i = 0; i < length; i++)
-            if (buf[offset + i] != s.charAt(i))
+        }
+        for (int i = 0; i < length; i++) {
+            if (buf[offset + i] != s.charAt(i)) {
                 return false;
+            }
+        }
         return true;
     }
 

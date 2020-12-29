@@ -18,25 +18,20 @@ package net.lightbody.bmp.proxy.jetty.util;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
-/* ------------------------------------------------------------ */
-
 /**
  * StringTokenizer with Quoting support.
  * <p>
  * This class is a copy of the java.util.StringTokenizer API and
- * the behaviour is the same, except that single and doulbe quoted
- * string values are recognized.
- * Delimiters within quotes are not considered delimiters.
- * Quotes can be escaped with '\'.
+ * the behaviour is the same, except that single and double quoted string values are recognized.
+ * Delimiters within quotes are not considered delimiters. Quotes can be escaped with '\'.
  *
  * @author Greg Wilkins (gregw)
  * @version $Id: QuotedStringTokenizer.java,v 1.5 2006/11/23 08:56:53 gregwilkins Exp $
  * @see java.util.StringTokenizer
  */
-public class QuotedStringTokenizer
-        extends StringTokenizer {
+public class QuotedStringTokenizer extends StringTokenizer {
     private final static String __delim = "\t\n\r";
-    private String _string;
+    private final String _string;
     private String _delim = __delim;
     private boolean _returnQuotes = false;
     private boolean _returnTokens = false;
@@ -47,66 +42,52 @@ public class QuotedStringTokenizer
     private boolean _single = true;
     private boolean _double = true;
 
-
-    /* ------------------------------------------------------------ */
-    public QuotedStringTokenizer(String str,
-                                 String delim,
-                                 boolean returnTokens,
-                                 boolean returnQuotes) {
+    public QuotedStringTokenizer(String str, String delim, boolean returnTokens, boolean returnQuotes) {
         super("");
         _string = str;
-        if (delim != null)
+        if (delim != null) {
             _delim = delim;
+        }
         _returnTokens = returnTokens;
         _returnQuotes = returnQuotes;
 
-        if (_delim.indexOf('\'') >= 0 ||
-                _delim.indexOf('"') >= 0)
+        if (_delim.indexOf('\'') >= 0 || _delim.indexOf('"') >= 0) {
             throw new Error("Can't use quotes as delimiters: " + _delim);
+        }
 
         _token = new StringBuffer(_string.length() > 1024 ? 512 : _string.length() / 2);
     }
 
-    /* ------------------------------------------------------------ */
-    public QuotedStringTokenizer(String str,
-                                 String delim,
-                                 boolean returnTokens) {
+    public QuotedStringTokenizer(String str, String delim, boolean returnTokens) {
         this(str, delim, returnTokens, false);
     }
 
-    /* ------------------------------------------------------------ */
-    public QuotedStringTokenizer(String str,
-                                 String delim) {
+    public QuotedStringTokenizer(String str, String delim) {
         this(str, delim, false, false);
     }
 
-    /* ------------------------------------------------------------ */
     public QuotedStringTokenizer(String str) {
         this(str, null, false, false);
     }
 
     /**
      * Quote a string.
-     * The string is quoted only if quoting is required due to
-     * embeded delimiters, quote characters or the
-     * empty string.
+     * The string is quoted only if quoting is required due to embedded delimiters, quote characters or the empty string.
      *
      * @param s The string to quote.
      * @return quoted string
      */
     public static String quote(String s, String delim) {
-        if (s == null)
+        if (s == null) {
             return null;
-        if (s.length() == 0)
+        }
+        if (s.length() == 0) {
             return "\"\"";
-
+        }
 
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
-            if (c == '"' ||
-                    c == '\\' ||
-                    c == '\'' ||
-                    delim.indexOf(c) >= 0) {
+            if (c == '"' || c == '\\' || c == '\'' || delim.indexOf(c) >= 0) {
                 StringBuffer b = new StringBuffer(s.length() + 8);
                 quote(b, s);
                 return b.toString();
@@ -149,15 +130,18 @@ public class QuotedStringTokenizer
      * @return quoted string
      */
     public static String unquote(String s) {
-        if (s == null)
+        if (s == null) {
             return null;
-        if (s.length() < 2)
+        }
+        if (s.length() < 2) {
             return s;
+        }
 
         char first = s.charAt(0);
         char last = s.charAt(s.length() - 1);
-        if (first != last || (first != '"' && first != '\''))
+        if (first != last || (first != '"' && first != '\'')) {
             return s;
+        }
 
         StringBuffer b = new StringBuffer(s.length() - 2);
         synchronized (b) {
@@ -184,15 +168,18 @@ public class QuotedStringTokenizer
      * @return quoted string
      */
     public static String unquoteDouble(String s) {
-        if (s == null)
+        if (s == null) {
             return null;
-        if (s.length() < 2)
+        }
+        if (s.length() < 2) {
             return s;
+        }
 
         char first = s.charAt(0);
         char last = s.charAt(s.length() - 1);
-        if (first != last || first != '"')
+        if (first != last || first != '"') {
             return s;
+        }
 
         StringBuffer b = new StringBuffer(s.length() - 2);
         synchronized (b) {
@@ -212,11 +199,11 @@ public class QuotedStringTokenizer
         }
     }
 
-    /* ------------------------------------------------------------ */
     public boolean hasMoreTokens() {
         // Already found a token
-        if (_hasToken)
+        if (_hasToken) {
             return true;
+        }
 
         _lastStart = _i;
 
@@ -233,12 +220,14 @@ public class QuotedStringTokenizer
                         return _hasToken = true;
                     }
                 } else if (c == '\'' && _single) {
-                    if (_returnQuotes)
+                    if (_returnQuotes) {
                         _token.append(c);
+                    }
                     state = 2;
                 } else if (c == '\"' && _double) {
-                    if (_returnQuotes)
+                    if (_returnQuotes) {
                         _token.append(c);
+                    }
                     state = 3;
                 } else {
                     _token.append(c);
@@ -250,16 +239,19 @@ public class QuotedStringTokenizer
             case 1: // Token
                 _hasToken = true;
                 if (_delim.indexOf(c) >= 0) {
-                    if (_returnTokens)
+                    if (_returnTokens) {
                         _i--;
+                    }
                     return _hasToken;
                 } else if (c == '\'' && _single) {
-                    if (_returnQuotes)
+                    if (_returnQuotes) {
                         _token.append(c);
+                    }
                     state = 2;
                 } else if (c == '\"' && _double) {
-                    if (_returnQuotes)
+                    if (_returnQuotes) {
                         _token.append(c);
+                    }
                     state = 3;
                 } else
                     _token.append(c);
@@ -272,15 +264,18 @@ public class QuotedStringTokenizer
                     escape = false;
                     _token.append(c);
                 } else if (c == '\'') {
-                    if (_returnQuotes)
+                    if (_returnQuotes) {
                         _token.append(c);
+                    }
                     state = 1;
                 } else if (c == '\\') {
-                    if (_returnQuotes)
+                    if (_returnQuotes) {
                         _token.append(c);
+                    }
                     escape = true;
-                } else
+                } else {
                     _token.append(c);
+                }
                 continue;
 
 
@@ -290,15 +285,18 @@ public class QuotedStringTokenizer
                     escape = false;
                     _token.append(c);
                 } else if (c == '\"') {
-                    if (_returnQuotes)
+                    if (_returnQuotes) {
                         _token.append(c);
+                    }
                     state = 1;
                 } else if (c == '\\') {
-                    if (_returnQuotes)
+                    if (_returnQuotes) {
                         _token.append(c);
+                    }
                     escape = true;
-                } else
+                } else {
                     _token.append(c);
+                }
                 continue;
             }
         }
@@ -306,25 +304,17 @@ public class QuotedStringTokenizer
         return _hasToken;
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
-    public String nextToken()
-            throws NoSuchElementException {
-        if (!hasMoreTokens() || _token == null)
+    public String nextToken() throws NoSuchElementException {
+        if (!hasMoreTokens() || _token == null) {
             throw new NoSuchElementException();
+        }
         String t = _token.toString();
         _token.setLength(0);
         _hasToken = false;
         return t;
     }
 
-
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
-    public String nextToken(String delim)
-            throws NoSuchElementException {
+    public String nextToken(String delim) throws NoSuchElementException {
         _delim = delim;
         _i = _lastStart;
         _token.setLength(0);
@@ -332,22 +322,13 @@ public class QuotedStringTokenizer
         return nextToken();
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     public boolean hasMoreElements() {
         return hasMoreTokens();
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
-    public Object nextElement()
-            throws NoSuchElementException {
+    public Object nextElement() throws NoSuchElementException {
         return nextToken();
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Not implemented.

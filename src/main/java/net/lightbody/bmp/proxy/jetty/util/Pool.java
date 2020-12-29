@@ -32,10 +32,10 @@ import java.util.HashMap;
 public class Pool implements LifeCycle, Serializable {
     static int __max = Integer.getInteger("POOL_MAX", 256);
     static int __min = Integer.getInteger("POOL_MIN", 2);
-    /* ------------------------------------------------------------------- */
+    
     static HashMap __nameMap = new HashMap();
     private static final Logger log = LoggerFactory.getLogger(Pool.class);
-    /* ------------------------------------------------------------------- */
+    
     private int _max = __max;
     private int _min = __min;
     private String _name;
@@ -50,8 +50,9 @@ public class Pool implements LifeCycle, Serializable {
     private transient int _running = 0;
     private transient long _lastShrink = 0;  // control shrinking to once per maxIdleTime
 
-    /* ------------------------------------------------------------------- */
-    /* Construct
+    
+    /**
+     * Construct.
      */
     public Pool() {
     }
@@ -68,7 +69,7 @@ public class Pool implements LifeCycle, Serializable {
     }
 
     /**
-     * @param name The pool name
+     * @param name The pool name.
      * @throws IllegalStateException If the name is already defined.
      */
     public void setPoolName(String name) throws IllegalStateException {

@@ -18,8 +18,6 @@ package net.lightbody.bmp.proxy.jetty.util;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/* ------------------------------------------------------------ */
-
 /**
  * Observer output events.
  *
@@ -28,14 +26,11 @@ import java.io.OutputStream;
  * @see net.lightbody.bmp.proxy.jetty.http.HttpOutputStream
  */
 public interface OutputObserver {
-    public final static int
-            __FIRST_WRITE = 0,
-            __RESET_BUFFER = 1,
-            __COMMITING = 2,
-            __CLOSING = 4,
-            __CLOSED = 5;
-
-    /* ------------------------------------------------------------ */
+    int __FIRST_WRITE = 0,
+        __RESET_BUFFER = 1,
+        __COMMITING = 2,
+        __CLOSING = 4,
+        __CLOSED = 5;
 
     /**
      * Notify an output action.
@@ -44,6 +39,5 @@ public interface OutputObserver {
      * @param action The action taken
      * @param data   Data associated with the event.
      */
-    void outputNotify(OutputStream out, int action, Object data)
-            throws IOException;
+    void outputNotify(OutputStream out, int action, Object data) throws IOException;
 }

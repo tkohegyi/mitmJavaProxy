@@ -15,13 +15,10 @@
 
 package net.lightbody.bmp.proxy.jetty.util;
 
-/* ------------------------------------------------------------ */
-
 /**
  * ClassLoader Helper.
  * This helper class allows classes to be loaded either from the
- * Thread's ContextClassLoader, the classloader of the derived class
- * or the system ClassLoader.
+ * Thread's ContextClassLoader, the classloader of the derived class or the system ClassLoader.
  *
  * <B>Usage:</B><PRE>
  * public class MyClass {
@@ -36,9 +33,8 @@ package net.lightbody.bmp.proxy.jetty.util;
  * @version $Id: Loader.java,v 1.4 2004/11/05 07:09:33 gregwilkins Exp $
  */
 public class Loader {
-    /* ------------------------------------------------------------ */
-    public static Class loadClass(Class loadClass, String name)
-            throws ClassNotFoundException {
+    
+    public static Class loadClass(Class loadClass, String name) throws ClassNotFoundException {
         ClassNotFoundException cnfe = null;
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         if (loader != null) {
@@ -57,7 +53,6 @@ public class Loader {
                 if (cnfe == null) cnfe = e;
             }
         }
-
 
         try {
             return Class.forName(name);

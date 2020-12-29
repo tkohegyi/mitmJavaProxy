@@ -27,16 +27,12 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-/* ======================================================================= */
-
 /**
- * Threaded socket server. This class listens at a socket and gives the connections received to a
- * pool of Threads
+ * Threaded socket server. This class listens at a socket and gives the connections received to a pool of Threads
  * <p>
  * The class is abstract and derived classes must provide the handling for the connections.
  * <p>
- * The properties THREADED_SERVER_MIN_THREADS and THREADED_SERVER_MAX_THREADS can be set to control
- * the number of threads created.
+ * The properties THREADED_SERVER_MIN_THREADS and THREADED_SERVER_MAX_THREADS can be set to control the number of threads created.
  * <p>
  *
  * @author Greg Wilkins
@@ -44,27 +40,19 @@ import java.net.UnknownHostException;
  */
 abstract public class ThreadedServer extends ThreadPool {
     private static final Logger log = LoggerFactory.getLogger(ThreadedServer.class);
-
-    /* ------------------------------------------------------------------- */
+    
     private InetAddrPort _address = null;
     private int _soTimeOut = -1;
-    private int _lingerTimeSecs = 30;
-    private boolean _tcpNoDelay = true;
-    private int _acceptQueueSize = 0;
-    private int _acceptors = 1;
 
     private transient Acceptor[] _acceptor;
     private transient ServerSocket _listen = null;
     private transient boolean _running = false;
-
-    /* ------------------------------------------------------------------- */
-    /*
-     * Construct
+    
+    /**
+     * Construct.
      */
     public ThreadedServer() {
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Construct for specific port.
@@ -73,16 +61,12 @@ abstract public class ThreadedServer extends ThreadPool {
         setInetAddrPort(new InetAddrPort(port));
     }
 
-    /* ------------------------------------------------------------------- */
-
     /**
      * Construct for specific address and port.
      */
     public ThreadedServer(InetAddress address, int port) {
         setInetAddrPort(new InetAddrPort(address, port));
     }
-
-    /* ------------------------------------------------------------------- */
 
     /**
      * Construct for specific address and port.
@@ -91,8 +75,6 @@ abstract public class ThreadedServer extends ThreadPool {
         setInetAddrPort(new InetAddrPort(host, port));
     }
 
-    /* ------------------------------------------------------------------- */
-
     /**
      * Construct for specific address and port.
      */
@@ -100,26 +82,22 @@ abstract public class ThreadedServer extends ThreadPool {
         setInetAddrPort(address);
     }
 
-    /* ------------------------------------------------------------------- */
-
     /**
-     * @return The ServerSocket
+     * @return The ServerSocket.
      */
     public ServerSocket getServerSocket() {
         return _listen;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * @return IP Address and port in a new Instance of InetAddrPort.
      */
     public InetAddrPort getInetAddrPort() {
-        if (_address == null) return null;
+        if (_address == null) {
+            return null;
+        }
         return new InetAddrPort(_address);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Set the server InetAddress and port.
@@ -127,190 +105,101 @@ abstract public class ThreadedServer extends ThreadPool {
      * @param address The Address to listen on, or 0.0.0.0:port for all interfaces.
      */
     public synchronized void setInetAddrPort(InetAddrPort address) {
-        if (_address != null && _address.equals(address)) return;
-
-        if (isStarted()) log.warn(this + " is started");
-
+        if (_address != null && _address.equals(address)) {
+            return;
+        }
+        if (isStarted()) {
+            log.warn(this + " is started");
+        }
         _address = address;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Host name
+     * @return Host name.
      */
     public String getHost() {
-        if (_address == null || _address.getInetAddress() == null) return null;
+        if (_address == null || _address.getInetAddress() == null) {
+            return null;
+        }
         return _address.getHost();
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param host
      */
     public synchronized void setHost(String host) throws UnknownHostException {
-        if (_address != null && _address.getHost() != null && _address.getHost().equals(host))
+        if (_address != null && _address.getHost() != null && _address.getHost().equals(host)) {
             return;
+        }
 
-        if (isStarted()) log.warn(this + " is started");
+        if (isStarted()) {
+            log.warn(this + " is started");
+        }
 
-        if (_address == null)
+        if (_address == null) {
             _address = new InetAddrPort(host, 0);
-        else
+        } else {
             _address.setHost(host);
+        }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
-     * @return IP Address
+     * @return IP Address.
      */
     public InetAddress getInetAddress() {
-        if (_address == null) return null;
+        if (_address == null) {
+            return null;
+        }
         return _address.getInetAddress();
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param addr
      */
     public synchronized void setInetAddress(InetAddress addr) {
-        if (_address != null && _address.getInetAddress() != null
-                && _address.getInetAddress().equals(addr)) return;
+        if (_address != null && _address.getInetAddress() != null && _address.getInetAddress().equals(addr)) {
+            return;
+        }
 
-        if (isStarted()) log.warn(this + " is started");
+        if (isStarted()) {
+            log.warn(this + " is started");
+        }
 
-        if (_address == null)
+        if (_address == null) {
             _address = new InetAddrPort(addr, 0);
-        else
+        } else {
             _address.setInetAddress(addr);
+        }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
-     * @return port number
+     * @return port number.
      */
     public int getPort() {
-        if (_address == null) return 0;
+        if (_address == null) {
+            return 0;
+        }
         return _address.getPort();
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * @param port
      */
     public synchronized void setPort(int port) {
-        if (_address != null && _address.getPort() == port) return;
+        if (_address != null && _address.getPort() == port) {
+            return;
+        }
 
-        if (isStarted()) log.warn(this + " is started");
+        if (isStarted()) {
+            log.warn(this + " is started");
+        }
 
-        if (_address == null)
+        if (_address == null) {
             _address = new InetAddrPort(port);
-        else
+        } else {
             _address.setPort(port);
+        }
     }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @return milliseconds
-     */
-    public int getMaxReadTimeMs() {
-        return getMaxIdleTimeMs();
-    }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * Set Max Read Time.
-     *
-     * @deprecated maxIdleTime is used instead.
-     */
-    public void setMaxReadTimeMs(int ms) {
-        log.warn("setMaxReadTimeMs is deprecated. Use setMaxIdleTimeMs()");
-    }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @return seconds.
-     */
-    public int getLingerTimeSecs() {
-        return _lingerTimeSecs;
-    }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @param ls seconds to linger or -1 to disable linger.
-     */
-    public void setLingerTimeSecs(int ls) {
-        _lingerTimeSecs = ls;
-    }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @return true if setTcpNoDelay(true) is called on accepted sockets.
-     */
-    public boolean getTcpNoDelay() {
-        return _tcpNoDelay;
-    }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @param tcpNoDelay if true then setTcpNoDelay(true) is called on accepted sockets.
-     */
-    public void setTcpNoDelay(boolean tcpNoDelay) {
-        _tcpNoDelay = tcpNoDelay;
-    }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * @return Returns the acceptQueueSize or -1 if not set.
-     */
-    public int getAcceptQueueSize() {
-        return _acceptQueueSize;
-    }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * The size of the queue for unaccepted connections. If not set, will default to greater of
-     * maxThreads or 50.
-     *
-     * @param acceptQueueSize The acceptQueueSize to set.
-     */
-    public void setAcceptQueueSize(int acceptQueueSize) {
-        _acceptQueueSize = acceptQueueSize;
-    }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * Get the nmber of threads used to accept connections
-     */
-    public int getAcceptorThreads() {
-        return _acceptors;
-    }
-
-    /* ------------------------------------------------------------ */
-
-    /**
-     * Set the number of threads used to accept connections. This should normally be 1, except when
-     * multiple CPUs are available and low latency is a high priority.
-     */
-    public void setAcceptorThreads(int n) {
-        _acceptors = n;
-    }
-
-    /* ------------------------------------------------------------------- */
 
     /**
      * Handle new connection. This method should be overridden by the derived class to implement the
@@ -321,15 +210,15 @@ abstract public class ThreadedServer extends ThreadPool {
         throw new Error("Either handlerConnection must be overridden");
     }
 
-    /* ------------------------------------------------------------------- */
-
     /**
      * Handle new connection. If access is required to the actual socket, override this method
      * instead of handleConnection(InputStream in,OutputStream out). The default implementation of
      * this just calls handleConnection(InputStream in,OutputStream out).
      */
     protected void handleConnection(Socket connection) throws IOException {
-        if (log.isDebugEnabled()) log.debug("Handle " + connection);
+        if (log.isDebugEnabled()) {
+            log.debug("Handle " + connection);
+        }
         InputStream in = connection.getInputStream();
         OutputStream out = connection.getOutputStream();
 
@@ -341,8 +230,6 @@ abstract public class ThreadedServer extends ThreadPool {
         connection.close();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Handle Job. Implementation of ThreadPool.handle(), calls handleConnection.
      *
@@ -351,6 +238,7 @@ abstract public class ThreadedServer extends ThreadPool {
     public void handle(Object job) {
         Socket socket = (Socket) job;
         try {
+            boolean _tcpNoDelay = true;
             if (_tcpNoDelay) socket.setTcpNoDelay(true);
             handleConnection(socket);
         } catch (Exception e) {
@@ -364,29 +252,23 @@ abstract public class ThreadedServer extends ThreadPool {
         }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * New server socket. Creates a new servers socket. May be overriden by derived class to create
-     * specialist serversockets (eg SSL).
+     * New server socket. Creates a new servers socket. May be overriden by derived class to create specialist serversockets (eg SSL).
      *
      * @param address         Address and port
      * @param acceptQueueSize Accept queue size
      * @return The new ServerSocket
      * @throws java.io.IOException
      */
-    protected ServerSocket newServerSocket(InetAddrPort address, int acceptQueueSize)
-            throws java.io.IOException {
-        if (address == null) return new ServerSocket(0, acceptQueueSize);
-
+    protected ServerSocket newServerSocket(InetAddrPort address, int acceptQueueSize) throws java.io.IOException {
+        if (address == null) {
+            return new ServerSocket(0, acceptQueueSize);
+        }
         return new ServerSocket(address.getPort(), acceptQueueSize, address.getInetAddress());
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Accept socket connection. May be overriden by derived class to create specialist
-     * serversockets (eg SSL).
+     * Accept socket connection. May be overriden by derived class to create specialist serversockets (eg SSL).
      *
      * @param ignored
      * @param timeout The time to wait for a connection. Normally passed the ThreadPool maxIdleTime.
@@ -397,11 +279,8 @@ abstract public class ThreadedServer extends ThreadPool {
         return acceptSocket(timeout);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Accept socket connection. May be overriden by derived class to create specialist
-     * serversockets (eg SSL).
+     * Accept socket connection. May be overriden by derived class to create specialist serversockets (eg SSL).
      *
      * @param timeout      The time to wait for a connection. Normally passed the ThreadPool maxIdleTime.
      * @return Accepted Socket
@@ -417,13 +296,10 @@ abstract public class ThreadedServer extends ThreadPool {
                 }
 
                 s = _listen.accept();
-
                 try {
                     if (getMaxIdleTimeMs() >= 0) s.setSoTimeout(getMaxIdleTimeMs());
-                    if (_lingerTimeSecs >= 0)
-                        s.setSoLinger(true, _lingerTimeSecs);
-                    else
-                        s.setSoLinger(false, 0);
+                    int _lingerTimeSecs = 30;
+                    s.setSoLinger(true, _lingerTimeSecs);
                 } catch (Exception e) {
                     //
                 }
@@ -439,9 +315,7 @@ abstract public class ThreadedServer extends ThreadPool {
         }
         return null;
     }
-
-    /* ------------------------------------------------------------------- */
-
+    
     /**
      * Open the server socket. This method can be called to open the server socket in advance of
      * starting the listener. This can be used to test if the port is available.
@@ -450,32 +324,40 @@ abstract public class ThreadedServer extends ThreadPool {
      */
     public void open() throws IOException {
         if (_listen == null) {
+            int _acceptQueueSize = 0;
             _listen = newServerSocket(_address, _acceptQueueSize);
 
-            if (_address == null)
+            if (_address == null) {
                 _address = new InetAddrPort(_listen.getInetAddress(), _listen.getLocalPort());
-            else {
-                if (_address.getInetAddress() == null)
+            } else {
+                if (_address.getInetAddress() == null) {
                     _address.setInetAddress(_listen.getInetAddress());
-                if (_address.getPort() == 0) _address.setPort(_listen.getLocalPort());
+                }
+                if (_address.getPort() == 0) {
+                    _address.setPort(_listen.getLocalPort());
+                }
             }
 
             _soTimeOut = getMaxIdleTimeMs();
-            if (_soTimeOut >= 0) _listen.setSoTimeout(_soTimeOut);
+            if (_soTimeOut >= 0) {
+                _listen.setSoTimeout(_soTimeOut);
+            }
         }
     }
-
-    /* ------------------------------------------------------------------- */
-    /*
-     * Start the ThreadedServer listening
+    
+    /**
+     * Start the ThreadedServer listening.
      */
     public synchronized void start() throws Exception {
         try {
-            if (isStarted()) return;
+            if (isStarted()) {
+                return;
+            }
 
             open();
 
             _running = true;
+            int _acceptors = 1;
             _acceptor = new Acceptor[_acceptors];
             for (int a = 0; a < _acceptor.length; a++) {
                 _acceptor[a] = new Acceptor();
@@ -485,21 +367,22 @@ abstract public class ThreadedServer extends ThreadPool {
 
             super.start();
         } catch (Exception e) {
-            log.warn("Failed to start: " + this);
+            log.warn("Failed to start: {}", this);
             throw e;
         }
     }
 
-    /* --------------------------------------------------------------- */
     public void stop() throws InterruptedException {
         synchronized (this) {
             // Signal that we are stopping
             _running = false;
 
             // Close the listener socket.
-            if (log.isDebugEnabled()) log.debug("closing " + _listen);
+            log.debug("closing {}", _listen);
             try {
-                if (_listen != null) _listen.close();
+                if (_listen != null) {
+                    _listen.close();
+                }
                 _listen = null;
             } catch (IOException e) {
                 log.warn(LogSupport.EXCEPTION, e);
@@ -509,8 +392,9 @@ abstract public class ThreadedServer extends ThreadPool {
             Thread.yield();
             for (int a = 0; _acceptor != null && a < _acceptor.length; a++) {
                 Acceptor acc = _acceptor[a];
-                if (acc != null)
+                if (acc != null) {
                     acc.interrupt();
+                }
             }
             Thread.sleep(100);
 
@@ -536,11 +420,8 @@ abstract public class ThreadedServer extends ThreadPool {
         }
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-
     /**
-     * Kill a job. This method closes IDLE and socket associated with a job
+     * Kill a job. This method closes IDLE and socket associated with a job.
      *
      * @param thread
      * @param job
@@ -556,20 +437,18 @@ abstract public class ThreadedServer extends ThreadPool {
         super.stopJob(thread, job);
     }
 
-    /* ------------------------------------------------------------ */
     public String toString() {
-        if (_address == null) return getName() + "@0.0.0.0:0";
-        if (_listen != null)
-            return getName() + "@" + _listen.getInetAddress().getHostAddress() + ":"
-                    + _listen.getLocalPort();
+        if (_address == null) {
+            return getName() + "@0.0.0.0:0";
+        }
+        if (_listen != null) {
+            return getName() + "@" + _listen.getInetAddress().getHostAddress() + ":" + _listen.getLocalPort();
+        }
         return getName() + "@" + getInetAddrPort();
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     private class Acceptor extends Thread {
-        /* ------------------------------------------------------------ */
+        
         public void run() {
             ThreadedServer threadedServer = ThreadedServer.this;
             try {
@@ -581,51 +460,53 @@ abstract public class ThreadedServer extends ThreadPool {
 
                         // Handle the socket
                         if (socket != null) {
-                            if (_running)
+                            if (_running) {
                                 threadedServer.run(socket);
-                            else
+                            } else {
                                 socket.close();
+                            }
                         }
                     } catch (Throwable e) {
-                        if (_running)
+                        if (_running) {
                             log.warn(LogSupport.EXCEPTION, e);
-                        else
+                        } else {
                             log.debug(LogSupport.EXCEPTION, e);
+                        }
                     }
                 }
             } finally {
-                if (_running)
-                    log.warn("Stopping " + this.getName());
-                else
-                    log.info("Stopping " + this.getName());
+                if (_running) {
+                    log.warn("Stopping {}", this.getName());
+                } else {
+                    log.info("Stopping {}", this.getName());
+                }
                 synchronized (threadedServer) {
                     if (_acceptor != null) {
-                        for (int a = 0; a < _acceptor.length; a++)
-                            if (_acceptor[a] == this)
+                        for (int a = 0; a < _acceptor.length; a++) {
+                            if (_acceptor[a] == this) {
                                 _acceptor[a] = null;
+                            }
+                        }
                     }
                     threadedServer.notifyAll();
                 }
             }
         }
 
-        /* ------------------------------------------------------------ */
         void forceStop() {
             if (_listen != null && _address != null) {
                 InetAddress addr = _address.getInetAddress();
                 try {
-                    if (addr == null || addr.toString().startsWith("0.0.0.0"))
+                    if (addr == null || addr.toString().startsWith("0.0.0.0")) {
                         addr = InetAddress.getByName("127.0.0.1");
-                    if (log.isDebugEnabled())
-                        log.debug("Self connect to close listener " + addr + ":"
-                                + _address.getPort());
+                    }
+                    log.debug("Self connect to close listener {}:{}", addr, _address.getPort());
                     Socket socket = new Socket(addr, _address.getPort());
                     Thread.yield();
                     socket.close();
                     Thread.yield();
                 } catch (IOException e) {
-                    if (log.isDebugEnabled())
-                        log.debug("problem stopping acceptor " + addr + ": ", e);
+                    log.debug("problem stopping acceptor {}: ", addr, e);
                 }
             }
         }

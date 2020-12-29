@@ -18,12 +18,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.Permission;
-
-/* ------------------------------------------------------------ */
 
 /**
  * Abstract resource class.
@@ -38,14 +35,12 @@ public class URLResource extends Resource {
     protected transient URLConnection _connection;
     protected transient InputStream _in = null;
 
-    /* ------------------------------------------------------------ */
     protected URLResource(URL url, URLConnection connection) {
         _url = url;
         _urlString = _url.toString();
         _connection = connection;
     }
 
-    /* ------------------------------------------------------------ */
     protected synchronized boolean checkConnection() {
         if (_connection == null) {
             try {
@@ -56,8 +51,6 @@ public class URLResource extends Resource {
         }
         return _connection != null;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Release any resources held by the resource.
@@ -72,11 +65,12 @@ public class URLResource extends Resource {
             _in = null;
         }
 
-        if (_connection != null)
+        if (_connection != null) {
             _connection = null;
+        }
     }
 
-    /* ------------------------------------------------------------ */
+    
 
     /**
      * Returns true if the respresened resource exists.
@@ -84,8 +78,9 @@ public class URLResource extends Resource {
     public boolean exists() {
         try {
             synchronized (this) {
-                if (checkConnection() && _in == null)
+                if (checkConnection() && _in == null) {
                     _in = _connection.getInputStream();
+                }
             }
         } catch (IOException e) {
             //
@@ -93,10 +88,8 @@ public class URLResource extends Resource {
         return _in != null;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Returns true if the respresenetd resource is a container/directory.
+     * Returns true if the represented resource is a container/directory.
      * If the resource is not a file, resources ending with "/" are
      * considered directories.
      */
@@ -104,52 +97,43 @@ public class URLResource extends Resource {
         return exists() && _url.toString().endsWith("/");
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
-     * Returns the last modified time
+     * Returns the last modified time.
      */
     public long lastModified() {
-        if (checkConnection())
+        if (checkConnection()) {
             return _connection.getLastModified();
+        }
         return -1;
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
-     * Return the length of the resource
+     * Return the length of the resource.
      */
     public long length() {
-        if (checkConnection())
+        if (checkConnection()) {
             return _connection.getContentLength();
+        }
         return -1;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Returns an URL representing the given resource
+     * Returns an URL representing the given resource.
      */
     public URL getURL() {
         return _url;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Returns an File representing the given resource or NULL if this
-     * is not possible.
+     * Returns an File representing the given resource or NULL if this is not possible.
      */
-    public File getFile()
-            throws IOException {
+    public File getFile() throws IOException {
         // Try the permission hack
         if (checkConnection()) {
             Permission perm = _connection.getPermission();
-            if (perm instanceof java.io.FilePermission)
+            if (perm instanceof java.io.FilePermission) {
                 return new File(perm.getName());
+            }
         }
 
         // Try the URL file arg
@@ -163,24 +147,20 @@ public class URLResource extends Resource {
         return null;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Returns the name of the resource
+     * Returns the name of the resource.
      */
     public String getName() {
         return _url.toExternalForm();
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Returns an input stream to the resource
+     * Returns an input stream to the resource.
      */
-    public synchronized InputStream getInputStream()
-            throws java.io.IOException {
-        if (!checkConnection())
+    public synchronized InputStream getInputStream() throws java.io.IOException {
+        if (!checkConnection()) {
             throw new IOException("Invalid resource");
+        }
 
         try {
             if (_in != null) {
@@ -194,75 +174,58 @@ public class URLResource extends Resource {
         }
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
-     * Returns an output stream to the resource
+     * Returns an output stream to the resource.
      */
     public OutputStream getOutputStream()
             throws java.io.IOException, SecurityException {
         throw new IOException("Output not supported");
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Deletes the given resource
+     * Deletes the given resource.
      */
-    public boolean delete()
-            throws SecurityException {
+    public boolean delete() throws SecurityException {
         throw new SecurityException("Delete not supported");
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Rename the given resource
+     * Rename the given resource.
      */
-    public boolean renameTo(Resource dest)
-            throws SecurityException {
+    public boolean renameTo(Resource dest) throws SecurityException {
         throw new SecurityException("RenameTo not supported");
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Returns a list of resource names contained in the given resource
+     * Returns a list of resource names contained in the given resource.
      */
     public String[] list() {
         return null;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Returns the resource contained inside the current resource with the
-     * given name
+     * Returns the resource contained inside the current resource with the given name.
      */
     public Resource addPath(String path) throws IOException {
-        if (path == null)
+        if (path == null) {
             return null;
+        }
 
         path = URI.canonicalPath(path);
 
         return newResource(URI.addPaths(_url.toExternalForm(), path));
     }
 
-    /* ------------------------------------------------------------ */
     public String toString() {
         return _urlString;
     }
 
-    /* ------------------------------------------------------------ */
     public int hashCode() {
         return _url.hashCode();
     }
 
-    /* ------------------------------------------------------------ */
     public boolean equals(Object o) {
-        return o instanceof URLResource &&
-                _url.equals(((URLResource) o)._url);
+        return o instanceof URLResource && _url.equals(((URLResource) o)._url);
     }
 
 }

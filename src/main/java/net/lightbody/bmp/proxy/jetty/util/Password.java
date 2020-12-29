@@ -20,8 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-/* ------------------------------------------------------------ */
-
 /**
  * Password utility class.
  * <p>
@@ -53,8 +51,6 @@ public class Password extends Credential {
 
     private String _pw;
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      *
@@ -64,11 +60,11 @@ public class Password extends Credential {
         _pw = password;
 
         // expand password
-        while (_pw != null && _pw.startsWith("OBF:"))
+        while (_pw != null && _pw.startsWith("OBF:")) {
             _pw = deobfuscate(_pw);
+        }
     }
 
-    /* ------------------------------------------------------------ */
     public static String obfuscate(String s) {
         StringBuffer buf = new StringBuffer();
         byte[] b = s.getBytes();
@@ -98,10 +94,10 @@ public class Password extends Credential {
         }
     }
 
-    /* ------------------------------------------------------------ */
     public static String deobfuscate(String s) {
-        if (s.startsWith("OBF:"))
+        if (s.startsWith("OBF:")) {
             s = s.substring(4);
+        }
 
         byte[] b = new byte[s.length() / 2];
         int l = 0;
@@ -133,19 +129,19 @@ public class Password extends Credential {
         String passwd = System.getProperty(realm, dft);
         if (passwd == null || passwd.length() == 0) {
             try {
-                System.out.print(realm +
-                        ((promptDft != null && promptDft.length() > 0)
-                                ? " [dft]" : "") + " : ");
+                System.out.print(realm + ((promptDft != null && promptDft.length() > 0) ? " [dft]" : "") + " : ");
                 System.out.flush();
                 byte[] buf = new byte[512];
                 int len = System.in.read(buf);
-                if (len > 0)
+                if (len > 0) {
                     passwd = new String(buf, 0, len).trim();
+                }
             } catch (IOException e) {
                 log.warn(LogSupport.EXCEPTION, e);
             }
-            if (passwd == null || passwd.length() == 0)
+            if (passwd == null || passwd.length() == 0) {
                 passwd = promptDft;
+            }
         }
         return new Password(passwd);
     }
@@ -164,63 +160,60 @@ public class Password extends Credential {
         System.err.println(pw.toString());
         System.err.println(obfuscate(pw.toString()));
         System.err.println(Credential.MD5.digest(p));
-        if (arg.length == 2)
+        if (arg.length == 2) {
             System.err.println(Credential.Crypt.crypt(arg[0], pw.toString()));
+        }
     }
 
-    /* ------------------------------------------------------------ */
     public String toString() {
         return _pw;
     }
 
-    /* ------------------------------------------------------------ */
     public String toStarString() {
-        return "*****************************************************"
-                .substring(0, _pw.length());
+        return "*****************************************************".substring(0, _pw.length());
     }
 
-    /* ------------------------------------------------------------ */
     public boolean check(Object credentials) {
-        if (this == credentials)
+        if (this == credentials) {
             return true;
+        }
 
-        if (credentials instanceof Password)
+        if (credentials instanceof Password) {
             return credentials.equals(_pw);
+        }
 
-        if (credentials instanceof String)
+        if (credentials instanceof String) {
             return credentials.equals(_pw);
+        }
 
-        if (credentials instanceof Credential)
+        if (credentials instanceof Credential) {
             return ((Credential) credentials).check(_pw);
+        }
 
         return false;
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
+        }
 
-        if (null == o)
+        if (null == o) {
             return false;
+        }
 
         if (o instanceof Password) {
             Password p = (Password) o;
             return p._pw == _pw || (null != _pw && _pw.equals(p._pw));
         }
 
-        if (o instanceof String)
+        if (o instanceof String) {
             return o.equals(_pw);
+        }
 
         return false;
     }
-
-
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
+   
     public int hashCode() {
         return null == _pw ? super.hashCode() : _pw.hashCode();
     }

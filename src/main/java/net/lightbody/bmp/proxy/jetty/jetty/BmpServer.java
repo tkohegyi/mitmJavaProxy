@@ -19,14 +19,10 @@ import net.lightbody.bmp.proxy.jetty.http.HttpContext;
 import net.lightbody.bmp.proxy.jetty.http.HttpServer;
 import net.lightbody.bmp.proxy.jetty.jetty.servlet.ServletHttpContext;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;
-import net.lightbody.bmp.proxy.jetty.util.Resource;
-import net.lightbody.bmp.proxy.jetty.xml.XmlConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -54,35 +50,6 @@ public class BmpServer extends HttpServer {
      * Constructor.
      */
     public BmpServer() {
-    }
-
-    /**
-     * Configure the server from an XML file.
-     *
-     * @param configuration The filename or URL of the XML configuration file.
-     */
-    public void configure(String configuration) throws IOException {
-        URL url = Resource.newResource(configuration).getURL();
-        if (_configuration != null && _configuration.equals(url.toString())) {
-            return;
-        }
-        if (_configuration != null) {
-            throw new IllegalStateException("Already configured with " + _configuration);
-        }
-        try {
-            XmlConfiguration config = new XmlConfiguration(url);
-            _configuration = url.toString();
-            config.configure(this);
-        } catch (IOException e) {
-            throw e;
-        } catch (Exception e) {
-            log.warn(LogSupport.EXCEPTION, e);
-            throw new IOException("Jetty configuration problem: " + e);
-        }
-    }
-
-    public String getConfiguration() {
-        return _configuration;
     }
 
     /**

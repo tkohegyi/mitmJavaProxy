@@ -21,12 +21,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-/* ------------------------------------------------------------ */
-
 /**
  * A multi valued Map.
- * This Map specializes HashMap and provides methods
- * that operate on multi valued items.
+ * This Map specializes HashMap and provides methods that operate on multi valued items.
  * <p>
  * Implemented as a map of LazyList values
  *
@@ -35,15 +32,12 @@ import java.util.Map;
  * @see LazyList
  */
 public class MultiMap extends HashMap implements Cloneable {
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
      */
     public MultiMap() {
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -54,8 +48,6 @@ public class MultiMap extends HashMap implements Cloneable {
         super(size);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      *
@@ -65,8 +57,6 @@ public class MultiMap extends HashMap implements Cloneable {
         super((map.size() * 3) / 2);
         putAll(map);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get multiple values.
@@ -79,12 +69,9 @@ public class MultiMap extends HashMap implements Cloneable {
         return LazyList.getList(super.get(name), true);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get a value from a multiple value.
-     * If the value is not a multivalue, then index 0 retrieves the
-     * value or null.
+     * If the value is not a multivalue, then index 0 retrieves the value or null.
      *
      * @param name The entry key.
      * @param i    Index of element to get.
@@ -92,19 +79,16 @@ public class MultiMap extends HashMap implements Cloneable {
      */
     public Object getValue(Object name, int i) {
         Object l = super.get(name);
-        if (i == 0 && LazyList.size(l) == 0)
+        if (i == 0 && LazyList.size(l) == 0) {
             return null;
+        }
         return LazyList.get(l, i);
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Get value as String.
-     * Single valued items are converted to a String with the toString()
-     * Object method. Multi valued entries are converted to a comma separated
-     * List.  No quoting of commas within values is performed.
+     * Single valued items are converted to a String with the toString() Object method. Multi valued entries
+     * are converted to a comma separated List.  No quoting of commas within values is performed.
      *
      * @param name The entry key.
      * @return String value.
@@ -123,8 +107,9 @@ public class MultiMap extends HashMap implements Cloneable {
                 for (int i = 0; i < LazyList.size(l); i++) {
                     Object e = LazyList.get(l, i);
                     if (e != null) {
-                        if (values.length() > 0)
+                        if (values.length() > 0) {
                             values.append(',');
+                        }
                         values.append(e.toString());
                     }
                 }
@@ -133,7 +118,6 @@ public class MultiMap extends HashMap implements Cloneable {
         }
     }
 
-    /* ------------------------------------------------------------ */
     public Object get(Object name) {
         Object l = super.get(name);
         switch (LazyList.size(l)) {
@@ -147,8 +131,6 @@ public class MultiMap extends HashMap implements Cloneable {
         }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Put and entry into the map.
      *
@@ -159,8 +141,6 @@ public class MultiMap extends HashMap implements Cloneable {
     public Object put(Object name, Object value) {
         return super.put(name, LazyList.add(null, value));
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Put multi valued entry.
@@ -173,8 +153,6 @@ public class MultiMap extends HashMap implements Cloneable {
         return super.put(name, values);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Put multi valued entry.
      *
@@ -184,18 +162,15 @@ public class MultiMap extends HashMap implements Cloneable {
      */
     public Object putValues(Object name, String[] values) {
         Object list = null;
-        for (int i = 0; i < values.length; i++)
+        for (int i = 0; i < values.length; i++) {
             list = LazyList.add(list, values[i]);
+        }
         return put(name, list);
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Add value to multi valued entry.
-     * If the entry is single valued, it is converted to the first
-     * value of a multi valued entry.
+     * If the entry is single valued, it is converted to the first value of a multi valued entry.
      *
      * @param name  The entry key.
      * @param value The entry value.
@@ -203,16 +178,14 @@ public class MultiMap extends HashMap implements Cloneable {
     public void add(Object name, Object value) {
         Object lo = super.get(name);
         Object ln = LazyList.add(lo, value);
-        if (lo != ln)
+        if (lo != ln) {
             super.put(name, ln);
+        }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Add values to multi valued entry.
-     * If the entry is single valued, it is converted to the first
-     * value of a multi valued entry.
+     * If the entry is single valued, it is converted to the first value of a multi valued entry.
      *
      * @param name   The entry key.
      * @param values The List of multiple values.
@@ -220,16 +193,14 @@ public class MultiMap extends HashMap implements Cloneable {
     public void addValues(Object name, List values) {
         Object lo = super.get(name);
         Object ln = LazyList.addCollection(lo, values);
-        if (lo != ln)
+        if (lo != ln) {
             super.put(name, ln);
+        }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Add values to multi valued entry.
-     * If the entry is single valued, it is converted to the first
-     * value of a multi valued entry.
+     * If the entry is single valued, it is converted to the first value of a multi valued entry.
      *
      * @param name   The entry key.
      * @param values The String array of multiple values.
@@ -237,11 +208,10 @@ public class MultiMap extends HashMap implements Cloneable {
     public void addValues(Object name, String[] values) {
         Object lo = super.get(name);
         Object ln = LazyList.addCollection(lo, Arrays.asList(values));
-        if (lo != ln)
+        if (lo != ln) {
             super.put(name, ln);
+        }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Remove value.
@@ -256,15 +226,14 @@ public class MultiMap extends HashMap implements Cloneable {
         int s = LazyList.size(lo);
         if (s > 0) {
             ln = LazyList.remove(lo, value);
-            if (ln == null)
+            if (ln == null) {
                 super.remove(name);
-            else
+            } else {
                 super.put(name, ln);
+            }
         }
         return LazyList.size(ln) != s;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Put all contents of map.
@@ -275,19 +244,17 @@ public class MultiMap extends HashMap implements Cloneable {
         Iterator i = m.entrySet().iterator();
         boolean multi = m instanceof MultiMap;
         while (i.hasNext()) {
-            Map.Entry entry =
-                    (Map.Entry) i.next();
-            if (multi)
+            Map.Entry entry = (Map.Entry) i.next();
+            if (multi) {
                 super.put(entry.getKey(), LazyList.clone(entry.getValue()));
-            else
+            } else {
                 put(entry.getKey(), entry.getValue());
+            }
         }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return Map of String arrays
+     * @return Map of String arrays.
      */
     public Map toStringArrayMap() {
         HashMap map = new HashMap(size() * 3 / 2);
@@ -301,7 +268,6 @@ public class MultiMap extends HashMap implements Cloneable {
         return map;
     }
 
-    /* ------------------------------------------------------------ */
     public Object clone() {
         MultiMap mm = (MultiMap) super.clone();
 

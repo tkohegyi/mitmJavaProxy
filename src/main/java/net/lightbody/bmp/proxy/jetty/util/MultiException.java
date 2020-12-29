@@ -19,9 +19,6 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.List;
 
-
-/* ------------------------------------------------------------ */
-
 /**
  * Wraps multiple exceptions.
  * <p>
@@ -32,49 +29,42 @@ import java.util.List;
  */
 public class MultiException extends Exception {
     private Object nested;
-
-    /* ------------------------------------------------------------ */
+    
     public MultiException() {
         super("Multiple exceptions");
     }
-
-    /* ------------------------------------------------------------ */
+    
     public void add(Exception e) {
         if (e instanceof MultiException) {
             MultiException me = (MultiException) e;
-            for (int i = 0; i < LazyList.size(me.nested); i++)
+            for (int i = 0; i < LazyList.size(me.nested); i++) {
                 nested = LazyList.add(nested, LazyList.get(me.nested, i));
-        } else
+            }
+        } else {
             nested = LazyList.add(nested, e);
+        }
     }
-
-    /* ------------------------------------------------------------ */
+    
     public int size() {
         return LazyList.size(nested);
     }
-
-    /* ------------------------------------------------------------ */
+    
     public List getExceptions() {
         return LazyList.getList(nested);
     }
-
-    /* ------------------------------------------------------------ */
+    
     public Exception getException(int i) {
         return (Exception) LazyList.get(nested, i);
     }
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
      * Throw a multiexception.
      * If this multi exception is empty then no action is taken. If it
-     * contains a single exception that is thrown, otherwise the this
-     * multi exception is thrown.
+     * contains a single exception that is thrown, otherwise the this multi exception is thrown.
      *
      * @throws Exception
      */
-    public void ifExceptionThrow()
-            throws Exception {
+    public void ifExceptionThrow() throws Exception {
         switch (LazyList.size(nested)) {
         case 0:
             break;
@@ -84,57 +74,49 @@ public class MultiException extends Exception {
             throw this;
         }
     }
-
-    /* ------------------------------------------------------------ */
-
+    
     /**
-     * Throw a multiexception.
-     * If this multi exception is empty then no action is taken. If it
-     * contains a any exceptions then this
-     * multi exception is thrown.
+     * Throw a multiexception. If this multi exception is empty then no action is taken. 
+     * If it contains a any exceptions then this multi exception is thrown.
      */
-    public void ifExceptionThrowMulti()
-            throws MultiException {
-        if (LazyList.size(nested) > 0)
+    public void ifExceptionThrowMulti() throws MultiException {
+        if (LazyList.size(nested) > 0) {
             throw this;
+        }
     }
-
-    /* ------------------------------------------------------------ */
+    
     public String toString() {
-        if (LazyList.size(nested) > 0)
-            return "net.lightbody.bmp.proxy.jetty.util.MultiException" +
-                    LazyList.getList(nested);
+        if (LazyList.size(nested) > 0) {
+            return "net.lightbody.bmp.proxy.jetty.util.MultiException" + LazyList.getList(nested);
+        }
         return "net.lightbody.bmp.proxy.jetty.util.MultiException[]";
     }
-
-    /* ------------------------------------------------------------ */
+    
     public void printStackTrace() {
         super.printStackTrace();
-        for (int i = 0; i < LazyList.size(nested); i++)
+        for (int i = 0; i < LazyList.size(nested); i++) {
             ((Throwable) LazyList.get(nested, i)).printStackTrace();
+        }
     }
 
-
-    /* ------------------------------------------------------------------------------- */
-
     /**
-     * @see java.lang.Throwable#printStackTrace(java.io.PrintStream)
+     * @see java.lang.Throwable#printStackTrace(java.io.PrintStream) .
      */
     public void printStackTrace(PrintStream out) {
         super.printStackTrace(out);
-        for (int i = 0; i < LazyList.size(nested); i++)
+        for (int i = 0; i < LazyList.size(nested); i++) {
             ((Throwable) LazyList.get(nested, i)).printStackTrace(out);
+        }
     }
 
-    /* ------------------------------------------------------------------------------- */
-
     /**
-     * @see java.lang.Throwable#printStackTrace(java.io.PrintWriter)
+     * @see java.lang.Throwable#printStackTrace(java.io.PrintWriter) .
      */
     public void printStackTrace(PrintWriter out) {
         super.printStackTrace(out);
-        for (int i = 0; i < LazyList.size(nested); i++)
+        for (int i = 0; i < LazyList.size(nested); i++) {
             ((Throwable) LazyList.get(nested, i)).printStackTrace(out);
+        }
     }
 
 }

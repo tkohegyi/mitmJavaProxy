@@ -20,13 +20,10 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-/* ------------------------------------------------------------ */
-
 /**
  * Singleton List.
  * This simple efficient implementation of a List with a single
- * element is provided for JDK 1.2 JVMs, which do not provide
- * the Collections.singletonList method.
+ * element is provided for JDK 1.2 JVMs, which do not provide the Collections.singletonList method.
  *
  * @author Greg Wilkins (gregw)
  * @version $Revision: 1.3 $
@@ -34,45 +31,37 @@ import java.util.NoSuchElementException;
 public class SingletonList extends AbstractList {
     private Object o;
 
-    /* ------------------------------------------------------------ */
     private SingletonList(Object o) {
         this.o = o;
     }
 
-    /* ------------------------------------------------------------ */
     public static SingletonList newSingletonList(Object o) {
         return new SingletonList(o);
     }
 
-    /* ------------------------------------------------------------ */
     public Object get(int i) {
-        if (i != 0)
+        if (i != 0) {
             throw new IndexOutOfBoundsException("index " + i);
+        }
         return o;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public int size() {
         return 1;
     }
-
-    /* ------------------------------------------------------------ */
+    
     public ListIterator listIterator() {
         return new SIterator();
     }
-
-    /* ------------------------------------------------------------ */
+    
     public ListIterator listIterator(int i) {
         return new SIterator(i);
     }
-
-    /* ------------------------------------------------------------ */
+    
     public Iterator iterator() {
         return new SIterator();
     }
-
-
-    /* ------------------------------------------------------------ */
+    
     private class SIterator implements ListIterator {
         int i;
 
@@ -81,8 +70,9 @@ public class SingletonList extends AbstractList {
         }
 
         SIterator(int i) {
-            if (i < 0 || i > 1)
+            if (i < 0 || i > 1) {
                 throw new IndexOutOfBoundsException("index " + i);
+            }
             this.i = i;
         }
 

@@ -25,28 +25,20 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 
-
-/* ------------------------------------------------------------ */
-
 /**
  * Fast LineInput InputStream.
- * This buffered InputStream provides methods for reading lines
- * of bytes. The lines can be converted to String or character
- * arrays either using the default encoding or a user supplied
- * encoding.
+ * This buffered InputStream provides methods for reading lines of bytes. The lines can be converted to String
+ * or character arrays either using the default encoding or a user supplied encoding.
  * <p>
  * Buffering and data copying are highly optimized, making this
- * an ideal class for protocols that mix character encoding lines
- * with arbitrary byte data (eg HTTP).
+ * an ideal class for protocols that mix character encoding lines with arbitrary byte data (eg HTTP).
  * <p>
  * The buffer size is also the maximum line length in bytes and/or
  * characters. If the byte length of a line is less than the max,
- * but the character length is greater, than then trailing characters
- * are lost.
+ * but the character length is greater, than then trailing characters are lost.
  * <p>
  * Line termination is forgiving and accepts CR, LF, CRLF or EOF.
- * Line input uses the mark/reset mechanism, so any marks set
- * prior to a readLine call are lost.
+ * Line input uses the mark/reset mechanism, so any marks set prior to a readLine call are lost.
  *
  * @author Greg Wilkins (gregw)
  * @version $Id: LineInput.java,v 1.17 2005/10/05 11:32:40 gregwilkins Exp $
@@ -55,8 +47,8 @@ public class LineInput extends FilterInputStream {
     private final static int LF = 10;
     private final static int CR = 13;
     private static final Logger log = LoggerFactory.getLogger(LineInput.class);
-    /* ------------------------------------------------------------ */
-    private byte _buf[];
+    
+    private byte[] _buf;
     private ByteBuffer _byteBuffer;
     private InputStreamReader _reader;
     private int _mark = -1;  // reset marker
@@ -71,9 +63,6 @@ public class LineInput extends FilterInputStream {
     private boolean _lastCr = false;
     private boolean _seenCrLf = false;
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      * Default buffer and maximum line size is 2048.
@@ -84,8 +73,6 @@ public class LineInput extends FilterInputStream {
         this(in, 0);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      *
@@ -94,7 +81,6 @@ public class LineInput extends FilterInputStream {
      */
     public LineInput(InputStream in, int bufferSize) {
         super(in);
-        _mark = -1;
         if (bufferSize == 0)
             bufferSize = 8192;
         _buf = ByteArrayPool.getByteArray(bufferSize);
@@ -108,8 +94,6 @@ public class LineInput extends FilterInputStream {
         }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      *
@@ -118,12 +102,11 @@ public class LineInput extends FilterInputStream {
      * @param encoding   the character encoding to use for readLine methods.
      * @throws UnsupportedEncodingException
      */
-    public LineInput(InputStream in, int bufferSize, String encoding)
-            throws UnsupportedEncodingException {
+    public LineInput(InputStream in, int bufferSize, String encoding) throws UnsupportedEncodingException {
         super(in);
-        _mark = -1;
-        if (bufferSize == 0)
+        if (bufferSize == 0) {
             bufferSize = 2048;
+        }
         _buf = ByteArrayPool.getByteArray(bufferSize);
         _byteBuffer = new ByteBuffer(_buf);
         _lineBuffer = new LineBuffer(bufferSize);
@@ -131,12 +114,9 @@ public class LineInput extends FilterInputStream {
         _encoding = encoding;
     }
 
-    /* ------------------------------------------------------------ */
     public InputStream getInputStream() {
         return in;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get the byte limit.
@@ -144,18 +124,15 @@ public class LineInput extends FilterInputStream {
      * @return Number of bytes until EOF is returned or -1 for no limit.
      */
     public int getByteLimit() {
-        if (_byteLimit < 0)
+        if (_byteLimit < 0) {
             return _byteLimit;
+        }
 
         return _byteLimit + _avail - _pos;
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
-     * Set the byte limit.
-     * If set, only this number of bytes are read before EOF.
+     * Set the byte limit. If set, only this number of bytes are read before EOF.
      *
      * @param bytes Limit number of bytes, or -1 for no limit.
      */
@@ -176,18 +153,14 @@ public class LineInput extends FilterInputStream {
         }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Read a line ended by CR, LF or CRLF.
-     * The default or supplied encoding is used to convert bytes to
-     * characters.
+     * The default or supplied encoding is used to convert bytes to characters.
      *
      * @return The line as a String or null for EOF.
      * @throws IOException
      */
-    public synchronized String readLine()
-            throws IOException {
+    public synchronized String readLine() throws IOException {
         int len = fillLine(_buf.length);
 
         if (len < 0)
@@ -208,12 +181,9 @@ public class LineInput extends FilterInputStream {
         return s;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Read a line ended by CR, LF or CRLF.
-     * The default or supplied encoding is used to convert bytes to
-     * characters.
+     * The default or supplied encoding is used to convert bytes to characters.
      *
      * @param c   Character buffer to place the line into.
      * @param off Offset into the buffer.
@@ -221,8 +191,7 @@ public class LineInput extends FilterInputStream {
      * @return The length of the line or -1 for EOF.
      * @throws IOException
      */
-    public int readLine(char[] c, int off, int len)
-            throws IOException {
+    public int readLine(char[] c, int off, int len) throws IOException {
         int blen = fillLine(len);
 
         if (blen < 0)
@@ -244,8 +213,6 @@ public class LineInput extends FilterInputStream {
 
         return read;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Read a line ended by CR, LF or CRLF.
@@ -271,43 +238,35 @@ public class LineInput extends FilterInputStream {
         return len;
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
      * Read a Line ended by CR, LF or CRLF.
      * Read a line into a shared LineBuffer instance.  The LineBuffer is
-     * resused between calls and should not be held by the caller.
-     * The default or supplied encoding is used to convert bytes to
-     * characters.
+     * reused between calls and should not be held by the caller.
+     * The default or supplied encoding is used to convert bytes to characters.
      *
      * @return LineBuffer instance or null for EOF.
      * @throws IOException
      */
-    public LineBuffer readLineBuffer()
-            throws IOException {
+    public LineBuffer readLineBuffer() throws IOException {
         return readLineBuffer(_buf.length);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Read a Line ended by CR, LF or CRLF.
      * Read a line into a shared LineBuffer instance.  The LineBuffer is
-     * resused between calls and should not be held by the caller.
-     * The default or supplied encoding is used to convert bytes to
-     * characters.
+     * reused between calls and should not be held by the caller.
+     * The default or supplied encoding is used to convert bytes to characters.
      *
      * @param len Maximum length of a line, or 0 for default
      * @return LineBuffer instance or null for EOF.
      * @throws IOException
      */
-    public LineBuffer readLineBuffer(int len)
-            throws IOException {
+    public LineBuffer readLineBuffer(int len) throws IOException {
         len = fillLine(len > 0 ? len : _buf.length);
 
-        if (len < 0)
+        if (len < 0) {
             return null;
+        }
 
         if (len == 0) {
             _lineBuffer.size = 0;
@@ -319,11 +278,10 @@ public class LineInput extends FilterInputStream {
         _lineBuffer.size = 0;
         int read = 0;
         while (read < len && _reader.ready()) {
-            int r = _reader.read(_lineBuffer.buffer,
-                    read,
-                    len - read);
-            if (r <= 0)
+            int r = _reader.read(_lineBuffer.buffer, read, len - read);
+            if (r <= 0) {
                 break;
+            }
             read += r;
         }
         _lineBuffer.size = read;
@@ -332,21 +290,19 @@ public class LineInput extends FilterInputStream {
         return _lineBuffer;
     }
 
-    /* ------------------------------------------------------------ */
     public synchronized int read() throws IOException {
         int b;
-        if (_pos >= _avail)
+        if (_pos >= _avail) {
             fill();
-        if (_pos >= _avail)
+        }
+        if (_pos >= _avail) {
             b = -1;
-        else
+        } else {
             b = _buf[_pos++] & 255;
-
+        }
         return b;
     }
 
-
-    /* ------------------------------------------------------------ */
     public synchronized int read(byte b[], int off, int len) throws IOException {
         int avail = _avail - _pos;
         if (avail <= 0) {
@@ -354,18 +310,16 @@ public class LineInput extends FilterInputStream {
             avail = _avail - _pos;
         }
 
-        if (avail <= 0)
+        if (avail <= 0) {
             len = -1;
-        else {
+        } else {
             len = (avail < len) ? avail : len;
             System.arraycopy(_buf, _pos, b, off, len);
             _pos += len;
         }
-
         return len;
     }
 
-    /* ------------------------------------------------------------ */
     public long skip(long n) throws IOException {
         int avail = _avail - _pos;
         if (avail <= 0) {
@@ -373,57 +327,49 @@ public class LineInput extends FilterInputStream {
             avail = _avail - _pos;
         }
 
-        if (avail <= 0)
+        if (avail <= 0) {
             n = 0;
-        else {
+        } else {
             n = (avail < n) ? avail : n;
             _pos += n;
         }
-
         return n;
     }
-
-
-    /* ------------------------------------------------------------ */
-    public synchronized int available()
-            throws IOException {
+    
+    public synchronized int available() throws IOException {
         int in_stream = in.available();
-        if (_byteLimit >= 0 && in_stream > _byteLimit)
+        if (_byteLimit >= 0 && in_stream > _byteLimit) {
             in_stream = _byteLimit;
+        }
 
         return _avail - _pos + in_stream;
     }
 
-    /* ------------------------------------------------------------ */
-    public synchronized void mark(int limit)
-            throws IllegalArgumentException {
+    public synchronized void mark(int limit) throws IllegalArgumentException {
         if (limit > _buf.length) {
             byte[] new_buf = new byte[limit];
             System.arraycopy(_buf, _pos, new_buf, _pos, _avail - _pos);
             _buf = new_buf;
-            if (_byteBuffer != null)
+            if (_byteBuffer != null) {
                 _byteBuffer.setBuffer(_buf);
+            }
         }
         _mark = _pos;
     }
 
-    /* ------------------------------------------------------------ */
-    public synchronized void reset()
-            throws IOException {
-        if (_mark < 0)
+    public synchronized void reset() throws IOException {
+        if (_mark < 0) {
             throw new IOException("Resetting to invalid mark");
+        }
         _pos = _mark;
         _mark = -1;
     }
 
-    /* ------------------------------------------------------------ */
     public boolean markSupported() {
         return true;
     }
 
-    /* ------------------------------------------------------------ */
-    private void fill()
-            throws IOException {
+    private void fill() throws IOException {
         // if the mark is in the middle of the buffer
         if (_mark > 0) {
             // moved saved bytes to start of buffer
@@ -452,9 +398,10 @@ public class LineInput extends FilterInputStream {
         _eof = false;
 
         // Handle byte limited EOF
-        if (_byteLimit == 0)
+        if (_byteLimit == 0) {
             _eof = true;
-            // else loop until something is read.
+        }
+        // else loop until something is read.
         else while (!_eof && n == 0 && _buf.length > _contents) {
             // try to read as much as will fit.
             int space = _buf.length - _contents;
@@ -520,16 +467,15 @@ public class LineInput extends FilterInputStream {
         _newByteLimit = false;
     }
 
-
-    /* ------------------------------------------------------------ */
-    private int fillLine(int maxLen)
-            throws IOException {
+    private int fillLine(int maxLen) throws IOException {
         _mark = _pos;
 
-        if (_pos >= _avail)
+        if (_pos >= _avail) {
             fill();
-        if (_pos >= _avail)
+        }
+        if (_pos >= _avail) {
             return -1;
+        }
 
         byte b;
         boolean cr = _lastCr;
@@ -588,9 +534,9 @@ public class LineInput extends FilterInputStream {
 
             default:
                 if (cr) {
-                    if (_pos == 1)
+                    if (_pos == 1) {
                         cr = false;
-                    else {
+                    } else {
                         _pos--;
                         break LineLoop;
                     }
@@ -599,9 +545,9 @@ public class LineInput extends FilterInputStream {
                 len++;
                 if (len == maxLen) {
                     // look for EOL
-                    if (_mark != 0 && _pos + 2 >= _avail && _avail < _buf.length)
+                    if (_mark != 0 && _pos + 2 >= _avail && _avail < _buf.length) {
                         fill();
-
+                    }
                     if (_pos < _avail && _buf[_pos] == CR) {
                         cr = true;
                         _pos++;
@@ -610,7 +556,6 @@ public class LineInput extends FilterInputStream {
                         lf = true;
                         _pos++;
                     }
-
                     if (!cr && !lf) {
                         // fake EOL
                         lf = true;
@@ -618,18 +563,17 @@ public class LineInput extends FilterInputStream {
                     }
                     break LineLoop;
                 }
-
                 break;
             }
         }
 
-        if (!cr && !lf && len == 0)
+        if (!cr && !lf && len == 0) {
             len = -1;
+        }
 
         return len;
     }
 
-    /* ------------------------------------------------------------ */
     public void destroy() {
         ByteArrayPool.returnByteArray(_buf);
         _byteBuffer = null;
@@ -638,9 +582,6 @@ public class LineInput extends FilterInputStream {
         _encoding = null;
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
     private static class ByteBuffer extends ByteArrayInputStream {
         ByteBuffer(byte[] buffer) {
             super(buffer);
@@ -674,6 +615,4 @@ public class LineInput extends FilterInputStream {
         }
     }
 
-
 }
-
