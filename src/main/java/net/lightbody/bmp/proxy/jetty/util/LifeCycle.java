@@ -13,47 +13,38 @@
 // limitations under the License.
 // ========================================================================
 
-package net.lightbody.bmp.proxy.jetty.util;/* ------------------------------------------------------------ */
+package net.lightbody.bmp.proxy.jetty.util;
 
 /**
  * A component LifeCycle.
- * Represents the life cycle interface for an abstract
- * software component.
+ * Represents the life cycle interface for an abstract software component.
  *
  * @author Greg Wilkins (gregw)
  * @version $Id: LifeCycle.java,v 1.5 2004/05/09 20:32:49 gregwilkins Exp $
  */
 public interface LifeCycle {
-    /* ------------------------------------------------------------ */
 
     /**
      * Start the LifeCycle.
      *
      * @throws Exception An arbitrary exception may be thrown.
      */
-    public void start()
-            throws Exception;
-
-    /* ------------------------------------------------------------ */
+    void start() throws Exception;
 
     /**
      * Stop the LifeCycle.
-     * The LifeCycle may wait for current activities to complete
-     * normally, but it can be interrupted.
+     * The LifeCycle may wait for current activities to complete normally, but it can be interrupted.
      *
      * @throws InterruptedException Stopping a lifecycle is rarely atomic
      *                              and may be interrupted by another thread.  If this happens
      *                              InterruptedException is throw and the component will be in an
      *                              indeterminant state and should probably be discarded.
      */
-    public void stop()
-            throws InterruptedException;
-
-    /* ------------------------------------------------------------ */
+    void stop() throws InterruptedException;
 
     /**
      * @return True if the LifeCycle has been started.
      */
-    public boolean isStarted();
+    boolean isStarted();
 }
 
