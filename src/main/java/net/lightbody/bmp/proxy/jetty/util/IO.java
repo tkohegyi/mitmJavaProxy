@@ -26,22 +26,19 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
 
-/* ======================================================================== */
-
 /**
  * IO Utilities.
- * Provides stream handling utilities in
- * singleton Threadpool implementation accessed by static members.
+ * Provides stream handling utilities in singleton Threadpool implementation accessed by static members.
  */
 public class IO extends ThreadPool {
-    /* ------------------------------------------------------------------- */
+    
     public final static String
             CRLF = "\015\012";
-    /* ------------------------------------------------------------------- */
+    
     public final static byte[]
             CRLF_BYTES = {(byte) '\015', (byte) '\012'};
-    /* ------------------------------------------------------------------- */
-    public static int bufferSize = Integer.getInteger("net.lightbody.bmp.proxy.jetty.util.IO.bufferSize", 8192).intValue();
+    
+    public static int bufferSize = Integer.getInteger("net.lightbody.bmp.proxy.jetty.util.IO.bufferSize", 8192);
     private static final Logger log = LoggerFactory.getLogger(IO.class);
     private static NullOS __nullStream = new NullOS();
     private static NullWrite __nullWriter = new NullWrite();
@@ -50,7 +47,7 @@ public class IO extends ThreadPool {
         return Singleton.__instance;
     }
 
-    /* ------------------------------------------------------------------- */
+    
 
     /**
      * Copy Stream in to Stream out until EOF or exception.
@@ -64,7 +61,7 @@ public class IO extends ThreadPool {
         }
     }
 
-    /* ------------------------------------------------------------------- */
+    
 
     /**
      * Copy Stream in to Stream out until EOF or exception.
@@ -74,7 +71,7 @@ public class IO extends ThreadPool {
         copy(in, out, -1);
     }
 
-    /* ------------------------------------------------------------------- */
+    
 
     /**
      * Copy Stream in to Stream out until EOF or exception
@@ -88,7 +85,7 @@ public class IO extends ThreadPool {
         }
     }
 
-    /* ------------------------------------------------------------------- */
+    
 
     /**
      * Copy Reader to Writer out until EOF or exception.
@@ -100,7 +97,7 @@ public class IO extends ThreadPool {
         copy(in, out, -1);
     }
 
-    /* ------------------------------------------------------------------- */
+    
 
     /**
      * Copy Stream in to Stream for byteCount bytes or until EOF or exception.
@@ -137,7 +134,7 @@ public class IO extends ThreadPool {
         }
     }
 
-    /* ------------------------------------------------------------------- */
+    
 
     /**
      * Copy Reader to Writer for byteCount bytes or until EOF or exception.
@@ -273,7 +270,7 @@ public class IO extends ThreadPool {
         }
     }
 
-    /* ------------------------------------------------------------------- */
+    
     private static class Singleton {
         static final IO __instance = new IO();
 
@@ -289,7 +286,7 @@ public class IO extends ThreadPool {
 
     /* ------------------------------------------------------------ */
 
-    /* ------------------------------------------------------------------- */
+    
     static class Job {
         InputStream in;
         OutputStream out;

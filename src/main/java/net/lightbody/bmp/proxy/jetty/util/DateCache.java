@@ -57,7 +57,7 @@ public class DateCache {
     private long _lastSeconds = -1;
     private String _lastResult = null;
 
-    private Locale _locale;
+    private final Locale _locale;
 
     public DateCache(String format, Locale l) {
         _formatString = format;

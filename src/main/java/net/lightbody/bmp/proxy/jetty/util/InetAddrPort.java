@@ -18,25 +18,19 @@ package net.lightbody.bmp.proxy.jetty.util;
 import java.io.Serializable;
 import java.net.InetAddress;
 
-/* ======================================================================== */
-
 /**
  * InetAddress and Port.
  */
 public class InetAddrPort implements Serializable {
-    /* ------------------------------------------------------------ */
-    public final static String __0_0_0_0 = "0.0.0.0";
+    
+    public static final String __0_0_0_0 = "0.0.0.0";
 
-    /* ------------------------------------------------------------ */
     private InetAddress _addr = null;
     private boolean _addrIsHost = false;
     private int _port = 0;
 
-    /* ------------------------------------------------------------------- */
     public InetAddrPort() {
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor for a port on all local host address.
@@ -46,8 +40,6 @@ public class InetAddrPort implements Serializable {
     public InetAddrPort(int port) {
         _port = port;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -60,34 +52,29 @@ public class InetAddrPort implements Serializable {
         _port = port;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Constructor.
      *
      * @param host
      * @param port
      */
-    public InetAddrPort(String host, int port)
-            throws java.net.UnknownHostException {
+    public InetAddrPort(String host, int port) throws java.net.UnknownHostException {
         setHost(host);
         setPort(port);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
      *
      * @param inetAddrPort String of the form "addr:port"
      */
-    public InetAddrPort(String inetAddrPort)
-            throws java.net.UnknownHostException {
+    public InetAddrPort(String inetAddrPort) throws java.net.UnknownHostException {
         int c = inetAddrPort.indexOf(':');
         if (c >= 0) {
             String addr = inetAddrPort.substring(0, c);
-            if (addr.indexOf('/') > 0)
+            if (addr.indexOf('/') > 0) {
                 addr = addr.substring(addr.indexOf('/') + 1);
+            }
             inetAddrPort = inetAddrPort.substring(c + 1);
 
             if (addr.length() > 0 && !__0_0_0_0.equals(addr)) {
@@ -98,8 +85,6 @@ public class InetAddrPort implements Serializable {
 
         _port = Integer.parseInt(inetAddrPort);
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Constructor.
@@ -113,21 +98,18 @@ public class InetAddrPort implements Serializable {
         }
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get the Host.
      *
      * @return The IP address
      */
     public String getHost() {
-        if (_addr == null)
+        if (_addr == null) {
             return __0_0_0_0;
+        }
 
         return _addrIsHost ? _addr.getHostName() : _addr.getHostAddress();
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Set the Host.
@@ -135,18 +117,16 @@ public class InetAddrPort implements Serializable {
      * @param host
      * @throws java.net.UnknownHostException
      */
-    public void setHost(String host)
-            throws java.net.UnknownHostException {
+    public void setHost(String host) throws java.net.UnknownHostException {
         _addr = null;
         if (host != null) {
-            if (host.indexOf('/') > 0)
+            if (host.indexOf('/') > 0) {
                 host = host.substring(0, host.indexOf('/'));
+            }
             _addrIsHost = !Character.isDigit((host.charAt(0)));
             _addr = InetAddress.getByName(host);
         }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Get the IP address.
@@ -156,8 +136,6 @@ public class InetAddrPort implements Serializable {
     public InetAddress getInetAddress() {
         return _addr;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Set the IP address.
@@ -169,8 +147,6 @@ public class InetAddrPort implements Serializable {
         _addr = addr;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Get the port.
      *
@@ -179,8 +155,6 @@ public class InetAddrPort implements Serializable {
     public int getPort() {
         return _port;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Set the port.
@@ -191,13 +165,9 @@ public class InetAddrPort implements Serializable {
         _port = port;
     }
 
-
-    /* ------------------------------------------------------------------- */
     public String toString() {
         return getHost() + ':' + _port;
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Clone the InetAddrPort.
@@ -208,8 +178,6 @@ public class InetAddrPort implements Serializable {
         return new InetAddrPort(this);
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Hash Code.
      *
@@ -219,8 +187,6 @@ public class InetAddrPort implements Serializable {
         return _port + ((_addr == null) ? 0 : _addr.hashCode());
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Equals.
      *
@@ -228,15 +194,16 @@ public class InetAddrPort implements Serializable {
      * @return True if is the same address and port.
      */
     public boolean equals(Object o) {
-        if (o == null)
+        if (o == null) {
             return false;
-        if (o == this)
+        }
+        if (o == this) {
             return true;
+        }
         if (o instanceof InetAddrPort) {
             InetAddrPort addr = (InetAddrPort) o;
             return addr._port == _port &&
-                    (addr._addr == _addr ||
-                            addr._addr != null && addr._addr.equals(_addr));
+                    (addr._addr == _addr || addr._addr != null && addr._addr.equals(_addr));
         }
         return false;
     }
