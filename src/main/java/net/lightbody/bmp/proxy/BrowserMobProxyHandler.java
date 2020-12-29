@@ -2,8 +2,8 @@ package net.lightbody.bmp.proxy;
 
 import net.lightbody.bmp.proxy.http.BadURIException;
 import net.lightbody.bmp.proxy.http.BrowserMobHttpClient;
-import com.epam.mitm.proxy.http.MitmJavaProxyHttpRequest;
-import com.epam.mitm.proxy.http.MitmJavaProxyHttpResponse;
+import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
+import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import net.lightbody.bmp.proxy.http.RequestCallback;
 import net.lightbody.bmp.proxy.jetty.http.HttpException;
 import net.lightbody.bmp.proxy.jetty.http.HttpFields;

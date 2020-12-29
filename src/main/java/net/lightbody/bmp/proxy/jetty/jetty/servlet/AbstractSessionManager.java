@@ -15,7 +15,7 @@
 
 package net.lightbody.bmp.proxy.jetty.jetty.servlet;
 
-import com.epam.mitm.proxy.ProxyServer;
+import org.rockhill.mitm.proxy.ProxyServer;
 import net.lightbody.bmp.proxy.jetty.http.HttpOnlyCookie;
 import net.lightbody.bmp.proxy.jetty.util.LazyList;
 import net.lightbody.bmp.proxy.jetty.util.LogSupport;

@@ -1,10 +1,10 @@
 package net.lightbody.bmp.proxy.http;
 
-import com.epam.mitm.proxy.ProxyServer;
-import com.epam.mitm.proxy.RequestInterceptor;
-import com.epam.mitm.proxy.ResponseInterceptor;
-import com.epam.mitm.proxy.http.MitmJavaProxyHttpRequest;
-import com.epam.mitm.proxy.http.MitmJavaProxyHttpResponse;
+import org.rockhill.mitm.proxy.ProxyServer;
+import org.rockhill.mitm.proxy.RequestInterceptor;
+import org.rockhill.mitm.proxy.ResponseInterceptor;
+import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
+import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarCookie;
 import net.lightbody.bmp.core.har.HarEntry;

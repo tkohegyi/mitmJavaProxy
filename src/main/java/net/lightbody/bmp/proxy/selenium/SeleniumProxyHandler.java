@@ -1,6 +1,6 @@
 package net.lightbody.bmp.proxy.selenium;
 
-import com.epam.mitm.proxy.ProxyServer;
+import org.rockhill.mitm.proxy.ProxyServer;
 import net.lightbody.bmp.proxy.jetty.http.HttpConnection;
 import net.lightbody.bmp.proxy.jetty.http.HttpException;
 import net.lightbody.bmp.proxy.jetty.http.HttpFields;
