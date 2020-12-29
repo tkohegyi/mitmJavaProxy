@@ -1,16 +1,17 @@
 MitmJavaProxy
 ============================
-This Men-In-The-Middle Java Proxy is a derivative work that was originated from **BrowserMob Proxy**, then tailored for old *Wilma* versions, 
+This Men-In-The-Middle Java Proxy is a derivative work that was originated from [**BrowserMob Proxy**](https://github.com/lightbody/browsermob-proxy), then tailored for old [*Wilma*](https://github.com/epam/Wilma) versions, 
 then upgraded in order to be prepared for the next generation of *Wilma*. 
 
-**Right now everything seems to be working so can be used in experimental mode.**
+**Right now everything seems to be working so can be used in experimental mode**, but still changes need to be expected before the first real release.
 
-Also please be aware that the main aim of creating this MITM Java proxy is to support the proxy need of Wilma.
-Therefore none of the original browsermob-proxy features should be expected as working, 
-because the main purpose is just:
+Also please be aware that the main aim of creating this MITM Java proxy is to support the proxy need of [Wilma](https://github.com/epam/Wilma).
+Therefore none of the original browsermob-proxy features should be expected as working, on the other side, other features which was not in the original browsermob-proxy become available. Also, this version is prepered for Java >8 versions, and supports TSL.
+In sort, what you can do with it:
 - proxying the HTTP/HTTPS messages and 
 - by intercepting both requests and responses
-- do whatever we (and Wilma) wants to do with the messages.
+- do whatever you want to do with the intercepted messages.
+It is possible to alter both the request before it hits the server (what is more - you can alter the target URL too) and the response before it arrives to the client.
 
 Embedded Mode
 -------------
