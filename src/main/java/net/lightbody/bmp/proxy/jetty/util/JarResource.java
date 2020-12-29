@@ -26,21 +26,16 @@ import java.net.URL;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
-
-/* ------------------------------------------------------------ */
 public class JarResource extends URLResource {
     private static final Logger log = LoggerFactory.getLogger(JarResource.class);
 
     protected transient JarURLConnection _jarConnection;
 
-    /* -------------------------------------------------------- */
     JarResource(URL url) {
         super(url, null);
     }
 
-    /* ------------------------------------------------------------ */
-    public static void extract(Resource resource, File directory, boolean deleteOnExit)
-            throws IOException {
+    public static void extract(Resource resource, File directory, boolean deleteOnExit) throws IOException {
         if (log.isDebugEnabled()) log.debug("Extract " + resource + " to " + directory);
         JarInputStream jin = new JarInputStream(resource.getInputStream());
         JarEntry entry = null;
@@ -48,13 +43,15 @@ public class JarResource extends URLResource {
             File file = new File(directory, entry.getName());
             if (entry.isDirectory()) {
                 // Make directory
-                if (!file.exists())
+                if (!file.exists()) {
                     file.mkdirs();
+                }
             } else {
                 // make directory (some jars don't list dirs)
                 File dir = new File(file.getParent());
-                if (!dir.exists())
+                if (!dir.exists()) {
                     dir.mkdirs();
+                }
 
                 // Make file
                 FileOutputStream fout = null;
@@ -66,26 +63,27 @@ public class JarResource extends URLResource {
                 }
 
                 // touch the file.
-                if (entry.getTime() >= 0)
+                if (entry.getTime() >= 0) {
                     file.setLastModified(entry.getTime());
+                }
             }
-            if (deleteOnExit)
+            if (deleteOnExit) {
                 file.deleteOnExit();
+            }
         }
     }
 
-    /* ------------------------------------------------------------ */
     public synchronized void release() {
         _jarConnection = null;
         super.release();
     }
 
-    /* ------------------------------------------------------------ */
     protected boolean checkConnection() {
         super.checkConnection();
         try {
-            if (_jarConnection != _connection)
+            if (_jarConnection != _connection) {
                 newConnection();
+            }
         } catch (IOException e) {
             _jarConnection = null;
         }
@@ -93,11 +91,7 @@ public class JarResource extends URLResource {
         return _jarConnection != null;
     }
 
-    /* ------------------------------------------------------------ */
-
-    /* ------------------------------------------------------------ */
-    protected void newConnection()
-            throws IOException {
+    protected void newConnection() throws IOException {
         _jarConnection = (JarURLConnection) _connection;
     }
 
@@ -105,31 +99,27 @@ public class JarResource extends URLResource {
      * Returns true if the respresenetd resource exists.
      */
     public boolean exists() {
-        if (_urlString.endsWith("!/"))
+        if (_urlString.endsWith("!/")) {
             return checkConnection();
-        else
+        } else {
             return super.exists();
+        }
     }
 
-    /* ------------------------------------------------------------ */
-    public File getFile()
-            throws IOException {
+    public File getFile() throws IOException {
         return null;
     }
 
-    /* ------------------------------------------------------------ */
-    public InputStream getInputStream()
-            throws java.io.IOException {
-        if (!_urlString.endsWith("!/"))
+    public InputStream getInputStream() throws java.io.IOException {
+        if (!_urlString.endsWith("!/")) {
             return super.getInputStream();
+        }
 
         URL url = new URL(_urlString.substring(4, _urlString.length() - 2));
         return url.openStream();
     }
 
-    /* ------------------------------------------------------------ */
-    public void extract(File directory, boolean deleteOnExit)
-            throws IOException {
+    public void extract(File directory, boolean deleteOnExit) throws IOException {
         extract(this, directory, deleteOnExit);
     }
 }

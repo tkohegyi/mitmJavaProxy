@@ -23,7 +23,6 @@ import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-/* ------------------------------------------------------------ */
 class JarFileResource extends JarResource {
     transient JarFile _jarFile;
     transient File _file;
@@ -33,13 +32,11 @@ class JarFileResource extends JarResource {
     transient String _jarUrl;
     transient String _path;
     transient boolean _exists;
-
-    /* -------------------------------------------------------- */
+    
     JarFileResource(URL url) {
         super(url);
     }
 
-    /* ------------------------------------------------------------ */
     public synchronized void release() {
         _list = null;
         _entry = null;
@@ -48,7 +45,6 @@ class JarFileResource extends JarResource {
         super.release();
     }
 
-    /* ------------------------------------------------------------ */
     protected boolean checkConnection() {
         try {
             super.checkConnection();
@@ -63,10 +59,7 @@ class JarFileResource extends JarResource {
         return _jarFile != null;
     }
 
-
-    /* ------------------------------------------------------------ */
-    protected void newConnection()
-            throws IOException {
+    protected void newConnection() throws IOException {
         super.newConnection();
 
         _entry = null;
@@ -77,21 +70,20 @@ class JarFileResource extends JarResource {
         int sep = _urlString.indexOf("!/");
         _jarUrl = _urlString.substring(0, sep + 2);
         _path = _urlString.substring(sep + 2);
-        if (_path.length() == 0)
+        if (_path.length() == 0) {
             _path = null;
+        }
         _jarFile = _jarConnection.getJarFile();
         _file = new File(_jarFile.getName());
     }
-
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Returns true if the respresenetd resource exists.
      */
     public boolean exists() {
-        if (_exists)
+        if (_exists) {
             return true;
+        }
 
         if (_urlString.endsWith("!/")) {
             String file_url = _urlString.substring(4, _urlString.length() - 2);
@@ -112,16 +104,14 @@ class JarFileResource extends JarResource {
         } else {
             // Can we find a file for it?
             JarFile jarFile = null;
-            if (check)
-                // Yes
+            if (check) { // Yes
                 jarFile = _jarFile;
-            else {
+            } else {
                 // No - so lets look if the root entry exists.
                 try {
-                    jarFile =
-                            ((JarURLConnection)
-                                    ((new URL(_jarUrl)).openConnection())).getJarFile();
+                    jarFile = ((JarURLConnection) ((new URL(_jarUrl)).openConnection())).getJarFile();
                 } catch (Exception e) {
+                    //
                 }
             }
 
@@ -156,29 +146,24 @@ class JarFileResource extends JarResource {
         return _exists;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Returns true if the respresenetd resource is a container/directory.
-     * If the resource is not a file, resources ending with "/" are
-     * considered directories.
+     * If the resource is not a file, resources ending with "/" are considered directories.
      */
     public boolean isDirectory() {
         return _urlString.endsWith("/") || exists() && _directory;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
      * Returns the last modified time
      */
     public long lastModified() {
-        if (checkConnection() && _file != null)
+        if (checkConnection() && _file != null) {
             return _file.lastModified();
+        }
         return -1;
     }
 
-    /* ------------------------------------------------------------ */
     public synchronized String[] list() {
         if (isDirectory() && _list == null) {
             ArrayList list = new ArrayList(32);
@@ -188,8 +173,7 @@ class JarFileResource extends JarResource {
             JarFile jarFile = _jarFile;
             if (jarFile == null) {
                 try {
-                    jarFile = ((JarURLConnection)
-                            ((new URL(_jarUrl)).openConnection())).getJarFile();
+                    jarFile = ((JarURLConnection) ((new URL(_jarUrl)).openConnection())).getJarFile();
                 } catch (Exception e) {
                     //
                 }
@@ -200,14 +184,16 @@ class JarFileResource extends JarResource {
             while (e.hasMoreElements()) {
                 JarEntry entry = (JarEntry) e.nextElement();
                 String name = entry.getName().replace('\\', '/');
-                if (!name.startsWith(dir) || name.length() == dir.length())
+                if (!name.startsWith(dir) || name.length() == dir.length()) {
                     continue;
+                }
                 String listName = name.substring(dir.length());
                 int dash = listName.indexOf('/');
                 if (dash >= 0) {
                     listName = listName.substring(0, dash + 1);
-                    if (list.contains(listName))
+                    if (list.contains(listName)) {
                         continue;
+                    }
                 }
 
                 list.add(listName);
@@ -219,26 +205,23 @@ class JarFileResource extends JarResource {
         return _list;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Return the length of the resource
+     * Return the length of the resource.
      */
     public long length() {
-        if (isDirectory())
+        if (isDirectory()) {
             return -1;
+        }
 
-        if (_entry != null)
+        if (_entry != null) {
             return _entry.getSize();
+        }
 
         return -1;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * Encode according to this resource type.
-     * File URIs are not encoded.
+     * Encode according to this resource type. File URIs are not encoded.
      *
      * @param uri URI to encode.
      * @return The uri unchanged.
@@ -247,11 +230,3 @@ class JarFileResource extends JarResource {
         return uri;
     }
 }
-
-
-
-
-
-
-
-

@@ -32,26 +32,21 @@ import java.io.Writer;
  */
 public class IO extends ThreadPool {
     
-    public final static String
-            CRLF = "\015\012";
+    public final static String CRLF = "\015\012";
     
-    public final static byte[]
-            CRLF_BYTES = {(byte) '\015', (byte) '\012'};
+    public final static byte[] CRLF_BYTES = {(byte) '\015', (byte) '\012'};
     
     public static int bufferSize = Integer.getInteger("net.lightbody.bmp.proxy.jetty.util.IO.bufferSize", 8192);
     private static final Logger log = LoggerFactory.getLogger(IO.class);
-    private static NullOS __nullStream = new NullOS();
-    private static NullWrite __nullWriter = new NullWrite();
+    private static final NullOS __nullStream = new NullOS();
+    private static final NullWrite __nullWriter = new NullWrite();
 
     public static IO instance() {
         return Singleton.__instance;
     }
 
-    
-
     /**
-     * Copy Stream in to Stream out until EOF or exception.
-     * in own thread
+     * Copy Stream in to Stream out until EOF or exception. in own thread
      */
     public static void copyThread(InputStream in, OutputStream out) {
         try {
@@ -61,21 +56,15 @@ public class IO extends ThreadPool {
         }
     }
 
-    
-
     /**
      * Copy Stream in to Stream out until EOF or exception.
      */
-    public static void copy(InputStream in, OutputStream out)
-            throws IOException {
+    public static void copy(InputStream in, OutputStream out) throws IOException {
         copy(in, out, -1);
     }
 
-    
-
     /**
-     * Copy Stream in to Stream out until EOF or exception
-     * in own thread
+     * Copy Stream in to Stream out until EOF or exception in own thread
      */
     public static void copyThread(Reader in, Writer out) {
         try {
@@ -85,41 +74,35 @@ public class IO extends ThreadPool {
         }
     }
 
-    
-
     /**
      * Copy Reader to Writer out until EOF or exception.
      *
      * @return TODO
      */
-    public static void copy(Reader in, Writer out)
-            throws IOException {
+    public static void copy(Reader in, Writer out) throws IOException {
         copy(in, out, -1);
     }
-
-    
 
     /**
      * Copy Stream in to Stream for byteCount bytes or until EOF or exception.
      *
      * @return Copied bytes count or -1 if no bytes were read *and* EOF was reached
      */
-    public static void copy(InputStream in,
-                            OutputStream out,
-                            long byteCount)
-            throws IOException {
-        byte buffer[] = new byte[bufferSize];
+    public static void copy(InputStream in, OutputStream out, long byteCount) throws IOException {
+        byte[] buffer = new byte[bufferSize];
         int len = bufferSize;
 
         if (byteCount >= 0) {
             while (byteCount > 0) {
-                if (byteCount < bufferSize)
+                if (byteCount < bufferSize) {
                     len = in.read(buffer, 0, (int) byteCount);
-                else
+                } else {
                     len = in.read(buffer, 0, bufferSize);
+                }
 
-                if (len == -1)
+                if (len == -1) {
                     break;
+                }
 
                 byteCount -= len;
                 out.write(buffer, 0, len);
@@ -127,34 +110,32 @@ public class IO extends ThreadPool {
         } else {
             while (true) {
                 len = in.read(buffer, 0, bufferSize);
-                if (len < 0)
+                if (len < 0) {
                     break;
+                }
                 out.write(buffer, 0, len);
             }
         }
     }
-
     
-
     /**
      * Copy Reader to Writer for byteCount bytes or until EOF or exception.
      */
-    public static void copy(Reader in,
-                            Writer out,
-                            long byteCount)
-            throws IOException {
-        char buffer[] = new char[bufferSize];
+    public static void copy(Reader in, Writer out, long byteCount) throws IOException {
+        char[] buffer = new char[bufferSize];
         int len = bufferSize;
 
         if (byteCount >= 0) {
             while (byteCount > 0) {
-                if (byteCount < bufferSize)
+                if (byteCount < bufferSize) {
                     len = in.read(buffer, 0, (int) byteCount);
-                else
+                } else {
                     len = in.read(buffer, 0, bufferSize);
+                }
 
-                if (len == -1)
+                if (len == -1) {
                     break;
+                }
 
                 byteCount -= len;
                 out.write(buffer, 0, len);
@@ -162,87 +143,80 @@ public class IO extends ThreadPool {
         } else {
             while (true) {
                 len = in.read(buffer, 0, bufferSize);
-                if (len == -1)
+                if (len == -1) {
                     break;
+                }
                 out.write(buffer, 0, len);
             }
         }
     }
-
-    /* ------------------------------------------------------------ */
 
     /**
      * Read input stream to string.
      */
-    public static String toString(InputStream in)
-            throws IOException {
+    public static String toString(InputStream in) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         copy(in, out);
         return new String(out.toByteArray());
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
-     * Delete File.
-     * This delete will recursively delete directories - BE CAREFULL
+     * Delete File. This delete will recursively delete directories - BE CAREFULL.
      *
      * @param file The file to be deleted.
      */
     public static boolean delete(File file) {
-        if (!file.exists())
+        if (!file.exists()) {
             return false;
+        }
         if (file.isDirectory()) {
             File[] files = file.listFiles();
-            for (int i = 0; files != null && i < files.length; i++)
+            for (int i = 0; files != null && i < files.length; i++) {
                 delete(files[i]);
+            }
         }
         return file.delete();
     }
 
-
-    /* ------------------------------------------------------------ */
-
     /**
-     * @return An outputstream to nowhere
+     * @return An outputstream to nowhere.
      */
     public static OutputStream getNullStream() {
         return __nullStream;
     }
 
-    /* ------------------------------------------------------------ */
-
     /**
-     * closes an input stream, and logs exceptions
+     * closes an input stream, and (do not) logs exceptions.
      *
      * @param is the input stream to close
      */
     public static void close(InputStream is) {
         try {
-            if (is != null)
+            if (is != null) {
                 is.close();
+            }
         } catch (IOException e) {
             //
         }
     }
 
     /**
-     * closes an output stream, and logs exceptions
+     * closes an output stream, and (do not) logs exceptions.
      *
      * @param os the output stream to close
      */
     public static void close(OutputStream os) {
         try {
-            if (os != null)
+            if (os != null) {
                 os.close();
+            }
         } catch (IOException e) {
-
+            //
         }
     }
 
     /**
-     * @return An writer to nowhere
+     * @return An writer to nowhere.
      */
     public static Writer getNullWriter() {
         return __nullWriter;
@@ -254,23 +228,25 @@ public class IO extends ThreadPool {
     public void handle(Object o) {
         Job job = (Job) o;
         try {
-            if (job.in != null)
+            if (job.in != null) {
                 copy(job.in, job.out, -1);
-            else
+            } else {
                 copy(job.read, job.write, -1);
+            }
         } catch (IOException e) {
             try {
-                if (job.out != null)
+                if (job.out != null) {
                     job.out.close();
-                if (job.write != null)
+                }
+                if (job.write != null) {
                     job.write.close();
+                }
             } catch (IOException e2) {
                 //
             }
         }
     }
 
-    
     private static class Singleton {
         static final IO __instance = new IO();
 
@@ -284,9 +260,6 @@ public class IO extends ThreadPool {
         }
     }
 
-    /* ------------------------------------------------------------ */
-
-    
     static class Job {
         InputStream in;
         OutputStream out;
@@ -308,8 +281,6 @@ public class IO extends ThreadPool {
         }
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     private static class NullOS extends OutputStream {
         public void close() {
         }
@@ -327,8 +298,6 @@ public class IO extends ThreadPool {
         }
     }
 
-    /* ------------------------------------------------------------ */
-    /* ------------------------------------------------------------ */
     private static class NullWrite extends Writer {
         public void close() {
         }
@@ -352,12 +321,3 @@ public class IO extends ThreadPool {
         }
     }
 }
-
-
-
-
-
-
-
-
-
