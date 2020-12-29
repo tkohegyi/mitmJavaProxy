@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 
 /**
  * Lazy List creation.
@@ -308,16 +307,6 @@ public class LazyList {
             return ((List) list).iterator();
         }
         return getList(list).iterator();
-    }
-
-    public static ListIterator listIterator(Object list) {
-        if (list == null) {
-            return Collections.EMPTY_LIST.listIterator();
-        }
-        if (list instanceof List) {
-            return ((List) list).listIterator();
-        }
-        return getList(list).listIterator();
     }
 
     /**

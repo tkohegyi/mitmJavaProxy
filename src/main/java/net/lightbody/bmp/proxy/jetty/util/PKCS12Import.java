@@ -105,16 +105,5 @@ public class PKCS12Import {
         out.close();
     }
 
-    static void dumpChain(Certificate[] chain) {
-        for (int i = 0; i < chain.length; i++) {
-            Certificate cert = chain[i];
-            if (cert instanceof X509Certificate) {
-                X509Certificate x509 = (X509Certificate) chain[i];
-                System.err.println("subject: " + x509.getSubjectDN());
-                System.err.println("issuer: " + x509.getIssuerDN());
-            }
-        }
-    }
-
 }
 

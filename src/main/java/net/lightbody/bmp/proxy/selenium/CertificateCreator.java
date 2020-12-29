@@ -85,28 +85,6 @@ public class CertificateCreator {
         clientCertDefaultOidsNotToCopy.add(OID_AUTHORITY_INFO_ACCESS);
     }
 
-
-    /**
-     * Utility method for generating a "standard" server certificate. Recognized by most
-     * browsers as valid for SSL/TLS.  These certificates are generated de novo, not from
-     * a template, so they will not retain the structure of the original certificate and may
-     * not be suitable for applications that require Extended Validation/High Assurance SSL
-     * or other distinct extensions or EKU.
-     *
-     * @param newPubKey
-     * @param caCert
-     * @param caPrivateKey
-     * @return
-     * @throws CertificateParsingException
-     * @throws SignatureException
-     * @throws InvalidKeyException
-     * @throws CertificateExpiredException
-     * @throws CertificateNotYetValidException
-     * @throws CertificateException
-     * @throws NoSuchAlgorithmException
-     * @throws NoSuchProviderException
-     */
-
     /**
      * This method creates an X509v3 certificate based on an an existing certificate.
      * It attempts to create as faithful a copy of the existing certificate as possible
@@ -152,8 +130,7 @@ public class CertificateCreator {
                                                            final X509Certificate caCert,
                                                            final PrivateKey caPrivateKey,
                                                            Set<String> extensionOidsNotToCopy)
-            throws CertificateParsingException,
-            SignatureException,
+            throws SignatureException,
             InvalidKeyException,
             CertificateException,
             NoSuchAlgorithmException,
@@ -230,7 +207,7 @@ public class CertificateCreator {
                                                            final PublicKey newPubKey,
                                                            final X509Certificate caCert,
                                                            final PrivateKey caPrivateKey)
-            throws CertificateParsingException, SignatureException, InvalidKeyException, CertificateExpiredException, CertificateNotYetValidException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException {
+            throws SignatureException, InvalidKeyException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException {
         return mitmDuplicateCertificate(originalCert, newPubKey, caCert, caPrivateKey, clientCertDefaultOidsNotToCopy);
     }
 
@@ -239,11 +216,8 @@ public class CertificateCreator {
             final X509Certificate caCert,
             final PrivateKey caPrivateKey,
             final String subject)
-            throws CertificateParsingException,
-            SignatureException,
+            throws SignatureException,
             InvalidKeyException,
-            CertificateExpiredException,
-            CertificateNotYetValidException,
             CertificateException,
             NoSuchAlgorithmException,
             NoSuchProviderException {

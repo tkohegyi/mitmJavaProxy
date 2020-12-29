@@ -119,7 +119,4 @@ public class JarResource extends URLResource {
         return url.openStream();
     }
 
-    public void extract(File directory, boolean deleteOnExit) throws IOException {
-        extract(this, directory, deleteOnExit);
-    }
 }

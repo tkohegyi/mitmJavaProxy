@@ -47,7 +47,7 @@ public abstract class Resource implements Serializable {
      * @param url A URL.
      * @return A Resource object.
      */
-    public static Resource newResource(URL url) throws IOException {
+    public static Resource newResource(URL url) {
         if (url == null) {
             return null;
         }
@@ -113,42 +113,6 @@ public abstract class Resource implements Serializable {
                 return new BadResource(url, "Trailing special characters stripped by URL in " + resource);
             }
         }
-        return newResource(url);
-    }
-
-    /**
-     * Construct a system resource from a string.
-     * The resource is tried as classloader resource before being treated as a normal resource.
-     */
-    public static Resource newSystemResource(String resource)
-            throws IOException {
-        URL url = null;
-        // Try to format as a URL?
-        ClassLoader
-                loader = Thread.currentThread().getContextClassLoader();
-        if (loader != null) {
-            url = loader.getResource(resource);
-            if (url == null && resource.startsWith("/"))
-                url = loader.getResource(resource.substring(1));
-        }
-        if (url == null) {
-            loader = Resource.class.getClassLoader();
-            if (loader != null) {
-                url = loader.getResource(resource);
-                if (url == null && resource.startsWith("/"))
-                    url = loader.getResource(resource.substring(1));
-            }
-        }
-
-        if (url == null) {
-            url = ClassLoader.getSystemResource(resource);
-            if (url == null && resource.startsWith("/"))
-                url = loader.getResource(resource.substring(1));
-        }
-
-        if (url == null)
-            return null;
-
         return newResource(url);
     }
 

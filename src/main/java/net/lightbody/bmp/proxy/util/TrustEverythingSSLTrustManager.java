@@ -11,7 +11,6 @@ import java.security.GeneralSecurityException;
 
 public class TrustEverythingSSLTrustManager implements X509TrustManager {
 
-
     private static SSLSocketFactory socketFactory = null;
 
     /**
@@ -24,7 +23,9 @@ public class TrustEverythingSSLTrustManager implements X509TrustManager {
      * @see javax.net.ssl.HttpsURLConnection#setDefaultSSLSocketFactory(SSLSocketFactory)
      */
     public synchronized static SSLSocketFactory getTrustingSSLSocketFactory() {
-        if (socketFactory != null) return socketFactory;
+        if (socketFactory != null) {
+            return socketFactory;
+        }
         TrustManager[] trustManagers = new TrustManager[]{new TrustEverythingSSLTrustManager()};
         SSLContext sc;
         try {

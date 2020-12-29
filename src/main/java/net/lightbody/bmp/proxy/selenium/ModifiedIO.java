@@ -12,13 +12,11 @@ public class ModifiedIO {
     /**
      * Copy Stream in to Stream out until EOF or exception.
      */
-    public static long copy(InputStream in, OutputStream out)
-            throws IOException {
+    public static long copy(InputStream in, OutputStream out) throws IOException {
         return copy(in, out, -1);
     }
 
-    public static long copy(Reader in, Writer out)
-            throws IOException {
+    public static long copy(Reader in, Writer out) throws IOException {
         return copy(in, out, -1);
     }
 
@@ -27,21 +25,19 @@ public class ModifiedIO {
      *
      * @return Copied bytes count or -1 if no bytes were read *and* EOF was reached
      */
-    public static long copy(InputStream in,
-                            OutputStream out,
-                            long byteCount)
-            throws IOException {
-        byte buffer[] = new byte[IO.bufferSize];
+    public static long copy(InputStream in, OutputStream out, long byteCount) throws IOException {
+        byte[] buffer = new byte[IO.bufferSize];
         int len;
 
         long returnVal = 0;
 
         if (byteCount >= 0) {
             while (byteCount > 0) {
-                if (byteCount < IO.bufferSize)
+                if (byteCount < IO.bufferSize) {
                     len = in.read(buffer, 0, (int) byteCount);
-                else
+                } else {
                     len = in.read(buffer, 0, IO.bufferSize);
+                }
 
                 if (len == -1) {
                     break;
@@ -68,21 +64,19 @@ public class ModifiedIO {
     /**
      * Copy Reader to Writer for byteCount bytes or until EOF or exception.
      */
-    public static long copy(Reader in,
-                            Writer out,
-                            long byteCount)
-            throws IOException {
-        char buffer[] = new char[IO.bufferSize];
+    public static long copy(Reader in, Writer out, long byteCount) throws IOException {
+        char[] buffer = new char[IO.bufferSize];
         int len;
 
         long returnVal = 0;
 
         if (byteCount >= 0) {
             while (byteCount > 0) {
-                if (byteCount < IO.bufferSize)
+                if (byteCount < IO.bufferSize) {
                     len = in.read(buffer, 0, (int) byteCount);
-                else
+                } else {
                     len = in.read(buffer, 0, IO.bufferSize);
+                }
 
                 if (len == -1) {
                     break;

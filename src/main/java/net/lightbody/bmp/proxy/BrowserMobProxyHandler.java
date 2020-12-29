@@ -110,7 +110,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
 
     @Override
     public void handleConnect(final String pathInContext, final String pathParams, final HttpRequest request, final HttpResponse response)
-            throws HttpException, IOException {
+            throws IOException {
         URI uri = request.getURI();
         String original = uri.toString();
         String host = original;
@@ -195,7 +195,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
     @Override
     @SuppressWarnings({"unchecked"})
     protected long proxyPlainTextRequest(final URL url, final String pathInContext, final String pathParams, final HttpRequest request,
-                                         final HttpResponse response) throws IOException {
+                                         final HttpResponse response) {
         try {
             String urlStr = url.toString();
 
@@ -222,11 +222,6 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
                 // don't even xfer these!
                 request.setHandled(true);
                 return -1;
-
-                // for debugging purposes, NOT to be used in product!
-                // httpClient = new BrowserMobHttpClient(Integer.MAX_VALUE);
-                // httpClient.setDecompress(false);
-                // httpClient.setFollowRedirects(false);
             }
 
             MitmJavaProxyHttpRequest httpReq = null;
@@ -243,7 +238,7 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
             } else if ("HEAD".equals(request.getMethod())) {
                 httpReq = httpClient.newHead(urlStr, request);
             } else {
-                logger.warn("Unexpected request method %s, coming from %s, giving up", request.getMethod(), request.getRemoteAddr());
+                logger.warn("Unexpected request method {}, coming from {}, giving up", request.getMethod(), request.getRemoteAddr());
                 request.setHandled(true);
                 return -1;
             }
@@ -268,10 +263,6 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
                 while (vals.hasMoreElements()) {
                     String val = (String) vals.nextElement();
                     if (val != null) {
-                        if (!isGet && HttpFields.__ContentLength.equals(hdr) && Integer.parseInt(val) > 0) {
-                            hasContent = true;
-                        }
-
                         if (!_DontProxyHeaders.containsKey(hdr)) {
                             httpReq.addRequestHeader(hdr, val);
                         }
@@ -409,7 +400,6 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
                     relay.getHttpServer().removeListener(relay);
                 }
             }
-
             sslRelays.clear();
         }
     }

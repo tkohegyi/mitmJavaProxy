@@ -27,21 +27,14 @@ public class ThumbprintUtil {
      * @throws java.security.cert.CertificateEncodingException
      */
     public static String getThumbprint(final X509Certificate cert) throws CertificateEncodingException {
-
         if (cert == null) {
             return null;
         }
-
         byte[] rawOctets = cert.getEncoded();
-
         SHA1Digest digest = new SHA1Digest();
-
         byte[] digestOctets = new byte[digest.getDigestSize()];
-
         digest.update(rawOctets, 0, rawOctets.length);
-
         digest.doFinal(digestOctets, 0);
-
         return new String(Base64.encode(digestOctets));
     }
 

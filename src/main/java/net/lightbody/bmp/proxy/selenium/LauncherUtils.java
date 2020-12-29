@@ -31,6 +31,7 @@ public class LauncherUtils {
                 clazz = Class.forName("OneJar");
                 input = clazz.getResourceAsStream(resourceFile);
             } catch (ClassNotFoundException e) {
+                //
             }
         }
         return input;

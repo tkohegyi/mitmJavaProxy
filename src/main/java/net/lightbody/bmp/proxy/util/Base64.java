@@ -183,8 +183,9 @@ public class Base64 {
      */
     private static int base64toInt(char c, byte[] alphaToInt) {
         int result = alphaToInt[c];
-        if (result < 0)
+        if (result < 0) {
             throw new IllegalArgumentException("Illegal character " + c);
+        }
         return result;
     }
 }

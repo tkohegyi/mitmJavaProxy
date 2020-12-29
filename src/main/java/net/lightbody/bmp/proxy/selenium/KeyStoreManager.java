@@ -89,8 +89,8 @@ public class KeyStoreManager {
     private SecureRandom _sr;
 
 
-    private boolean persistImmediately = true;
-    private File root;
+    private final boolean persistImmediately = true;
+    private final File root;
 
     @SuppressWarnings("unchecked")
     public KeyStoreManager(File root) {
@@ -136,14 +136,10 @@ public class KeyStoreManager {
         } catch (FileNotFoundException e) {
             // check for file exists, won't happen.
             e.printStackTrace();
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             // we could correct, but this probably indicates a corruption
             // of the serialized file that we want to know about; likely
-            // synchronization problems during serialization.
-            e.printStackTrace();
-            throw new Error(e);
-        } catch (ClassNotFoundException e) {
-            // serious problem.
+            // synchronization problems during serialization. or // serious problem.
             e.printStackTrace();
             throw new Error(e);
         }
@@ -184,12 +180,8 @@ public class KeyStoreManager {
         } catch (FileNotFoundException e) {
             // won't happen, check file.exists()
             e.printStackTrace();
-        } catch (IOException e) {
-            // corrupted file, we want to know.
-            e.printStackTrace();
-            throw new Error(e);
-        } catch (ClassNotFoundException e) {
-            // something very wrong, exit
+        } catch (IOException | ClassNotFoundException e) {
+            // corrupted file, we want to know. or // something very wrong, exit
             e.printStackTrace();
             throw new Error(e);
         }
@@ -211,28 +203,21 @@ public class KeyStoreManager {
         } catch (FileNotFoundException e) {
             // won't happen, check file.exists()
             e.printStackTrace();
-        } catch (IOException e) {
-            // corrupted file, we want to know.
-            e.printStackTrace();
-            throw new Error(e);
-        } catch (ClassNotFoundException e) {
-            // something very wrong, exit
+        } catch (IOException | ClassNotFoundException e) {
+            // corrupted file, we want to know. or // something very wrong, exit
             e.printStackTrace();
             throw new Error(e);
         }
-
 
     }
 
-    private void reloadKeystore() throws FileNotFoundException, IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException, UnrecoverableKeyException {
+    private void reloadKeystore() throws IOException, NoSuchAlgorithmException, CertificateException, KeyStoreException, UnrecoverableKeyException {
         File keyStoreFile = new File(root, _caPrivateKeystore);
         InputStream is = new FileInputStream(keyStoreFile);
 
-        if (is != null) {
-            _ks.load(is, _keystorepass);
-            _caCert = (X509Certificate) _ks.getCertificate(_caCertAlias);
-            _caPrivKey = (PrivateKey) _ks.getKey(_caPrivKeyAlias, _keypassword);
-        }
+        _ks.load(is, _keystorepass);
+        _caCert = (X509Certificate) _ks.getCertificate(_caCertAlias);
+        _caPrivKey = (PrivateKey) _ks.getKey(_caPrivKeyAlias, _keypassword);
     }
 
     /**
@@ -258,8 +243,6 @@ public class KeyStoreManager {
      */
     public synchronized void addCertAndPrivateKey(String hostname, final X509Certificate cert, final PrivateKey privKey)
             throws KeyStoreException, CertificateException, NoSuchAlgorithmException {
-//		String alias = ThumbprintUtil.getThumbprint(cert);
-
         _ks.deleteEntry(hostname);
 
         _ks.setCertificateEntry(hostname, cert);
@@ -268,7 +251,6 @@ public class KeyStoreManager {
         if (persistImmediately) {
             persist();
         }
-
     }
 
     /**
@@ -322,7 +304,6 @@ public class KeyStoreManager {
      * @see ThumbprintUtil
      */
     public synchronized X509Certificate getCertificateByHostname(final String hostname) throws KeyStoreException, CertificateParsingException, InvalidKeyException, CertificateExpiredException, CertificateNotYetValidException, SignatureException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException, UnrecoverableKeyException {
-
         String alias = _subjectMap.get(getSubjectForHostname(hostname));
 
         if (alias != null) {
@@ -353,24 +334,6 @@ public class KeyStoreManager {
     @SuppressWarnings("unused")
     public synchronized PrivateKey getSigningPrivateKey() throws KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException {
         return _caPrivKey;
-    }
-
-    /**
-     * Whether updates are immediately written to disk.
-     *
-     * @return
-     */
-    public boolean getPersistImmediately() {
-        return persistImmediately;
-    }
-
-    /**
-     * Whether updates are immediately written to disk.
-     *
-     * @param persistImmediately
-     */
-    public void setPersistImmediately(final boolean persistImmediately) {
-        this.persistImmediately = persistImmediately;
     }
 
     /**
@@ -433,7 +396,6 @@ public class KeyStoreManager {
             } else {
                 privKey = getPrivateKey(mappedPk);
             }
-
 
             X509Certificate replacementCert =
                     CertificateCreator.mitmDuplicateCertificate(
@@ -531,7 +493,6 @@ public class KeyStoreManager {
         }
     }
 
-
     private synchronized void persistSubjectMap() {
         try {
             ObjectOutput out = new ObjectOutputStream(new FileOutputStream(new File(root, SUBJMAP_SER_FILE)));
@@ -547,7 +508,6 @@ public class KeyStoreManager {
             throw new Error(e);
         }
     }
-
 
     /**
      * For a cert we have generated, return the private key.
@@ -567,9 +527,8 @@ public class KeyStoreManager {
         return (PrivateKey) _ks.getKey(thumbprint, _keypassword);
     }
 
-
     /**
-     * Generate an RSA Key Pair
+     * Generate an RSA Key Pair.
      *
      * @return
      */
@@ -581,7 +540,7 @@ public class KeyStoreManager {
     }
 
     /**
-     * Generate a DSA Key Pair
+     * Generate a DSA Key Pair.
      *
      * @return
      */
@@ -590,7 +549,6 @@ public class KeyStoreManager {
         rememberKeyPair(kp);
         return kp;
     }
-
 
     private synchronized void persistPublicKeyMap() {
         try {
