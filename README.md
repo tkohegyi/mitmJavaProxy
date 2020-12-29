@@ -18,9 +18,9 @@ Embedded Mode
 If you're using Java, the easiest way to get started is to embed the project directly.
     
     <dependency>
-        <groupId>com.epam.mitm</groupId>
+        <groupId>org.rockhill.mitm</groupId>
         <artifactId>mitmJavaProxy</artifactId>
-        <version>2.0-0.14.13</version>
+        <version>2.0.17.46</version>
         <type>pom</type>
     </dependency>
 
