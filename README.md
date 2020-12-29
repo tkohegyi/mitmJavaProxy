@@ -18,18 +18,18 @@ Embedded Mode
 If you're using Java, the easiest way to get started is to embed the project directly.
     
     <dependency>
-        <groupId>org.rockhill.mitm</groupId>
-        <artifactId>mitmJavaProxy</artifactId>
-        <version>2.0.17.46</version>
-        <type>pom</type>
+	    <groupId>org.rockhill.mitm</groupId>
+	    <artifactId>mitmJavaProxy</artifactId>
+	    <version>2.0.17.57</version>
+	    <type>pom</type>
     </dependency>
 
 Release
 ------------
 Latest announced release is available here:
-[ ![Download](https://api.bintray.com/packages/epam/wilma/mitmJavaProxy/images/download.svg?version=2.0-0.14.13) ](https://bintray.com/epam/wilma/mitmJavaProxy/2.0-0.14.13/link)
+[ ![Download](https://api.bintray.com/packages/tkohegyi2/maven/mitmJavaProxy/images/download.svg?version=V2.0.17.57) ](https://bintray.com/tkohegyi2/maven/mitmJavaProxy/V2.0.17.57/link)
 
-CI Build Status: [![Build Status](https://travis-ci.com/tkohegyi/mitmJavaProxy.svg?branch=master)](https://travis-ci.com/tkohegyi/mitmJavaProxy)
+Travis CI Build Status (applicable for latest build from source): [![Build Status](https://travis-ci.com/tkohegyi/mitmJavaProxy.svg?branch=master)](https://travis-ci.com/tkohegyi/mitmJavaProxy)
 
 HTTP Request Manipulation
 -------------------
