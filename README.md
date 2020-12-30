@@ -65,3 +65,7 @@ SSL Support
 While the proxy supports SSL, it requires that a Certificate Authority be installed in to the browser - or at client from where you call a server via the proxy.
 This allows the client to trust all the SSL traffic coming from the proxy, which will be proxied using a classic man-in-the-middle technique. 
 IT IS CRITICAL THAT YOU NOT INSTALL THIS CERTIFICATE AUTHORITY ON A CLIENT/BROWSER THAT IS USED FOR ANYTHING OTHER THAN TESTING.
+
+Detailed User's Guide
+----------------
+See detailed information of its usage at [wiki pages](https://github.com/tkohegyi/mitmJavaProxy/wiki).
