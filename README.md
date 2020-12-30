@@ -49,16 +49,17 @@ To build it, use this command:
 
 HTTP Request Manipulation
 -------------------
-Just add a request interceptor to the proxy server, and manipulate the request as you wish...
+Just add a Request Interceptor to the proxy server, and manipulate the request as you wish.
 
 HTTP Response Manipulation
 -------------------
-The key is the Response Volatility. 
-If volatile, proxy must extract, call interceptor, compress, then release response towards Client. This is SLOW.
-If not volatile, proxy may release the response towards the Client, meanwhile extracting the response and notify interceptors.
-So if not volatile, maybe the response arrives to Client before the interceptor actually is called. This ensures the fastest method.
+Just add a Response Interceptor to the proxy server, and you will get access to the responses.
+
+The key to manipulate responses is the Response Volatility. 
+If a response is volatile, the proxy (or you) must work with the response a lot (extract, call interceptor, compress, then release response towards the Client). This is SLOW.
+If a response is not volatile, then the proxy don't need to do such things. This of course a much faster method, so in case you don't need to manipulate the response, just leave responses as not volatile.
 Response volatility can be set in general via static method: ProxyServer.SetResponseVolatility
-Or can be set per message via ...
+Or can be set per request-response pair by using the Request Interceptors.
 
 SSL Support
 -----------
