@@ -38,7 +38,7 @@ public class MitmJavaProxyHttpRequest {
     private final List<NameValuePair> nvps = new ArrayList<NameValuePair>();
     private final boolean collectAdditionalInfo;
     private final HttpRequest proxyRequest;
-    private final String wilmaMessageId = TIME_STAMP_BASED_ID_GENERATOR.nextIdentifier();
+    private final String messageId = TIME_STAMP_BASED_ID_GENERATOR.nextIdentifier();
     private int expectedStatusCode;
     private StringEntity stringEntity;
     private ByteArrayEntity byteArrayEntity;
@@ -187,8 +187,8 @@ public class MitmJavaProxyHttpRequest {
         this.playGround = playGround;
     }
 
-    public String getWilmaMessageId() {
-        return wilmaMessageId;
+    public String getMessageId() {
+        return messageId;
     }
 
     public boolean getResponseVolatile() {

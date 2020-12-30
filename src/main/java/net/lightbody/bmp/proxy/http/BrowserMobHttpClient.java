@@ -432,7 +432,7 @@ public class BrowserMobHttpClient {
 
         // link the object up now, before we make the request, so that if we get cut off (ie: favicon.ico request and browser shuts down)
         // we still have the attempt associated, even if we never got a response
-        HarEntry entry = new HarEntry(harPageRef, req.getWilmaMessageId());
+        HarEntry entry = new HarEntry(harPageRef, req.getMessageId());
 
         // clear out any connection-related information so that it's not stale from previous use of this thread.
         RequestInfo.clear(url, entry);

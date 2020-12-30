@@ -10,12 +10,12 @@ public class HarEntry {
     private HarResponse response;
     private HarTimings timings;
     private String serverIPAddress;
-    private String wilmaEntryId;
+    private String messageId;
 
-    public HarEntry(String pageref, String wilmaEntryId) {
+    public HarEntry(String pageref, String messageId) {
         this.pageref = pageref;
         this.startedDateTime = new Date();
-        this.wilmaEntryId = wilmaEntryId;
+        this.messageId = messageId;
     }
 
     public String getPageref() {
@@ -74,11 +74,11 @@ public class HarEntry {
         this.serverIPAddress = serverIPAddress;
     }
 
-    public String getWilmaEntryId() {
-        return wilmaEntryId;
+    public String getMessageId() {
+        return messageId;
     }
 
-    public void setWilmaEntryId(final String wilmaEntryId) {
-        this.wilmaEntryId = wilmaEntryId;
+    public void setMessageId(final String wilmaEntryId) {
+        this.messageId = wilmaEntryId;
     }
 }
