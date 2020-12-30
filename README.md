@@ -15,21 +15,37 @@ It is possible to alter both the request before it hits the server (what is more
 
 Embedded Mode
 -------------
-If you're using Java, the easiest way to get started is to embed the project directly.
+If you're using Java, the easiest way to get started is to embed the project directly. The jar is available in **jcenter**.
+
+Related gradle file should look like:
+
+```
+repositories {
+    jcenter()
+    ...
+}
     
-    <dependency>
-	    <groupId>org.rockhill.mitm</groupId>
-	    <artifactId>mitmJavaProxy</artifactId>
-	    <version>2.0.17.57</version>
-	    <type>pom</type>
-    </dependency>
+dependencies {
+    implementation('org.rockhill.mitm:mitmJavaProxy:2.0.17.57')
+    ...
+}    
+```
 
 Release
 ------------
 Latest announced release is available here:
-[ ![Download](https://api.bintray.com/packages/tkohegyi2/maven/mitmJavaProxy/images/download.svg?version=V2.0.17.57) ](https://bintray.com/tkohegyi2/maven/mitmJavaProxy/V2.0.17.57/link)
+[ ![Download](https://api.bintray.com/packages/tkohegyi2/maven/mitmJavaProxy/images/download.svg?version=V2.0.17.57) ](https://bintray.com/tkohegyi2/maven/mitmJavaProxy/V2.0.17.57/link) or from **jcenter** as described above.
 
+Build from source
+-----------------
 Travis CI Build Status (applicable for latest build from source): [![Build Status](https://travis-ci.com/tkohegyi/mitmJavaProxy.svg?branch=master)](https://travis-ci.com/tkohegyi/mitmJavaProxy)
+
+[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/dashboard?id=tkohegyi_mitmJavaProxy)
+
+To build it, use this command:
+```
+./gradlew clean build
+```
 
 HTTP Request Manipulation
 -------------------
