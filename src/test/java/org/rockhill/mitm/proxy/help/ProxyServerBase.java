@@ -17,7 +17,7 @@ public class ProxyServerBase {
     /**
      * The server used by the tests.
      */
-    private static final int PROXY_TIMEOUT = 60000; //1 minute
+    private static final int PROXY_TIMEOUT = 600000; //10 minutes, to have enough time for manual debug
     private final static Logger LOGGER = LoggerFactory.getLogger(ProxyServerBase.class);
     private ProxyServer proxyServer;
     private int proxyPort = -1;

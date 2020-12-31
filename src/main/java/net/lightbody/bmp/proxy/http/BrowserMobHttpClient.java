@@ -1,8 +1,13 @@
 package net.lightbody.bmp.proxy.http;
 
+import net.lightbody.bmp.proxy.jetty.http.HttpFields;
 import org.rockhill.mitm.proxy.ProxyServer;
 import org.rockhill.mitm.proxy.RequestInterceptor;
 import org.rockhill.mitm.proxy.ResponseInterceptor;
+import org.rockhill.mitm.proxy.header.HttpHeaderChange;
+import org.rockhill.mitm.proxy.header.HttpHeaderToBeAdded;
+import org.rockhill.mitm.proxy.header.HttpHeaderToBeRemoved;
+import org.rockhill.mitm.proxy.header.HttpHeaderToBeUpdated;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import net.lightbody.bmp.core.har.Har;
@@ -367,6 +372,28 @@ public class BrowserMobHttpClient {
             }
 
             if (isResponseVolatile) {
+                //update headers at req.proxyRequest._connection._response._header
+                net.lightbody.bmp.proxy.jetty.http.HttpResponse httpResponse = req.getProxyRequest().getHttpConnection().getResponse();
+                HttpFields httpFields = httpResponse.getHeader();
+
+                Map<String, HttpHeaderChange> headerChangeMap = response.getHeaderChanges();
+                for (Map.Entry<String, HttpHeaderChange> headerChangeEntry : headerChangeMap.entrySet()) {
+                    String key = headerChangeEntry.getKey();
+                    HttpHeaderChange httpHeaderChange = headerChangeEntry.getValue();
+                    String value = httpHeaderChange.getHeader().getValue();
+                    if (httpHeaderChange instanceof HttpHeaderToBeUpdated) { //update header
+                        value = ((HttpHeaderToBeUpdated) httpHeaderChange).getNewValue();
+                        httpFields.put(key, value);
+                    }
+                    if (httpHeaderChange instanceof HttpHeaderToBeAdded) { //add header
+                        httpFields.add(key, value);
+                    }
+                    if (httpHeaderChange instanceof HttpHeaderToBeRemoved) { //remove header
+                        httpFields.remove(key);
+                    }
+                }
+
+                //update body and flush answer (from now on the response goes back to Client)
                 response.doAnswer();
             }
             return response;

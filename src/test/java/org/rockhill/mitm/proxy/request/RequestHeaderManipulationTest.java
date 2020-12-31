@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
  * 'A'->'A' is to check header existence and accessibility
  * 'B'->'B' is altered to 'B'->'BB' at request interceptor
  * 'C'->'C' is removed at request interceptor
+ * 'D'->'D' this header is added as new header at request interceptor
  */
 public class RequestHeaderManipulationTest extends AnsweringServerBase {
     private final static Logger LOGGER = LoggerFactory.getLogger(RequestHeaderManipulationTest.class);
@@ -63,6 +64,9 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
         //check deletion of header
         headerValue = request.getHeader("C");
         assertNull(headerValue);
+        //check new header
+        headerValue = request.getHeader("D");
+        assertEquals("D", headerValue);
     }
 
     @Test
@@ -100,6 +104,8 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
             header = request.getMethod().getFirstHeader("C");
             assertEquals(header.getValue(), "C");
             request.getMethod().removeHeader(header);
+            //add brand new header
+            request.getMethod().addHeader("D", "D");
         }
     }
 
