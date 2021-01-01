@@ -165,4 +165,8 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
     public Exception getLastException() {
         return lastException;
     }
+
+    public void setLastException(Exception e) {
+        lastException = e;
+    }
 }

@@ -1,5 +1,6 @@
 package org.rockhill.mitm.proxy.request;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -18,6 +19,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -77,6 +81,16 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
 
         @Override
         public void process(MitmJavaProxyHttpRequest request) {
+            //get the body as string
+            InputStream clonedInputStream = request.getPlayGround();
+            try {
+                String body = IOUtils.toString(clonedInputStream);
+                clonedInputStream.reset();
+                assertTrue("Cannot find the expected body", REQ_BODY.equals(body));
+
+            } catch (IOException e) {
+                setLastException(e);
+            }
         }
     }
 
