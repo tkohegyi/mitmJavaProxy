@@ -10,13 +10,14 @@ import org.junit.After;
 import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StreamUtils;
 
 import javax.net.ssl.SSLContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -106,31 +107,33 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
     private Server startWebServerWithResponse(boolean enableHttps, final byte[] content) {
         final Server httpServer = new Server(0);
         httpServer.setHandler(new AbstractHandler() {
-            public void handle(String target,
-                               Request baseRequest,
-                               HttpServletRequest request,
-                               HttpServletResponse response) throws IOException {
+            public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
                 requestCount.incrementAndGet();
                 long numberOfBytesRead = 0;
-                try (InputStream in = new BufferedInputStream(request.getInputStream())) {
-                    while (in.read() != -1) {
-                        numberOfBytesRead += 1;
-                    }
+                String bodyString = null;
+                try (InputStream requestInputStream = request.getInputStream()) {
+                    byte[] body = StreamUtils.copyToByteArray(requestInputStream);
+                    bodyString = new String(body, StandardCharsets.UTF_8);
+                    ;
+                    numberOfBytesRead = bodyString.length();
                 }
                 LOGGER.info("Done reading # of bytes: {}", numberOfBytesRead);
 
                 //finish response
                 response.setStatus(HttpServletResponse.SC_OK);
-
+                byte[] newContent = null;
                 try {
-                    evaluateServerRequestResponse(request, response);
+                    newContent = evaluateServerRequestResponse(request, response, bodyString);
+                    if (newContent == null) {
+                        newContent = content;
+                    }
                 } catch (Exception e) {
                     lastException = e;
                 }
                 baseRequest.setHandled(true);
 
-                response.addHeader("Content-Length", Integer.toString(content.length));
-                response.getOutputStream().write(content);
+                response.addHeader("Content-Length", Integer.toString(newContent.length));
+                response.getOutputStream().write(newContent);
             }
         });
 
@@ -160,7 +163,7 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
         return httpServer;
     }
 
-    protected abstract void evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response) throws Exception;
+    protected abstract byte[] evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) throws Exception;
 
     public Exception getLastException() {
         return lastException;

@@ -31,9 +31,8 @@ import static org.junit.Assert.assertTrue;
  * 'D'->'D' this header is added as new header at request interceptor
  */
 public class RequestHeaderManipulationTest extends AnsweringServerBase {
-    private final static Logger LOGGER = LoggerFactory.getLogger(RequestHeaderManipulationTest.class);
-
     protected static final String GET_REQUEST = "/anyUrl";
+    private final static Logger LOGGER = LoggerFactory.getLogger(RequestHeaderManipulationTest.class);
     private HttpGet request;
 
     @Override
@@ -53,7 +52,7 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
     }
 
     @Override
-    protected void evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response) {
+    protected byte[] evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
         String headerValue;
         //check request header existence
         headerValue = request.getHeader("A");
@@ -67,6 +66,7 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
         //check new header
         headerValue = request.getHeader("D");
         assertEquals("D", headerValue);
+        return null;
     }
 
     @Test

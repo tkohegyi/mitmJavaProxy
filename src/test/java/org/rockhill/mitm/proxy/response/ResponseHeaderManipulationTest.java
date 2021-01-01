@@ -52,11 +52,12 @@ public class ResponseHeaderManipulationTest extends AnsweringServerBase {
     }
 
     @Override
-    protected void evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response) {
+    protected byte[] evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
         //add test headers to the server response
         response.addHeader("A", "Aa"); //header to be found
         response.addHeader("B", "Bb"); //header to be altered
         response.addHeader("C", "Cc"); //header to be removed
+        return null;
     }
 
     @Test

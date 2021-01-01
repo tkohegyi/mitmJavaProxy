@@ -198,4 +198,18 @@ public class MitmJavaProxyHttpRequest {
     public void setResponseVolatile(final boolean responseVolatile) {
         this.responseVolatile = responseVolatile;
     }
+
+    /**
+     * Set the body of the request.
+     *
+     * @param body is the new content of the request. If null, then the original body is not changed.
+     */
+    public void setBody(byte[] body) {
+        if (body != null) {
+            if (this.getMethod() instanceof HttpEntityEnclosingRequestBase) {
+                HttpEntityEnclosingRequestBase enclosingRequest = (HttpEntityEnclosingRequestBase) this.getMethod();
+                enclosingRequest.setEntity(new ByteArrayEntity(body));
+            }
+        }
+    }
 }
