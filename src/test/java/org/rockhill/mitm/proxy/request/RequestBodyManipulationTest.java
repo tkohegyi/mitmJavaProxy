@@ -191,7 +191,6 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
                     Header header = request.getMethod().getFirstHeader("Content-Type");
                     request.getMethod().removeHeader(header);
                     request.getMethod().addHeader("Content-Type", "application/json");
-//                    request.getProxyRequest().setContentType("application/json");
                 }
 
 
