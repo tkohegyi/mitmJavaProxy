@@ -63,9 +63,20 @@ jacocoTestReport {
     }
 }
 
-//test {
+test {
 //    jvmArgs '-Djavax.net.debug=all' // add line
-//}
+    testLogging {
+        events "skipped", "failed" //, "standardOut", "standardError"
+
+        showExceptions true
+        exceptionFormat "full"
+        showCauses true
+        showStackTraces true
+
+        showStandardStreams = false
+    }
+}
+
 test.finalizedBy jacocoTestReport
 
 dependencies {
@@ -78,7 +89,7 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-io', version:'1.3.2'
     compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version:'3.2'
     compile group: 'org.apache.ant', name: 'ant', version:'1.9.4'
-    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:'1.67'
+    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:'1.68'
     compile group: 'org.eclipse.jetty', name: 'jetty-io', version: '7.4.5.v20110725'
     compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
     compile group: 'dnsjava', name: 'dnsjava', version: '3.3.1'
