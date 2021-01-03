@@ -166,6 +166,7 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
     }
 
     public void setLastException(Exception e) {
+        e.printStackTrace();
         lastException = e;
     }
 }
