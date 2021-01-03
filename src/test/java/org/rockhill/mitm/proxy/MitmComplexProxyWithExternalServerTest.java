@@ -17,14 +17,14 @@ public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxy
 
     @Override
     protected void setUp() {
-        String stubUrl = "http://127.0.0.1:" + stubServerPort + "/stub";
+        String stubUrl = "http://127.0.0.1:" + getStubServerPort() + "/stub";
         LOGGER.info("STUB URL used: {}", stubUrl);
-        DefaultRequestInterceptor defaultRequestInterceptor = new DefaultRequestInterceptor(requestCount, NEED_STUB_RESPONSE, stubUrl);
-        DefaultResponseInterceptor defaultResponseInterceptor = new DefaultResponseInterceptor(responseCount);
-        proxyServer.addRequestInterceptor(defaultRequestInterceptor);
-        proxyServer.addResponseInterceptor(defaultResponseInterceptor);
-        proxyServer.setCaptureBinaryContent(false);
-        proxyServer.setCaptureContent(false);
+        DefaultRequestInterceptor defaultRequestInterceptor = new DefaultRequestInterceptor(getRequestCount(), NEED_STUB_RESPONSE, stubUrl);
+        DefaultResponseInterceptor defaultResponseInterceptor = new DefaultResponseInterceptor(getResponseCount());
+        getProxyServer().addRequestInterceptor(defaultRequestInterceptor);
+        getProxyServer().addResponseInterceptor(defaultResponseInterceptor);
+        getProxyServer().setCaptureBinaryContent(false);
+        getProxyServer().setCaptureContent(false);
         ProxyServer.setResponseVolatile(true);
     }
 

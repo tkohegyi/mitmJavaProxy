@@ -1,0 +1,55 @@
+<configuration>
+  <appender name="CONSOLE-APPENDER" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>DEBUG</level>
+    </filter>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="EMPTY" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>INFO</level>
+      <onMatch>DENY</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
+    <encoder>
+      <pattern>%X{messageId} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+
+  <appender name="FILE-APP" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>log/proxyLog.txt</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>log/proxyLog%d{yyyyMMdd}.txt</fileNamePattern>
+      <maxHistory>5</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="org.rockhill.mitm" level="DEBUG">
+    <appender-ref ref="CONSOLE-APPENDER" />
+  </logger>
+
+  <logger name="net.lightbody.bmp" level="DEBUG">
+    <appender-ref ref="CONSOLE-APPENDER" />
+  </logger>
+
+  <logger name="org.eclipse.jetty.io.ManagedSelector" level="ERROR">
+    <appender-ref ref="CONSOLE-APPENDER" />
+  </logger>
+  
+  <logger name="org.eclipse.jetty.util.component.AbstractLifeCycle" level="ERROR">
+    <appender-ref ref="CONSOLE-APPENDER" />
+  </logger>
+
+  <root level="INFO">
+    <appender-ref ref="${logger:-EMPTY}" />
+    <appender-ref ref="FILE-APP" />
+  </root>
+
+</configuration>

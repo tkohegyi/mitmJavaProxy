@@ -426,7 +426,6 @@ public class BrowserMobHttpClient {
         long bytes = 0;
         boolean gzipping = false;
         boolean deflating = false;
-        boolean contentMatched = true;
         OutputStream os = req.getOutputStream();
         if (os == null) {
             os = new CappedByteArrayOutputStream(MAX_BUFFER_SIZE);
@@ -709,8 +708,8 @@ public class BrowserMobHttpClient {
             }
             if (expectedStatusCode != statusCode) {
                 if (isRedirect) {
-                    throw new RuntimeException("Expected status code of " + expectedStatusCode + " but saw " + statusCode + " redirecting to: "
-                            + location);
+                    throw new RuntimeException("Expected status code of " + expectedStatusCode + " but saw " + statusCode
+                            + " redirecting to: " + location);
                 } else {
                     throw new RuntimeException("Expected status code of " + expectedStatusCode + " but saw " + statusCode);
                 }
@@ -744,7 +743,7 @@ public class BrowserMobHttpClient {
             }
         }
 
-        return new MitmJavaProxyHttpResponse(statusCode, entry, method, req.getProxyRequest().getURI(), response, contentMatched, errorMessage,
+        return new MitmJavaProxyHttpResponse(statusCode, entry, method, req.getProxyRequest().getURI(), response, errorMessage,
                 entry.getResponse().getContent().getText(), contentType, charSet, bos, os, isResponseVolatile);
     }
 

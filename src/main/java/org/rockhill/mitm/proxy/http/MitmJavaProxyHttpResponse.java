@@ -31,7 +31,6 @@ public class MitmJavaProxyHttpResponse {
     private final HttpRequestBase method;
     private final URI proxyRequestURI;
     private final HttpResponse response;
-    private final boolean contentMatched;
     private final String errorMessage;
     private final String body;
     private final String contentType;
@@ -42,14 +41,14 @@ public class MitmJavaProxyHttpResponse {
     private ByteArrayOutputStream bos;
 
     public MitmJavaProxyHttpResponse(int status, HarEntry entry, HttpRequestBase method, URI proxyRequestURI, HttpResponse response,
-                                     boolean contentMatched, String errorMessage,
+                                     String errorMessage,
                                      String body, String contentType, String charSet,
-                                     ByteArrayOutputStream bos, OutputStream os, final boolean responseVolatile) {
+                                     ByteArrayOutputStream bos, OutputStream os,
+                                     final boolean responseVolatile) {
         this.entry = entry;
         this.method = method;
         this.proxyRequestURI = proxyRequestURI;
         this.response = response;
-        this.contentMatched = contentMatched;
         this.errorMessage = errorMessage;
         this.body = body;
         this.contentType = contentType;
@@ -58,10 +57,6 @@ public class MitmJavaProxyHttpResponse {
         this.bos = bos;
         this.os = os;
         this.responseVolatile = responseVolatile;
-    }
-
-    public boolean isContentMatched() {
-        return contentMatched;
     }
 
     /**
@@ -309,10 +304,6 @@ public class MitmJavaProxyHttpResponse {
             Header h = new BasicHeader(header.getName(), newValue);
             addHeader(h);
         }
-    }
-
-    public Map<String, HttpHeaderChange> getHeaderChanges() {
-        return headerChanges;
     }
 
 }

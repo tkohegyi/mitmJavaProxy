@@ -33,16 +33,16 @@ public abstract class AbstractComplexProxyTool {
      * The server used by the tests.
      */
     public static final int PROXY_TIMEOUT = 1200000; //20 minute - giving time to debug
-    protected final static Logger LOGGER = LoggerFactory.getLogger(AbstractComplexProxyTool.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractComplexProxyTool.class);
     protected static final String NO_NEED_STUB_RESPONSE = "/getServer";
     protected static final String NEED_STUB_RESPONSE = "/getStub";
     protected static final String SERVER_BACKEND = "server-backend";
     protected static final String STUB_BACKEND = "stub-backend";
-    public ProxyServer proxyServer;
-    protected int webServerPort = -1;
+    private ProxyServer proxyServer;
+    private int webServerPort = -1;
     protected int stubServerPort = -1;
     protected int httpsWebServerPort = -1;
-    protected int proxyPort = -1;
+    private int proxyPort = -1;
     protected HttpHost webHost;
     protected HttpHost httpsWebHost;
     protected HttpHost stubHost;
@@ -56,6 +56,45 @@ public abstract class AbstractComplexProxyTool {
      * The web server that provides the back-end.
      */
     private Server stubServer;
+
+    public ProxyServer getProxyServer() {
+        return proxyServer;
+    }
+    public int getWebServerPort() {
+        return webServerPort;
+    }
+
+    public int getStubServerPort() {
+        return stubServerPort;
+    }
+
+    public int getHttpsWebServerPort() {
+        return httpsWebServerPort;
+    }
+
+    public int getProxyPort() {
+        return proxyPort;
+    }
+
+    public HttpHost getWebHost() {
+        return webHost;
+    }
+
+    public HttpHost getHttpsWebHost() {
+        return httpsWebHost;
+    }
+
+    public HttpHost getStubHost() {
+        return stubHost;
+    }
+
+    public AtomicInteger getRequestCount() {
+        return requestCount;
+    }
+
+    public AtomicInteger getResponseCount() {
+        return responseCount;
+    }
 
     @Before
     public void runSetup() throws Exception {

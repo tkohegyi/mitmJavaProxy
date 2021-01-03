@@ -151,29 +151,29 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
     @Test
     public void replaceWithJson() throws Exception {
         request.addHeader("C", "C");
-        CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort());
-        HttpResponse response = httpClient.execute(httpHost, request); //request is here
-        String body = EntityUtils.toString(response.getEntity());
-        httpClient.close();
-        assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
-        assertNull(getLastException());
-        //check that answer is a json string
-        assertEquals(REQ_JSON_BODY, body);
-        assertEquals("application/json", response.getEntity().getContentType().getValue());
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+            HttpResponse response = httpClient.execute(httpHost, request); //request is here
+            String body = EntityUtils.toString(response.getEntity());
+            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            assertNull(getLastException());
+            //check that answer is a json string
+            assertEquals(REQ_JSON_BODY, body);
+            assertEquals("application/json", response.getEntity().getContentType().getValue());
+        }
     }
 
     @Test
     public void replaceWithJsonSecure() throws Exception {
         request.addHeader("C", "C");
-        CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort());
-        HttpResponse response = httpClient.execute(secureHost, request); //request is here
-        String body = EntityUtils.toString(response.getEntity());
-        assertEquals("application/json", response.getEntity().getContentType().getValue());
-        httpClient.close();
-        assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
-        assertNull(getLastException());
-        //check that answer is a json string
-        assertEquals(REQ_JSON_BODY, body);
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+            HttpResponse response = httpClient.execute(secureHost, request); //request is here
+            String body = EntityUtils.toString(response.getEntity());
+            assertEquals("application/json", response.getEntity().getContentType().getValue());
+            assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            assertNull(getLastException());
+            //check that answer is a json string
+            assertEquals(REQ_JSON_BODY, body);
+        }
     }
 
     @Test
