@@ -6,8 +6,6 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.junit.After;
-import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StreamUtils;
@@ -30,85 +28,76 @@ import static org.junit.Assert.assertThat;
  * - HTTP/HTTPS server that answers to the client (SERVER_BACKEND)
  * - the proxyServer via class extension
  */
-public abstract class AnsweringServerBase extends ProxyServerBase {
+public abstract class StubServerBase extends AnsweringServerBase {
 
     /**
      * The server used by the tests.
      */
-    protected final static Logger LOGGER = LoggerFactory.getLogger(AnsweringServerBase.class);
-    protected static final String SERVER_BACKEND = "server-backend";
-    protected int httpPort = -1;
-    protected int securePort = -1;
-    protected HttpHost httpHost;
-    protected HttpHost secureHost;
-    protected AtomicInteger requestCount;
+    protected final static Logger LOGGER = LoggerFactory.getLogger(StubServerBase.class);
+    protected static final String STUB_SERVER_BACKEND = "stub-backend";
+    protected int httpStubPort = -1;
+    protected int secureStubPort = -1;
+    protected HttpHost httpStubHost;
+    protected HttpHost secureStubHost;
+    protected AtomicInteger requestStubCount;
 
     /**
      * The web server that provides the back-end.
      */
-    private Server webServer;
+    private Server webStubServer;
 
     /**
      * Exception holder to notify main test that there was an exception at server.
      */
-    private Exception lastException;
+    private Exception lastStubException;
 
-    @Before
-    public void runSetup() throws Exception {
-        initializeCounters();
-        startProxyServer();
-        startServer();
-        LOGGER.info("*** Backed http Server started on port: {}", httpPort);
-        LOGGER.info("*** Backed httpS Server started on port: {}", securePort);
-        setUp();
-        LOGGER.info("*** Test INIT DONE - starting the Test");
+    public void setUp() throws Exception {
+        initializeStubCounters();
+        startStubServer();
+        LOGGER.info("*** Backed STUB http Server started on port: {}", httpStubPort);
+        LOGGER.info("*** Backed STUB httpS Server started on port: {}", secureStubPort);
+        setUp2();
     }
 
-    protected abstract void setUp() throws Exception;
+    protected abstract void setUp2() throws Exception;
 
-    private void initializeCounters() {
-        requestCount = new AtomicInteger(0);
+    private void initializeStubCounters() {
+        requestStubCount = new AtomicInteger(0);
     }
 
-    private void startServer() {
-        webServer = startWebServerWithResponse(true, SERVER_BACKEND.getBytes(), "text/plain");
+    private void startStubServer() {
+        webStubServer = startWebStubServerWithResponse(true, STUB_SERVER_BACKEND.getBytes(), "text/plain");
 
         // find out what ports the HTTP and HTTPS connectors were bound to
-        securePort = TestUtils.findLocalHttpsPort(webServer);
-        assertThat(securePort, not(equalTo(0)));
-        httpPort = TestUtils.findLocalHttpPort(webServer);
-        assertThat(securePort, not(equalTo(0)));
+        secureStubPort = TestUtils.findLocalHttpsPort(webStubServer);
+        assertThat(secureStubPort, not(equalTo(0)));
+        httpStubPort = TestUtils.findLocalHttpPort(webStubServer);
+        assertThat(secureStubPort, not(equalTo(0)));
 
-        httpHost = new HttpHost("127.0.0.1", httpPort);
-        secureHost = new HttpHost("127.0.0.1", securePort, "https");
-        assertNotNull(httpHost);
-        assertNotNull(secureHost);
-        lastException = null;
+        httpStubHost = new HttpHost("127.0.0.1", httpStubPort);
+        secureStubHost = new HttpHost("127.0.0.1", secureStubPort, "https");
+        assertNotNull(httpStubHost);
+        assertNotNull(secureStubHost);
+        lastStubException = null;
     }
 
-    @After
-    public void runTearDown() throws Exception {
-        LOGGER.info("*** Test DONE - starting TearDown");
+    public void tearDown() throws Exception {
         try {
-            tearDown();
+            tearDown2();
         } finally {
-            try {
-                stopProxyServer();
-            } finally {
-                if (this.webServer != null) {
-                    webServer.stop();
-                }
+            if (this.webStubServer != null) {
+                webStubServer.stop();
             }
         }
     }
 
-    protected abstract void tearDown() throws Exception;
+    protected abstract void tearDown2() throws Exception;
 
-    private Server startWebServerWithResponse(boolean enableHttps, final byte[] content, String contentType) {
+    private Server startWebStubServerWithResponse(boolean enableHttps, final byte[] content, String contentType) {
         final Server httpServer = new Server(0);
         httpServer.setHandler(new AbstractHandler() {
             public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
-                requestCount.incrementAndGet();
+                requestStubCount.incrementAndGet();
                 long numberOfBytesRead = 0;
                 String bodyString = null;
                 try (InputStream requestInputStream = request.getInputStream()) {
@@ -116,14 +105,14 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
                     bodyString = new String(body, StandardCharsets.UTF_8);
                     numberOfBytesRead = bodyString.length();
                 }
-                LOGGER.info("Done reading # of bytes: {}", numberOfBytesRead);
+                LOGGER.info("STUB Done reading # of bytes: {}", numberOfBytesRead);
 
                 //finish response
                 response.setStatus(HttpServletResponse.SC_OK);
                 try {
-                    evaluateServerRequestResponse(request, response, bodyString);
+                    evaluateStubServerRequestResponse(request, response, bodyString);
                 } catch (Exception e) {
-                    lastException = e;
+                    lastStubException = e;
                 }
                 baseRequest.setHandled(true);
 
@@ -153,19 +142,19 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
         try {
             httpServer.start();
         } catch (Exception e) {
-            throw new RuntimeException("Error starting Jetty web server", e);
+            throw new RuntimeException("Error starting Jetty STUB web server", e);
         }
 
         return httpServer;
     }
 
-    protected abstract byte[] evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) throws Exception;
+    protected abstract byte[] evaluateStubServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) throws Exception;
 
-    public Exception getLastException() {
-        return lastException;
+    public Exception getLastStubException() {
+        return lastStubException;
     }
 
-    public void setLastException(Exception e) {
-        lastException = e;
+    public void setLastStubException(Exception e) {
+        lastStubException = e;
     }
 }
