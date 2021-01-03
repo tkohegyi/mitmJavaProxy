@@ -1,12 +1,16 @@
 package org.rockhill.mitm.proxy.http;
 
 import net.lightbody.bmp.core.har.HarEntry;
+import net.lightbody.bmp.proxy.jetty.http.HttpFields;
+import net.lightbody.bmp.proxy.jetty.http.HttpOutputStream;
 import net.lightbody.bmp.proxy.jetty.util.URI;
+import net.lightbody.bmp.proxy.util.ClonedOutputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.rockhill.mitm.proxy.ProxyServer;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.message.BasicHeader;
 import org.rockhill.mitm.proxy.header.HttpHeaderChange;
 import org.rockhill.mitm.proxy.header.HttpHeaderToBeAdded;
 import org.rockhill.mitm.proxy.header.HttpHeaderToBeRemoved;
@@ -40,7 +44,7 @@ public class MitmJavaProxyHttpResponse {
     public MitmJavaProxyHttpResponse(int status, HarEntry entry, HttpRequestBase method, URI proxyRequestURI, HttpResponse response,
                                      boolean contentMatched, String errorMessage,
                                      String body, String contentType, String charSet,
-                                     ByteArrayOutputStream bos, OutputStream os, boolean responseVolatile) {
+                                     ByteArrayOutputStream bos, OutputStream os, final boolean responseVolatile) {
         this.entry = entry;
         this.method = method;
         this.proxyRequestURI = proxyRequestURI;
@@ -60,12 +64,98 @@ public class MitmJavaProxyHttpResponse {
         return contentMatched;
     }
 
-    public String getBody() {
+    /**
+     * Gets the response body as String. Only available in case Proxy is working in 'captureContent' mode and the content type is not binary.
+     * @return with the response body, or null, if body is not available.
+     */
+    public String getBodyString() {
         return body;
     }
 
+    /**
+     * Gets the response body as byte array. Returns null if body is not available.
+     * Returns with raw bytes, so unzipping/deflating etc is up to you.
+     * See getBodyString() too.
+     *
+     * @return with the response body content
+     */
+    public byte[] getBodyBytes() {
+        byte[] result = null;
+        ByteArrayOutputStream copy = null;
+        boolean enableWorkWithCopy = false;
+        if (!responseVolatile && os != null && os instanceof ClonedOutputStream) {
+            copy = ((ClonedOutputStream) os).getOutput();
+            enableWorkWithCopy = true;
+        }
+        if (responseVolatile && bos != null) {
+            enableWorkWithCopy = true;
+            copy = bos;
+        }
+        if (enableWorkWithCopy) {
+            result = copy.toByteArray();
+        }
+        return result;
+    }
+
+    /**
+     * Updates the response body - in case it is volatile.
+     *
+     * @param newBody is the new body to be used as answer.
+     */
+    public void setBody(byte[] newBody) throws IOException {
+        if (newBody != null && responseVolatile && bos != null) {
+            String length = Integer.toString(newBody.length);
+            //update os
+            IOUtils.closeQuietly(bos);
+            bos = new ByteArrayOutputStream(newBody.length);
+            IOUtils.write(newBody, bos);
+            //ensure that subsequent interceptors see this update too, including header update if necessary
+            this.getRawResponse().setEntity(new ByteArrayEntity(newBody));
+            Header header = this.getRawResponse().getFirstHeader(HttpFields.__ContentLength);
+            if (header != null) {
+                this.getRawResponse().removeHeader(header);
+                this.updateHeader(header, length);
+            }
+        }
+    }
+
+    /**
+     * Gets the response content-type.
+     * @return with the content type string or null if not defined.
+     */
     public String getContentType() {
         return contentType;
+    }
+
+    /**
+     * Sets the content type of the response body.
+     *
+     * @param contentType is the type
+     */
+    public void setContentType(final String contentType) {
+        Header header = findHeader(getRawResponse().getAllHeaders(), HttpFields.__ContentType);
+        if (header != null) {
+            updateHeader(header, contentType);
+        } else {
+            addHeader(new BasicHeader(HttpFields.__ContentType, contentType));
+        }
+    }
+
+    /**
+     * Support method to search for a specific header in header array.
+     * @param headers is the header array
+     * @param key is the specific header to be searched for
+     * @return with the header found, or null if not found
+     */
+    public Header findHeader(Header[] headers, String key) {
+        Header header = null;
+        for (Header h : headers) {
+            if (h.getName().equals(key)) {
+                header = h;
+                break;
+            }
+        }
+        return header;
     }
 
     public String getCharSet() {
@@ -105,14 +195,43 @@ public class MitmJavaProxyHttpResponse {
         return entry;
     }
 
-    public void doAnswer() {
-        //only if response is volatile and well prepared
-        if (!isResponseVolatile() || bos == null || os == null) {
+    /**
+     * MitmJavaProxy internal call - support method to be used when a volatile response body is updated.
+     * Never call it, otherwise the response will be messed up.
+     *
+     * @param response is the response inside HttpConnection - this nes to be updated
+     */
+    public void doAnswer(net.lightbody.bmp.proxy.jetty.http.HttpResponse response) {
+        if (responseVolatile && !headerChanges.isEmpty()) {
+            //update headers at req.proxyRequest._connection._response._header
+            HttpFields httpFields = response.getHeader();
+
+            for (Map.Entry<String, HttpHeaderChange> headerChangeEntry : headerChanges.entrySet()) {
+                String key = headerChangeEntry.getKey();
+                HttpHeaderChange httpHeaderChange = headerChangeEntry.getValue();
+                String value = httpHeaderChange.getHeader().getValue();
+                if (httpHeaderChange instanceof HttpHeaderToBeUpdated) { //update header
+                    value = ((HttpHeaderToBeUpdated) httpHeaderChange).getNewValue();
+                    httpFields.put(key, value);
+                }
+                if (httpHeaderChange instanceof HttpHeaderToBeAdded) { //add header
+                    httpFields.add(key, value);
+                }
+                if (httpHeaderChange instanceof HttpHeaderToBeRemoved) { //remove header
+                    httpFields.remove(key);
+                }
+            }
+        }
+
+        //prepare body update - only if response is volatile and well prepared
+        if (!responseVolatile || bos == null || os == null) {
             return;
         }
         //from bos write to os
         byte[] answer = bos.toByteArray();
         try {
+            ((HttpOutputStream) os).setContentLength(answer.length);
+            response.setIntField(HttpFields.__ContentLength, answer.length); //this sets the length of to response
             os.write(answer);
         } catch (IOException e) {
             e.printStackTrace();
@@ -120,24 +239,6 @@ public class MitmJavaProxyHttpResponse {
             IOUtils.closeQuietly(bos);
             IOUtils.closeQuietly(os);
         }
-    }
-
-    public byte[] getAnswer() {
-        //only if response is volatile
-        if (bos == null) {
-            return null;
-        }
-        return bos.toByteArray();
-    }
-
-    public void setAnswer(byte[] bytes) throws IOException {
-        //only if response is volatile and well prepared
-        if (!isResponseVolatile() || bos == null) {
-            return;
-        }
-        IOUtils.closeQuietly(bos);
-        bos = new ByteArrayOutputStream(bytes.length);
-        IOUtils.write(bytes, bos);
     }
 
     public boolean isResponseVolatile() {
@@ -188,8 +289,8 @@ public class MitmJavaProxyHttpResponse {
     /**
      * Update an existing Http header.
      *
-     * @param header is the existing header that need to be changed
-     * @param newValue       is the new value to be used for the header.
+     * @param header   is the existing header that need to be changed
+     * @param newValue is the new value to be used for the header.
      */
     public void updateHeader(final Header header, final String newValue) {
         boolean found = false;
@@ -205,7 +306,8 @@ public class MitmJavaProxyHttpResponse {
             }
         }
         if (!found) {
-            logger.warn("Header with key: {} not found, update header skipped.", key);
+            Header h = new BasicHeader(header.getName(), newValue);
+            addHeader(h);
         }
     }
 

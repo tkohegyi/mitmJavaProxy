@@ -71,7 +71,7 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
     }
 
     private void startServer() {
-        webServer = startWebServerWithResponse(true, SERVER_BACKEND.getBytes());
+        webServer = startWebServerWithResponse(true, SERVER_BACKEND.getBytes(), "text/plain");
 
         // find out what ports the HTTP and HTTPS connectors were bound to
         securePort = TestUtils.findLocalHttpsPort(webServer);
@@ -104,7 +104,7 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
 
     protected abstract void tearDown() throws Exception;
 
-    private Server startWebServerWithResponse(boolean enableHttps, final byte[] content) {
+    private Server startWebServerWithResponse(boolean enableHttps, final byte[] content, String contentType) {
         final Server httpServer = new Server(0);
         httpServer.setHandler(new AbstractHandler() {
             public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -121,19 +121,16 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
 
                 //finish response
                 response.setStatus(HttpServletResponse.SC_OK);
-                byte[] newContent = null;
                 try {
-                    newContent = evaluateServerRequestResponse(request, response, bodyString);
-                    if (newContent == null) {
-                        newContent = content;
-                    }
+                    evaluateServerRequestResponse(request, response, bodyString);
                 } catch (Exception e) {
                     lastException = e;
                 }
                 baseRequest.setHandled(true);
 
-                response.addHeader("Content-Length", Integer.toString(newContent.length));
-                response.getOutputStream().write(newContent);
+                response.addHeader("Content-Length", Integer.toString(content.length));
+                response.setContentType(contentType);
+                response.getOutputStream().write(content);
             }
         });
 

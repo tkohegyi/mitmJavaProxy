@@ -7,11 +7,9 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.junit.Test;
 import org.rockhill.mitm.proxy.ProxyServer;
-import org.rockhill.mitm.proxy.RequestInterceptor;
 import org.rockhill.mitm.proxy.ResponseInterceptor;
 import org.rockhill.mitm.proxy.help.AnsweringServerBase;
 import org.rockhill.mitm.proxy.help.TestUtils;
-import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,11 +37,9 @@ public class ResponseHeaderManipulationTest extends AnsweringServerBase {
 
     @Override
     protected void setUp() throws Exception {
-        TestRequestInterceptor testRequestInterceptor = new TestRequestInterceptor();
         TestResponseInterceptor testResponseInterceptor = new TestResponseInterceptor();
-        getProxyServer().addRequestInterceptor(testRequestInterceptor);
         getProxyServer().addResponseInterceptor(testResponseInterceptor);
-        ProxyServer.setResponseVolatile(true); //this ia a must !!!
+        ProxyServer.setResponseVolatile(true); //this is a must !!!
         request = new HttpGet(GET_REQUEST);
     }
 
@@ -128,14 +124,6 @@ public class ResponseHeaderManipulationTest extends AnsweringServerBase {
         //'D' (the new header) must not exist
         h = response.getFirstHeader("D");
         assertNull("Shall not find 'D' header in response", h);
-    }
-
-    class TestRequestInterceptor implements RequestInterceptor {
-
-        @Override
-        public void process(MitmJavaProxyHttpRequest request) {
-            //nothing to do at request now
-        }
     }
 
     class TestResponseInterceptor implements ResponseInterceptor {

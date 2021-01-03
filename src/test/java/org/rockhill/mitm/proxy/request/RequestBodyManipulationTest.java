@@ -34,8 +34,8 @@ import static org.junit.Assert.assertTrue;
  */
 public class RequestBodyManipulationTest extends AnsweringServerBase {
     protected static final String GET_REQUEST = "/anyUrl";
-    private final static String REQ_STRING_BODY = "initial request body";
-    private final static String REQ_JSON_BODY = "{ \"json\": \"simple text\" }";
+    private static final String REQ_STRING_BODY = "initial request body";
+    private static final String REQ_JSON_BODY = "{ \"json\": \"simple text\" }";
     private HttpPost request;
 
     @Override

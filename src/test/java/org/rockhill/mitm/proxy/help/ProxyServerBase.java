@@ -26,6 +26,7 @@ public class ProxyServerBase {
         proxyServer = new ProxyServer(0);
         proxyServer.start(PROXY_TIMEOUT);
         proxyPort = proxyServer.getPort();
+        ProxyServer.setShouldKeepSslConnectionAlive(false);
         assertThat(getProxyPort(), not(equalTo(0)));
         LOGGER.info("*** Proxy Server started on port: {}", proxyPort);
     }
