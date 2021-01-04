@@ -84,8 +84,8 @@ dependencies {
     compile(group: 'org.slf4j', name: 'jcl-over-slf4j', version:'1.7.12')
     compile(group: 'org.slf4j', name: 'jul-to-slf4j', version:'1.7.12')
     compile group: 'janino', name: 'janino', version:'2.5.10'
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.5.12'
-    compile group: 'org.apache.httpcomponents', name: 'httpmime', version:'4.5.12'
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.5.13'
+    compile group: 'org.apache.httpcomponents', name: 'httpmime', version:'4.5.13'
     compile group: 'org.apache.commons', name: 'commons-io', version:'1.3.2'
     compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version:'3.2'
     compile group: 'org.apache.ant', name: 'ant', version:'1.9.4'

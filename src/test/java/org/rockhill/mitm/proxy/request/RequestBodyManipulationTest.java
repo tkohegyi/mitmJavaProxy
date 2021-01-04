@@ -6,6 +6,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 import org.rockhill.mitm.proxy.RequestInterceptor;
 import org.rockhill.mitm.proxy.help.AnsweringServerBase;
@@ -22,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * This test checks if the request body can be accessed and altered by the request interceptors.
@@ -58,8 +58,12 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
         //check if body properly arrived to server
         if (request.getHeader("A") != null) {
             // If header "A" added - reduce body size to 5 chars
-            assertEquals(5, request.getContentLength());
-            assertTrue(REQ_STRING_BODY.startsWith(bodyString));
+            if (5 != request.getContentLength()) {
+                setLastException(new Exception("Content length is not 5"));
+            }
+            if (!REQ_STRING_BODY.startsWith(bodyString)) {
+                setLastException(new Exception("Body differs from expected string"));
+            }
         } else {
             if (request.getHeader("B") != null) {
                 // If header "B" added - duplicate the body text
@@ -100,7 +104,9 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
     public void noRequestBodyChange() throws Exception {
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
-            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
         }
     }
@@ -109,7 +115,9 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
     public void noRequestBodyChangeSecure() throws Exception {
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
-            assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTPS Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
         }
     }
@@ -119,7 +127,9 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
         request.addHeader("A", "A");
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
-            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
         }
     }
@@ -129,7 +139,9 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
         request.addHeader("A", "A");
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
-            assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTPS Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
         }
     }
@@ -139,7 +151,9 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
         request.addHeader("B", "B");
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
-            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
         }
     }
@@ -149,8 +163,9 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
         request.addHeader("B", "B");
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
-            httpClient.close();
-            assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTPS Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
         }
     }
@@ -160,7 +175,9 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
         request.addHeader("C", "C");
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
-            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
         }
     }
@@ -170,7 +187,9 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
         request.addHeader("C", "C");
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
-            assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTPS Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
         }
     }
@@ -188,9 +207,7 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
                 String body = IOUtils.toString(clonedInputStream);
                 clonedInputStream.reset();
                 if (!REQ_STRING_BODY.equals(body)) {
-                    Exception e = new Exception("Cannot find the expected body");
-                    setLastException(e);
-                    logger.error("EXCEPTION", e);
+                    setLastException(new Exception("Cannot find the expected body"));
                 }
 
                 //alter body - if 'A' header - to 5 char long

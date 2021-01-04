@@ -75,9 +75,7 @@ public class HttpSMassTest extends AnsweringServerBase {
             //header to be found
             header = request.getMethod().getFirstHeader("A");
             if (header == null) {
-                Exception e = new Exception("Request header was not found");
-                setLastException(e);
-                logger.error("EXCEPTION at Request Interceptor", e);
+                setLastException(new Exception("Request header was not found"));
             }
         }
     }
@@ -89,9 +87,7 @@ public class HttpSMassTest extends AnsweringServerBase {
             Header[] headers = response.getRequestHeaders();
             Header h = response.findHeader(headers, "A");
             if (h == null) {
-                Exception e = new Exception("'A' was not found at response interceptor");
-                setLastException(e);
-                logger.error("EXCEPTION at Response Interceptor", e);
+                setLastException(new Exception("'A' was not found at response interceptor"));
             }
             response.addHeader(new BasicHeader("B", response.getEntry().getMessageId()));
         }

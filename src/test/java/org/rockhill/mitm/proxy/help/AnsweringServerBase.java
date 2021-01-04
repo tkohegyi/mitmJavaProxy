@@ -175,7 +175,7 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
     }
 
     public void setLastException(Exception e) {
-        logger.error("ISSUE DETECTED!", e);
+        logger.error("ISSUE DETECTED! {}", e.getMessage(), e);
         setLastException(e);
     }
 }
