@@ -12,8 +12,6 @@ import org.rockhill.mitm.proxy.RequestInterceptor;
 import org.rockhill.mitm.proxy.help.AnsweringServerBase;
 import org.rockhill.mitm.proxy.help.TestUtils;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,7 +34,6 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
     private static final String GET_REQUEST = "/anyUrl";
     private static final String REQ_STRING_BODY = "initial request body";
     private static final String REQ_JSON_BODY = "{ \"json\": \"simple text\" }";
-    private final Logger logger = LoggerFactory.getLogger(RequestBodyManipulationTest.class);
     private HttpPost request;
 
     @Override

@@ -169,6 +169,7 @@ public abstract class StubServerBase extends AnsweringServerBase {
     }
 
     public void setLastStubException(Exception e) {
+        logger.error("ISSUE DETECTED! {}", e.getMessage(), e);
         lastStubException = e;
     }
 }

@@ -21,7 +21,6 @@ import java.net.URISyntaxException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * This test checks if the request header can be accessed and altered by the request interceptors.
@@ -51,9 +50,13 @@ public class RequestURIManipulationTest extends StubServerBase {
         String headerValue;
         //normal server shall not be called if 'A' or 'B' header exists
         headerValue = request.getHeader("A");
-        assertNull(headerValue);
+        if (headerValue != null) {
+            setLastException(new Exception("normal server shall not be called if 'A' header exists"));
+        }
         headerValue = request.getHeader("B");
-        assertNull(headerValue);
+        if (headerValue != null) {
+            setLastException(new Exception("normal server shall not be called if 'B' header exists"));
+        }
         return null;
     }
 
@@ -63,7 +66,9 @@ public class RequestURIManipulationTest extends StubServerBase {
         //stub server shall be called if 'A' or 'B' header exists
         headerValue1 = request.getHeader("A");
         headerValue2 = request.getHeader("B");
-        assertTrue(headerValue1 != null || headerValue2 != null);
+        if (headerValue1 == null && headerValue2 == null) {
+            setLastException(new Exception("stub server shall not be called if neither 'A' nor 'B' header exists"));
+        }
         return null;
     }
 
@@ -72,7 +77,9 @@ public class RequestURIManipulationTest extends StubServerBase {
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
             assertNull(getLastStubException());
             //check that answer is not changed
@@ -85,7 +92,9 @@ public class RequestURIManipulationTest extends StubServerBase {
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
             assertNull(getLastStubException());
             //check that answer is not changed
@@ -99,7 +108,9 @@ public class RequestURIManipulationTest extends StubServerBase {
             request.addHeader("A", "A"); //header to be found -> redirect to sub / http
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
             assertNull(getLastStubException());
             //check that answer is not changed
@@ -113,7 +124,9 @@ public class RequestURIManipulationTest extends StubServerBase {
             request.addHeader("B", "B"); //header to be found -> redirect to sub / http
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
             assertNull(getLastStubException());
             //check that answer is not changed
@@ -127,7 +140,9 @@ public class RequestURIManipulationTest extends StubServerBase {
             request.addHeader("A", "A"); //header to be found -> redirect to sub / http
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
             assertNull(getLastStubException());
             //check that answer is not changed
@@ -141,7 +156,9 @@ public class RequestURIManipulationTest extends StubServerBase {
             request.addHeader("B", "B"); //header to be found -> redirect to sub / http
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            int statusCode = response.getStatusLine().getStatusCode();
+            EntityUtils.consume(response.getEntity());
+            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
             assertNull(getLastStubException());
             //check that answer is not changed
@@ -164,7 +181,6 @@ public class RequestURIManipulationTest extends StubServerBase {
                     logger.info("Request Interceptor Called - Redirect to STUB: {}", uri.toString());
                 } catch (URISyntaxException e) {
                     setLastStubException(e);
-                    logger.error("EXCEPTION at Request Interceptor", e);
                 }
             }
             header = request.getMethod().getFirstHeader("B");
@@ -176,7 +192,6 @@ public class RequestURIManipulationTest extends StubServerBase {
                     logger.info("Request Interceptor Called - Redirect to STUB: {}", uri.toString());
                 } catch (URISyntaxException e) {
                     setLastStubException(e);
-                    logger.error("EXCEPTION at Request Interceptor", e);
                 }
             }
         }
