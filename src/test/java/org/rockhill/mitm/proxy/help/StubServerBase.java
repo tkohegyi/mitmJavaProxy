@@ -30,15 +30,29 @@ import static org.junit.Assert.assertThat;
  */
 public abstract class StubServerBase extends AnsweringServerBase {
 
-    /**
-     * The server used by the tests.
-     */
-    protected final static Logger LOGGER = LoggerFactory.getLogger(StubServerBase.class);
-    protected static final String STUB_SERVER_BACKEND = "stub-backend";
-    protected int httpStubPort = -1;
-    protected int secureStubPort = -1;
-    protected HttpHost httpStubHost;
-    protected HttpHost secureStubHost;
+    public static final String STUB_SERVER_BACKEND = "stub-backend";
+    private final Logger logger = LoggerFactory.getLogger(StubServerBase.class);
+
+    public int getHttpStubPort() {
+        return httpStubPort;
+    }
+
+    public int getSecureStubPort() {
+        return secureStubPort;
+    }
+
+    public HttpHost getHttpStubHost() {
+        return httpStubHost;
+    }
+
+    public HttpHost getSecureStubHost() {
+        return secureStubHost;
+    }
+
+    private int httpStubPort = -1;
+    private int secureStubPort = -1;
+    private HttpHost httpStubHost;
+    private HttpHost secureStubHost;
     protected AtomicInteger requestStubCount;
 
     /**
@@ -54,8 +68,8 @@ public abstract class StubServerBase extends AnsweringServerBase {
     public void setUp() throws Exception {
         initializeStubCounters();
         startStubServer();
-        LOGGER.info("*** Backed STUB http Server started on port: {}", httpStubPort);
-        LOGGER.info("*** Backed STUB httpS Server started on port: {}", secureStubPort);
+        logger.info("*** Backed STUB http Server started on port: {}", httpStubPort);
+        logger.info("*** Backed STUB httpS Server started on port: {}", secureStubPort);
         setUp2();
     }
 
@@ -105,7 +119,7 @@ public abstract class StubServerBase extends AnsweringServerBase {
                     bodyString = new String(body, StandardCharsets.UTF_8);
                     numberOfBytesRead = bodyString.length();
                 }
-                LOGGER.info("STUB Done reading # of bytes: {}", numberOfBytesRead);
+                logger.info("STUB Done reading # of bytes: {}", numberOfBytesRead);
 
                 //finish response
                 response.setStatus(HttpServletResponse.SC_OK);

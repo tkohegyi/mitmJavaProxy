@@ -32,7 +32,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class RequestHeaderManipulationTest extends AnsweringServerBase {
     protected static final String GET_REQUEST = "/anyUrl";
-    private final static Logger LOGGER = LoggerFactory.getLogger(RequestHeaderManipulationTest.class);
+    private final Logger logger = LoggerFactory.getLogger(RequestHeaderManipulationTest.class);
     private HttpGet request;
 
     @Override
@@ -72,7 +72,7 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
     @Test
     public void headerInterceptedAndAccessible() throws Exception {
         CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort());
-        HttpResponse response = httpClient.execute(httpHost, request); //request is here
+        HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
         httpClient.close();
         assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
         assertNull(getLastException());
@@ -81,7 +81,7 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
     @Test
     public void headerInterceptedAndAccessibleSecure() throws Exception {
         CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort());
-        HttpResponse response = httpClient.execute(secureHost, request); //request is here
+        HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
         httpClient.close();
         assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
         assertNull(getLastException());
@@ -119,7 +119,7 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
             found = false;
             for (Header h : headers) {
                 if (h.getName().equals("A")) {
-                    LOGGER.info("Header '{}' found with value '{}'", h.getName(), h.getValue());
+                    logger.info("Header '{}' found with value '{}'", h.getName(), h.getValue());
                     if (h.getValue().equals("A")) {
                         found = true;
                     }
@@ -131,7 +131,7 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
             found = false;
             for (Header h : headers) {
                 if (h.getName().equals("B")) {
-                    LOGGER.info("Header '{}' found with value '{}'", h.getName(), h.getValue());
+                    logger.info("Header '{}' found with value '{}'", h.getName(), h.getValue());
                     if (h.getValue().equals("BB")) {
                         found = true;
                     }
@@ -143,7 +143,7 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
             found = false;
             for (Header h : headers) {
                 if (h.getName().equals("C")) {
-                    LOGGER.info("Header '{}' found with value '{}'", h.getName(), h.getValue());
+                    logger.info("Header '{}' found with value '{}'", h.getName(), h.getValue());
                     found = true;
                 }
             }

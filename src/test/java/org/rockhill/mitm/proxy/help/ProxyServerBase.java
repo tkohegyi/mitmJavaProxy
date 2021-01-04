@@ -18,7 +18,7 @@ public class ProxyServerBase {
      * The server used by the tests.
      */
     private static final int PROXY_TIMEOUT = 600000; //10 minutes, to have enough time for manual debug
-    private final static Logger LOGGER = LoggerFactory.getLogger(ProxyServerBase.class);
+    private final Logger logger = LoggerFactory.getLogger(ProxyServerBase.class);
     private ProxyServer proxyServer;
     private int proxyPort = -1;
 
@@ -28,7 +28,7 @@ public class ProxyServerBase {
         proxyPort = proxyServer.getPort();
         ProxyServer.setShouldKeepSslConnectionAlive(false);
         assertThat(getProxyPort(), not(equalTo(0)));
-        LOGGER.info("*** Proxy Server started on port: {}", proxyPort);
+        logger.info("*** Proxy Server started on port: {}", proxyPort);
     }
 
     public void stopProxyServer() throws Exception {

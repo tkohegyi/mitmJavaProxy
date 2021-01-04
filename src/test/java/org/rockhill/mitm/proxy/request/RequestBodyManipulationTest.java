@@ -11,6 +11,8 @@ import org.rockhill.mitm.proxy.RequestInterceptor;
 import org.rockhill.mitm.proxy.help.AnsweringServerBase;
 import org.rockhill.mitm.proxy.help.TestUtils;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,9 +33,10 @@ import static org.junit.Assert.assertTrue;
  * - If header "C" added - replace it with a json message (changes content-type too)
  */
 public class RequestBodyManipulationTest extends AnsweringServerBase {
-    protected static final String GET_REQUEST = "/anyUrl";
+    private static final String GET_REQUEST = "/anyUrl";
     private static final String REQ_STRING_BODY = "initial request body";
     private static final String REQ_JSON_BODY = "{ \"json\": \"simple text\" }";
+    private final Logger logger = LoggerFactory.getLogger(RequestBodyManipulationTest.class);
     private HttpPost request;
 
     @Override
@@ -96,7 +99,7 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
     @Test
     public void noRequestBodyChange() throws Exception {
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
-            HttpResponse response = httpClient.execute(httpHost, request); //request is here
+            HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
         }
@@ -105,7 +108,7 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
     @Test
     public void noRequestBodyChangeSecure() throws Exception {
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
-            HttpResponse response = httpClient.execute(secureHost, request); //request is here
+            HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
         }
@@ -115,7 +118,7 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
     public void reduceTo5Chars() throws Exception {
         request.addHeader("A", "A");
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
-            HttpResponse response = httpClient.execute(httpHost, request); //request is here
+            HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
         }
@@ -125,7 +128,7 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
     public void reduceTo5CharsSecure() throws Exception {
         request.addHeader("A", "A");
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
-            HttpResponse response = httpClient.execute(secureHost, request); //request is here
+            HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
         }
@@ -135,7 +138,7 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
     public void doubleBodySize() throws Exception {
         request.addHeader("B", "B");
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
-            HttpResponse response = httpClient.execute(httpHost, request); //request is here
+            HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
         }
@@ -145,7 +148,7 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
     public void doubleBodySizeSecure() throws Exception {
         request.addHeader("B", "B");
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
-            HttpResponse response = httpClient.execute(secureHost, request); //request is here
+            HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             httpClient.close();
             assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
@@ -156,7 +159,7 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
     public void replaceWithJson() throws Exception {
         request.addHeader("C", "C");
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
-            HttpResponse response = httpClient.execute(httpHost, request); //request is here
+            HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
         }
@@ -166,7 +169,7 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
     public void replaceWithJsonSecure() throws Exception {
         request.addHeader("C", "C");
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
-            HttpResponse response = httpClient.execute(secureHost, request); //request is here
+            HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
         }
@@ -185,7 +188,9 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
                 String body = IOUtils.toString(clonedInputStream);
                 clonedInputStream.reset();
                 if (!REQ_STRING_BODY.equals(body)) {
-                    setLastException(new Exception("Cannot find the expected body"));
+                    Exception e = new Exception("Cannot find the expected body");
+                    setLastException(e);
+                    logger.error("EXCEPTION", e);
                 }
 
                 //alter body - if 'A' header - to 5 char long

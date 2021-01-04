@@ -7,11 +7,9 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 import org.rockhill.mitm.proxy.RequestInterceptor;
-import org.rockhill.mitm.proxy.ResponseInterceptor;
 import org.rockhill.mitm.proxy.help.StubServerBase;
 import org.rockhill.mitm.proxy.help.TestUtils;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
-import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +31,8 @@ import static org.junit.Assert.assertTrue;
  * 'B'->'B' forward to stubServer / https
  */
 public class RequestURIManipulationTest extends StubServerBase {
-    private final static Logger LOGGER = LoggerFactory.getLogger(RequestURIManipulationTest.class);
-    protected static final String GET_REQUEST = "/anyUrl";
+    private static final String GET_REQUEST = "/anyUrl";
+    private final Logger logger = LoggerFactory.getLogger(RequestURIManipulationTest.class);
     private HttpGet request;
 
     @Override
@@ -72,7 +70,7 @@ public class RequestURIManipulationTest extends StubServerBase {
     @Test
     public void simpleCallNoRedirect() throws Exception {
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
-            HttpResponse response = httpClient.execute(httpHost, request); //request is here
+            HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
@@ -85,7 +83,7 @@ public class RequestURIManipulationTest extends StubServerBase {
     @Test
     public void simpleCallNoRedirectSecure() throws Exception {
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
-            HttpResponse response = httpClient.execute(secureHost, request); //request is here
+            HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
@@ -99,7 +97,7 @@ public class RequestURIManipulationTest extends StubServerBase {
     public void callHttp2HttpStub() throws Exception {
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
             request.addHeader("A", "A"); //header to be found -> redirect to sub / http
-            HttpResponse response = httpClient.execute(httpHost, request); //request is here
+            HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
@@ -113,7 +111,7 @@ public class RequestURIManipulationTest extends StubServerBase {
     public void callHttp2SecureHttpStub() throws Exception {
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
             request.addHeader("B", "B"); //header to be found -> redirect to sub / http
-            HttpResponse response = httpClient.execute(httpHost, request); //request is here
+            HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
@@ -127,7 +125,7 @@ public class RequestURIManipulationTest extends StubServerBase {
     public void callSecureHttp2HttpStub() throws Exception {
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
             request.addHeader("A", "A"); //header to be found -> redirect to sub / http
-            HttpResponse response = httpClient.execute(secureHost, request); //request is here
+            HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
@@ -139,16 +137,16 @@ public class RequestURIManipulationTest extends StubServerBase {
 
     @Test
     public void callSecureHttp2SecureHttpStub() throws Exception {
-        CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort());
-        request.addHeader("B", "B"); //header to be found -> redirect to sub / http
-        HttpResponse response = httpClient.execute(secureHost, request); //request is here
-        String body = EntityUtils.toString(response.getEntity());
-        httpClient.close();
-        assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
-        assertNull(getLastException());
-        assertNull(getLastStubException());
-        //check that answer is not changed
-        assertEquals(STUB_SERVER_BACKEND, body);
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+            request.addHeader("B", "B"); //header to be found -> redirect to sub / http
+            HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
+            String body = EntityUtils.toString(response.getEntity());
+            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            assertNull(getLastException());
+            assertNull(getLastStubException());
+            //check that answer is not changed
+            assertEquals(STUB_SERVER_BACKEND, body);
+        }
     }
 
     class TestRequestInterceptor implements RequestInterceptor {
@@ -161,24 +159,24 @@ public class RequestURIManipulationTest extends StubServerBase {
             if (header != null) {
                 //redirect to stub / http
                 try {
-                    URI uri = new URI("http://127.0.0.1:" + httpStubPort + "/stubUrl");
+                    URI uri = new URI("http://127.0.0.1:" + getHttpStubPort() + "/stubUrl");
                     request.getMethod().setURI(uri);
-                    LOGGER.info("Request Interceptor Called - Redirect to STUB: {}", uri.toString());
+                    logger.info("Request Interceptor Called - Redirect to STUB: {}", uri.toString());
                 } catch (URISyntaxException e) {
                     setLastStubException(e);
-                    LOGGER.info("EXCEPTION at Request Interceptor", e);
+                    logger.error("EXCEPTION at Request Interceptor", e);
                 }
             }
             header = request.getMethod().getFirstHeader("B");
             if (header != null) {
                 //redirect to stub / httpS
                 try {
-                    URI uri = new URI("https://127.0.0.1:" + secureStubPort + "/stubUrl");
+                    URI uri = new URI("https://127.0.0.1:" + getSecureStubPort() + "/stubUrl");
                     request.getMethod().setURI(uri);
-                    LOGGER.info("Request Interceptor Called - Redirect to STUB: {}", uri.toString());
+                    logger.info("Request Interceptor Called - Redirect to STUB: {}", uri.toString());
                 } catch (URISyntaxException e) {
                     setLastStubException(e);
-                    LOGGER.info("EXCEPTION at Request Interceptor", e);
+                    logger.error("EXCEPTION at Request Interceptor", e);
                 }
             }
         }

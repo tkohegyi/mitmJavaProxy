@@ -35,12 +35,21 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
     /**
      * The server used by the tests.
      */
-    protected final static Logger LOGGER = LoggerFactory.getLogger(AnsweringServerBase.class);
-    protected static final String SERVER_BACKEND = "server-backend";
-    protected int httpPort = -1;
-    protected int securePort = -1;
-    protected HttpHost httpHost;
-    protected HttpHost secureHost;
+    private final Logger logger = LoggerFactory.getLogger(AnsweringServerBase.class);
+
+    public HttpHost getHttpHost() {
+        return httpHost;
+    }
+
+    public HttpHost getSecureHost() {
+        return secureHost;
+    }
+
+    public static final String SERVER_BACKEND = "server-backend";
+    private int httpPort = -1;
+    private int securePort = -1;
+    private HttpHost httpHost;
+    private HttpHost secureHost;
     protected AtomicInteger requestCount;
 
     /**
@@ -58,10 +67,10 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
         initializeCounters();
         startProxyServer();
         startServer();
-        LOGGER.info("*** Backed http Server started on port: {}", httpPort);
-        LOGGER.info("*** Backed httpS Server started on port: {}", securePort);
+        logger.info("*** Backed http Server started on port: {}", httpPort);
+        logger.info("*** Backed httpS Server started on port: {}", securePort);
         setUp();
-        LOGGER.info("*** Test INIT DONE - starting the Test");
+        logger.info("*** Test INIT DONE - starting the Test");
     }
 
     protected abstract void setUp() throws Exception;
@@ -88,7 +97,7 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
 
     @After
     public void runTearDown() throws Exception {
-        LOGGER.info("*** Test DONE - starting TearDown");
+        logger.info("*** Test DONE - starting TearDown");
         try {
             tearDown();
         } finally {
@@ -116,14 +125,14 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
                     bodyString = new String(body, StandardCharsets.UTF_8);
                     numberOfBytesRead = bodyString.length();
                 }
-                LOGGER.info("Done reading # of bytes: {}", numberOfBytesRead);
+                logger.info("Done reading # of bytes: {}", numberOfBytesRead);
 
                 //finish response
                 response.setStatus(HttpServletResponse.SC_OK);
                 try {
                     evaluateServerRequestResponse(request, response, bodyString);
                 } catch (Exception e) {
-                    lastException = e;
+                    setLastException(e);
                 }
                 baseRequest.setHandled(true);
 
@@ -166,7 +175,7 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
     }
 
     public void setLastException(Exception e) {
-        e.printStackTrace();
-        lastException = e;
+        logger.error("ISSUE DETECTED!", e);
+        setLastException(e);
     }
 }
