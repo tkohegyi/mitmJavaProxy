@@ -14,6 +14,7 @@ import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -56,9 +57,7 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
     }
 
     @Override
-    protected byte[] evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
-        //nothing to do here
-        return null;
+    protected void evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
     }
 
     @Test
@@ -96,6 +95,9 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
             assertNull(getLastException());
             //check that answer is not changed
             assertEquals(SERVER_BACKEND, body);
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
         }
     }
 
@@ -122,6 +124,9 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
             assertNull(getLastException());
             //check that answer is reduced to 5 chars length
             assertEquals(SERVER_BACKEND.substring(0, 5), body);
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
         }
     }
 
@@ -148,6 +153,9 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
             assertNull(getLastException());
             //check that answer is doubled
             assertEquals(SERVER_BACKEND + SERVER_BACKEND, body);
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
         }
     }
 
@@ -176,6 +184,9 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
             assertNull(getLastException());
             //check that answer is a json string
             assertEquals(REQ_JSON_BODY, body);
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
         }
     }
 
@@ -203,6 +214,9 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
             assertNull(getLastException());
             //check that answer is not changed
             assertEquals(SERVER_BACKEND, body);
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
         }
     }
 
@@ -231,6 +245,9 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
             //check that answer is a json string
             assertEquals(REQ_JSON_BODY, body);
             assertEquals("application/json", response.getEntity().getContentType().getValue());
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
         }
     }
 
@@ -243,10 +260,7 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
             byte[] newBody = null;
             Header[] requestHeaders = response.getRequestHeaders();
 
-            if (!SERVER_BACKEND.equals(body)) {
-                setLastException(new Exception("Cannot find the expected body"));
-                logger.error("EXCEPTION at Response Interceptor", getLastException());
-            }
+            assertIssue(!SERVER_BACKEND.equals(body), "Cannot find the expected body");
 
             //alter body - if 'A' header - to 5 char long
             if (response.findHeader(requestHeaders, "A") != null) {
@@ -268,10 +282,7 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
             if (response.findHeader(requestHeaders, "D") != null) {
                 byte[] oldBody = response.getBodyBytes();
                 String bodyString = new String(oldBody);
-                if (!SERVER_BACKEND.equals(bodyString)) {
-                    setLastException(new Exception("Cannot find the expected body"));
-                    logger.error("EXCEPTION at Response Interceptor", getLastException());
-                }
+                assertIssue(!SERVER_BACKEND.equals(bodyString), "Cannot find the expected body");
             }
 
             //alter body - if 'E' header - use json request + get raw body too
@@ -279,10 +290,7 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
 
                 byte[] oldBody = response.getBodyBytes();
                 String bodyString = new String(oldBody);
-                if (!SERVER_BACKEND.equals(bodyString)) {
-                    setLastException(new Exception("Cannot find the expected body"));
-                    logger.error("EXCEPTION at Response Interceptor", getLastException());
-                }
+                assertIssue(!SERVER_BACKEND.equals(bodyString), "Cannot find the expected body");
                 newBody = REQ_JSON_BODY.getBytes(StandardCharsets.UTF_8);
                 response.setContentType("application/json");
             }
@@ -290,8 +298,7 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
             try {
                 response.setBody(newBody);
             } catch (IOException e) {
-                setLastException(e);
-                logger.error("EXCEPTION at Response Interceptor", getLastException());
+                assertIssue(e);
             }
         }
     }

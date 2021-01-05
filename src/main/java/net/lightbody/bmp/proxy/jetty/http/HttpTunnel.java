@@ -53,20 +53,12 @@ public class HttpTunnel {
      * Constructor.
      *
      * @param socket The tunnel socket.
-     * @param in     Alternative input stream or null if using normal socket stream
-     * @param out    Alternative output stream or null if using normal socket stream
      * @throws IOException
      */
-    public HttpTunnel(Socket socket, InputStream in, OutputStream out) throws IOException {
+    public HttpTunnel(Socket socket) throws IOException {
         _socket = socket;
-        _sIn = in;
-        _sOut = out;
-        if (_sIn == null) {
-            _sIn = _socket.getInputStream();
-        }
-        if (_sOut == null) {
-            _sOut = socket.getOutputStream();
-        }
+        _sIn = _socket.getInputStream();
+        _sOut = socket.getOutputStream();
         _timeoutMs = 30000;
     }
 

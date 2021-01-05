@@ -127,7 +127,7 @@ public class SslListener extends SocketListener {
 
             java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory.getInstance("X.509");
             for (int i = 0; i < length; i++) {
-                byte bytes[] = javaxCerts[i].getEncoded();
+                byte[] bytes = javaxCerts[i].getEncoded();
                 ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
                 javaCerts[i] = (X509Certificate) cf.generateCertificate(stream);
             }

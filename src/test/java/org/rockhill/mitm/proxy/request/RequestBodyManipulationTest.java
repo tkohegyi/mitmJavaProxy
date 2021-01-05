@@ -12,7 +12,10 @@ import org.rockhill.mitm.proxy.RequestInterceptor;
 import org.rockhill.mitm.proxy.help.AnsweringServerBase;
 import org.rockhill.mitm.proxy.help.TestUtils;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -34,6 +37,7 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
     private static final String GET_REQUEST = "/anyUrl";
     private static final String REQ_STRING_BODY = "initial request body";
     private static final String REQ_JSON_BODY = "{ \"json\": \"simple text\" }";
+    private final Logger logger = LoggerFactory.getLogger(RequestBodyManipulationTest.class);
     private HttpPost request;
 
     @Override
@@ -51,50 +55,31 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
     }
 
     @Override
-    protected byte[] evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
+    protected void evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
         //check if body properly arrived to server
         if (request.getHeader("A") != null) {
             // If header "A" added - reduce body size to 5 chars
-            if (5 != request.getContentLength()) {
-                setLastException(new Exception("Content length is not 5"));
-            }
-            if (!REQ_STRING_BODY.startsWith(bodyString)) {
-                setLastException(new Exception("Body differs from expected string"));
-            }
+            assertIssue(5 != request.getContentLength(), "Content length is not 5");
+            assertIssue(!REQ_STRING_BODY.startsWith(bodyString), "Body differs from expected string");
         } else {
             if (request.getHeader("B") != null) {
                 // If header "B" added - duplicate the body text
-                if (request.getContentLength() != REQ_STRING_BODY.length() * 2) {
-                    setLastException(new Exception("Request content-length is not double sized"));
-                }
-                if (!(REQ_STRING_BODY + REQ_STRING_BODY).equals(bodyString)) {
-                    setLastException(new Exception("Request body is not the double sized body"));
-                }
+                assertIssue(request.getContentLength() != REQ_STRING_BODY.length() * 2, "Request content-length is not double sized");
+                assertIssue(!(REQ_STRING_BODY + REQ_STRING_BODY).equals(bodyString), "Request body is not the double sized body");
             } else {
                 if (request.getHeader("C") != null) {
                     // If header "C" added - replace it with a json message (changes content-type too)
-                    if (request.getContentLength() != REQ_JSON_BODY.length()) {
-                        setLastException(new Exception("Request content-length is not normal sized"));
-                    }
-                    if (!REQ_JSON_BODY.equals(bodyString)) {
-                        setLastException(new Exception("Request body is not the json body"));
-                    }
+                    assertIssue(request.getContentLength() != REQ_JSON_BODY.length(), "Request content-length is not normal sized");
+                    assertIssue(!REQ_JSON_BODY.equals(bodyString), "Request body is not the json body");
                     String contentType = request.getHeader("Content-Type");
-                    if (!"application/json".equals(contentType)) {
-                        setLastException(new Exception("Request content-type is not json"));
-                    }
+                    assertIssue(!"application/json".equals(contentType), "Request content-type is not json");
                 } else {
                     // No additional header - body untouched
-                    if (request.getContentLength() != REQ_STRING_BODY.length()) {
-                        setLastException(new Exception("Request content-length is correct"));
-                    }
-                    if (!REQ_STRING_BODY.equals(bodyString)) {
-                        setLastException(new Exception("Request body is not the expected body"));
-                    }
+                    assertIssue(request.getContentLength() != REQ_STRING_BODY.length(), "Request content-length is correct");
+                    assertIssue(!REQ_STRING_BODY.equals(bodyString), "Request body is not the expected body");
                 }
             }
         }
-        return null;
     }
 
     @Test
@@ -116,6 +101,9 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
             EntityUtils.consume(response.getEntity());
             assertEquals("HTTPS Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
         }
     }
 
@@ -140,6 +128,9 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
             EntityUtils.consume(response.getEntity());
             assertEquals("HTTPS Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
         }
     }
 
@@ -164,6 +155,9 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
             EntityUtils.consume(response.getEntity());
             assertEquals("HTTPS Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
         }
     }
 
@@ -188,6 +182,9 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
             EntityUtils.consume(response.getEntity());
             assertEquals("HTTPS Response Status code is:" + statusCode, 200, statusCode);
             assertNull(getLastException());
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
         }
     }
 
@@ -203,9 +200,7 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
                 clonedInputStream.mark(8192);
                 String body = IOUtils.toString(clonedInputStream);
                 clonedInputStream.reset();
-                if (!REQ_STRING_BODY.equals(body)) {
-                    setLastException(new Exception("Cannot find the expected body"));
-                }
+                assertIssue(!REQ_STRING_BODY.equals(body), "Cannot find the expected body");
 
                 //alter body - if 'A' header - to 5 char long
                 if (request.getMethod().getFirstHeader("A") != null) {

@@ -46,7 +46,7 @@ public class RequestURIManipulationTest extends StubServerBase {
     }
 
     @Override
-    protected byte[] evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
+    protected void evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
         String headerValue;
         //normal server shall not be called if 'A' or 'B' header exists
         headerValue = request.getHeader("A");
@@ -57,7 +57,6 @@ public class RequestURIManipulationTest extends StubServerBase {
         if (headerValue != null) {
             setLastException(new Exception("normal server shall not be called if 'B' header exists"));
         }
-        return null;
     }
 
     @Override

@@ -47,12 +47,11 @@ public class ResponseHeaderManipulationTest extends AnsweringServerBase {
     }
 
     @Override
-    protected byte[] evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
+    protected void evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
         //add test headers to the server response
         response.addHeader("A", "Aa"); //header to be found
         response.addHeader("B", "Bb"); //header to be altered
         response.addHeader("C", "Cc"); //header to be removed
-        return null;
     }
 
     @Test
@@ -133,11 +132,7 @@ public class ResponseHeaderManipulationTest extends AnsweringServerBase {
 
             //A header - just check that we can find it, do not alter
             String headerString = response.getHeader("A");
-            if (!"Aa".equals(headerString)) {
-                Exception e = new Exception("'A' was not found at interceptor");
-                setLastException(e);
-                logger.error("EXCEPTION", e);
-            }
+            assertIssue(!"Aa".equals(headerString), "'A' was not found at interceptor");
 
             //B header - alter it
             found = false;
@@ -150,9 +145,7 @@ public class ResponseHeaderManipulationTest extends AnsweringServerBase {
                 }
             }
             if (!found) {
-                Exception e = new Exception("'B' was not found at interceptor");
-                setLastException(e);
-                logger.error("EXCEPTION", e);
+                setLastException(new Exception("'B' was not found at interceptor"));
             }
 
             //C header - remove it
@@ -166,9 +159,7 @@ public class ResponseHeaderManipulationTest extends AnsweringServerBase {
                 }
             }
             if (!found) {
-                Exception e = new Exception("'C' was not found at interceptor");
-                setLastException(e);
-                logger.error("EXCEPTION", e);
+                setLastException(new Exception("'C' was not found at interceptor"));
             }
 
             //D header - just add this brand new header

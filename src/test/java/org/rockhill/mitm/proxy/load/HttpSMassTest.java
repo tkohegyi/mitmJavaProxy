@@ -46,8 +46,7 @@ public class HttpSMassTest extends AnsweringServerBase {
     }
 
     @Override
-    protected byte[] evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
-        return null;
+    protected void evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
     }
 
     @Test

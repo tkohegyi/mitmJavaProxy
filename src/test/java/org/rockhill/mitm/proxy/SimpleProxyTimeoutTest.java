@@ -24,7 +24,6 @@ public class SimpleProxyTimeoutTest extends AbstractSimpleProxyTool {
         proxyServer.setCaptureBinaryContent(false);
         proxyServer.setCaptureContent(false);
         ProxyServer.setResponseVolatile(true);
-        ProxyServer.setShouldKeepSslConnectionAlive(true);
     }
 
     @Test

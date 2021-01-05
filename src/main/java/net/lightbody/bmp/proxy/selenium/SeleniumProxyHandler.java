@@ -583,7 +583,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
             Socket socket = new Socket(iaddr, port);
             socket.setSoTimeout(timeoutMS);
             socket.setTcpNoDelay(true);
-            return new HttpTunnel(socket, null, null);
+            return new HttpTunnel(socket);
         } catch (IOException e) {
             log.debug("Exception thrown", e);
             response.sendError(HttpResponse.__400_Bad_Request);

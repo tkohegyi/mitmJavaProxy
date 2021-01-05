@@ -52,7 +52,7 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
     }
 
     @Override
-    protected byte[] evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
+    protected void evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
         String headerValue;
         //check request header existence
         headerValue = request.getHeader("A");
@@ -66,7 +66,6 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
         //check new header
         headerValue = request.getHeader("D");
         assertEquals("D", headerValue);
-        return null;
     }
 
     @Test

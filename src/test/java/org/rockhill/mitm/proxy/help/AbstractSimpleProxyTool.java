@@ -72,6 +72,7 @@ public abstract class AbstractSimpleProxyTool {
         proxyServer = new ProxyServer(0);
         proxyServer.start(PROXY_TIMEOUT);
         proxyPort = proxyServer.getPort();
+        ProxyServer.setShouldKeepSslConnectionAlive(false);
     }
 
     private void startServers() {

@@ -22,7 +22,6 @@ public class SimpleProxyResponseNotVolatileTest extends AbstractSimpleProxyTool 
         proxyServer.setCaptureBinaryContent(false);
         proxyServer.setCaptureContent(false);
         ProxyServer.setResponseVolatile(false); //!!
-        ProxyServer.setShouldKeepSslConnectionAlive(true);
     }
 
     @Test

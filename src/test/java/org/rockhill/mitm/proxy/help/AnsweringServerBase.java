@@ -168,7 +168,7 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
         return httpServer;
     }
 
-    protected abstract byte[] evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) throws Exception;
+    protected abstract void evaluateServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) throws Exception;
 
     public Exception getLastException() {
         return lastException;
@@ -176,6 +176,17 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
 
     public void setLastException(Exception e) {
         logger.error("ISSUE DETECTED! {}", e.getMessage(), e);
+        lastException = e;
+    }
+
+    public void assertIssue(final boolean hasIssue, final String issueText) {
+        if (hasIssue) {
+            setLastException(new Exception(issueText));
+        }
+    }
+
+    public void assertIssue(final Exception e) {
         setLastException(e);
     }
+
 }

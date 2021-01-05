@@ -12,7 +12,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
-import org.apache.http.ssl.SSLContexts;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
@@ -28,10 +28,17 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Objects;
 
+/**
+ * Utility class to provide static methods to start a web server with a specific text answer,
+ * and to create a httpClient to initiate a request via the proxy.
+ */
 public class TestUtils {
-    private final static Logger LOGGER = LoggerFactory.getLogger(TestUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestUtils.class);
+    private static final int TEN_SEC_LENGTH = 10000;
 
     /**
      * Creates and starts an embedded web server on JVM-assigned HTTP and HTTPS ports.
@@ -64,7 +71,7 @@ public class TestUtils {
                     //requesting timeout - 10 sec response time
                     LOGGER.info("Requesting 10 sec delay in Server answer");
                     try {
-                        Thread.sleep(10000);
+                        Thread.sleep(TEN_SEC_LENGTH);
                     } catch (InterruptedException e) {
                         LOGGER.warn("Thread Interrupt arrived");
                     }
@@ -140,15 +147,23 @@ public class TestUtils {
     /**
      * Creates a DefaultHttpClient instance.
      *
-     * @param isProxied
-     * @param port
+     * @param isProxied if the request must go through proxy or not
+     * @param port      is the proxy port
      * @return instance of DefaultHttpClient
+     * @throws Exception is something wrong happens
      */
     public static CloseableHttpClient buildHttpClient(boolean isProxied, int port) throws Exception {
-        TrustStrategy acceptingTrustStrategy = (cert, authType) -> true;
-        SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(null, acceptingTrustStrategy).build();
-        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext,
-                NoopHostnameVerifier.INSTANCE);
+//        TrustStrategy acceptingTrustStrategy = (cert, authType) -> true;  //checkstyle cannot handle this, so using a bit more complex code below
+        TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
+            @Override
+            public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                return true;
+            }
+        };
+        SSLContext sslContext = SSLContextBuilder.create()
+                .loadTrustMaterial(acceptingTrustStrategy)
+                .build();
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
 
         Registry<ConnectionSocketFactory> socketFactoryRegistry =
                 RegistryBuilder.<ConnectionSocketFactory>create()
@@ -156,10 +171,10 @@ public class TestUtils {
                         .register("http", new PlainConnectionSocketFactory())
                         .build();
 
-        BasicHttpClientConnectionManager connectionManager =
-                new BasicHttpClientConnectionManager(socketFactoryRegistry);
+        BasicHttpClientConnectionManager connectionManager = new BasicHttpClientConnectionManager(socketFactoryRegistry);
 
-        HttpClientBuilder httpClientBuilder = HttpClients.custom().setSSLSocketFactory(sslsf)
+        HttpClientBuilder httpClientBuilder = HttpClients.custom()
+                .setSSLSocketFactory(sslsf)
                 .setConnectionManager(connectionManager);
 
         if (isProxied) {
