@@ -49,11 +49,12 @@ public abstract class StubServerBase extends ClientServerBase {
         return secureStubHost;
     }
 
+    protected AtomicInteger requestStubCount;
+
     private int httpStubPort = -1;
     private int secureStubPort = -1;
     private HttpHost httpStubHost;
     private HttpHost secureStubHost;
-    protected AtomicInteger requestStubCount;
 
     /**
      * The web server that provides the back-end.
@@ -65,6 +66,10 @@ public abstract class StubServerBase extends ClientServerBase {
      */
     private Exception lastStubException;
 
+    /**
+     * Starts the STUB server.
+     * @throws Exception if issue happens
+     */
     public void setUp() throws Exception {
         initializeStubCounters();
         startStubServer();
@@ -80,7 +85,7 @@ public abstract class StubServerBase extends ClientServerBase {
     }
 
     private void startStubServer() {
-        webStubServer = startWebStubServerWithResponse(true, STUB_SERVER_BACKEND.getBytes(), "text/plain");
+        webStubServer = startWebStubServerWithResponse(STUB_SERVER_BACKEND.getBytes(), "text/plain");
 
         // find out what ports the HTTP and HTTPS connectors were bound to
         secureStubPort = TestUtils.findLocalHttpsPort(webStubServer);
@@ -95,6 +100,11 @@ public abstract class StubServerBase extends ClientServerBase {
         lastStubException = null;
     }
 
+    /**
+     * Std tearDown method - stops the stub.
+     *
+     * @throws Exception in case of issue
+     */
     public void tearDown() throws Exception {
         try {
             tearDown2();
@@ -107,7 +117,7 @@ public abstract class StubServerBase extends ClientServerBase {
 
     protected abstract void tearDown2() throws Exception;
 
-    private Server startWebStubServerWithResponse(boolean enableHttps, final byte[] content, String contentType) {
+    private Server startWebStubServerWithResponse(final byte[] content, String contentType) {
         final Server httpServer = new Server(0);
         httpServer.setHandler(new AbstractHandler() {
             public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -136,22 +146,20 @@ public abstract class StubServerBase extends ClientServerBase {
             }
         });
 
-        if (enableHttps) {
-            // Add SSL connector
-            SslContextFactory sslContextFactory = new SslContextFactory.Server.Server();
+        // Add SSL connector
+        SslContextFactory sslContextFactory = new SslContextFactory.Server.Server();
 
-            SelfSignedSslEngineSource contextSource = new SelfSignedSslEngineSource();
-            SSLContext sslContext = contextSource.getSslContext();
+        SelfSignedSslEngineSource contextSource = new SelfSignedSslEngineSource();
+        SSLContext sslContext = contextSource.getSslContext();
 
-            sslContextFactory.setSslContext(sslContext);
+        sslContextFactory.setSslContext(sslContext);
 
-            sslContextFactory.setIncludeProtocols("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
+        sslContextFactory.setIncludeProtocols("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
 
-            ServerConnector connector = new ServerConnector(httpServer, sslContextFactory);
-            connector.setPort(0);
-            connector.setIdleTimeout(0);
-            httpServer.addConnector(connector);
-        }
+        ServerConnector connector = new ServerConnector(httpServer, sslContextFactory);
+        connector.setPort(0);
+        connector.setIdleTimeout(0);
+        httpServer.addConnector(connector);
 
         try {
             httpServer.start();

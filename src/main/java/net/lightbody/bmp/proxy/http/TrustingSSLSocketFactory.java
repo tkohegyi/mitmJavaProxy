@@ -59,10 +59,7 @@ public class TrustingSSLSocketFactory extends SSLConnectionSocketFactory {
                         .build(),
                 new AllowAllHostnameVerifier()
         );
-        //sslContextFactory.setValidateCerts(false); ???
-        //sslContextFactory.setIncludeProtocols("TLSv1.2", "TLSv1.1", "TLSv1"); ???
 
-        assert nameResolver != null;
         assert streamManager != null;
         this.streamManager = streamManager;
         this.timeout = timeout;
@@ -71,10 +68,7 @@ public class TrustingSSLSocketFactory extends SSLConnectionSocketFactory {
     //just an helper function to wrap a normal sslSocket into a simulated one so we can do throttling
     private Socket createSimulatedSocket(final Socket socket) {
         SimulatedSocketFactory.configure(socket);
-        //socket.setEnabledProtocols(new String[]{ "SSLv3", "TLSv1", "TLSv1.3", "TLSv1.2", "TLSv1.1" });
-        //socket.setEnabledCipherSuites(new String[] { "SSL_RSA_WITH_RC4_128_MD5" });
         return new SimulatedSSLSocket(socket, streamManager, timeout);
-        //return socket;
     }
 
     @Override

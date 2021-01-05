@@ -175,7 +175,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
 
             proxyPlainTextRequest(url, pathInContext, pathParams, request, response);
         } catch (UnknownHostException e) {
-            log.info("Couldn't proxy to {} beacuse host not found", uri);
+            log.info("Couldn't proxy to {} because host not found", uri);
             response.setStatus(400);
             String host = uri.getHost();
             response.setReason("Host " + host + " not found");

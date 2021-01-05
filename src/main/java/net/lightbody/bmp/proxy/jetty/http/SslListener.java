@@ -243,6 +243,8 @@ public class SslListener extends SocketListener {
     }
 
     protected SSLServerSocketFactory createFactory() throws Exception {
+        log.info("SslListener - createFactory/started");
+
         SSLContext context;
         if (_provider == null) {
             context = SSLContext.getInstance(_protocol);
@@ -256,7 +258,7 @@ public class SslListener extends SocketListener {
         keyManagerFactory.init(keyStore, _keypassword.toString().toCharArray());
 
         context.init(keyManagerFactory.getKeyManagers(), null, new java.security.SecureRandom());
-
+        log.info("SslListener - createFactory/ended, returning");
         return context.getServerSocketFactory();
     }
 
@@ -266,6 +268,7 @@ public class SslListener extends SocketListener {
      * @return @exception IOException
      */
     protected ServerSocket newServerSocket(InetAddrPort p_address, int p_acceptQueueSize) throws IOException {
+        log.error("SslListener - newServerSocket start");
         SSLServerSocketFactory factory = null;
         SSLServerSocket socket = null;
 
@@ -291,9 +294,10 @@ public class SslListener extends SocketListener {
                 }
             }
         } catch (IOException e) {
+            log.error("SslListener - newServerSocket", e);
             throw e;
         } catch (Exception e) {
-            log.warn(LogSupport.EXCEPTION, e);
+            log.warn("SslListener - newServerSocket", e);
             throw new IOException("Could not create JsseListener: " + e.toString());
         }
         return socket;
@@ -311,7 +315,7 @@ public class SslListener extends SocketListener {
             return s;
         } catch (SSLException e) {
             log.warn(LogSupport.EXCEPTION, e);
-            throw new IOException(e.getMessage());
+            throw new IOException(e.getMessage(), e);
         }
     }
 

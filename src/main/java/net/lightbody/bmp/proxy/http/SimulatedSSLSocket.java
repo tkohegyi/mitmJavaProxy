@@ -10,7 +10,6 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.channels.SocketChannel;
-import java.util.Date;
 
 public class SimulatedSSLSocket extends Socket {
     private final Socket socket;
