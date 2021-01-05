@@ -8,7 +8,7 @@ import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 import org.rockhill.mitm.proxy.ProxyServer;
 import org.rockhill.mitm.proxy.ResponseInterceptor;
-import org.rockhill.mitm.proxy.help.AnsweringServerBase;
+import org.rockhill.mitm.proxy.help.ClientServerBase;
 import org.rockhill.mitm.proxy.help.TestUtils;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ import static org.junit.Assert.assertNull;
  * - If header "D" added - tries to get the response as byte[], meanwhile the content is not altered
  * - If header "E" added - tries to get the response as byte[], meanwhile the content is altered (replaced with a json message)
  */
-public class ResponseBodyManipulationTest extends AnsweringServerBase {
+public class ResponseBodyManipulationTest extends ClientServerBase {
     public static final String GET_REQUEST = "/anyUrl";
     private static final String REQ_JSON_BODY = "{ \"json\": \"simple text\" }";
     private final Logger logger = LoggerFactory.getLogger(ResponseBodyManipulationTest.class);
@@ -260,7 +260,7 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
             byte[] newBody = null;
             Header[] requestHeaders = response.getRequestHeaders();
 
-            assertIssue(!SERVER_BACKEND.equals(body), "Cannot find the expected body");
+            detectIssue(!SERVER_BACKEND.equals(body), "Cannot find the expected body");
 
             //alter body - if 'A' header - to 5 char long
             if (response.findHeader(requestHeaders, "A") != null) {
@@ -282,7 +282,7 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
             if (response.findHeader(requestHeaders, "D") != null) {
                 byte[] oldBody = response.getBodyBytes();
                 String bodyString = new String(oldBody);
-                assertIssue(!SERVER_BACKEND.equals(bodyString), "Cannot find the expected body");
+                detectIssue(!SERVER_BACKEND.equals(bodyString), "Cannot find the expected body");
             }
 
             //alter body - if 'E' header - use json request + get raw body too
@@ -290,7 +290,7 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
 
                 byte[] oldBody = response.getBodyBytes();
                 String bodyString = new String(oldBody);
-                assertIssue(!SERVER_BACKEND.equals(bodyString), "Cannot find the expected body");
+                detectIssue(!SERVER_BACKEND.equals(bodyString), "Cannot find the expected body");
                 newBody = REQ_JSON_BODY.getBytes(StandardCharsets.UTF_8);
                 response.setContentType("application/json");
             }
@@ -298,7 +298,7 @@ public class ResponseBodyManipulationTest extends AnsweringServerBase {
             try {
                 response.setBody(newBody);
             } catch (IOException e) {
-                assertIssue(e);
+                registerIssue(e);
             }
         }
     }

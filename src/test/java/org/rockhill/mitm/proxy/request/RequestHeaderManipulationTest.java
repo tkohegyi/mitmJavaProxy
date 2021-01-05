@@ -7,7 +7,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.Test;
 import org.rockhill.mitm.proxy.RequestInterceptor;
 import org.rockhill.mitm.proxy.ResponseInterceptor;
-import org.rockhill.mitm.proxy.help.AnsweringServerBase;
+import org.rockhill.mitm.proxy.help.ClientServerBase;
 import org.rockhill.mitm.proxy.help.TestUtils;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpResponse;
@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
  * 'C'->'C' is removed at request interceptor
  * 'D'->'D' this header is added as new header at request interceptor
  */
-public class RequestHeaderManipulationTest extends AnsweringServerBase {
+public class RequestHeaderManipulationTest extends ClientServerBase {
     protected static final String GET_REQUEST = "/anyUrl";
     private final Logger logger = LoggerFactory.getLogger(RequestHeaderManipulationTest.class);
     private HttpGet request;
@@ -117,9 +117,9 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
             //header to be found
             found = false;
             for (Header h : headers) {
-                if (h.getName().equals("A")) {
+                if ("A".equals(h.getName())) {
                     logger.info("Header '{}' found with value '{}'", h.getName(), h.getValue());
-                    if (h.getValue().equals("A")) {
+                    if ("A".equals(h.getValue())) {
                         found = true;
                     }
                 }
@@ -129,9 +129,9 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
             //header to be found as altered
             found = false;
             for (Header h : headers) {
-                if (h.getName().equals("B")) {
+                if ("B".equals(h.getName())) {
                     logger.info("Header '{}' found with value '{}'", h.getName(), h.getValue());
-                    if (h.getValue().equals("BB")) {
+                    if ("BB".equals(h.getValue())) {
                         found = true;
                     }
                 }
@@ -141,7 +141,7 @@ public class RequestHeaderManipulationTest extends AnsweringServerBase {
             //header not to be found
             found = false;
             for (Header h : headers) {
-                if (h.getName().equals("C")) {
+                if ("C".equals(h.getName())) {
                     logger.info("Header '{}' found with value '{}'", h.getName(), h.getValue());
                     found = true;
                 }

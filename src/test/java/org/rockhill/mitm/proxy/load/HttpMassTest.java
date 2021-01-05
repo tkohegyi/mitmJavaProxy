@@ -9,8 +9,7 @@ import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 import org.rockhill.mitm.proxy.RequestInterceptor;
 import org.rockhill.mitm.proxy.ResponseInterceptor;
-import org.rockhill.mitm.proxy.help.AnsweringServerBase;
-import org.rockhill.mitm.proxy.help.TestUtils;
+import org.rockhill.mitm.proxy.help.ClientServerBase;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import org.slf4j.Logger;
@@ -25,7 +24,7 @@ import static org.junit.Assert.assertNull;
 /**
  * This test runs simple http request 1000 times.
  */
-public class HttpMassTest extends AnsweringServerBase {
+public class HttpMassTest extends ClientServerBase {
     private static final String GET_REQUEST = "/anyUrl";
     private static final int MAX_REQUEST = 1000;
     private final Logger logger = LoggerFactory.getLogger(HttpMassTest.class);
@@ -51,7 +50,7 @@ public class HttpMassTest extends AnsweringServerBase {
 
     @Test
     public void massHttpRequestTest() throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = getHttpClient()) {
             for (int i = 0; i < MAX_REQUEST; i++) {
                 Header h = request.getFirstHeader("A");
                 request.removeHeader(h);
@@ -73,9 +72,7 @@ public class HttpMassTest extends AnsweringServerBase {
             Header header;
             //header to be found
             header = request.getMethod().getFirstHeader("A");
-            if (header == null) {
-                setLastException(new Exception("Request header was not found"));
-            }
+            detectIssue(header == null, "Request header was not found");
         }
     }
 
@@ -85,9 +82,7 @@ public class HttpMassTest extends AnsweringServerBase {
         public void process(MitmJavaProxyHttpResponse response) {
             Header[] headers = response.getRequestHeaders();
             Header h = response.findHeader(headers, "A");
-            if (h == null) {
-                setLastException(new Exception("'A' was not found at response interceptor"));
-            }
+            detectIssue(h == null, "'A' was not found at response interceptor");
             response.addHeader(new BasicHeader("B", response.getEntry().getMessageId()));
         }
     }

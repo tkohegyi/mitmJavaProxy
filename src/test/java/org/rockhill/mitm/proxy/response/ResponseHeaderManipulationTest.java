@@ -8,12 +8,13 @@ import org.apache.http.message.BasicHeader;
 import org.junit.Test;
 import org.rockhill.mitm.proxy.ProxyServer;
 import org.rockhill.mitm.proxy.ResponseInterceptor;
-import org.rockhill.mitm.proxy.help.AnsweringServerBase;
+import org.rockhill.mitm.proxy.help.ClientServerBase;
 import org.rockhill.mitm.proxy.help.TestUtils;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -29,7 +30,7 @@ import static org.junit.Assert.assertNull;
  * 'C'->'Cc' is removed at request interceptor
  * + 1 header 'D'->'Dd' is added to response by response interceptor
  */
-public class ResponseHeaderManipulationTest extends AnsweringServerBase {
+public class ResponseHeaderManipulationTest extends ClientServerBase {
     private static final String GET_REQUEST = "/anyUrl";
     private final Logger logger = LoggerFactory.getLogger(ResponseHeaderManipulationTest.class);
     private HttpGet request;
@@ -97,6 +98,9 @@ public class ResponseHeaderManipulationTest extends AnsweringServerBase {
             //'D' (the new header) must exist
             h = response.getFirstHeader("D");
             assertNotNull("Cannot find 'D' header in response", h);
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
         }
     }
 
@@ -132,35 +136,31 @@ public class ResponseHeaderManipulationTest extends AnsweringServerBase {
 
             //A header - just check that we can find it, do not alter
             String headerString = response.getHeader("A");
-            assertIssue(!"Aa".equals(headerString), "'A' was not found at interceptor");
+            detectIssue(!"Aa".equals(headerString), "'A' was not found at interceptor");
 
             //B header - alter it
             found = false;
             Header[] headers = response.getHeaders();
             for (Header h : headers) {
-                if (h.getName().equals("B")) {
+                if ("B".equals(h.getName())) {
                     logger.info("Header '{}' found with value '{}'", h.getName(), h.getValue());
                     found = true;
                     response.updateHeader(h, "bBB");
                 }
             }
-            if (!found) {
-                setLastException(new Exception("'B' was not found at interceptor"));
-            }
+            detectIssue(!found, "'B' was not found at interceptor");
 
             //C header - remove it
             found = false;
             headers = response.getHeaders();
             for (Header h : headers) {
-                if (h.getName().equals("C")) {
+                if ("C".equals(h.getName())) {
                     logger.info("Header '{}' found with value '{}'", h.getName(), h.getValue());
                     found = true;
                     response.removeHeader(h);
                 }
             }
-            if (!found) {
-                setLastException(new Exception("'C' was not found at interceptor"));
-            }
+            detectIssue(!found, "'C' was not found at interceptor");
 
             //D header - just add this brand new header
             response.addHeader(new BasicHeader("D", "Dd"));

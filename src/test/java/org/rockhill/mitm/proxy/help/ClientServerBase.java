@@ -1,6 +1,18 @@
 package org.rockhill.mitm.proxy.help;
 
 import org.apache.http.HttpHost;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -8,6 +20,7 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.rules.TestName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StreamUtils;
@@ -18,6 +31,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -30,12 +45,26 @@ import static org.junit.Assert.assertThat;
  * - HTTP/HTTPS server that answers to the client (SERVER_BACKEND)
  * - the proxyServer via class extension
  */
-public abstract class AnsweringServerBase extends ProxyServerBase {
+public abstract class ClientServerBase extends ProxyServerBase {
 
+    public static final String SERVER_BACKEND = "server-backend";
     /**
      * The server used by the tests.
      */
-    private final Logger logger = LoggerFactory.getLogger(AnsweringServerBase.class);
+    private final Logger logger = LoggerFactory.getLogger(ClientServerBase.class);
+    protected AtomicInteger requestCount;
+    private int httpPort = -1;
+    private int securePort = -1;
+    private HttpHost httpHost;
+    private HttpHost secureHost;
+    /**
+     * The web server that provides the back-end.
+     */
+    private Server webServer;
+    /**
+     * Exception holder to notify main test that there was an exception at server.
+     */
+    private Exception lastException;
 
     public HttpHost getHttpHost() {
         return httpHost;
@@ -45,23 +74,6 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
         return secureHost;
     }
 
-    public static final String SERVER_BACKEND = "server-backend";
-    private int httpPort = -1;
-    private int securePort = -1;
-    private HttpHost httpHost;
-    private HttpHost secureHost;
-    protected AtomicInteger requestCount;
-
-    /**
-     * The web server that provides the back-end.
-     */
-    private Server webServer;
-
-    /**
-     * Exception holder to notify main test that there was an exception at server.
-     */
-    private Exception lastException;
-
     @Before
     public void runSetup() throws Exception {
         initializeCounters();
@@ -70,7 +82,7 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
         logger.info("*** Backed http Server started on port: {}", httpPort);
         logger.info("*** Backed httpS Server started on port: {}", securePort);
         setUp();
-        logger.info("*** Test INIT DONE - starting the Test");
+        logger.info("*** Test INIT DONE - starting the Test: {}:{}", this.getClass().getCanonicalName(), new TestName());
     }
 
     protected abstract void setUp() throws Exception;
@@ -80,7 +92,7 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
     }
 
     private void startServer() {
-        webServer = startWebServerWithResponse(true, SERVER_BACKEND.getBytes(), "text/plain");
+        webServer = startWebServerWithResponse(SERVER_BACKEND.getBytes(), "text/plain");
 
         // find out what ports the HTTP and HTTPS connectors were bound to
         securePort = TestUtils.findLocalHttpsPort(webServer);
@@ -113,7 +125,7 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
 
     protected abstract void tearDown() throws Exception;
 
-    private Server startWebServerWithResponse(boolean enableHttps, final byte[] content, String contentType) {
+    private Server startWebServerWithResponse(final byte[] content, String contentType) {
         final Server httpServer = new Server(0);
         httpServer.setHandler(new AbstractHandler() {
             public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -142,22 +154,20 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
             }
         });
 
-        if (enableHttps) {
-            // Add SSL connector
-            SslContextFactory sslContextFactory = new SslContextFactory.Server.Server();
+        // Add SSL connector
+        SslContextFactory sslContextFactory = new SslContextFactory.Server.Server();
 
-            SelfSignedSslEngineSource contextSource = new SelfSignedSslEngineSource();
-            SSLContext sslContext = contextSource.getSslContext();
+        SelfSignedSslEngineSource contextSource = new SelfSignedSslEngineSource();
+        SSLContext sslContext = contextSource.getSslContext();
 
-            sslContextFactory.setSslContext(sslContext);
+        sslContextFactory.setSslContext(sslContext);
 
-            sslContextFactory.setIncludeProtocols("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
+        sslContextFactory.setIncludeProtocols("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
 
-            ServerConnector connector = new ServerConnector(httpServer, sslContextFactory);
-            connector.setPort(0);
-            connector.setIdleTimeout(0);
-            httpServer.addConnector(connector);
-        }
+        ServerConnector connector = new ServerConnector(httpServer, sslContextFactory);
+        connector.setPort(0);
+        connector.setIdleTimeout(0);
+        httpServer.addConnector(connector);
 
         try {
             httpServer.start();
@@ -179,14 +189,51 @@ public abstract class AnsweringServerBase extends ProxyServerBase {
         lastException = e;
     }
 
-    public void assertIssue(final boolean hasIssue, final String issueText) {
+    public void detectIssue(final boolean hasIssue, final String issueText) {
         if (hasIssue) {
             setLastException(new Exception(issueText));
         }
     }
 
-    public void assertIssue(final Exception e) {
+    public void registerIssue(final Exception e) {
         setLastException(e);
+    }
+
+    /**
+     * Creates a CloseableHttpClient instance that uses the proxy.
+     *
+     * @return instance of CloseableHttpClient
+     * @throws Exception is something wrong happens
+     */
+    public CloseableHttpClient getHttpClient() throws Exception {
+//        TrustStrategy acceptingTrustStrategy = (cert, authType) -> true;  //checkstyle cannot handle this, so using a bit more complex code below
+        TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
+            @Override
+            public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                return true;
+            }
+        };
+        SSLContext sslContext = SSLContextBuilder.create()
+                .loadTrustMaterial(acceptingTrustStrategy)
+                .build();
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+
+        Registry<ConnectionSocketFactory> socketFactoryRegistry =
+                RegistryBuilder.<ConnectionSocketFactory>create()
+                        .register("https", sslsf)
+                        .register("http", new PlainConnectionSocketFactory())
+                        .build();
+
+        BasicHttpClientConnectionManager connectionManager = new BasicHttpClientConnectionManager(socketFactoryRegistry);
+
+        HttpHost proxy = new HttpHost("127.0.0.1", getProxyPort());
+
+        HttpClientBuilder httpClientBuilder = HttpClients.custom()
+                .setSSLSocketFactory(sslsf)
+                .setConnectionManager(connectionManager)
+                .setProxy(proxy);
+
+        return httpClientBuilder.build();
     }
 
 }

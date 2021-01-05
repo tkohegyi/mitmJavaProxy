@@ -61,7 +61,8 @@ public class RequestURIManipulationTest extends StubServerBase {
 
     @Override
     protected byte[] evaluateStubServerRequestResponse(HttpServletRequest request, HttpServletResponse response, String bodyString) {
-        String headerValue1, headerValue2;
+        String headerValue1;
+        String headerValue2;
         //stub server shall be called if 'A' or 'B' header exists
         headerValue1 = request.getHeader("A");
         headerValue2 = request.getHeader("B");

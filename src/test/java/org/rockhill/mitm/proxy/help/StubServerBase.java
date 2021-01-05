@@ -28,7 +28,7 @@ import static org.junit.Assert.assertThat;
  * - HTTP/HTTPS server that answers to the client (SERVER_BACKEND)
  * - the proxyServer via class extension
  */
-public abstract class StubServerBase extends AnsweringServerBase {
+public abstract class StubServerBase extends ClientServerBase {
 
     public static final String STUB_SERVER_BACKEND = "stub-backend";
     private final Logger logger = LoggerFactory.getLogger(StubServerBase.class);

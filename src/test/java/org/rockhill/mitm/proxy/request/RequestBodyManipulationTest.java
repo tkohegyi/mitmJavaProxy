@@ -9,7 +9,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 import org.rockhill.mitm.proxy.RequestInterceptor;
-import org.rockhill.mitm.proxy.help.AnsweringServerBase;
+import org.rockhill.mitm.proxy.help.ClientServerBase;
 import org.rockhill.mitm.proxy.help.TestUtils;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ import static org.junit.Assert.assertNull;
  * - If header "B" added - duplicate the body text
  * - If header "C" added - replace it with a json message (changes content-type too)
  */
-public class RequestBodyManipulationTest extends AnsweringServerBase {
+public class RequestBodyManipulationTest extends ClientServerBase {
     private static final String GET_REQUEST = "/anyUrl";
     private static final String REQ_STRING_BODY = "initial request body";
     private static final String REQ_JSON_BODY = "{ \"json\": \"simple text\" }";
@@ -59,24 +59,24 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
         //check if body properly arrived to server
         if (request.getHeader("A") != null) {
             // If header "A" added - reduce body size to 5 chars
-            assertIssue(5 != request.getContentLength(), "Content length is not 5");
-            assertIssue(!REQ_STRING_BODY.startsWith(bodyString), "Body differs from expected string");
+            detectIssue(5 != request.getContentLength(), "Content length is not 5");
+            detectIssue(!REQ_STRING_BODY.startsWith(bodyString), "Body differs from expected string");
         } else {
             if (request.getHeader("B") != null) {
                 // If header "B" added - duplicate the body text
-                assertIssue(request.getContentLength() != REQ_STRING_BODY.length() * 2, "Request content-length is not double sized");
-                assertIssue(!(REQ_STRING_BODY + REQ_STRING_BODY).equals(bodyString), "Request body is not the double sized body");
+                detectIssue(request.getContentLength() != REQ_STRING_BODY.length() * 2, "Request content-length is not double sized");
+                detectIssue(!(REQ_STRING_BODY + REQ_STRING_BODY).equals(bodyString), "Request body is not the double sized body");
             } else {
                 if (request.getHeader("C") != null) {
                     // If header "C" added - replace it with a json message (changes content-type too)
-                    assertIssue(request.getContentLength() != REQ_JSON_BODY.length(), "Request content-length is not normal sized");
-                    assertIssue(!REQ_JSON_BODY.equals(bodyString), "Request body is not the json body");
+                    detectIssue(request.getContentLength() != REQ_JSON_BODY.length(), "Request content-length is not normal sized");
+                    detectIssue(!REQ_JSON_BODY.equals(bodyString), "Request body is not the json body");
                     String contentType = request.getHeader("Content-Type");
-                    assertIssue(!"application/json".equals(contentType), "Request content-type is not json");
+                    detectIssue(!"application/json".equals(contentType), "Request content-type is not json");
                 } else {
                     // No additional header - body untouched
-                    assertIssue(request.getContentLength() != REQ_STRING_BODY.length(), "Request content-length is correct");
-                    assertIssue(!REQ_STRING_BODY.equals(bodyString), "Request body is not the expected body");
+                    detectIssue(request.getContentLength() != REQ_STRING_BODY.length(), "Request content-length is correct");
+                    detectIssue(!REQ_STRING_BODY.equals(bodyString), "Request body is not the expected body");
                 }
             }
         }
@@ -200,7 +200,7 @@ public class RequestBodyManipulationTest extends AnsweringServerBase {
                 clonedInputStream.mark(8192);
                 String body = IOUtils.toString(clonedInputStream);
                 clonedInputStream.reset();
-                assertIssue(!REQ_STRING_BODY.equals(body), "Cannot find the expected body");
+                detectIssue(!REQ_STRING_BODY.equals(body), "Cannot find the expected body");
 
                 //alter body - if 'A' header - to 5 char long
                 if (request.getMethod().getFirstHeader("A") != null) {
