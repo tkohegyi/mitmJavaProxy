@@ -876,7 +876,7 @@ public class HttpConnection implements OutputObserver {
             }
         } catch (IOException e) {
             if (_request.getState() != HttpMessage.__MSG_RECEIVED) {
-                log.debug(e.toString());
+                log.debug("Normal handling issue", e);
                 _response.destroy();
                 _response = null;
             } else {

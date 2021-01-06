@@ -516,6 +516,7 @@ public class BrowserMobHttpClient {
             }
         } catch (Exception e) {
             errorMessage = e.toString();
+            LOGGER.debug("EX @ call to server from proxy.", e);
             if (callback != null) {
                 if (activeRequest.wasTimeout) {
                     e = new ConnectTimeoutException();

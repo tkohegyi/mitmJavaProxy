@@ -268,7 +268,7 @@ public class SslListener extends SocketListener {
      * @return @exception IOException
      */
     protected ServerSocket newServerSocket(InetAddrPort p_address, int p_acceptQueueSize) throws IOException {
-        log.error("SslListener - newServerSocket start");
+        log.info("SslListener - newServerSocket start");
         SSLServerSocketFactory factory = null;
         SSLServerSocket socket = null;
 
@@ -300,6 +300,7 @@ public class SslListener extends SocketListener {
             log.warn("SslListener - newServerSocket", e);
             throw new IOException("Could not create JsseListener: " + e.toString());
         }
+        log.info("SslListener - newServerSocket end");
         return socket;
     }
 
