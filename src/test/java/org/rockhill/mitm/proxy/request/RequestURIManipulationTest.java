@@ -35,14 +35,14 @@ public class RequestURIManipulationTest extends StubServerBase {
     private HttpGet request;
 
     @Override
-    protected void setUp2() {
+    protected void setUpWithStub() {
         TestRequestInterceptor testRequestInterceptor = new TestRequestInterceptor();
         getProxyServer().addRequestInterceptor(testRequestInterceptor);
         request = new HttpGet(GET_REQUEST);
     }
 
     @Override
-    protected void tearDown2() {
+    protected void tearDownWithStub() {
     }
 
     @Override

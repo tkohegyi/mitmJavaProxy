@@ -1,8 +1,5 @@
 package org.rockhill.mitm.proxy.help;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -78,20 +75,6 @@ public class SelfSignedSslEngineSource {
         return sslContext;
     }
 
-    private void initializeKeyStore(String filename) {
-        throw new RuntimeException("tried to generate JKS / CER - not good.");
-/*        nativeCall("keytool", "-genkey", "-alias", alias, "-keysize",
-                "4096", "-validity", "36500", "-keyalg", "RSA", "-dname",
-                "CN=mitmProxy", "-keypass", password, "-storepass",
-                password, "-keystore", filename);
-
-        nativeCall("keytool", "-exportcert", "-alias", alias, "-keystore",
-                filename, "-storepass", password, "-file",
-                "mitmProxy.cer");
-
- */
-    }
-
     private void initializeSSLContext() {
         String algorithm = Security.getProperty("ssl.KeyManagerFactory.algorithm");
         if (algorithm == null) {
@@ -153,7 +136,7 @@ public class SelfSignedSslEngineSource {
         } else {
             File keyStoreLocalFile = new File(keyStoreFile);
             if (!keyStoreLocalFile.isFile()) {
-                initializeKeyStore(keyStoreLocalFile.getName());
+                throw new RuntimeException("tried to generate JKS / CER - not good.");
             }
             loadKeyStore(keyStore, keyStoreLocalFile.toURI().toURL());
         }
@@ -165,26 +148,5 @@ public class SelfSignedSslEngineSource {
             keyStore.load(is, password.toCharArray());
         }
     }
-
-    /*
-    private String nativeCall(final String... commands) {
-        logger.info("Running '{}'", Arrays.asList(commands));
-        final ProcessBuilder pb = new ProcessBuilder(commands);
-        try {
-            final Process process = pb.start();
-            byte[] data;
-            try (InputStream is = process.getInputStream()) {
-                data = ByteStreams.toByteArray(is);
-            }
-            String dataAsString = new String(data);
-
-            logger.info("Completed native call: '{}'\nResponse: '" + dataAsString + "'", Arrays.asList(commands));
-            return dataAsString;
-        } catch (final IOException e) {
-            logger.error("Error running commands: " + Arrays.asList(commands), e);
-            return "";
-        }
-    }
-     */
 
 }

@@ -81,8 +81,10 @@ public class LineInput extends FilterInputStream {
      */
     public LineInput(InputStream in, int bufferSize) {
         super(in);
-        if (bufferSize == 0)
+        _mark=-1;
+        if (bufferSize == 0) {
             bufferSize = 8192;
+        }
         _buf = ByteArrayPool.getByteArray(bufferSize);
         _byteBuffer = new ByteBuffer(_buf);
         _lineBuffer = new LineBuffer(bufferSize);
@@ -104,6 +106,7 @@ public class LineInput extends FilterInputStream {
      */
     public LineInput(InputStream in, int bufferSize, String encoding) throws UnsupportedEncodingException {
         super(in);
+        _mark=-1;
         if (bufferSize == 0) {
             bufferSize = 2048;
         }
@@ -163,13 +166,14 @@ public class LineInput extends FilterInputStream {
     public synchronized String readLine() throws IOException {
         int len = fillLine(_buf.length);
 
-        if (len < 0)
+        if (len < 0) {
             return null;
+        }
 
         String s = null;
-        if (_encoding == null)
+        if (_encoding == null) {
             s = new String(_buf, _mark, len);
-        else {
+        } else {
             try {
                 s = new String(_buf, _mark, len, _encoding);
             } catch (UnsupportedEncodingException e) {
@@ -194,18 +198,21 @@ public class LineInput extends FilterInputStream {
     public int readLine(char[] c, int off, int len) throws IOException {
         int blen = fillLine(len);
 
-        if (blen < 0)
+        if (blen < 0) {
             return -1;
-        if (blen == 0)
+        }
+        if (blen == 0) {
             return 0;
+        }
 
         _byteBuffer.setStream(_mark, blen);
 
         int read = 0;
         while (read < len && _reader.ready()) {
             int r = _reader.read(c, off + read, len - read);
-            if (r <= 0)
+            if (r <= 0) {
                 break;
+            }
             read += r;
         }
 
@@ -223,14 +230,15 @@ public class LineInput extends FilterInputStream {
      * @return The length of the line or -1 for EOF.
      * @throws IOException
      */
-    public int readLine(byte[] b, int off, int len)
-            throws IOException {
+    public int readLine(byte[] b, int off, int len) throws IOException {
         len = fillLine(len);
 
-        if (len < 0)
+        if (len < 0) {
             return -1;
-        if (len == 0)
+        }
+        if (len == 0) {
             return 0;
+        }
 
         System.arraycopy(_buf, _mark, b, off, len);
         _mark = -1;

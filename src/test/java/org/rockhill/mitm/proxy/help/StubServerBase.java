@@ -1,6 +1,6 @@
 package org.rockhill.mitm.proxy.help;
 
-import org.apache.http.HttpHost;
+import net.lightbody.bmp.proxy.jetty.http.HttpFields;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -31,30 +30,13 @@ import static org.junit.Assert.assertThat;
 public abstract class StubServerBase extends ClientServerBase {
 
     public static final String STUB_SERVER_BACKEND = "stub-backend";
+    public static final String STUB_SERVER_RESPONSE_CONTENT_TYPE = "text/plain";
     private final Logger logger = LoggerFactory.getLogger(StubServerBase.class);
 
-    public int getHttpStubPort() {
-        return httpStubPort;
-    }
 
-    public int getSecureStubPort() {
-        return secureStubPort;
-    }
-
-    public HttpHost getHttpStubHost() {
-        return httpStubHost;
-    }
-
-    public HttpHost getSecureStubHost() {
-        return secureStubHost;
-    }
-
-    protected AtomicInteger requestStubCount;
-
+    private AtomicInteger requestStubCount;
     private int httpStubPort = -1;
     private int secureStubPort = -1;
-    private HttpHost httpStubHost;
-    private HttpHost secureStubHost;
 
     /**
      * The web server that provides the back-end.
@@ -75,17 +57,21 @@ public abstract class StubServerBase extends ClientServerBase {
         startStubServer();
         logger.info("*** Backed STUB http Server started on port: {}", httpStubPort);
         logger.info("*** Backed STUB httpS Server started on port: {}", secureStubPort);
-        setUp2();
+        setUpWithStub();
     }
 
-    protected abstract void setUp2() throws Exception;
+    /**
+     * Use this method to implement upper level setUp methods.
+     * @throws Exception in case of issue
+     */
+    protected abstract void setUpWithStub() throws Exception;
 
     private void initializeStubCounters() {
         requestStubCount = new AtomicInteger(0);
     }
 
     private void startStubServer() {
-        webStubServer = startWebStubServerWithResponse(STUB_SERVER_BACKEND.getBytes(), "text/plain");
+        webStubServer = startWebStubServerWithResponse(STUB_SERVER_BACKEND.getBytes());
 
         // find out what ports the HTTP and HTTPS connectors were bound to
         secureStubPort = TestUtils.findLocalHttpsPort(webStubServer);
@@ -93,21 +79,17 @@ public abstract class StubServerBase extends ClientServerBase {
         httpStubPort = TestUtils.findLocalHttpPort(webStubServer);
         assertThat(secureStubPort, not(equalTo(0)));
 
-        httpStubHost = new HttpHost("127.0.0.1", httpStubPort);
-        secureStubHost = new HttpHost("127.0.0.1", secureStubPort, "https");
-        assertNotNull(httpStubHost);
-        assertNotNull(secureStubHost);
         lastStubException = null;
     }
 
     /**
-     * Std tearDown method - stops the stub.
+     * Std tearDown method - stops the stub, and calls tearDownWithStub() method on upper level.
      *
      * @throws Exception in case of issue
      */
     public void tearDown() throws Exception {
         try {
-            tearDown2();
+            tearDownWithStub();
         } finally {
             if (this.webStubServer != null) {
                 webStubServer.stop();
@@ -115,9 +97,20 @@ public abstract class StubServerBase extends ClientServerBase {
         }
     }
 
-    protected abstract void tearDown2() throws Exception;
+    /**
+     * Use this method to implement upper level tearDown() methods.
+     * @throws Exception in case of issue
+     */
+    protected abstract void tearDownWithStub() throws Exception;
 
-    private Server startWebStubServerWithResponse(final byte[] content, String contentType) {
+    public int getHttpStubPort() {
+        return httpStubPort;
+    }
+    public int getSecureStubPort() {
+        return secureStubPort;
+    }
+
+    private Server startWebStubServerWithResponse(final byte[] content) {
         final Server httpServer = new Server(0);
         httpServer.setHandler(new AbstractHandler() {
             public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -140,8 +133,8 @@ public abstract class StubServerBase extends ClientServerBase {
                 }
                 baseRequest.setHandled(true);
 
-                response.addHeader("Content-Length", Integer.toString(content.length));
-                response.setContentType(contentType);
+                response.addHeader(HttpFields.__ContentLength, Integer.toString(content.length));
+                response.setContentType(STUB_SERVER_RESPONSE_CONTENT_TYPE);
                 response.getOutputStream().write(content);
             }
         });

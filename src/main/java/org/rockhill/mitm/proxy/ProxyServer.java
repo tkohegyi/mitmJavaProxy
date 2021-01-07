@@ -16,8 +16,6 @@ import net.lightbody.bmp.proxy.jetty.http.HttpListener;
 import net.lightbody.bmp.proxy.jetty.http.SocketListener;
 import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
 import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
-import org.java_bandwidthlimiter.BandwidthLimiter;
-import org.java_bandwidthlimiter.StreamManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +34,6 @@ public class ProxyServer {
     private BmpServer bmpServer;
     private int port = -1;
     private BrowserMobHttpClient client;
-    private StreamManager streamManager;
     private HarPage currentPage;
     private BrowserMobProxyHandler handler;
     private int pageCount = 1;
@@ -70,9 +67,6 @@ public class ProxyServer {
         }
 
         PROXY_TIMEOUT = requestTimeOut;
-        //create a stream manager that will be capped to 100 Megabits
-        //remember that by default it is disabled!
-        streamManager = new StreamManager(100 * BandwidthLimiter.OneMbps);
 
         bmpServer = new BmpServer();
         HttpListener listener = new SocketListener(new InetAddrPort(getPort()));
@@ -84,7 +78,7 @@ public class ProxyServer {
         handler = new BrowserMobProxyHandler();
         handler.setJettyServer(bmpServer);
         handler.setShutdownLock(new Object());
-        client = new BrowserMobHttpClient(streamManager, requestCounter, requestTimeOut);
+        client = new BrowserMobHttpClient(requestCounter, requestTimeOut);
         client.prepareForBrowser();
         handler.setHttpClient(client);
 

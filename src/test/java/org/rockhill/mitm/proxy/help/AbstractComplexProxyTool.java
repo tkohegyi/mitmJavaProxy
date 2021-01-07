@@ -33,6 +33,7 @@ public abstract class AbstractComplexProxyTool {
      * The server used by the tests.
      */
     public static final int PROXY_TIMEOUT = 1200000; //20 minute - giving time to debug
+    private static final int GRACE_PERIOD = 500; //0.5 sec
     protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractComplexProxyTool.class);
     protected static final String NO_NEED_STUB_RESPONSE = "/getServer";
     protected static final String NEED_STUB_RESPONSE = "/getStub";
@@ -107,6 +108,7 @@ public abstract class AbstractComplexProxyTool {
         LOGGER.info("*** Proxy Server started on port: {}", proxyPort);
         //and finally
         setUp();
+        Thread.sleep(GRACE_PERIOD);
         LOGGER.info("*** Setup DONE - starting TEST");
     }
 
@@ -122,6 +124,7 @@ public abstract class AbstractComplexProxyTool {
         proxyServer.start(PROXY_TIMEOUT);
         proxyPort = proxyServer.getPort();
         ProxyServer.setShouldKeepSslConnectionAlive(false);
+        Thread.sleep(GRACE_PERIOD);
     }
 
     private void startServers() {

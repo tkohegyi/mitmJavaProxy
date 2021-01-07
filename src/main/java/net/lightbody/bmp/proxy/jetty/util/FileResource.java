@@ -43,16 +43,6 @@ import java.security.Permission;
  */
 public class FileResource extends URLResource {
     private static final Logger log = LoggerFactory.getLogger(FileResource.class);
-    private static boolean __checkAliases;
-
-    static {
-        __checkAliases =
-                "true".equalsIgnoreCase
-                        (System.getProperty("net.lightbody.bmp.proxy.jetty.util.FileResource.checkAliases", "true"));
-
-        if (__checkAliases)
-            log.info("Checking Resource aliases");
-    }
 
     private File _file;
     private transient URL _alias = null;
@@ -90,24 +80,6 @@ public class FileResource extends URLResource {
         }
     }
 
-    /**
-     * getCheckAliases.
-     *
-     * @return True of resource aliases are to be checked for (eg case insensitivity or 8.3 short names) and treated as not found.
-     */
-    public static boolean getCheckAliases() {
-        return __checkAliases;
-    }
-
-    /**
-     * setCheckAliases.
-     *
-     * @param checkAliases True of resource aliases are to be checked for (eg case insensitivity or 8.3 short names) and treated as not found.
-     */
-    public static void setCheckAliases(boolean checkAliases) {
-        __checkAliases = checkAliases;
-    }
-
     public Resource addPath(String path) throws IOException {
         FileResource r;
 
@@ -138,7 +110,7 @@ public class FileResource extends URLResource {
     }
 
     public URL getAlias() {
-        if (__checkAliases && !_aliasChecked) {
+        if (!_aliasChecked) {
             try {
                 String abs = _file.getAbsolutePath();
                 String can = _file.getCanonicalPath();
@@ -149,12 +121,12 @@ public class FileResource extends URLResource {
 
                 _aliasChecked = true;
 
-                if (_alias != null && log.isDebugEnabled()) {
+                if (_alias != null) {
                     log.debug("ALIAS abs={}", abs);
                     log.debug("ALIAS can={}", can);
                 }
             } catch (Exception e) {
-                log.warn(LogSupport.EXCEPTION, e);
+                log.warn("ALIAS Exception", e);
                 return getURL();
             }
         }

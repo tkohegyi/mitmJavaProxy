@@ -6,7 +6,6 @@ import org.apache.http.conn.HttpInetSocketAddress;
 import org.apache.http.conn.scheme.HostNameResolver;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.protocol.HttpContext;
-import org.java_bandwidthlimiter.StreamManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,19 +53,16 @@ public class SimulatedSocketFactory implements ConnectionSocketFactory {
     }
 
     private HostNameResolver hostNameResolver;
-    private StreamManager streamManager;
     private int requestTimeout;
 
-    public SimulatedSocketFactory(HostNameResolver hostNameResolver, StreamManager streamManager, int requestTimeout) {
+    public SimulatedSocketFactory(HostNameResolver hostNameResolver, int requestTimeout) {
         super();
         assert hostNameResolver != null;
-        assert streamManager != null;
         this.hostNameResolver = hostNameResolver;
-        this.streamManager = streamManager;
         this.requestTimeout = requestTimeout;
     }
 
-    public static <T extends Socket> void configure(T sock) {
+    private void configureSocket(Socket socket) {
         // Configure the socket to be Load Test Friendly!
         // If we don't set these, we can easily use up too many sockets, even when we're cleaning/closing the sockets
         // responsibly. The reason is that they will stick around in TIME_WAIT for some time (ie: 1-4 minutes) and once
@@ -82,8 +78,8 @@ public class SimulatedSocketFactory implements ConnectionSocketFactory {
         // For further reading, check out HttpClient's FAQ on this subject:
         // http://wiki.apache.org/HttpComponents/FrequentlyAskedConnectionManagementQuestions
         try {
-            sock.setReuseAddress(true);
-            sock.setSoLinger(true, 0);
+            socket.setReuseAddress(true);
+            socket.setSoLinger(true, 0);
         } catch (Exception e) {
             //this is fine not to do anything here
         }
@@ -113,44 +109,28 @@ public class SimulatedSocketFactory implements ConnectionSocketFactory {
         //see: http://svn.apache.org/repos/asf/httpcomponents/httpclient/trunk/httpclient/src/examples/org/apache/http/examples/client/ClientExecuteSOCKS.java
 
         //creating an anonymous class deriving from socket
-        //we just need to override methods for connect to get some metrics
-        //and get-in-out streams to provide throttling
         Socket newSocket = new Socket() {
             @Override
             public void connect(SocketAddress endpoint) throws IOException {
-                Date start = new Date();
                 super.connect(endpoint);
-                Date end = new Date();
-                RequestInfo.get().connect(start, end);
             }
 
             @Override
             public void connect(SocketAddress endpoint, int timeout) throws IOException {
-                Date start = new Date();
                 super.connect(endpoint, timeout);
-                Date end = new Date();
-                RequestInfo.get().connect(start, end);
             }
 
             @Override
             public InputStream getInputStream() throws IOException {
-                // whenever this socket is asked for its input stream
-                // we get it ourselves via socket.getInputStream()
-                // and register it to the stream manager so it will
-                // automatically be throttled
-                return streamManager.registerStream(super.getInputStream());
+                return super.getInputStream();
             }
 
             @Override
             public OutputStream getOutputStream() throws IOException {
-                // whenever this socket is asked for its output stream
-                // we get it ourselves via socket.getOutputStream()
-                // and register it to the stream manager so it will
-                // automatically be throttled
-                return streamManager.registerStream(super.getOutputStream());
+                return super.getOutputStream();
             }
         };
-        SimulatedSocketFactory.configure(newSocket);
+        configureSocket(newSocket);
         return newSocket;
     }
 

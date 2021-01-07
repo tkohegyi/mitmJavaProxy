@@ -72,7 +72,7 @@ public class Version {
                     " (" + System.getProperty("os.name") +
                     "/" + System.getProperty("os.version") +
                     " " + System.getProperty("os.arch") +
-                    " java/" + System.getProperty("java.version");
+                    " java/" + System.getProperty("java.version") + ")";
         }
     }
 }

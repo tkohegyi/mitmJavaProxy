@@ -65,7 +65,6 @@ import org.apache.http.impl.cookie.BrowserCompatSpec;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
-import org.java_bandwidthlimiter.StreamManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xbill.DNS.Cache;
@@ -134,14 +133,14 @@ public class BrowserMobHttpClient {
     private boolean followRedirects = true;
     private AtomicInteger requestCounter;
 
-    public BrowserMobHttpClient(final StreamManager streamManager, final AtomicInteger requestCounter, final int requestTimeOut) {
+    public BrowserMobHttpClient(final AtomicInteger requestCounter, final int requestTimeOut) {
         this.requestCounter = requestCounter;
         this.requestTimeout = requestTimeOut;
         hostNameResolver = new BrowserMobHostNameResolver(new Cache(DClass.ANY));
 
-        socketFactory = new SimulatedSocketFactory(hostNameResolver, streamManager, requestTimeout);
+        socketFactory = new SimulatedSocketFactory(hostNameResolver, requestTimeout);
         try {
-            sslSocketFactory = new TrustingSSLSocketFactory(hostNameResolver, streamManager, requestTimeout);
+            sslSocketFactory = new TrustingSSLSocketFactory(requestTimeout);
         } catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException e) {
             throw new RuntimeException(e);
         }

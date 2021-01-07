@@ -141,7 +141,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
     public void handle(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws IOException {
         URI uri = request.getURI();
 
-        // Is this a CONNECT request?
+        // Is this a CONNECT request? if so, handle it
         if (HttpRequest.__CONNECT.equalsIgnoreCase(request.getMethod())) {
             if (!ProxyServer.getShouldKeepSslConnectionAlive()) {
                 response.setField(HttpFields.__Connection, "close"); // TODO Needed for IE????
@@ -429,7 +429,17 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
         request.removeField("Accept-Encoding");    // js injection is hard w/ gzip'd data, so try to prevent it ahead of time
         request.setState(HttpMessage.__MSG_RECEIVED);
     }
-    
+
+    /**
+     * Handle CONNECT request from original Client that uses the proxy.
+     *
+     * @param pathInContext
+     * @param pathParams
+     * @param request
+     * @param response
+     * @throws HttpException
+     * @throws IOException
+     */
     public void handleConnect(String pathInContext, String pathParams, HttpRequest request, HttpResponse response) throws HttpException, IOException {
         URI uri = request.getURI();
 

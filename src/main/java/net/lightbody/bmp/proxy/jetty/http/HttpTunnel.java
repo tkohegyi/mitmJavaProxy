@@ -16,6 +16,8 @@
 package net.lightbody.bmp.proxy.jetty.http;
 
 import net.lightbody.bmp.proxy.jetty.util.IO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +36,7 @@ import java.net.Socket;
  * @see HttpConnection
  */
 public class HttpTunnel {
+    private final Logger log = LoggerFactory.getLogger(HttpTunnel.class);
 
     private Thread _thread;
     private int _timeoutMs;
@@ -138,7 +141,7 @@ public class HttpTunnel {
 
             copydata(_sIn, _out);
         } catch (Exception e) {
-            //
+            log.debug("Ex at Tunnel copydata", e);
         } finally {
             try {
                 _in.close();

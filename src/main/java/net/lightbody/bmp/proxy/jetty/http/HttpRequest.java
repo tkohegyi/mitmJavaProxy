@@ -225,6 +225,7 @@ public class HttpRequest extends HttpMessage {
         do {
             line_buffer = in.readLineBuffer();
             if (line_buffer == null) throw new EOFException();
+            log.debug("Line read: {}", line_buffer.toString());
         } while (line_buffer.size == 0);
 
         if (line_buffer.size >= __maxLineLength) {

@@ -1,11 +1,9 @@
 package net.lightbody.bmp.proxy.http;
 
 import org.apache.http.HttpHost;
-import org.apache.http.conn.scheme.HostNameResolver;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContexts;
-import org.java_bandwidthlimiter.StreamManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,10 +45,9 @@ public class TrustingSSLSocketFactory extends SSLConnectionSocketFactory {
         }
     }
 
-    private final StreamManager streamManager;
     private final int timeout;
 
-    public TrustingSSLSocketFactory(final HostNameResolver nameResolver, final StreamManager streamManager, int timeout) throws KeyManagementException,
+    public TrustingSSLSocketFactory(int timeout) throws KeyManagementException,
             UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
         super(
                 SSLContexts.custom()
@@ -60,21 +57,15 @@ public class TrustingSSLSocketFactory extends SSLConnectionSocketFactory {
                 new AllowAllHostnameVerifier()
         );
 
-        assert streamManager != null;
-        this.streamManager = streamManager;
         this.timeout = timeout;
-    }
-
-    //just an helper function to wrap a normal sslSocket into a simulated one so we can do throttling
-    private Socket createSimulatedSocket(final Socket socket) {
-        SimulatedSocketFactory.configure(socket);
-        return new SimulatedSSLSocket(socket, streamManager, timeout);
     }
 
     @Override
     public Socket createSocket(final HttpContext context) throws IOException {
         Socket sslSocket = super.createSocket(context);
-        return createSimulatedSocket(sslSocket);
+        sslSocket.setSoTimeout(timeout);
+        configureSocket(sslSocket);
+        return sslSocket;
     }
 
     @Override
@@ -85,12 +76,9 @@ public class TrustingSSLSocketFactory extends SSLConnectionSocketFactory {
             final InetSocketAddress remoteAddress,
             final InetSocketAddress localAddress,
             final HttpContext context) throws IOException {
-        Socket sslSocket = super.connectSocket(connectTimeout, socket, host, remoteAddress, localAddress, context);
 
-        if (sslSocket instanceof SimulatedSSLSocket) {
-            return sslSocket;
-        }
-        return createSimulatedSocket(sslSocket);
+        Socket sslSocket = super.connectSocket(connectTimeout, socket, host, remoteAddress, localAddress, context);
+        return sslSocket;
     }
 
     @Override
@@ -100,10 +88,31 @@ public class TrustingSSLSocketFactory extends SSLConnectionSocketFactory {
             final int port,
             final HttpContext context) throws IOException {
         Socket sslSocket = super.createLayeredSocket(socket, target, port, context);
-
-        if (sslSocket instanceof SimulatedSSLSocket) {
-            return sslSocket;
-        }
-        return createSimulatedSocket(sslSocket);
+        configureSocket(sslSocket);
+        return sslSocket;
     }
+
+    private void configureSocket(Socket socket) {
+        // Configure the socket to be Load Test Friendly!
+        // If we don't set these, we can easily use up too many sockets, even when we're cleaning/closing the sockets
+        // responsibly. The reason is that they will stick around in TIME_WAIT for some time (ie: 1-4 minutes) and once
+        // they get to 64K (on Linux) or 16K (on Mac) we can't make any more requests. While those limits can be raised
+        // with a configuration setting in the OS, we really don't need to change things globally. We just need to make
+        // sure that when we close a socket it gets ditched right away and doesn't stick around in TIME_WAIT.
+        //
+        // This problem is most easily noticable/problematic for load tests that use a single transaction to issue
+        // one HTTP request and then end the transaction, thereby shutting down the HTTP socket. This can easily create
+        // 64K+ sockets in TIME_WAIT state, preventing any other requests from going out and producing a false-negative
+        // "connection refused" error message.
+        //
+        // For further reading, check out HttpClient's FAQ on this subject:
+        // http://wiki.apache.org/HttpComponents/FrequentlyAskedConnectionManagementQuestions
+        try {
+            socket.setReuseAddress(true);
+            socket.setSoLinger(true, 0);
+        } catch (Exception e) {
+            //this is fine not to do anything here
+        }
+    }
+
 }

@@ -33,8 +33,6 @@ import java.util.Enumeration;
 import java.util.List;
 
 
-/* ------------------------------------------------------------ */
-
 /**
  * A HTTP Connection.
  * This class provides the generic HTTP handling for
@@ -797,6 +795,8 @@ public class HttpConnection implements OutputObserver {
             _completing = false;
             _dotVersion = 0;
 
+            log.debug("Normal handling - start");
+
             // Read requests
             readRequest();
             if (_listener == null || !_listener.isStarted()) {
@@ -811,6 +811,8 @@ public class HttpConnection implements OutputObserver {
             if (_request.getState() != HttpMessage.__MSG_RECEIVED) {
                 throw new HttpException(HttpResponse.__400_Bad_Request);
             }
+
+            log.debug("Normal handling - valid request");
             // We have a valid request!
             statsRequestStart();
             stats = true;
@@ -876,7 +878,12 @@ public class HttpConnection implements OutputObserver {
             }
         } catch (IOException e) {
             if (_request.getState() != HttpMessage.__MSG_RECEIVED) {
+                Throwable t = e.getCause();
                 log.debug("Normal handling issue", e);
+                if (t != null) {
+                    log.debug("Normal handling issue - cause", t);
+                }
+
                 _response.destroy();
                 _response = null;
             } else {
