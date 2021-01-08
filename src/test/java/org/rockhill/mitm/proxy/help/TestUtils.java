@@ -41,78 +41,6 @@ public class TestUtils {
     private static final int TEN_SEC_LENGTH = 10000;
 
     /**
-     * Creates and starts an embedded web server on JVM-assigned HTTP and HTTPS ports.
-     * Each response has a body that contains the specified contents.
-     *
-     * @param enableHttps if true, an HTTPS connector will be added to the web server
-     * @param content     The response the server will return
-     * @return Instance of Server
-     */
-    public static Server startWebServerWithResponse(boolean enableHttps, final byte[] content) {
-        final Server httpServer = new Server(0);
-        httpServer.setHandler(new AbstractHandler() {
-            public void handle(String target,
-                               Request baseRequest,
-                               HttpServletRequest request,
-                               HttpServletResponse response) throws IOException {
-                if (request.getRequestURI().contains("stub")) {
-                    LOGGER.info("STUB found in request");
-                }
-                long numberOfBytesRead = 0;
-                try (InputStream in = new BufferedInputStream(request.getInputStream())) {
-                    while (in.read() != -1) {
-                        numberOfBytesRead += 1;
-                    }
-                }
-                LOGGER.info("Done reading # of bytes: {}", numberOfBytesRead);
-
-                //slow response handling
-                if (request.getRequestURI().contains("SlowResponse")) {
-                    //requesting timeout - 10 sec response time
-                    LOGGER.info("Requesting 10 sec delay in Server answer");
-                    try {
-                        Thread.sleep(TEN_SEC_LENGTH);
-                    } catch (InterruptedException e) {
-                        LOGGER.warn("Thread Interrupt arrived");
-                    }
-                }
-
-                //finish response
-                response.setStatus(HttpServletResponse.SC_OK);
-                baseRequest.setHandled(true);
-
-                response.addHeader("Content-Length", Integer.toString(content.length));
-                response.getOutputStream().write(content);
-            }
-        });
-
-        if (enableHttps) {
-            // Add SSL connector
-            SslContextFactory sslContextFactory = new SslContextFactory.Server.Server();
-
-            SelfSignedSslEngineSource contextSource = new SelfSignedSslEngineSource();
-            SSLContext sslContext = contextSource.getSslContext();
-
-            sslContextFactory.setSslContext(sslContext);
-
-            sslContextFactory.setIncludeProtocols("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
-
-            ServerConnector connector = new ServerConnector(httpServer, sslContextFactory);
-            connector.setPort(0);
-            connector.setIdleTimeout(0);
-            httpServer.addConnector(connector);
-        }
-
-        try {
-            httpServer.start();
-        } catch (Exception e) {
-            throw new RuntimeException("Error starting Jetty web server", e);
-        }
-
-        return httpServer;
-    }
-
-    /**
      * Finds the port the specified server is listening for HTTP connections on.
      *
      * @param webServer started web server
@@ -142,48 +70,6 @@ public class TestUtils {
         }
 
         return -1;
-    }
-
-    /**
-     * Creates a DefaultHttpClient instance.
-     *
-     * @param isProxied if the request must go through proxy or not
-     * @param port      is the proxy port
-     * @return instance of DefaultHttpClient
-     * @throws Exception is something wrong happens
-     */
-    public static CloseableHttpClient buildHttpClient(boolean isProxied, int port) throws Exception {
-//        TrustStrategy acceptingTrustStrategy = (cert, authType) -> true;  //checkstyle cannot handle this, so using a bit more complex code below
-        TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
-            @Override
-            public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                return true;
-            }
-        };
-        SSLContext sslContext = SSLContextBuilder.create()
-                .loadTrustMaterial(acceptingTrustStrategy)
-                .build();
-        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
-
-        Registry<ConnectionSocketFactory> socketFactoryRegistry =
-                RegistryBuilder.<ConnectionSocketFactory>create()
-                        .register("https", sslsf)
-                        .register("http", new PlainConnectionSocketFactory())
-                        .build();
-
-        BasicHttpClientConnectionManager connectionManager = new BasicHttpClientConnectionManager(socketFactoryRegistry);
-
-        HttpClientBuilder httpClientBuilder = HttpClients.custom()
-                .setSSLSocketFactory(sslsf)
-                .setConnectionManager(connectionManager);
-
-        if (isProxied) {
-            HttpHost proxy = new HttpHost("127.0.0.1", port);
-            httpClientBuilder.setProxy(proxy);
-        }
-
-        CloseableHttpClient httpClient = httpClientBuilder.build();
-        return httpClient;
     }
 
 }

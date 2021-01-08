@@ -1,235 +1,135 @@
 package org.rockhill.mitm.proxy;
-/*==========================================================================
-Copyright since 2020, Tamas Kohegyi
-===========================================================================*/
 
-import net.lightbody.bmp.core.har.Har;
-import net.lightbody.bmp.core.har.HarEntry;
-import net.lightbody.bmp.core.har.HarLog;
-import net.lightbody.bmp.core.har.HarNameVersion;
-import net.lightbody.bmp.core.har.HarPage;
-import net.lightbody.bmp.core.util.ThreadUtils;
-import net.lightbody.bmp.proxy.BrowserMobProxyHandler;
-import net.lightbody.bmp.proxy.http.BrowserMobHttpClient;
-import net.lightbody.bmp.proxy.jetty.http.HttpContext;
-import net.lightbody.bmp.proxy.jetty.http.HttpListener;
-import net.lightbody.bmp.proxy.jetty.http.SocketListener;
-import net.lightbody.bmp.proxy.jetty.jetty.BmpServer;
-import net.lightbody.bmp.proxy.jetty.util.InetAddrPort;
+import org.eclipse.jetty.proxy.ProxyServlet;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.proxy.ConnectHandler;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.ServerConnector2;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.rockhill.mitm.proxy.https.SelfSignedSslEngineSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import javax.net.ssl.SSLContext;
+import java.util.Objects;
 
 public class ProxyServer {
-    protected static final Logger logger = LoggerFactory.getLogger(ProxyServer.class);
-    private static final HarNameVersion CREATOR = new HarNameVersion("Mitm Java Proxy", "0.0");
-    public static int PROXY_TIMEOUT = 240000; //4 minutes, by default will be set during ProxyServer.start()
-    private static Boolean responseVolatile = Boolean.FALSE;  //general default approach is that the response is not volatile
-    private static Boolean shouldKeepSslConnectionAlive = Boolean.FALSE; //set it to true if such (e.g. .net) clients we have
-    private final AtomicInteger requestCounter = new AtomicInteger(0);
-    private BmpServer bmpServer;
-    private int port = -1;
-    private BrowserMobHttpClient client;
-    private HarPage currentPage;
-    private BrowserMobProxyHandler handler;
-    private int pageCount = 1;
+    private final Logger logger = LoggerFactory.getLogger(ProxyServer.class);
+    private final Server server;
+    private int port;
+    private int securePort;
 
-    public ProxyServer() {
-    }
-
-    public ProxyServer(final int port) {
+    public ProxyServer(int port) {
         this.port = port;
+        this.securePort = port;
+        server = new Server(port);
+        // Establish listening connector
+
+        // Add SSL connector
+        SslContextFactory sslContextFactory = new SslContextFactory.Server.Server();
+
+        SelfSignedSslEngineSource contextSource = new SelfSignedSslEngineSource();
+        SSLContext sslContext = contextSource.getSslContext();
+
+        sslContextFactory.setSslContext(sslContext);
+
+        sslContextFactory.setIncludeProtocols("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
+
+        ServerConnector2 connector = new ServerConnector2(server, sslContextFactory);
+
+     //   ServerConnector connector = new ServerConnector(server);
+        //connector.setPort(port);
+        connector.setIdleTimeout(0);
+        server.addConnector(connector);
+
+        // Setup proxy handler to handle CONNECT methods
+        ConnectHandler proxy = new ConnectHandler();
+        server.setHandler(proxy);
+
+        // Setup proxy servlet
+        ServletContextHandler context = new ServletContextHandler(proxy, "/", ServletContextHandler.SESSIONS);
+        ServletHolder proxyServlet = new ServletHolder(ProxyServlet.class);
+
+        //proxyServlet.setInitParameter("blackList", "www.eclipse.org");
+        context.addServlet(proxyServlet, "/*");
+
     }
 
-    public static Boolean getResponseVolatile() {
-        return responseVolatile;
-    }
-
-    public static void setResponseVolatile(Boolean responseVolatile) {
-        ProxyServer.responseVolatile = responseVolatile;
-    }
-
-    public static Boolean getShouldKeepSslConnectionAlive() {
-        return shouldKeepSslConnectionAlive;
-    }
-
-    public static void setShouldKeepSslConnectionAlive(Boolean shouldKeepSslConnectionAlive) {
-        ProxyServer.shouldKeepSslConnectionAlive = shouldKeepSslConnectionAlive;
-    }
-
-    public void start(final int requestTimeOut) throws Exception {
-        if (port == -1) {
-            throw new IllegalStateException("Must set port before starting");
+    public void start(int timeout) throws Exception {
+        try {
+            server.start();
+            for (Connector c: server.getConnectors()) {
+                if (c instanceof ServerConnector) {
+                    ((ServerConnector) c).setStopTimeout(timeout);
+                }
+                if (c instanceof ServerConnector2) {
+                    ((ServerConnector2) c).setStopTimeout(timeout);
+                }
+            }
+            //detect port
+            port = findLocalHttpPort(server);
+            securePort = findLocalHttpsPort(server);
+            logger.info("Proxy Server started on ports [http:{}] [https:{}]", port, securePort);
+        } catch (Exception e) {
+            logger.error("Cannot start proxy server", e);
+            throw e;
         }
-
-        PROXY_TIMEOUT = requestTimeOut;
-
-        bmpServer = new BmpServer();
-        HttpListener listener = new SocketListener(new InetAddrPort(getPort()));
-        bmpServer.addListener(listener);
-        HttpContext context = new HttpContext();
-        context.setContextPath("/");
-        bmpServer.addContext(context);
-
-        handler = new BrowserMobProxyHandler();
-        handler.setJettyServer(bmpServer);
-        handler.setShutdownLock(new Object());
-        client = new BrowserMobHttpClient(requestCounter, requestTimeOut);
-        client.prepareForBrowser();
-        handler.setHttpClient(client);
-
-        context.addHandler(handler);
-
-        bmpServer.start();
-
-        setPort(listener.getPort());
     }
 
-    public void cleanup() {
-        handler.cleanup();
-    }
-
-    public void stop() throws Exception {
-        cleanup();
-        client.shutdown();
-        bmpServer.stop();
+    public void stop() {
+        try {
+            server.stop();
+        } catch (Exception e) {
+            logger.error("Exception occurred during Proxy Server stop", e);
+        } finally {
+            logger.info("Proxy Server stopped.");
+        }
     }
 
     public int getPort() {
         return port;
     }
 
-    public void setPort(final int port) {
-        this.port = port;
-    }
-
-    /* public void setRetryCount(final int count) {
-        client.setRetryCount(count);
-    } */
-
-    public Har getHar() {
-        // Wait up to 5 seconds for all active requests to cease before returning the HAR.
-        // This helps with race conditions but won't cause deadlocks should a request hang
-        // or error out in an unexpected way (which of course would be a bug!)
-        boolean success = ThreadUtils.waitFor(new ThreadUtils.WaitCondition() {
-            @Override
-            public boolean checkCondition(final long elapsedTimeInMs) {
-                return requestCounter.get() == 0;
-            }
-        }, TimeUnit.SECONDS, 5);
-
-        if (!success) {
-            logger.warn("Waited 5 seconds for requests to cease before returning HAR; giving up!");
-        }
-
-        return client.getHar();
-    }
-
-    public Har newHar(final String initialPageRef) {
-        pageCount = 1;
-
-        Har oldHar = getHar();
-
-        Har har = new Har(new HarLog(CREATOR));
-        client.setHar(har);
-        newPage(initialPageRef);
-
-        return oldHar;
-    }
-
-    public void newPage(String pageRef) {
-        if (pageRef == null) {
-            pageRef = "Page " + pageCount;
-        }
-
-        client.setHarPageRef(pageRef);
-        currentPage = new HarPage(pageRef);
-        client.getHar().getLog().addPage(currentPage);
-
-        pageCount++;
-    }
-
-    public void addRequestInterceptor(final RequestInterceptor interceptor) {
-        client.addRequestInterceptor(interceptor);
-    }
-
-    public void addResponseInterceptor(final ResponseInterceptor interceptor) {
-        client.addResponseInterceptor(interceptor);
-    }
-
-    public void setRequestTimeout(final int requestTimeout) {
-        client.setRequestTimeout(requestTimeout);
-    }
-
-    public void rewriteUrl(final String match, final String replace) {
-        client.rewriteUrl(match, replace);
-    }
-
-    public void addHeader(final String name, final String value) {
-        client.addHeader(name, value);
-    }
-
-    public void setCaptureHeaders(final boolean captureHeaders) {
-        client.setCaptureHeaders(captureHeaders);
-    }
-
-    public void setCaptureContent(final boolean captureContent) {
-        client.setCaptureContent(captureContent);
-    }
-
-    public void setCaptureBinaryContent(final boolean captureBinaryContent) {
-        client.setCaptureBinaryContent(captureBinaryContent);
-    }
-
-    public void clearDNSCache() {
-        client.clearDNSCache();
-    }
-
-    public void setDNSCacheTimeout(final int timeout) {
-        client.setDNSCacheTimeout(timeout);
-    }
-
-    public void waitForNetworkTrafficToStop(final long quietPeriodInMs, final long timeoutInMs) {
-        boolean result = ThreadUtils.waitFor(new ThreadUtils.WaitCondition() {
-            @Override
-            public boolean checkCondition(final long elapsedTimeInMs) {
-                Date lastCompleted = null;
-                Har har = client.getHar();
-                if (har == null || har.getLog() == null) {
-                    return true;
+    /**
+     * Finds the port the specified server is listening for HTTP connections on.
+     *
+     * @param webServer started web server
+     * @return HTTP port, or -1 if no HTTP port was found
+     */
+    private int findLocalHttpPort(Server webServer) {
+        for (Connector connector : webServer.getConnectors()) {
+            if (!Objects.equals(connector.getDefaultConnectionFactory().getProtocol(), "SSL")) {
+                int port = -1;
+                if (connector instanceof ServerConnector) {
+                    port = ((ServerConnector) connector).getLocalPort();
+                }
+                if (connector instanceof ServerConnector2) {
+                    port = ((ServerConnector2) connector).getLocalPort();
                 }
 
-                for (HarEntry entry : har.getLog().getEntries()) {
-                    // if there is an active request, just stop looking
-                    if (entry.getResponse().getStatus() < 0) {
-                        return false;
-                    }
-
-                    Date end = new Date(entry.getStartedDateTime().getTime() + entry.getTime());
-                    if (lastCompleted == null) {
-                        lastCompleted = end;
-                    } else if (end.after(lastCompleted)) {
-                        lastCompleted = end;
-                    }
-                }
-
-                return lastCompleted != null && System.currentTimeMillis() - lastCompleted.getTime() >= quietPeriodInMs;
+                return port;
             }
-        }, TimeUnit.MILLISECONDS, timeoutInMs);
-
-        if (!result) {
-            throw new RuntimeException("Timed out after " + timeoutInMs + " ms while waiting for network traffic to stop");
         }
+        return -1;
     }
 
-    public void setOptions(final Map<String, String> options) {
-        if (options.containsKey("httpProxy")) {
-            client.setHttpProxy(options.get("httpProxy"));
+    /**
+     * Finds the port the specified server is listening for HTTPS connections on.
+     *
+     * @param webServer started web server
+     * @return HTTP port, or -1 if no HTTPS port was found
+     */
+    private int findLocalHttpsPort(Server webServer) {
+        for (Connector connector : webServer.getConnectors()) {
+            if (Objects.equals(connector.getDefaultConnectionFactory().getProtocol(), "SSL")) {
+                return ((ServerConnector2) connector).getLocalPort();
+            }
         }
+
+        return -1;
     }
 
 }
