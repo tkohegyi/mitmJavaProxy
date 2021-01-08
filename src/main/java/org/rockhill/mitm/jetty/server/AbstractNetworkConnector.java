@@ -16,13 +16,17 @@
 //  ========================================================================
 //
 
-package org.eclipse.jetty.server;
+package org.rockhill.mitm.jetty.server;
 
 import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 import org.eclipse.jetty.io.ByteBufferPool;
+import org.eclipse.jetty.server.AbstractConnector;
+import org.eclipse.jetty.server.ConnectionFactory;
+import org.eclipse.jetty.server.NetworkConnector;
+import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.annotation.ManagedAttribute;
 import org.eclipse.jetty.util.annotation.ManagedObject;
 import org.eclipse.jetty.util.thread.Scheduler;
@@ -33,13 +37,13 @@ import org.eclipse.jetty.util.thread.Scheduler;
  * Extends the {@link AbstractConnector} support for the {@link NetworkConnector} interface.
  */
 @ManagedObject("AbstractNetworkConnector")
-public abstract class AbstractNetworkConnector2 extends AbstractConnector implements NetworkConnector
+public abstract class AbstractNetworkConnector extends AbstractConnector implements NetworkConnector
 {
 
     private volatile String _host;
     private volatile int _port = 0;
 
-    public AbstractNetworkConnector2(Server server, Executor executor, Scheduler scheduler, ByteBufferPool pool, int acceptors, ConnectionFactory... factories)
+    public AbstractNetworkConnector(Server server, Executor executor, Scheduler scheduler, ByteBufferPool pool, int acceptors, ConnectionFactory... factories)
     {
         super(server, executor, scheduler, pool, acceptors, factories);
     }

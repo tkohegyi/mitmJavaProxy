@@ -16,7 +16,7 @@
 //  ========================================================================
 //
 
-package org.eclipse.jetty.server;
+package org.rockhill.mitm.jetty.server;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -41,6 +41,13 @@ import org.eclipse.jetty.io.EndPoint;
 import org.eclipse.jetty.io.ManagedSelector;
 import org.eclipse.jetty.io.SelectorManager;
 import org.eclipse.jetty.io.SocketChannelEndPoint;
+import org.eclipse.jetty.server.AbstractConnectionFactory;
+import org.eclipse.jetty.server.AbstractConnector;
+import org.eclipse.jetty.server.ConnectionFactory;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.util.annotation.ManagedAttribute;
 import org.eclipse.jetty.util.annotation.ManagedObject;
 import org.eclipse.jetty.util.annotation.Name;
@@ -74,7 +81,7 @@ import org.eclipse.jetty.util.thread.Scheduler;
  * </p>
  */
 @ManagedObject("HTTP connector using NIO ByteChannels and Selectors")
-public class ServerConnector2 extends AbstractNetworkConnector2
+public class ServerConnector extends AbstractNetworkConnector
 {
     private final SelectorManager _manager;
     private final AtomicReference<Closeable> _acceptor = new AtomicReference<>();
@@ -92,7 +99,7 @@ public class ServerConnector2 extends AbstractNetworkConnector2
      *
      * @param server The {@link Server} this connector will accept connection for.
      */
-    public ServerConnector2(
+    public ServerConnector(
             @Name("server") Server server)
     {
         this(server, null, null, null, -1, -1, new HttpConnectionFactory());
@@ -106,7 +113,7 @@ public class ServerConnector2 extends AbstractNetworkConnector2
      * the selector threads are used to accept connections.
      * @param selectors the number of selector threads, or &lt;=0 for a default value. Selectors notice and schedule established connection that can make IO progress.
      */
-    public ServerConnector2(
+    public ServerConnector(
             @Name("server") Server server,
             @Name("acceptors") int acceptors,
             @Name("selectors") int selectors)
@@ -123,7 +130,7 @@ public class ServerConnector2 extends AbstractNetworkConnector2
      * @param selectors the number of selector threads, or &lt;=0 for a default value. Selectors notice and schedule established connection that can make IO progress.
      * @param factories Zero or more {@link ConnectionFactory} instances used to create and configure connections.
      */
-    public ServerConnector2(
+    public ServerConnector(
             @Name("server") Server server,
             @Name("acceptors") int acceptors,
             @Name("selectors") int selectors,
@@ -138,7 +145,7 @@ public class ServerConnector2 extends AbstractNetworkConnector2
      * @param server The {@link Server} this connector will accept connection for.
      * @param factories Zero or more {@link ConnectionFactory} instances used to create and configure connections.
      */
-    public ServerConnector2(
+    public ServerConnector(
             @Name("server") Server server,
             @Name("factories") ConnectionFactory... factories)
     {
@@ -152,7 +159,7 @@ public class ServerConnector2 extends AbstractNetworkConnector2
      * @param sslContextFactory If non null, then a {@link SslConnectionFactory} is instantiated and prepended to the
      * list of HTTP Connection Factory.
      */
-    public ServerConnector2(
+    public ServerConnector(
             @Name("server") Server server,
             @Name("sslContextFactory") SslContextFactory sslContextFactory)
     {
@@ -169,7 +176,7 @@ public class ServerConnector2 extends AbstractNetworkConnector2
      * the selector threads are used to accept connections.
      * @param selectors the number of selector threads, or &lt;=0 for a default value. Selectors notice and schedule established connection that can make IO progress.
      */
-    public ServerConnector2(
+    public ServerConnector(
             @Name("server") Server server,
             @Name("acceptors") int acceptors,
             @Name("selectors") int selectors,
@@ -184,7 +191,7 @@ public class ServerConnector2 extends AbstractNetworkConnector2
      * list of ConnectionFactories, with the first factory being the default protocol for the SslConnectionFactory.
      * @param factories Zero or more {@link ConnectionFactory} instances used to create and configure connections.
      */
-    public ServerConnector2(
+    public ServerConnector(
             @Name("server") Server server,
             @Name("sslContextFactory") SslContextFactory sslContextFactory,
             @Name("factories") ConnectionFactory... factories)
@@ -203,7 +210,7 @@ public class ServerConnector2 extends AbstractNetworkConnector2
      * @param selectors the number of selector threads, or &lt;=0 for a default value. Selectors notice and schedule established connection that can make IO progress.
      * @param factories Zero or more {@link ConnectionFactory} instances used to create and configure connections.
      */
-    public ServerConnector2(
+    public ServerConnector(
             @Name("server") Server server,
             @Name("executor") Executor executor,
             @Name("scheduler") Scheduler scheduler,
@@ -276,7 +283,7 @@ public class ServerConnector2 extends AbstractNetworkConnector2
      * launch Jetty.</p>
      *
      * @param inheritChannel whether this connector uses a channel inherited from the JVM.
-     * @see ServerConnector#openAcceptChannel()
+     * @see org.eclipse.jetty.server.ServerConnector#openAcceptChannel()
      */
     public void setInheritChannel(boolean inheritChannel)
     {
@@ -603,19 +610,19 @@ public class ServerConnector2 extends AbstractNetworkConnector2
         @Override
         protected void accepted(SelectableChannel channel) throws IOException
         {
-            ServerConnector2.this.accepted((SocketChannel)channel);
+            ServerConnector.this.accepted((SocketChannel)channel);
         }
 
         @Override
         protected ChannelEndPoint newEndPoint(SelectableChannel channel, ManagedSelector selectSet, SelectionKey selectionKey) throws IOException
         {
-            return ServerConnector2.this.newEndPoint((SocketChannel)channel, selectSet, selectionKey);
+            return ServerConnector.this.newEndPoint((SocketChannel)channel, selectSet, selectionKey);
         }
 
         @Override
         public Connection newConnection(SelectableChannel channel, EndPoint endpoint, Object attachment) throws IOException
         {
-            return getDefaultConnectionFactory().newConnection(ServerConnector2.this, endpoint);
+            return getDefaultConnectionFactory().newConnection(ServerConnector.this, endpoint);
         }
 
         @Override
@@ -635,7 +642,7 @@ public class ServerConnector2 extends AbstractNetworkConnector2
         @Override
         public String toString()
         {
-            return String.format("SelectorManager@%s", ServerConnector2.this);
+            return String.format("SelectorManager@%s", ServerConnector.this);
         }
     }
 } 

@@ -84,7 +84,6 @@ public abstract class ClientServerBase extends ProxyServerBase {
         logger.info("*** Backed http Server started on port: {}", httpPort);
         logger.info("*** Backed httpS Server started on port: {}", securePort);
         setUp();
-        Thread.sleep(GRACE_PERIOD);
         logger.info("*** Test INIT DONE - starting the Test: {}:{}", this.getClass().getCanonicalName(), new TestName());
     }
 

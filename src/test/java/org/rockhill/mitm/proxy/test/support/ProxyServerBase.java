@@ -17,7 +17,6 @@ public class ProxyServerBase {
     /**
      * The proxy server used by the tests.
      */
-    public static final int GRACE_PERIOD = 500; //0.5 sec
     private static final int PROXY_TIMEOUT = 600000; //10 minutes, to have enough time for manual debug
     private final Logger logger = LoggerFactory.getLogger(ProxyServerBase.class);
     private ProxyServer proxyServer;
@@ -29,7 +28,6 @@ public class ProxyServerBase {
         proxyPort = proxyServer.getPort();
 //        Proxy2Server.setShouldKeepSslConnectionAlive(false);
         assertThat(getProxyPort(), not(equalTo(0)));
-        Thread.sleep(GRACE_PERIOD);
         logger.info("*** Proxy Server started on port: {}", proxyPort);
     }
 

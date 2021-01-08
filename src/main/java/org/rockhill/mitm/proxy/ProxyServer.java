@@ -1,11 +1,11 @@
 package org.rockhill.mitm.proxy;
 
-import org.eclipse.jetty.proxy.ProxyServlet;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.proxy.ConnectHandler;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.ServerConnector2;
+import org.rockhill.mitm.jetty.proxy.ProxyServlet;
+import org.rockhill.mitm.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -14,6 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Objects;
 
 public class ProxyServer {
@@ -38,15 +42,24 @@ public class ProxyServer {
 
         sslContextFactory.setIncludeProtocols("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
 
-        ServerConnector2 connector = new ServerConnector2(server, sslContextFactory);
+        ServerConnector connector = new ServerConnector(server, sslContextFactory);
 
-     //   ServerConnector connector = new ServerConnector(server);
+        //ServerConnector connector = new ServerConnector(server);  //this is enough for a simple http proxy
         //connector.setPort(port);
+
         connector.setIdleTimeout(0);
         server.addConnector(connector);
 
         // Setup proxy handler to handle CONNECT methods
-        ConnectHandler proxy = new ConnectHandler();
+        //ConnectHandler proxy = new ConnectHandler(); simple ConnectHandler
+        ConnectHandler proxy = new ConnectHandler() {
+            @Override
+            public void handle(String target, Request br, HttpServletRequest request, HttpServletResponse res)
+                    throws ServletException, IOException {
+                logger.debug("ConnectHandler (target: {})", target);
+                super.handle(target, br, request, res);
+            }
+        };
         server.setHandler(proxy);
 
         // Setup proxy servlet
@@ -62,11 +75,11 @@ public class ProxyServer {
         try {
             server.start();
             for (Connector c: server.getConnectors()) {
+                if (c instanceof org.eclipse.jetty.server.ServerConnector) {
+                    ((org.eclipse.jetty.server.ServerConnector) c).setStopTimeout(timeout);
+                }
                 if (c instanceof ServerConnector) {
                     ((ServerConnector) c).setStopTimeout(timeout);
-                }
-                if (c instanceof ServerConnector2) {
-                    ((ServerConnector2) c).setStopTimeout(timeout);
                 }
             }
             //detect port
@@ -103,11 +116,11 @@ public class ProxyServer {
         for (Connector connector : webServer.getConnectors()) {
             if (!Objects.equals(connector.getDefaultConnectionFactory().getProtocol(), "SSL")) {
                 int port = -1;
+                if (connector instanceof org.eclipse.jetty.server.ServerConnector) {
+                    port = ((org.eclipse.jetty.server.ServerConnector) connector).getLocalPort();
+                }
                 if (connector instanceof ServerConnector) {
                     port = ((ServerConnector) connector).getLocalPort();
-                }
-                if (connector instanceof ServerConnector2) {
-                    port = ((ServerConnector2) connector).getLocalPort();
                 }
 
                 return port;
@@ -125,7 +138,7 @@ public class ProxyServer {
     private int findLocalHttpsPort(Server webServer) {
         for (Connector connector : webServer.getConnectors()) {
             if (Objects.equals(connector.getDefaultConnectionFactory().getProtocol(), "SSL")) {
-                return ((ServerConnector2) connector).getLocalPort();
+                return ((ServerConnector) connector).getLocalPort();
             }
         }
 

@@ -19,10 +19,10 @@ import static org.junit.Assert.assertNull;
 /**
  * This test runs simple http request 1000 times.
  */
-public class HttpMassTest extends ClientServerBase {
+public class HttpSMassTest extends ClientServerBase {
     private static final String GET_REQUEST = "/anyUrl";
     private static final int MAX_REQUEST = 1000;
-    private final Logger logger = LoggerFactory.getLogger(HttpMassTest.class);
+    private final Logger logger = LoggerFactory.getLogger(HttpSMassTest.class);
     private HttpGet request;
 
     @Override
@@ -44,13 +44,13 @@ public class HttpMassTest extends ClientServerBase {
     }
 
     @Test
-    public void massHttpRequestTest() throws Exception {
+    public void massHttpSRequestTest() throws Exception {
         try (CloseableHttpClient httpClient = getHttpClient()) {
             for (int i = 0; i < MAX_REQUEST; i++) {
                 Header h = request.getFirstHeader("A");
                 request.removeHeader(h);
                 request.addHeader("A", "R-" + i);
-                HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
+                HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
                 int statusCode = response.getStatusLine().getStatusCode();
                 String body = EntityUtils.toString(response.getEntity());
                 EntityUtils.consume(response.getEntity());
