@@ -1,28 +1,24 @@
 package org.rockhill.mitm.proxy;
 
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.proxy.ConnectHandler;
+import org.rockhill.mitm.jetty.server.Connector;
+import org.rockhill.mitm.jetty.server.Server;
+import org.rockhill.mitm.jetty.servlet.ServletContextHandler;
+import org.rockhill.mitm.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.rockhill.mitm.jetty.proxy.ConnectHandler;
 import org.rockhill.mitm.jetty.proxy.ProxyServlet;
 import org.rockhill.mitm.jetty.server.ServerConnector;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.rockhill.mitm.proxy.https.SelfSignedSslEngineSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Objects;
 
 public class ProxyServer {
     private final Logger logger = LoggerFactory.getLogger(ProxyServer.class);
     private final Server server;
+    private final ConnectHandler proxy;
     private int port;
     private int securePort;
 
@@ -52,14 +48,7 @@ public class ProxyServer {
 
         // Setup proxy handler to handle CONNECT methods
         //ConnectHandler proxy = new ConnectHandler(); simple ConnectHandler
-        ConnectHandler proxy = new ConnectHandler() {
-            @Override
-            public void handle(String target, Request br, HttpServletRequest request, HttpServletResponse res)
-                    throws ServletException, IOException {
-                logger.debug("ConnectHandler (target: {})", target);
-                super.handle(target, br, request, res);
-            }
-        };
+        proxy = new ConnectHandler();
         server.setHandler(proxy);
 
         // Setup proxy servlet
@@ -74,9 +63,9 @@ public class ProxyServer {
     public void start(int timeout) throws Exception {
         try {
             server.start();
-            for (Connector c: server.getConnectors()) {
-                if (c instanceof org.eclipse.jetty.server.ServerConnector) {
-                    ((org.eclipse.jetty.server.ServerConnector) c).setStopTimeout(timeout);
+            for (Connector c : server.getConnectors()) {
+                if (c instanceof org.rockhill.mitm.jetty.server.ServerConnector) {
+                    ((org.rockhill.mitm.jetty.server.ServerConnector) c).setStopTimeout(timeout);
                 }
                 if (c instanceof ServerConnector) {
                     ((ServerConnector) c).setStopTimeout(timeout);
@@ -116,8 +105,8 @@ public class ProxyServer {
         for (Connector connector : webServer.getConnectors()) {
             if (!Objects.equals(connector.getDefaultConnectionFactory().getProtocol(), "SSL")) {
                 int port = -1;
-                if (connector instanceof org.eclipse.jetty.server.ServerConnector) {
-                    port = ((org.eclipse.jetty.server.ServerConnector) connector).getLocalPort();
+                if (connector instanceof org.rockhill.mitm.jetty.server.ServerConnector) {
+                    port = ((org.rockhill.mitm.jetty.server.ServerConnector) connector).getLocalPort();
                 }
                 if (connector instanceof ServerConnector) {
                     port = ((ServerConnector) connector).getLocalPort();
@@ -145,4 +134,7 @@ public class ProxyServer {
         return -1;
     }
 
+    public void addRequestInterceptor(RequestInterceptor requestInterceptor) {
+        proxy.addRequestInterceptor(requestInterceptor);
+    }
 }

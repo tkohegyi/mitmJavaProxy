@@ -26,9 +26,11 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
@@ -45,16 +47,20 @@ import org.eclipse.jetty.io.ManagedSelector;
 import org.eclipse.jetty.io.MappedByteBufferPool;
 import org.eclipse.jetty.io.SelectorManager;
 import org.eclipse.jetty.io.SocketChannelEndPoint;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.HttpConnection;
-import org.eclipse.jetty.server.HttpTransport;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.HandlerWrapper;
+import org.rockhill.mitm.jetty.server.Handler;
+import org.rockhill.mitm.jetty.server.HttpConnection;
+import org.rockhill.mitm.jetty.server.HttpTransport;
+import org.rockhill.mitm.jetty.server.Request;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.HostPort;
 import org.eclipse.jetty.util.Promise;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.eclipse.jetty.util.thread.Scheduler;
+import org.rockhill.mitm.jetty.server.handler.HandlerWrapper;
+import org.rockhill.mitm.proxy.RequestInterceptor;
+import org.rockhill.mitm.proxy.ResponseInterceptor;
+import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
+import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +70,9 @@ import org.slf4j.LoggerFactory;
 public class ConnectHandler extends HandlerWrapper
 {
     protected static final Logger LOG = LoggerFactory.getLogger(ConnectHandler.class);
+
+    private final List<RequestInterceptor> requestInterceptors = new CopyOnWriteArrayList<>();
+    private final List<ResponseInterceptor> responseInterceptors = new CopyOnWriteArrayList<>();
 
     private final Set<String> whiteList = new HashSet<>();
     private final Set<String> blackList = new HashSet<>();
@@ -157,6 +166,14 @@ public class ConnectHandler extends HandlerWrapper
     public void setBufferSize(int bufferSize)
     {
         this.bufferSize = bufferSize;
+    }
+
+    public void addRequestInterceptor(final RequestInterceptor interceptor) {
+        requestInterceptors.add(interceptor);
+    }
+
+    public void addResponseInterceptor(final ResponseInterceptor interceptor) {
+        responseInterceptors.add(interceptor);
     }
 
     @Override
@@ -334,6 +351,11 @@ public class ConnectHandler extends HandlerWrapper
         HttpServletRequest request = connectContext.getRequest();
 
         //now run request interceptors
+        MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest = new MitmJavaProxyHttpRequest(request, context, upstreamConnection);
+        for (RequestInterceptor interceptor : requestInterceptors) {
+            interceptor.process(mitmJavaProxyHttpRequest);
+        }
+        //continue with the (updated) request
 
         prepareContext(request, context);
 
@@ -350,6 +372,15 @@ public class ConnectHandler extends HandlerWrapper
         HttpServletResponse response = connectContext.getResponse();
 
         //now run response interceptors
+        MitmJavaProxyHttpResponse mitmJavaProxyHttpResponse = new MitmJavaProxyHttpResponse(mitmJavaProxyHttpRequest, response, downstreamConnection);
+        for (ResponseInterceptor interceptor : responseInterceptors) {
+            interceptor.process(mitmJavaProxyHttpResponse);
+        }
+
+        if (mitmJavaProxyHttpResponse.isResponseVolatile()) {
+            //update response
+        }
+        //continue with the (updated) response
 
         sendConnectResponse(request, response, HttpServletResponse.SC_OK);
 

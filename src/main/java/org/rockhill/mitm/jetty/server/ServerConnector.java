@@ -41,13 +41,6 @@ import org.eclipse.jetty.io.EndPoint;
 import org.eclipse.jetty.io.ManagedSelector;
 import org.eclipse.jetty.io.SelectorManager;
 import org.eclipse.jetty.io.SocketChannelEndPoint;
-import org.eclipse.jetty.server.AbstractConnectionFactory;
-import org.eclipse.jetty.server.AbstractConnector;
-import org.eclipse.jetty.server.ConnectionFactory;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.util.annotation.ManagedAttribute;
 import org.eclipse.jetty.util.annotation.ManagedObject;
 import org.eclipse.jetty.util.annotation.Name;
@@ -283,7 +276,7 @@ public class ServerConnector extends AbstractNetworkConnector
      * launch Jetty.</p>
      *
      * @param inheritChannel whether this connector uses a channel inherited from the JVM.
-     * @see org.eclipse.jetty.server.ServerConnector#openAcceptChannel()
+     * @see org.rockhill.mitm.jetty.server.ServerConnector#openAcceptChannel()
      */
     public void setInheritChannel(boolean inheritChannel)
     {
