@@ -1,4 +1,4 @@
-package org.rockhill.mitm.idgenerator;
+package org.rockhill.mitm.util.idgenerator;
 
 import java.util.Date;
 

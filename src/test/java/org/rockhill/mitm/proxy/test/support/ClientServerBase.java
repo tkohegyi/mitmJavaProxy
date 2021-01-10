@@ -54,6 +54,8 @@ public abstract class ClientServerBase extends ProxyServerBase {
      * The server used by the tests.
      */
     private final Logger logger = LoggerFactory.getLogger(ClientServerBase.class);
+    protected final boolean WITH_PROXY = true;
+    protected final boolean WITHOUT_PROXY = false;
     protected AtomicInteger requestCount;
     private int httpPort = -1;
     private int securePort = -1;
@@ -100,7 +102,7 @@ public abstract class ClientServerBase extends ProxyServerBase {
         securePort = TestUtils.findLocalHttpsPort(webServer);
         assertThat(securePort, not(equalTo(0)));
         httpPort = TestUtils.findLocalHttpPort(webServer);
-        assertThat(securePort, not(equalTo(0)));
+        assertThat(httpPort, not(equalTo(0)));
 
         httpHost = new HttpHost("127.0.0.1", httpPort);
         secureHost = new HttpHost("127.0.0.1", securePort, "https");
@@ -212,6 +214,16 @@ public abstract class ClientServerBase extends ProxyServerBase {
      * @throws Exception is something wrong happens
      */
     public CloseableHttpClient getHttpClient() throws Exception {
+        return getHttpClient(WITH_PROXY);
+    }
+
+    /**
+     * Creates a CloseableHttpClient instance that uses the proxy.
+     *
+     * @return instance of CloseableHttpClient
+     * @throws Exception is something wrong happens
+     */
+    public CloseableHttpClient getHttpClient(boolean isProxyInUse) throws Exception {
 //        TrustStrategy acceptingTrustStrategy = (cert, authType) -> true;  //checkstyle cannot handle this, so using a bit more complex code below
         TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
             @Override
@@ -232,12 +244,14 @@ public abstract class ClientServerBase extends ProxyServerBase {
 
         BasicHttpClientConnectionManager connectionManager = new BasicHttpClientConnectionManager(socketFactoryRegistry);
 
-        HttpHost proxy = new HttpHost("127.0.0.1", getProxyPort());
-
         HttpClientBuilder httpClientBuilder = HttpClients.custom()
                 .setSSLSocketFactory(sslsf)
-                .setConnectionManager(connectionManager)
-                .setProxy(proxy);
+                .setConnectionManager(connectionManager);
+
+        if (isProxyInUse) {
+            HttpHost proxy = new HttpHost("127.0.0.1", getProxyPort());
+            httpClientBuilder.setProxy(proxy);
+        }
 
         return httpClientBuilder.build();
     }

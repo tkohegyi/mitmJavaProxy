@@ -1,4 +1,4 @@
-package org.rockhill.mitm.idgenerator;
+package org.rockhill.mitm.util.idgenerator;
 
 import java.text.SimpleDateFormat;
 import java.util.concurrent.atomic.AtomicInteger;

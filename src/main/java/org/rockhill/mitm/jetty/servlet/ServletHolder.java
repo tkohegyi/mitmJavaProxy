@@ -47,12 +47,14 @@ import javax.servlet.ServletResponse;
 import javax.servlet.ServletSecurityElement;
 import javax.servlet.SingleThreadModel;
 import javax.servlet.UnavailableException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.rockhill.mitm.jetty.security.IdentityService;
 import org.rockhill.mitm.jetty.security.RunAsToken;
 import org.rockhill.mitm.jetty.server.MultiPartCleanerListener;
 import org.rockhill.mitm.jetty.server.Request;
+import org.rockhill.mitm.jetty.server.Response;
 import org.rockhill.mitm.jetty.server.UserIdentity;
 import org.rockhill.mitm.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.util.Loader;
@@ -794,11 +796,11 @@ public class ServletHolder extends Holder<Servlet> implements UserIdentity.Scope
             if (servlet == null)
                 throw new UnavailableException("Servlet Not Initialized");
 
-            MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest = runRequestInterceptors(servlet, baseRequest, request, response);
+            MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest = runRequestInterceptors(request);
 
             servlet.service(request, response);
 
-            runResponseInterceptors(mitmJavaProxyHttpRequest, servlet, baseRequest, request, response);
+            runResponseInterceptors(mitmJavaProxyHttpRequest, request, response);
         }
         catch (UnavailableException e)
         {
@@ -806,37 +808,36 @@ public class ServletHolder extends Holder<Servlet> implements UserIdentity.Scope
         }
     }
 
-    private MitmJavaProxyHttpRequest runRequestInterceptors(final Servlet servlet,
-                                                            Request baseRequest,
-                                                            ServletRequest request,
-                                                            ServletResponse response
-                                                            ) {
+    private MitmJavaProxyHttpRequest runRequestInterceptors(ServletRequest request) {
         //now run request interceptors
-        MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest = new MitmJavaProxyHttpRequest(servlet, baseRequest, request, response);
-        List<RequestInterceptor> requestInterceptors = ProxyServer.getRequestInterceptors();
-        for (RequestInterceptor interceptor : requestInterceptors) {
-            interceptor.process(mitmJavaProxyHttpRequest);
+        if (request instanceof Request) {
+            MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest = new MitmJavaProxyHttpRequest((Request) request);
+            List<RequestInterceptor> requestInterceptors = ProxyServer.getRequestInterceptors();
+            for (RequestInterceptor interceptor : requestInterceptors) {
+                interceptor.process(mitmJavaProxyHttpRequest);
+            }
+            //continue with the (updated) request
+            return mitmJavaProxyHttpRequest;
         }
-        //continue with the (updated) request
-        return mitmJavaProxyHttpRequest;
+        return null;
     }
 
     private void runResponseInterceptors(MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest,
-                                         Servlet servlet,
-                                         Request baseRequest,
                                          ServletRequest request,
                                          ServletResponse response) {
         //now run response interceptors
-        MitmJavaProxyHttpResponse mitmJavaProxyHttpResponse = new MitmJavaProxyHttpResponse(mitmJavaProxyHttpRequest, servlet, baseRequest, request, response);
-        List<ResponseInterceptor> responseInterceptors = ProxyServer.getResponseInterceptors();
-        for (ResponseInterceptor interceptor : responseInterceptors) {
-            interceptor.process(mitmJavaProxyHttpResponse);
-        }
+        if ((request instanceof HttpServletRequest) && (response instanceof HttpServletResponse)) {
+            MitmJavaProxyHttpResponse mitmJavaProxyHttpResponse = new MitmJavaProxyHttpResponse(mitmJavaProxyHttpRequest, (Request)request, (Response)response);
+            List<ResponseInterceptor> responseInterceptors = ProxyServer.getResponseInterceptors();
+            for (ResponseInterceptor interceptor : responseInterceptors) {
+                interceptor.process(mitmJavaProxyHttpResponse);
+            }
 
-        if (mitmJavaProxyHttpResponse.isResponseVolatile()) {
-            //update response
+            if (mitmJavaProxyHttpResponse.isResponseVolatile()) {
+                //update response
+            }
+            //continue with the (updated) response
         }
-        //continue with the (updated) response
     }
 
     protected boolean isJspServlet()

@@ -7,9 +7,6 @@ import org.rockhill.mitm.proxy.header.HttpHeaderChange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.Servlet;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,19 +16,14 @@ public class MitmJavaProxyHttpResponse {
     private final Map<String, HttpHeaderChange> headerChanges = new HashMap<>();
 
     private final MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest;
-    private final Servlet servlet;
-    private final Request baseRequest;
-    private final ServletRequest request;
-    private final ServletResponse response;
+    private final Request request;
+    private final Response response;
 
-    public MitmJavaProxyHttpResponse(MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest, Servlet servlet, Request baseRequest, ServletRequest request, ServletResponse response) {
+    public MitmJavaProxyHttpResponse(MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest, Request request, Response response) {
         this.mitmJavaProxyHttpRequest = mitmJavaProxyHttpRequest;
-        this.servlet = servlet;
-        this.baseRequest = baseRequest;
         this.request = request;
         this.response = response;
     }
-
 
     /**
      * Gets the response body as String. Only available in case Proxy is working in 'captureContent' mode and the content type is not binary.

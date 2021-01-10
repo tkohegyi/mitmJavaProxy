@@ -1,4 +1,4 @@
-package org.rockhill.mitm.idgenerator;
+package org.rockhill.mitm.util.idgenerator;
 
 import org.junit.Assert;
 import org.junit.Before;

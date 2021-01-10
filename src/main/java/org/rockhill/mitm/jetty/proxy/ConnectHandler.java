@@ -34,6 +34,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -56,7 +58,9 @@ import org.eclipse.jetty.util.HostPort;
 import org.eclipse.jetty.util.Promise;
 import org.eclipse.jetty.util.thread.ScheduledExecutorScheduler;
 import org.eclipse.jetty.util.thread.Scheduler;
+import org.rockhill.mitm.jetty.server.Response;
 import org.rockhill.mitm.jetty.server.handler.HandlerWrapper;
+import org.rockhill.mitm.proxy.ProxyServer;
 import org.rockhill.mitm.proxy.RequestInterceptor;
 import org.rockhill.mitm.proxy.ResponseInterceptor;
 import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
@@ -339,6 +343,8 @@ public class ConnectHandler extends HandlerWrapper
         ConcurrentMap<String, Object> context = connectContext.getContext();
         HttpServletRequest request = connectContext.getRequest();
 
+        MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest = runRequestInterceptors(request);
+
         prepareContext(request, context);
 
         HttpConnection httpConnection = connectContext.getHttpConnection();
@@ -353,11 +359,43 @@ public class ConnectHandler extends HandlerWrapper
 
         HttpServletResponse response = connectContext.getResponse();
 
+        runResponseInterceptors(mitmJavaProxyHttpRequest, request, response);
+
         sendConnectResponse(request, response, HttpServletResponse.SC_OK);
 
         upgradeConnection(request, response, downstreamConnection);
 
         connectContext.getAsyncContext().complete();
+    }
+
+    private MitmJavaProxyHttpRequest runRequestInterceptors(HttpServletRequest request) {
+        //now run request interceptors
+        if (request instanceof Request) {
+            MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest = new MitmJavaProxyHttpRequest((Request) request);
+            List<RequestInterceptor> requestInterceptors = ProxyServer.getRequestInterceptors();
+            for (RequestInterceptor interceptor : requestInterceptors) {
+                interceptor.process(mitmJavaProxyHttpRequest);
+            }
+            //continue with the (updated) request
+            return mitmJavaProxyHttpRequest;
+        }
+        return null;
+    }
+
+    private void runResponseInterceptors(MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest,
+                                         HttpServletRequest request,
+                                         HttpServletResponse response) {
+        //now run response interceptors
+            MitmJavaProxyHttpResponse mitmJavaProxyHttpResponse = new MitmJavaProxyHttpResponse(mitmJavaProxyHttpRequest, (Request)request, (Response)response);
+            List<ResponseInterceptor> responseInterceptors = ProxyServer.getResponseInterceptors();
+            for (ResponseInterceptor interceptor : responseInterceptors) {
+                interceptor.process(mitmJavaProxyHttpResponse);
+            }
+
+            if (mitmJavaProxyHttpResponse.isResponseVolatile()) {
+                //update response
+            }
+            //continue with the (updated) response
     }
 
     protected void onConnectFailure(HttpServletRequest request, HttpServletResponse response, AsyncContext asyncContext, Throwable failure)
