@@ -151,7 +151,7 @@ public abstract class StubServerBase extends ClientServerBase {
                 }
                 baseRequest.setHandled(true);
 
-                response.addHeader(HttpFields.__ContentLength, Integer.toString(content.length));
+                response.addHeader(HttpFields.CONTENT_LENGTH, Integer.toString(content.length));
                 response.setContentType(STUB_SERVER_RESPONSE_CONTENT_TYPE);
                 response.getOutputStream().write(content);
             }
