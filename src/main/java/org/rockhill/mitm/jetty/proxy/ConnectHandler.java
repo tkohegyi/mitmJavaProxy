@@ -71,9 +71,6 @@ public class ConnectHandler extends HandlerWrapper
 {
     protected static final Logger LOG = LoggerFactory.getLogger(ConnectHandler.class);
 
-    private final List<RequestInterceptor> requestInterceptors = new CopyOnWriteArrayList<>();
-    private final List<ResponseInterceptor> responseInterceptors = new CopyOnWriteArrayList<>();
-
     private final Set<String> whiteList = new HashSet<>();
     private final Set<String> blackList = new HashSet<>();
     private Executor executor;
@@ -166,14 +163,6 @@ public class ConnectHandler extends HandlerWrapper
     public void setBufferSize(int bufferSize)
     {
         this.bufferSize = bufferSize;
-    }
-
-    public void addRequestInterceptor(final RequestInterceptor interceptor) {
-        requestInterceptors.add(interceptor);
-    }
-
-    public void addResponseInterceptor(final ResponseInterceptor interceptor) {
-        responseInterceptors.add(interceptor);
     }
 
     @Override
@@ -350,13 +339,6 @@ public class ConnectHandler extends HandlerWrapper
         ConcurrentMap<String, Object> context = connectContext.getContext();
         HttpServletRequest request = connectContext.getRequest();
 
-        //now run request interceptors
-        MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest = new MitmJavaProxyHttpRequest(request, context, upstreamConnection);
-        for (RequestInterceptor interceptor : requestInterceptors) {
-            interceptor.process(mitmJavaProxyHttpRequest);
-        }
-        //continue with the (updated) request
-
         prepareContext(request, context);
 
         HttpConnection httpConnection = connectContext.getHttpConnection();
@@ -370,17 +352,6 @@ public class ConnectHandler extends HandlerWrapper
             LOG.debug("Connection setup completed: {}<->{}", downstreamConnection, upstreamConnection);
 
         HttpServletResponse response = connectContext.getResponse();
-
-        //now run response interceptors
-        MitmJavaProxyHttpResponse mitmJavaProxyHttpResponse = new MitmJavaProxyHttpResponse(mitmJavaProxyHttpRequest, response, downstreamConnection);
-        for (ResponseInterceptor interceptor : responseInterceptors) {
-            interceptor.process(mitmJavaProxyHttpResponse);
-        }
-
-        if (mitmJavaProxyHttpResponse.isResponseVolatile()) {
-            //update response
-        }
-        //continue with the (updated) response
 
         sendConnectResponse(request, response, HttpServletResponse.SC_OK);
 

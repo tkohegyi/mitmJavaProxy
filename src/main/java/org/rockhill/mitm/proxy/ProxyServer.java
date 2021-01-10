@@ -13,9 +13,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ProxyServer {
+
+    private static final List<RequestInterceptor> requestInterceptors = new CopyOnWriteArrayList<>();
+    private static final List<ResponseInterceptor> responseInterceptors = new CopyOnWriteArrayList<>();
+
     private final Logger logger = LoggerFactory.getLogger(ProxyServer.class);
     private final Server server;
     private final ConnectHandler proxy;
@@ -134,7 +140,21 @@ public class ProxyServer {
         return -1;
     }
 
-    public void addRequestInterceptor(RequestInterceptor requestInterceptor) {
-        proxy.addRequestInterceptor(requestInterceptor);
+    public void addRequestInterceptor(final RequestInterceptor interceptor) {
+        requestInterceptors.add(interceptor);
     }
+
+    public void addResponseInterceptor(final ResponseInterceptor interceptor) {
+        responseInterceptors.add(interceptor);
+    }
+
+    public static List<RequestInterceptor> getRequestInterceptors() {
+        return requestInterceptors;
+    }
+
+    public static List<ResponseInterceptor> getResponseInterceptors() {
+        return responseInterceptors;
+    }
+
+
 }

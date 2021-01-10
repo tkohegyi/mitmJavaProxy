@@ -1,12 +1,14 @@
 package org.rockhill.mitm.proxy.http;
 
 import org.rockhill.mitm.idgenerator.TimeStampBasedIdGenerator;
-import org.rockhill.mitm.jetty.proxy.ConnectHandler;
+import org.rockhill.mitm.jetty.server.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.Servlet;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import java.util.concurrent.ConcurrentMap;
 
 public class MitmJavaProxyHttpRequest {
     public static final TimeStampBasedIdGenerator TIME_STAMP_BASED_ID_GENERATOR = new TimeStampBasedIdGenerator();
@@ -15,14 +17,16 @@ public class MitmJavaProxyHttpRequest {
     private boolean responseVolatile = false;
 
     //arrived with constructor
-    private final HttpServletRequest request;
-    private final ConcurrentMap<String, Object> context;
-    private final ConnectHandler.UpstreamConnection upstreamConnection;
+    private final Servlet servlet;
+    private final Request baseRequest;
+    private final ServletRequest request;
+    private final ServletResponse response;
 
-    public MitmJavaProxyHttpRequest(HttpServletRequest request, ConcurrentMap<String, Object> context, ConnectHandler.UpstreamConnection upstreamConnection) {
+    public MitmJavaProxyHttpRequest(Servlet servlet, Request baseRequest, ServletRequest request, ServletResponse response) {
+        this.servlet = servlet;
+        this.baseRequest = baseRequest;
         this.request = request;
-        this.context = context;
-        this.upstreamConnection = upstreamConnection;
+        this.response = response;
     }
 
     public String getMessageId() {
@@ -38,6 +42,9 @@ public class MitmJavaProxyHttpRequest {
     }
 
     public HttpServletRequest getRequest() {
-        return request;
+        if (request instanceof HttpServletRequest) {
+            return (HttpServletRequest) request;
+        }
+        return null;
     }
 }

@@ -1,12 +1,15 @@
 package org.rockhill.mitm.proxy.http;
 
 import org.apache.http.Header;
-import org.rockhill.mitm.jetty.proxy.ConnectHandler;
+import org.rockhill.mitm.jetty.server.Request;
+import org.rockhill.mitm.jetty.server.Response;
 import org.rockhill.mitm.proxy.header.HttpHeaderChange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.Servlet;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,13 +19,17 @@ public class MitmJavaProxyHttpResponse {
     private final Map<String, HttpHeaderChange> headerChanges = new HashMap<>();
 
     private final MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest;
-    private final HttpServletResponse response;
-    private final ConnectHandler.DownstreamConnection downstreamConnection;
+    private final Servlet servlet;
+    private final Request baseRequest;
+    private final ServletRequest request;
+    private final ServletResponse response;
 
-    public MitmJavaProxyHttpResponse(MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest, HttpServletResponse response, ConnectHandler.DownstreamConnection downstreamConnection) {
+    public MitmJavaProxyHttpResponse(MitmJavaProxyHttpRequest mitmJavaProxyHttpRequest, Servlet servlet, Request baseRequest, ServletRequest request, ServletResponse response) {
         this.mitmJavaProxyHttpRequest = mitmJavaProxyHttpRequest;
+        this.servlet = servlet;
+        this.baseRequest = baseRequest;
+        this.request = request;
         this.response = response;
-        this.downstreamConnection = downstreamConnection;
     }
 
 
@@ -59,7 +66,7 @@ public class MitmJavaProxyHttpResponse {
      * @return with the content type string or null if not defined.
      */
     public String getContentType() {
-        return null;
+        return response.getContentType();
     }
 
     /**
@@ -88,7 +95,7 @@ public class MitmJavaProxyHttpResponse {
     }
 
     public String getCharSet() {
-        return null;
+        return response.getCharacterEncoding();
     }
 
     public String getHeader(String name) {
@@ -104,6 +111,9 @@ public class MitmJavaProxyHttpResponse {
     }
 
     public int getStatus() {
+        if (response instanceof Response) {
+            return ((Response)response).getStatus();
+        }
         return -1;
     }
 

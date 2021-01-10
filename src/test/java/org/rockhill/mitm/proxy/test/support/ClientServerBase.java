@@ -187,7 +187,11 @@ public abstract class ClientServerBase extends ProxyServerBase {
     }
 
     public void setLastException(Exception e) {
-        logger.error("ISSUE DETECTED! {}", e.getMessage(), e);
+        if (e != null) {
+            logger.error("ISSUE DETECTED! {}", e.getMessage(), e);
+        } else {
+            logger.info("LastException flag CLEARED!");
+        }
         lastException = e;
     }
 
