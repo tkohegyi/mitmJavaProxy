@@ -59,9 +59,8 @@ public class ProxyServer {
 
         // Setup proxy servlet
         ServletContextHandler context = new ServletContextHandler(proxy, "/", ServletContextHandler.SESSIONS);
-        ServletHolder proxyServlet = new ServletHolder(ProxyServlet.class);
 
-        //proxyServlet.setInitParameter("blackList", "www.eclipse.org");
+        ServletHolder proxyServlet = new ServletHolder(MitmProxyServlet.class);
         context.addServlet(proxyServlet, "/*");
 
     }
@@ -99,6 +98,10 @@ public class ProxyServer {
 
     public int getPort() {
         return port;
+    }
+
+    public int getSecurePort() {
+        return securePort;
     }
 
     /**

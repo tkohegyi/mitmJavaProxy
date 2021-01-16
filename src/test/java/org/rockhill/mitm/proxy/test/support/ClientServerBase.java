@@ -224,6 +224,16 @@ public abstract class ClientServerBase extends ProxyServerBase {
      * @throws Exception is something wrong happens
      */
     public CloseableHttpClient getHttpClient(boolean isProxyInUse) throws Exception {
+        return getHttpClient(isProxyInUse, false);
+    }
+
+    /**
+     * Creates a CloseableHttpClient instance that uses the proxy.
+     *
+     * @return instance of CloseableHttpClient
+     * @throws Exception is something wrong happens
+     */
+    public CloseableHttpClient getHttpClient(boolean isProxyInUse, boolean useHttpsProxy) throws Exception {
 //        TrustStrategy acceptingTrustStrategy = (cert, authType) -> true;  //checkstyle cannot handle this, so using a bit more complex code below
         TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
             @Override
@@ -249,7 +259,12 @@ public abstract class ClientServerBase extends ProxyServerBase {
                 .setConnectionManager(connectionManager);
 
         if (isProxyInUse) {
-            HttpHost proxy = new HttpHost("127.0.0.1", getProxyPort());
+            HttpHost proxy;
+            if (useHttpsProxy) {
+                proxy = new HttpHost("127.0.0.1", getProxySecurePort());
+            } else {
+                proxy = new HttpHost("127.0.0.1", getProxyPort());
+            }
             httpClientBuilder.setProxy(proxy);
         }
 

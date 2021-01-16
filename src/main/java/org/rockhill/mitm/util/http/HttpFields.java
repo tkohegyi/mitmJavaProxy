@@ -4,7 +4,7 @@ public class HttpFields {
     /**
      * Entity Fields.
      */
-    public final static String
+    public static final String
             ALLOW = "Allow",
             CONTENT_ENCODING = "Content-Encoding",
             CONTENT_LANGUAGE = "Content-Language",
@@ -15,4 +15,7 @@ public class HttpFields {
             CONTENT_TYPE = "Content-Type",
             EXPIRES = "Expires",
             LAST_MODIFIED = "Last-Modified";
+
+    public static final String TRANSFER_ENCODING = "Transfer-Encoding";
+    public static final String MULTIPART_FORM_DATA = "multipart/form-data";
 }

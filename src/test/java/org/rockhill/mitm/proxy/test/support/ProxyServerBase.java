@@ -21,11 +21,13 @@ public class ProxyServerBase {
     private final Logger logger = LoggerFactory.getLogger(ProxyServerBase.class);
     private ProxyServer proxyServer;
     private int proxyPort = -1;
+    private int proxySecurePort = -1;
 
     public void startProxyServer() throws Exception {
         proxyServer = new ProxyServer(0);
         proxyServer.start(PROXY_TIMEOUT);
         proxyPort = proxyServer.getPort();
+        proxySecurePort = proxyServer.getSecurePort();
 //        Proxy2Server.setShouldKeepSslConnectionAlive(false);
         assertThat(getProxyPort(), not(equalTo(0)));
         logger.info("*** Proxy Server started on port: {}", proxyPort);
@@ -39,6 +41,10 @@ public class ProxyServerBase {
 
     public int getProxyPort() {
         return proxyPort;
+    }
+
+    public int getProxySecurePort() {
+        return proxySecurePort;
     }
 
     public ProxyServer getProxyServer() {

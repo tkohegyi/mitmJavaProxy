@@ -216,6 +216,7 @@ public abstract class AbstractProxyServlet extends HttpServlet
         {
             servletName = getClass().getName() + "." + servletName;
         }
+        servletName = StringUtil.replace(servletName, '$', '.');
         return Log.getLogger(servletName);
     }
 
