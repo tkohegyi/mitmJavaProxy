@@ -1,6 +1,8 @@
 package net.lightbody.bmp.proxy.selenium;
 
+import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.OperatorCreationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -303,7 +305,10 @@ public class KeyStoreManager {
      * @throws CertificateParsingException
      * @see ThumbprintUtil
      */
-    public synchronized X509Certificate getCertificateByHostname(final String hostname) throws KeyStoreException, CertificateParsingException, InvalidKeyException, CertificateExpiredException, CertificateNotYetValidException, SignatureException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException, UnrecoverableKeyException {
+    public synchronized X509Certificate getCertificateByHostname(final String hostname) throws KeyStoreException,
+            CertificateParsingException, InvalidKeyException, CertificateExpiredException, CertificateNotYetValidException,
+            SignatureException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException,
+            UnrecoverableKeyException, CertIOException, OperatorCreationException {
         String alias = _subjectMap.get(getSubjectForHostname(hostname));
 
         if (alias != null) {
@@ -363,7 +368,7 @@ public class KeyStoreManager {
             NoSuchProviderException,
             SignatureException,
             KeyStoreException,
-            UnrecoverableKeyException {
+            UnrecoverableKeyException, CertIOException, OperatorCreationException {
 
         String thumbprint = ThumbprintUtil.getThumbprint(cert);
 
@@ -440,7 +445,7 @@ public class KeyStoreManager {
      * @throws KeyStoreException
      * @throws UnrecoverableKeyException
      */
-    public X509Certificate getMappedCertificateForHostname(String hostname) throws CertificateParsingException, InvalidKeyException, CertificateExpiredException, CertificateNotYetValidException, SignatureException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException, KeyStoreException, UnrecoverableKeyException {
+    public X509Certificate getMappedCertificateForHostname(String hostname) throws CertificateParsingException, InvalidKeyException, CertificateExpiredException, CertificateNotYetValidException, SignatureException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException, KeyStoreException, UnrecoverableKeyException, CertIOException, OperatorCreationException {
         String subject = getSubjectForHostname(hostname);
 
         String thumbprint = _subjectMap.get(subject);

@@ -10,6 +10,7 @@ import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.bouncycastle.x509.extension.AuthorityKeyIdentifierStructure;
 
 import javax.security.auth.x500.X500Principal;
@@ -21,6 +22,9 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.HashSet;
@@ -37,7 +41,8 @@ import java.util.Set;
  *
  * @author Brad Hill
  */
-public class CertificateCreator {
+public class CertificateCreatorObsolete {
+
 
     /**
      * The default key generation algorithm for this package is RSA.
@@ -75,8 +80,8 @@ public class CertificateCreator {
      * X.509 OID for Additional CA Issuers for AIA - Omitted when duplicating a cert by default.
      */
     public static final String OID_ID_AD_CAISSUERS = "1.3.6.1.5.5.7.48.2";
-    private static final HashSet<String> clientCertOidsNeverToCopy = new HashSet<>();
-    private static final HashSet<String> clientCertDefaultOidsNotToCopy = new HashSet<>();
+    private static final HashSet<String> clientCertOidsNeverToCopy = new HashSet<String>();
+    private static final HashSet<String> clientCertDefaultOidsNotToCopy = new HashSet<String>();
 
     static {
         clientCertOidsNeverToCopy.add(OID_SUBJECT_KEY_IDENTIFIER);
@@ -119,8 +124,11 @@ public class CertificateCreator {
      * @param caPrivateKey           The private key of the signing authority.
      * @param extensionOidsNotToCopy An optional list of certificate extension OIDs not to copy to the MITM certificate.
      * @return The new MITM certificate.
+     * @throws CertificateParsingException
      * @throws SignatureException
      * @throws InvalidKeyException
+     * @throws CertificateExpiredException
+     * @throws CertificateNotYetValidException
      * @throws CertificateException
      * @throws NoSuchAlgorithmException
      * @throws NoSuchProviderException
@@ -130,11 +138,24 @@ public class CertificateCreator {
                                                            final X509Certificate caCert,
                                                            final PrivateKey caPrivateKey,
                                                            Set<String> extensionOidsNotToCopy)
-            throws SignatureException, InvalidKeyException, CertificateException, NoSuchAlgorithmException,
+            throws SignatureException,
+            InvalidKeyException,
+            CertificateException,
+            NoSuchAlgorithmException,
             NoSuchProviderException, CertIOException, OperatorCreationException {
         if (extensionOidsNotToCopy == null) {
-            extensionOidsNotToCopy = new HashSet<>();
+            extensionOidsNotToCopy = new HashSet<String>();
         }
+
+        X509V3CertificateGenerator v3CertGen = new X509V3CertificateGenerator();
+
+        v3CertGen.setSubjectDN(originalCert.getSubjectX500Principal());
+        v3CertGen.setSignatureAlgorithm(CertificateCreatorObsolete.SIGN_ALGO); // needs to be the same as the signing cert, not the copied cert
+        v3CertGen.setPublicKey(newPubKey);
+        v3CertGen.setNotAfter(originalCert.getNotAfter());
+        v3CertGen.setNotBefore(originalCert.getNotBefore());
+        v3CertGen.setIssuerDN(caCert.getSubjectX500Principal());
+        v3CertGen.setSerialNumber(originalCert.getSerialNumber());
 
         // copy other extensions:
         Set<String> critExts = originalCert.getCriticalExtensionOIDs();
@@ -149,6 +170,26 @@ public class CertificateCreator {
             throw new RuntimeException("Ups has non-critical extensions..."); //TODO
         }
 
+		/* TODO
+		v3CertGen.addExtension(
+				X509Extensions.SubjectKeyIdentifier,
+				false,
+				new SubjectKeyIdentifierStructure(newPubKey));
+*/
+
+        v3CertGen.addExtension(
+                X509Extensions.AuthorityKeyIdentifier,
+                false,
+                new AuthorityKeyIdentifierStructure(caCert.getPublicKey()));
+
+        X509Certificate cert = v3CertGen.generate(caPrivateKey, "BC");
+
+        // For debugging purposes.
+        //cert.checkValidity(new Date());
+        //cert.verify(caCert.getPublicKey());
+
+   //     return cert;  //return with old-style certificate
+///*
         X509v3CertificateBuilder x509v3CertificateBuilder = new JcaX509v3CertificateBuilder(
                 caCert.getSubjectX500Principal(),
                 originalCert.getSerialNumber(),
@@ -161,20 +202,13 @@ public class CertificateCreator {
                 X509Extensions.AuthorityKeyIdentifier,
                 false,
                 new AuthorityKeyIdentifierStructure(caCert.getPublicKey()));
-
-        /* TODO
-		x509v3CertificateBuilder.addExtension(
-				X509Extensions.SubjectKeyIdentifier,
-				false,
-				new SubjectKeyIdentifierStructure(newPubKey));
-        */
-
-        //ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(caPrivateKey);
-        ContentSigner signer = new JcaContentSignerBuilder(CertificateCreator.SIGN_ALGO).build(caPrivateKey); // needs to be the same as the signing cert, not the copied cert
+        ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(caPrivateKey);
         X509CertificateHolder certHolder = x509v3CertificateBuilder.build(signer);
-        X509Certificate cert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
+        cert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
         cert.verify(newPubKey);
         return cert;
+
+// */
     }
 
     /**
@@ -188,8 +222,11 @@ public class CertificateCreator {
      * @param caCert
      * @param caPrivateKey
      * @return
+     * @throws CertificateParsingException
      * @throws SignatureException
      * @throws InvalidKeyException
+     * @throws CertificateExpiredException
+     * @throws CertificateNotYetValidException
      * @throws CertificateException
      * @throws NoSuchAlgorithmException
      * @throws NoSuchProviderException
@@ -198,8 +235,7 @@ public class CertificateCreator {
                                                            final PublicKey newPubKey,
                                                            final X509Certificate caCert,
                                                            final PrivateKey caPrivateKey)
-            throws SignatureException, InvalidKeyException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException,
-            CertIOException, OperatorCreationException {
+            throws SignatureException, InvalidKeyException, CertificateException, NoSuchAlgorithmException, NoSuchProviderException, CertIOException, OperatorCreationException {
         return mitmDuplicateCertificate(originalCert, newPubKey, caCert, caPrivateKey, clientCertDefaultOidsNotToCopy);
     }
 
@@ -208,11 +244,17 @@ public class CertificateCreator {
             final X509Certificate caCert,
             final PrivateKey caPrivateKey,
             final String subject)
-            throws InvalidKeyException, CertificateException, CertIOException, OperatorCreationException {
+            throws SignatureException,
+            InvalidKeyException,
+            CertificateException,
+            NoSuchAlgorithmException,
+            NoSuchProviderException, CertIOException, OperatorCreationException {
+        X509V3CertificateGenerator v3CertGen = new X509V3CertificateGenerator();
 
+        ///*
+        //NEW APPROACH
         X509v3CertificateBuilder x509v3CertificateBuilder = new JcaX509v3CertificateBuilder(
-                caCert.getSubjectX500Principal(),
-                // This is not a secure serial number generator, (duh!) but it's good enough for our purposes.
+                caCert.getIssuerX500Principal(),
                 new BigInteger(Long.toString(System.currentTimeMillis())),
                 new Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 30 * 12),
                 new Date(System.currentTimeMillis() + 30L * 60 * 60 * 24 * 30 * 12),
@@ -227,12 +269,48 @@ public class CertificateCreator {
                 X509Extensions.AuthorityKeyIdentifier,
                 false,
                 new AuthorityKeyIdentifierStructure(caCert.getPublicKey()));
-        /*
-                //TODO
-//		x509v3CertificateBuilder.addExtension(
+        ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(caPrivateKey);
+        X509CertificateHolder certHolder = x509v3CertificateBuilder.build(signer);
+        X509Certificate newCert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
+        //newCert.verify(newPubKey, "BC"); //- seems this throws ex always.... ????
+        //newCert ready, continue with OLD cer creation
+
+         //*/
+
+        v3CertGen.setSubjectDN(new X500Principal(subject));
+        v3CertGen.setSignatureAlgorithm(CertificateCreatorObsolete.SIGN_ALGO);
+        v3CertGen.setPublicKey(newPubKey);
+        v3CertGen.setNotAfter(new Date(System.currentTimeMillis() + 30L * 60 * 60 * 24 * 30 * 12));
+        v3CertGen.setNotBefore(new Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 30 * 12));
+        v3CertGen.setIssuerDN(caCert.getSubjectX500Principal());
+
+        // Firefox actually tracks serial numbers within a CA and refuses to validate if it sees duplicates
+        // This is not a secure serial number generator, (duh!) but it's good enough for our purposes.
+        v3CertGen.setSerialNumber(new BigInteger(Long.toString(System.currentTimeMillis())));
+
+        v3CertGen.addExtension(
+                X509Extensions.BasicConstraints,
+                true,
+                new BasicConstraints(false));
+
+        //TODO
+//		v3CertGen.addExtension(
 //				X509Extensions.SubjectKeyIdentifier,
 //				false,
 //				new SubjectKeyIdentifierStructure(newPubKey));
+
+
+        v3CertGen.addExtension(
+                X509Extensions.AuthorityKeyIdentifier,
+                false,
+                new AuthorityKeyIdentifierStructure(caCert.getPublicKey()));
+
+// 		Firefox 2 disallows these extensions in an SSL server cert.  IE7 doesn't care.
+//		v3CertGen.addExtension(
+//				X509Extensions.KeyUsage,
+//				false,
+//				new KeyUsage(KeyUsage.dataEncipherment | KeyUsage.digitalSignature ) );
+
 
         //TODO
 //		DEREncodableVector typicalSSLServerExtendedKeyUsages = new DEREncodableVector();
@@ -242,30 +320,29 @@ public class CertificateCreator {
 //		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.netscapeServerGatedCrypto));
 //		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.msServerGatedCrypto));
 
-//		x509v3CertificateBuilder.addExtension(
+//		v3CertGen.addExtension(
 //				X509Extensions.ExtendedKeyUsage,
 //				false,
 //				new DERSequence(typicalSSLServerExtendedKeyUsages));
 
 //  Disabled by default.  Left in comments in case this is desired.
 //
-//		x509v3CertificateBuilder.addExtension(
+//		v3CertGen.addExtension(
 //				X509Extensions.AuthorityInfoAccess,
 //				false,
 //				new AuthorityInformationAccess(new DERObjectIdentifier(OID_ID_AD_CAISSUERS),
 //						new GeneralName(GeneralName.uniformResourceIdentifier, "http://" + subject + "/aia")));
 
-//		x509v3CertificateBuilder.addExtension(
+//		v3CertGen.addExtension(
 //				X509Extensions.CRLDistributionPoints,
 //				false,
 //				new CRLDistPoint(new DistributionPoint[] {}));
-         */
-//        ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(caPrivateKey);
-        ContentSigner signer = new JcaContentSignerBuilder(CertificateCreator.SIGN_ALGO).build(caPrivateKey);
-        X509CertificateHolder certHolder = x509v3CertificateBuilder.build(signer);
-        X509Certificate newCert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
-        //newCert.verify(newPubKey, "BC"); //- seems this throws ex always.... ????
-        return newCert;
+
+
+        X509Certificate cert = v3CertGen.generate(caPrivateKey, "BC");
+
+//        return cert; //returns with cert generated with old style
+        return newCert; //return with cert generated in new style
     }
 
 }

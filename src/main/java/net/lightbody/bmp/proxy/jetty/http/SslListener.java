@@ -119,7 +119,8 @@ public class SslListener extends SocketListener {
      */
     private static X509Certificate[] getCertChain(SSLSession sslSession) {
         try {
-            javax.security.cert.X509Certificate javaxCerts[] = sslSession.getPeerCertificateChain();
+            //javax.security.cert.X509Certificate javaxCerts[] = sslSession.getPeerCertificateChain();
+            java.security.cert.Certificate javaxCerts[] = sslSession.getPeerCertificates();
             if (javaxCerts == null || javaxCerts.length == 0) return null;
 
             int length = javaxCerts.length;

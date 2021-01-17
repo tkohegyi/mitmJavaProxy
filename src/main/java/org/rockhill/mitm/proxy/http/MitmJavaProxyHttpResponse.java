@@ -255,18 +255,22 @@ public class MitmJavaProxyHttpResponse {
      */
     public void removeHeader(final Header header) {
         boolean found = false;
-        String key = header.getName();
-        Header[] headers = getHeaders();
-        for (Header h : headers) {
-            if (header.getName().equals(h.getName()) && header.getValue().equals(h.getValue())) {
-                found = true;
-                getRawResponse().removeHeader(h);
-                HttpHeaderToBeRemoved headerToBeRemoved = new HttpHeaderToBeRemoved(header);
-                headerChanges.put(key, headerToBeRemoved);
+        if (header != null) {
+            String key = header.getName();
+            Header[] headers = getHeaders();
+            for (Header h : headers) {
+                if (header.getName().equals(h.getName()) && header.getValue().equals(h.getValue())) {
+                    found = true;
+                    getRawResponse().removeHeader(h);
+                    HttpHeaderToBeRemoved headerToBeRemoved = new HttpHeaderToBeRemoved(header);
+                    headerChanges.put(key, headerToBeRemoved);
+                }
             }
-        }
-        if (!found) {
-            logger.warn("Header with key: {} not found, remove header skipped.", key);
+            if (!found) {
+                logger.warn("Header with key: {} not found, remove header skipped.", key);
+            }
+        } else {
+            logger.warn("removeHeader called with null");
         }
     }
 
@@ -276,9 +280,18 @@ public class MitmJavaProxyHttpResponse {
      * @param header is the header to be added.
      */
     public void addHeader(final Header header) {
-        getRawResponse().addHeader(header.getName(), header.getValue());
-        HttpHeaderToBeAdded httpHeaderToBeAdded = new HttpHeaderToBeAdded(header);
-        headerChanges.put(header.getName(), httpHeaderToBeAdded);
+        if (header != null) {
+            HttpResponse httpResponse = getRawResponse();
+            if (httpResponse != null) {
+                httpResponse.addHeader(header);
+                HttpHeaderToBeAdded httpHeaderToBeAdded = new HttpHeaderToBeAdded(header);
+                headerChanges.put(header.getName(), httpHeaderToBeAdded);
+            } else {
+                logger.warn("addHeader called without accessible response");
+            }
+        } else {
+            logger.warn("addHeader called with null");
+        }
     }
 
     /**
@@ -289,20 +302,24 @@ public class MitmJavaProxyHttpResponse {
      */
     public void updateHeader(final Header header, final String newValue) {
         boolean found = false;
-        String key = header.getName();
-        Header[] headers = getHeaders();
-        for (Header h : headers) {
-            if (header.getName().equals(h.getName()) && header.getValue().equals(h.getValue())) {
-                found = true;
-                getRawResponse().removeHeader(h);
-                getRawResponse().addHeader(key, newValue);
-                HttpHeaderToBeUpdated httpHeaderToBeUpdated = new HttpHeaderToBeUpdated(header, newValue);
-                headerChanges.put(key, httpHeaderToBeUpdated);
+        if (header != null && newValue != null) {
+            String key = header.getName();
+            Header[] headers = getHeaders();
+            for (Header h : headers) {
+                if (header.getName().equals(h.getName()) && header.getValue().equals(h.getValue())) {
+                    found = true;
+                    getRawResponse().removeHeader(h);
+                    getRawResponse().addHeader(key, newValue);
+                    HttpHeaderToBeUpdated httpHeaderToBeUpdated = new HttpHeaderToBeUpdated(header, newValue);
+                    headerChanges.put(key, httpHeaderToBeUpdated);
+                }
             }
-        }
-        if (!found) {
-            Header h = new BasicHeader(header.getName(), newValue);
-            addHeader(h);
+            if (!found) {
+                Header h = new BasicHeader(header.getName(), newValue);
+                addHeader(h);
+            }
+        } else {
+            logger.warn("updateHeader called with null");
         }
     }
 

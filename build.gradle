@@ -85,7 +85,7 @@ dependencies {
     compile group: 'org.apache.httpcomponents', name: 'httpmime', version:'4.5.13' //this includes httpclient too
     compile group: 'org.apache.commons', name: 'commons-io', version:'1.3.2'
     compile group: 'org.apache.ant', name: 'ant', version:'1.9.4'
-    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:'1.68'
+    compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.68' //this includes bcprov-jdk15on too
     compile group: 'org.eclipse.jetty', name: 'jetty-io', version: '9.4.35.v20201120'
     compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
     compile group: 'dnsjava', name: 'dnsjava', version: '3.3.1'
