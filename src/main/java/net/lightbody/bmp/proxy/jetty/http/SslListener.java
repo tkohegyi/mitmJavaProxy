@@ -32,6 +32,7 @@ import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -80,7 +81,8 @@ public class SslListener extends SocketListener {
     private boolean _needClientAuth = false; // Set to true if we require client certificate authentication.
     private boolean _wantClientAuth = false; // Set to true if we would like client certificate authentication.
     private String _protocol = "TLS";
-    private String _algorithm = (Security.getProperty("ssl.KeyManagerFactory.algorithm") == null ? "SunX509" : Security.getProperty("ssl.KeyManagerFactory.algorithm")); // cert algorithm
+    //see https://stackoverflow.com/questions/3797704/generate-ssl-certificate-using-keytool-provide-in-jdk
+    private String _algorithm = (Security.getProperty("ssl.KeyManagerFactory.algorithm") == null ? "PKIX" : Security.getProperty("ssl.KeyManagerFactory.algorithm")); // cert algorithm
     private String _keystoreType = "JKS"; // type of the key store
     private String _provider = null;
 
