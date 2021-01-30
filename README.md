@@ -1,9 +1,9 @@
 MitmJavaProxy
 ============================
 This Men-In-The-Middle Java Proxy is a derivative work that was originated from [**BrowserMob Proxy**](https://github.com/lightbody/browsermob-proxy), then tailored for old [**Wilma**](https://github.com/epam/Wilma) versions, 
-then upgraded in order to have a refreshed MITM Java Proxy and be prepared for the next generation of **Wilma** which is a service virtualization tool and relies on this **MitmJavaProxy**. 
+then upgraded in order to have a refreshed MITM Java Proxy and be prepared for the next generation of **Wilma** which is a proxy/stub/service virtualization tool and relies on this **MitmJavaProxy**. 
 
-**Right now everything seems to be working so can be used in experimental mode**, but still changes need to be expected before the first real release.
+**Right now everything seems to be working so can be used**.
 
 Also please be aware that the main aim of creating this MITM Java proxy is to support the proxy need of [Wilma](https://github.com/epam/Wilma).
 Therefore none of the original browsermob-proxy features should be expected as working, on the other side, other features which was not in the original browsermob-proxy become available. Also, this version is prepered for Java >8 versions, and supports TSL.
@@ -30,7 +30,7 @@ repositories {
 }
     
 dependencies {
-    implementation('org.rockhill.mitm:mitmJavaProxy:2.0.17.57')
+    implementation('org.rockhill.mitm:mitmJavaProxy:2.0.18.85')
     ...
 }    
 ```
@@ -38,7 +38,7 @@ dependencies {
 Release
 ------------
 Latest announced release is available here:
-[ ![Download](https://api.bintray.com/packages/tkohegyi2/maven/mitmJavaProxy/images/download.svg?version=V2.0.17.57) ](https://bintray.com/tkohegyi2/maven/mitmJavaProxy/V2.0.17.57/link) or from **jcenter** as described above.
+[ ![Download](https://api.bintray.com/packages/tkohegyi2/maven/mitmJavaProxy/images/download.svg?version=V2.0.18.85) ](https://bintray.com/tkohegyi2/maven/mitmJavaProxy/V2.0.18.85/link) or from **jcenter** as described above.
 
 Build from source
 -----------------
@@ -63,8 +63,8 @@ HTTP Response Manipulation
 -------------------
 Just add a Response Interceptor to the proxy server, and you will get access to the responses.
 
-The key to manipulate responses is the Response Volatility. 
-If a response is volatile, the proxy (or you) must work with the response a lot (extract, call interceptor, compress, then release response towards the Client). This is SLOW.
+The key to manipulate responses is the Response Volatility attribute. 
+If a response is volatile, the proxy (or you) must work with the response a lot (extract, call interceptor, compress, then release response towards the Client). This takes time.
 If a response is not volatile, then the proxy don't need to do such things. This of course a much faster method, so in case you don't need to manipulate the response, just leave responses as not volatile.
 Response volatility can be set in general via static method: `ProxyServer.SetResponseVolatility(boolean)`
 Or can be set per request-response pair by using the Request Interceptors. See more details [here](https://github.com/tkohegyi/mitmJavaProxy/wiki/5.-How-to-manipulate-responses).
