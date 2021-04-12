@@ -42,7 +42,7 @@ Latest announced release is available here:
 
 Build from source
 -----------------
-Travis CI Build Status (applicable for latest build from source): [![Build Status](https://travis-ci.com/tkohegyi/mitmJavaProxy.svg?branch=master)](https://travis-ci.com/tkohegyi/mitmJavaProxy)
+Github CI Build status: ![CI](https://github.com/tkohegyi/mitmJavaProxy/workflows/CI/badge.svg)
 
 [![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/dashboard?id=tkohegyi_mitmJavaProxy)
 
