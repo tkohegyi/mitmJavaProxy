@@ -1,6 +1,6 @@
 package net.lightbody.bmp.proxy;
 
-import org.rockhill.mitm.proxy.ProxyServer;
+import website.magyar.mitm.proxy.ProxyServer;
 import org.apache.http.HttpHost;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.impl.client.DefaultHttpClient;

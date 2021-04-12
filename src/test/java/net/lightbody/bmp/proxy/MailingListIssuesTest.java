@@ -1,6 +1,6 @@
 package net.lightbody.bmp.proxy;
 
-import org.rockhill.mitm.proxy.ProxyServer;
+import website.magyar.mitm.proxy.ProxyServer;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarContent;
 import net.lightbody.bmp.core.har.HarEntry;
@@ -8,8 +8,8 @@ import net.lightbody.bmp.core.har.HarLog;
 import net.lightbody.bmp.core.har.HarPostData;
 import net.lightbody.bmp.core.har.HarRequest;
 import net.lightbody.bmp.core.har.HarResponse;
-import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
-import org.rockhill.mitm.proxy.RequestInterceptor;
+import website.magyar.mitm.proxy.http.MitmJavaProxyHttpRequest;
+import website.magyar.mitm.proxy.RequestInterceptor;
 import net.lightbody.bmp.proxy.util.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;

@@ -13,7 +13,7 @@ if ( hasProperty('localRepository') ) {
     myLocalRepository = "${project.ext.localRepository}"
 }
 
-group = 'org.rockhill.mitm'
+group = 'website.magyar.mitm'
 apply plugin: 'idea'
 apply plugin: 'checkstyle'
 apply plugin: 'java'
@@ -21,7 +21,7 @@ apply plugin: 'maven'
 apply plugin: 'java-library'
 apply plugin: 'jacoco'
 
-version = "$wilmaVersion" + ".18." + "$buildNumber"
+version = "$wilmaVersion" + ".19." + "$buildNumber"
 
 repositories {
     jcenter()
@@ -121,7 +121,7 @@ task createPom {
     doLast {
         pom {
             project {
-                groupId 'org.rockhill.mitm'
+                groupId 'website.magyar.mitm'
                 artifactId 'mitmJavaProxy'
             }
         }.writeTo("$buildDir/distributions/$componentName-${version}.pom")

@@ -1,10 +1,10 @@
 package net.lightbody.bmp.proxy.http;
 
-import org.rockhill.mitm.proxy.ProxyServer;
-import org.rockhill.mitm.proxy.RequestInterceptor;
-import org.rockhill.mitm.proxy.ResponseInterceptor;
-import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpRequest;
-import org.rockhill.mitm.proxy.http.MitmJavaProxyHttpResponse;
+import website.magyar.mitm.proxy.ProxyServer;
+import website.magyar.mitm.proxy.RequestInterceptor;
+import website.magyar.mitm.proxy.ResponseInterceptor;
+import website.magyar.mitm.proxy.http.MitmJavaProxyHttpRequest;
+import website.magyar.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarCookie;
 import net.lightbody.bmp.core.har.HarEntry;
