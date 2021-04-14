@@ -13,15 +13,17 @@ if ( hasProperty('localRepository') ) {
     myLocalRepository = "${project.ext.localRepository}"
 }
 
-group = 'website.magyar.mitm'
+group = "website.magyar"
+archivesBaseName = "mitmJavaProxy"
+version = "$wilmaVersion" + ".19." + "$buildNumber"
+
 apply plugin: 'idea'
 apply plugin: 'checkstyle'
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'signing'
 apply plugin: 'java-library'
 apply plugin: 'jacoco'
-
-version = "$wilmaVersion" + ".19." + "$buildNumber"
 
 repositories {
     jcenter()
@@ -37,6 +39,23 @@ targetCompatibility = 1.8
 java {
 //    withJavadocJar()
     withSourcesJar()
+}
+
+task javadocJar(type: Jar) {
+    archiveClassifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    archiveClassifier = 'sources'
+    from sourceSets.main.allSource
+}
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
 }
 
 task sourceZip(type: Zip) {
@@ -133,6 +152,48 @@ uploadArchives {
     repositories {
         mavenDeployer {
             repository(url: "${myLocalRepository}")
+        }
+    }
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'MITM HTTP/HTTPS Java Proxy'
+                packaging 'jar'
+                // optionally artifactId can be defined here
+                description 'HTTP/HTTPS MITM Java Proxy with the possibility of intercepting and investigating/altering both requests and responses.'
+                url 'https://github.com/tkohegyi/mitmJavaProxy/wiki'
+
+                scm {
+                    connection 'https://github.com/tkohegyi/mitmJavaProxy.git'
+                    developerConnection 'https://github.com/tkohegyi/mitmJavaProxy.git'
+                    url 'https://github.com/tkohegyi/mitmJavaProxy/tree/master/'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'tkohegyi'
+                        name 'Tamas Kohegyi'
+                        email 'tkohegyi2@gmail.com'
+                    }
+                }
+            }
         }
     }
 }
