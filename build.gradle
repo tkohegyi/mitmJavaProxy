@@ -56,7 +56,7 @@ signing {
 
 task sourceZip(type: Zip) {
     from 'src'
-    baseName = "$componentName"
+    baseName = "$archivesBaseName"
     classifier 'sources'
     extension 'jar'
 }
@@ -122,7 +122,7 @@ def myCopySpec = project.copySpec {
 jar {
     manifest.attributes( 'provider': 'gradle')
     manifest.attributes( 'Implementation-Title': "$componentDescription - V$version")
-    archiveName = "$componentName-$version"+'.jar'
+    archiveName = "$archivesBaseName-$version"+'.jar'
     with myCopySpec
 }
 
@@ -139,7 +139,7 @@ task createPom {
                 groupId 'website.magyar.mitm'
                 artifactId 'mitmJavaProxy'
             }
-        }.writeTo("$buildDir/distributions/$componentName-${version}.pom")
+        }.writeTo("$buildDir/distributions/$archivesBaseName-${version}.pom")
     }
 }
 createPom.dependsOn(copyJarToDistributions)
