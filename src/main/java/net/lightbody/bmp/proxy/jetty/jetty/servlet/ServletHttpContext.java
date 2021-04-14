@@ -19,6 +19,7 @@ import net.lightbody.bmp.proxy.jetty.http.HttpContext;
 import net.lightbody.bmp.proxy.jetty.http.HttpException;
 import net.lightbody.bmp.proxy.jetty.http.HttpRequest;
 import net.lightbody.bmp.proxy.jetty.http.HttpResponse;
+import net.lightbody.bmp.proxy.jetty.util.Container;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
@@ -166,7 +167,7 @@ public class ServletHttpContext extends HttpContext {
     }
 
     /**
-     * @see net.lightbody.bmp.proxy.jetty.http.HttpContext#enterContextScope(net.lightbody.bmp.proxy.jetty.http.HttpRequest, net.lightbody.bmp.proxy.jetty.http.HttpResponse).
+     * @see net.lightbody.bmp.proxy.jetty.http.HttpContext#enterContextScope(HttpRequest, HttpResponse)
      */
     public Object enterContextScope(HttpRequest request, HttpResponse response) {
         // Make sure servlet wrappers exist for request/response objects
@@ -184,7 +185,7 @@ public class ServletHttpContext extends HttpContext {
     }
 
     /**
-     * @see net.lightbody.bmp.proxy.jetty.util.Container#doStop().
+     * @see Container#doStop()
      */
     protected void doStop() throws Exception {
         super.doStop();

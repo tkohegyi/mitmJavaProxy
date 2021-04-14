@@ -91,8 +91,8 @@ public class ServletHolder extends Holder implements Comparable {
     }
 
     /**
-     * Set the initialize order. Holders with order<0, are initialized on use. Those with
-     * order>=0 are initialized in increasing order when the handler is started.
+     * Set the initialize order. Holders with order&lt;0, are initialized on use. Those with
+     * order&gt;=0 are initialized in increasing order when the handler is started.
      */
     public void setInitOrder(int order) {
         _initOnStartup = true;

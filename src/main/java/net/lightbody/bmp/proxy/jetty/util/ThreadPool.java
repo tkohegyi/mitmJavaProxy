@@ -31,8 +31,8 @@ import java.io.Serializable;
  * getJob(timeout) method. Derived implementations may specialize getJob(timeout) to obtain jobs
  * from other sources without queuing overheads.
  *
- * @author Juancarlo Aï¿½ez <juancarlo@modelistica.com>
- * @author Greg Wilkins <gregw@mortbay.com>
+ * @author Juancarlo Aï¿½ez &lt;juancarlo@amp;modelistica.com&gt;
+ * @author Greg Wilkins &lt;gregw@amp;mortbay.com&gt;
  * @version $Id: ThreadPool.java,v 1.41 2005/08/13 00:01:28 gregwilkins Exp $
  */
 public class ThreadPool implements LifeCycle, Serializable {

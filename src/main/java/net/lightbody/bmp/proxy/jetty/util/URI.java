@@ -192,7 +192,6 @@ public class URI implements Cloneable {
 
     /** Decode a URI path.
      * @param path The path the encode
-     * @param buf StringBuffer to encode path into
      */
     public static String decodePath(String path) {
         int len = path.length();
@@ -780,7 +779,7 @@ public class URI implements Cloneable {
     /**
      * Add encoded _parameters.
      *
-     * @param encoded A HTTP encoded string of _parameters: e.g.. "a=1&b=2"
+     * @param encoded A HTTP encoded string of _parameters: e.g.. "a=1&amp;b=2"
      */
     public void put(String encoded) {
         UrlEncoded params = new UrlEncoded(encoded);

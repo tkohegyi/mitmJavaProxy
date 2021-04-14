@@ -214,7 +214,6 @@ public class ByteBufferOutputStream extends OutputStream {
      * The capacity is not checked.
      *
      * @param b
-     * @throws IOException
      */
     public void postwrite(byte b) {
         _buf[_pos++] = b;
@@ -227,7 +226,6 @@ public class ByteBufferOutputStream extends OutputStream {
      * @param b
      * @param offset
      * @param length
-     * @throws IOException
      */
     public void postwrite(byte[] b, int offset, int length) {
         System.arraycopy(b, offset, _buf, _pos, length);

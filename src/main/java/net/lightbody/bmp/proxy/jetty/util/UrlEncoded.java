@@ -27,7 +27,7 @@ import java.util.Map;
  * This class handles the encoding and decoding for either
  * the query string of a URL or the content of a POST HTTP request.
  *
- * <p><h4>Notes</h4>
+ * <p>Notes
  * The hashtable either contains String single values, vectors of String or arrays of Strings.
  * <p>
  * This class is only partially synchronised.  In particular, simple
@@ -343,7 +343,7 @@ public class UrlEncoded extends MultiMap {
      * Encode Hashtable with % encoding.
      *
      * @param equalsForNullValue if True, then an '=' is always used, even
-     *                           for parameters without a value. e.g. "blah?a=&b=&c=".
+     *                           for parameters without a value. e.g. 'blah?a=&amp;b=&amp;c='.
      */
     public synchronized String encode(String charset, boolean equalsForNullValue) {
         if (charset == null) {

@@ -25,8 +25,8 @@ import java.util.HashMap;
  * A pool of Objects.
  * <p>
  *
- * @author Juancarlo Añez <juancarlo@modelistica.com>
- * @author Greg Wilkins <gregw@mortbay.com>
+ * @author Juancarlo Añez &lt;juancarlo@amp;modelistica.com&gt;
+ * @author Greg Wilkins &lt;gregw@amp;mortbay.com&gt;
  * @version $Id: Pool.java,v 1.13 2005/08/13 00:01:28 gregwilkins Exp $
  */
 public class Pool implements LifeCycle, Serializable {

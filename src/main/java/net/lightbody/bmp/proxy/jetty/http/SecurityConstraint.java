@@ -360,7 +360,7 @@ public class SecurityConstraint implements Cloneable, Serializable {
     }
 
     /**
-     * @return Data constrain indicator: 0=DC+NONE, 1=DC_INTEGRAL & 2=DC_CONFIDENTIAL
+     * @return Data constrain indicator: 0=DC+NONE, 1=DC_INTEGRAL &amp; 2=DC_CONFIDENTIAL
      */
     public int getDataConstraint() {
         return _dataConstraint;

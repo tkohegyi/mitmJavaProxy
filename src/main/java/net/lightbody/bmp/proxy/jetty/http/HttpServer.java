@@ -228,7 +228,6 @@ public class HttpServer extends Container implements LifeCycle, Serializable {
      *
      * @param address
      * @return the HttpListener.
-     * @throws IOException
      */
     public HttpListener addListener(InetAddrPort address) {
         HttpListener listener = new SocketListener(address);
@@ -589,7 +588,7 @@ public class HttpServer extends Container implements LifeCycle, Serializable {
     /**
      * Get system classes.
      *
-     * @deprecated. Use HttpContext
+     * @deprecated Use HttpContext
      */
     public String[] getSystemClasses() {
         return _systemClasses;
@@ -598,7 +597,7 @@ public class HttpServer extends Container implements LifeCycle, Serializable {
     /**
      * Set system classes.
      *
-     * @deprecated. Use HttpContext
+     * @deprecated Use HttpContext
      */
     public void setSystemClasses(String[] classes) {
         _systemClasses = classes;
@@ -607,7 +606,7 @@ public class HttpServer extends Container implements LifeCycle, Serializable {
     /**
      * Get system classes.
      *
-     * @deprecated. Use HttpContext
+     * @deprecated Use HttpContext
      */
     public String[] getServerClasses() {
         return _serverClasses;
@@ -616,7 +615,7 @@ public class HttpServer extends Container implements LifeCycle, Serializable {
     /**
      * Set system classes.
      *
-     * @deprecated. Use HttpContext
+     * @deprecated Use HttpContext
      */
     public void setServerClasses(String[] classes) {
         _serverClasses = classes;

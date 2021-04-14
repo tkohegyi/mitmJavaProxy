@@ -26,20 +26,16 @@ import java.util.StringTokenizer;
 /**
  * Byte range inclusive of end points.
  * <PRE>
- * <p>
  * parses the following types of byte ranges:
- * <p>
  * bytes=100-499
  * bytes=-300
  * bytes=100-
  * bytes=1-2,2-3,6-,-2
- * <p>
+ *
  * given an entity length, converts range to string
- * <p>
  * bytes 100-499/500
  *
  * </PRE>
- * <p>
  * Based on RFC2616 3.12, 14.16, 14.35.1, 14.35.2
  *
  * @author Helmut Hissen

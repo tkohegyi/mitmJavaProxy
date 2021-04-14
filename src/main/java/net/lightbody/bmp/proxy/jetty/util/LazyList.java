@@ -28,7 +28,7 @@ import java.util.List;
  * or frequently contain a single item, then using LazyList will avoid additional object
  * creations by using Collections.EMPTY_LIST or Collections.singletonList where possible.
  *
- * <p><h4>Usage</h4>
+ * <p>Usage
  * <pre>
  *   Object lazylist =null;
  *   while(loopCondition)

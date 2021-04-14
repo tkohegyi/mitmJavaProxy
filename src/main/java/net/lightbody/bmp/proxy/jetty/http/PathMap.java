@@ -38,13 +38,13 @@ import java.util.StringTokenizer;
  * *.ext              - a suffix path specification.
  * /                  - the default path specification.
  * </PRE>
- * Matching is performed in the following order <NL>
- * <LI>Exact match.
- * <LI>Longest prefix match.
- * <LI>Longest suffix match.
- * <LI>default.
- * </NL>
- * Multiple path specifications can be mapped by providing a list of specifications.  
+ * Matching is performed in the following order
+ * Exact match.
+ * Longest prefix match.
+ * Longest suffix match.
+ * default.
+ *
+ * Multiple path specifications can be mapped by providing a list of specifications.
  * The list is separated by the characters specified in the "org.mortbay.http.PathMap.separators" System property, 
  * which defaults to :
  * <p>

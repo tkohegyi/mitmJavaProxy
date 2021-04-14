@@ -13,10 +13,6 @@ if ( hasProperty('localRepository') ) {
     myLocalRepository = "${project.ext.localRepository}"
 }
 
-group = "website.magyar"
-archivesBaseName = "mitmJavaProxy"
-version = "$wilmaVersion" + ".19." + "$buildNumber"
-
 apply plugin: 'idea'
 apply plugin: 'checkstyle'
 apply plugin: 'java'
@@ -24,6 +20,10 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 apply plugin: 'java-library'
 apply plugin: 'jacoco'
+
+group = "website.magyar"
+archivesBaseName = "mitmJavaProxy"
+version = "$wilmaVersion" + ".19." + "$buildNumber"
 
 repositories {
     jcenter()
@@ -46,10 +46,6 @@ task javadocJar(type: Jar) {
     from javadoc
 }
 
-task sourcesJar(type: Jar) {
-    archiveClassifier = 'sources'
-    from sourceSets.main.allSource
-}
 artifacts {
     archives javadocJar, sourcesJar
 }

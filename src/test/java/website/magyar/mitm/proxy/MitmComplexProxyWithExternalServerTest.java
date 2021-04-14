@@ -78,8 +78,9 @@ public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxy
         //do test if available
         ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, true, false);
         assertEquals(200, proxiedResponse.getStatusCode());
-        assertEquals(1, responseCount.get());
-        assertEquals(1, requestCount.get());
+        assertTrue(requestCount.get() > 0);
+        assertTrue(responseCount.get() > 0);
+        assertEquals(requestCount.get(), responseCount.get());
     }
 
     @Test

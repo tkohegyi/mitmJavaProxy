@@ -1243,7 +1243,6 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Se
      *
      * @param request
      * @param response
-     * @return True if the request has been handled.
      * @throws HttpException
      * @throws IOException
      */
@@ -1323,7 +1322,6 @@ public class HttpContext extends Container implements LifeCycle, HttpHandler, Se
      * @param pathParams    Path parameters such as encoded Session ID
      * @param request
      * @param response
-     * @return True if the request has been handled.
      * @throws HttpException
      * @throws IOException
      */

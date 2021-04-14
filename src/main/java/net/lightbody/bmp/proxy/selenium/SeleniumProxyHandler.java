@@ -643,7 +643,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
     }
 
     /**
-     * Is scheme,host & port Forbidden.
+     * Is scheme,host &amp; port Forbidden.
      *
      * @param scheme           A scheme that mast be in the proxySchemes StringMap.
      * @param host             A host that must pass the white and black lists

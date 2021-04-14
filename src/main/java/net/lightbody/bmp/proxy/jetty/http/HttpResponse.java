@@ -223,7 +223,6 @@ public class HttpResponse extends HttpMessage {
      * Not Implemented.
      *
      * @param in
-     * @throws IOException
      */
     public void readHeader(HttpInputStream in) {
         _state = __MSG_BAD;

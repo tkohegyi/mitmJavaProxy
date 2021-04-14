@@ -76,8 +76,6 @@ public class IO extends ThreadPool {
 
     /**
      * Copy Reader to Writer out until EOF or exception.
-     *
-     * @return TODO
      */
     public static void copy(Reader in, Writer out) throws IOException {
         copy(in, out, -1);
@@ -85,8 +83,6 @@ public class IO extends ThreadPool {
 
     /**
      * Copy Stream in to Stream for byteCount bytes or until EOF or exception.
-     *
-     * @return Copied bytes count or -1 if no bytes were read *and* EOF was reached
      */
     public static void copy(InputStream in, OutputStream out, long byteCount) throws IOException {
         byte[] buffer = new byte[bufferSize];

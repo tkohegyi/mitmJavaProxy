@@ -31,7 +31,7 @@ import java.util.TimeZone;
  * <p>
  * If consecutive calls are frequently very different, then this may be a little slower than a normal DateFormat.
  *
- * @author Kent Johnson <KJohnson@transparent.com>
+ * @author Kent Johnson &lt;KJohnson@amp;transparent.com&gt;
  * @author Greg Wilkins (gregw)
  * @version $Id: DateCache.java,v 1.15 2004/05/09 20:32:49 gregwilkins Exp $
  */
