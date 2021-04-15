@@ -3,7 +3,7 @@ plugins {
     id "org.sonarqube" version "3.0"
 }
 
-ext.componentDescription = "MITM Java Proxy of Wilma"
+ext.componentDescription = "MITM Java Proxy"
 
 // Common local repository info
 ext.myLocalRepository='file://C:/tmp/myRepo/'
@@ -22,7 +22,7 @@ apply plugin: 'java-library'
 apply plugin: 'jacoco'
 
 group = "website.magyar"
-archivesBaseName = "mitmJavaProxy"
+archivesBaseName = "mitm-java-proxy"
 version = "$wilmaVersion" + ".19." + "$buildNumber"
 
 repositories {
@@ -136,8 +136,8 @@ task createPom {
     doLast {
         pom {
             project {
-                groupId 'website.magyar.mitm'
-                artifactId 'mitmJavaProxy'
+                groupId 'website.magyar'
+                artifactId 'mitm-java-proxy'
             }
         }.writeTo("$buildDir/distributions/$archivesBaseName-${version}.pom")
     }

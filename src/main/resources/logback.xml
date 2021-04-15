@@ -31,7 +31,7 @@
     </encoder>
   </appender>
 
-  <logger name="org.rockhill.mitm" level="DEBUG">
+  <logger name="website.magyar.mitm" level="DEBUG">
     <appender-ref ref="CONSOLE-APPENDER" />
   </logger>
 
