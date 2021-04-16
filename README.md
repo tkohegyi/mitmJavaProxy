@@ -1,11 +1,11 @@
-MitmJavaProxy
+MITM Java Proxy
 ============================
 This Men-In-The-Middle Java Proxy is a derivative work that was originated from [**BrowserMob Proxy**](https://github.com/lightbody/browsermob-proxy), then tailored for old [**Wilma**](https://github.com/epam/Wilma) versions, 
-then upgraded in order to have a refreshed MITM Java Proxy and be prepared for the next generation of **Wilma** which is a proxy/stub/service virtualization tool and relies on this **MitmJavaProxy**. 
+then upgraded in order to have a refreshed MITM Java Proxy (above Java 8 and TLS support) and be prepared for the next generation of **Wilma** which is a proxy/stub/service virtualization tool and relies on this **MitmJavaProxy**. 
 
 **Right now everything seems to be working so can be used**.
 
-Also please be aware that the main aim of creating this MITM Java proxy is to support the proxy need of [Wilma](https://github.com/epam/Wilma).
+Also please be aware that the main aim of creating this MITM Java Proxy is to support the proxy need of [Wilma](https://github.com/epam/Wilma).
 Therefore none of the original browsermob-proxy features should be expected as working, on the other side, other features which was not in the original browsermob-proxy become available. Also, this version is prepered for Java >8 versions, and supports TSL.
 In sort, what you can do with it:
 - proxying the HTTP/HTTPS messages and 
@@ -15,30 +15,29 @@ It is possible to alter both the request before it hits the server (what is more
 
 Warning!
 ========
-This proxy is a Men-In-The-Middle type of proxy that is able to capture **ANY** traffic, everything that is tranferred between the client and the server, even if it is encrypted. Use it carefully and only when you know what you do, and what you do is allowed/legal, and on environment where you are allowed/authorized to use the Proxy.
+This proxy is a Men-In-The-Middle type of proxy that is able to capture **ANY** http traffic, everything that is tranferred between the client and the server, even if it is encrypted. Use it carefully and only when you know what you do, and what you do is allowed/legal, and on environment where you are allowed/authorized to use the Proxy.
 
 Embedded Mode
 -------------
-If you're using Java, the easiest way to get started is to embed the project directly. The jar is available in **jcenter**.
+If you're using Java, the easiest way to get started is to embed the project directly. The jar is available in **maven**.
 
-Related gradle file should look like:
+Related gradle file should look like similar to the below:
 
 ```
 repositories {
-    jcenter()
+    maven { url "https://repo.maven.apache.org/maven2" }
     ...
 }
     
 dependencies {
-    implementation('org.rockhill.mitm:mitmJavaProxy:2.0.18.85')
+    compile('website.magyar:mitm-java-proxy:2.0.19.93')
     ...
 }    
 ```
 
 Release
 ------------
-Latest announced release is available here:
-[ ![Download](https://api.bintray.com/packages/tkohegyi2/maven/mitmJavaProxy/images/download.svg?version=V2.0.18.85) ](https://bintray.com/tkohegyi2/maven/mitmJavaProxy/V2.0.18.85/link) or from **jcenter** as described above.
+Latest announced release is available here: https://github.com/tkohegyi/mitmJavaProxy/releases 
 
 Build from source
 -----------------
@@ -46,9 +45,9 @@ Github CI Build status: ![CI](https://github.com/tkohegyi/mitmJavaProxy/workflow
 
 [![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/dashboard?id=tkohegyi_mitmJavaProxy)
 
-To build it, use this command:
+To build it locally, use this command:
 ```
-./gradlew clean build
+./gradlew clean build -PbuildNumber=DEV -PossrhUsername=foo -PossrhPassword=bar -xsignArchives
 ```
 
 Detailed User's Guide
