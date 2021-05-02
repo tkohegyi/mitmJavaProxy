@@ -1,3 +1,15 @@
+WARNING
+=========
+This repository has been moved to another place: https://github.com/website-magyar/mitmJavaProxy
+Everything will be transferred there and this repo will be closed/deleted after.
+
+This repo need to be considered as obsolete now - pls use the new place.
+
+Reason: we need to move from jcenter to maven - and the easiest way to follow maven publishing rules is to transfer the code base to a domain that is properly owned (which is: magyar.website).
+Codebase already reflects this change.
+
+Please do not expect further development here in this codebase, we continue the support/development only at the new location.
+
 MITM Java Proxy
 ============================
 This Men-In-The-Middle Java Proxy is a derivative work that was originated from [**BrowserMob Proxy**](https://github.com/lightbody/browsermob-proxy), then tailored for old [**Wilma**](https://github.com/epam/Wilma) versions, 
