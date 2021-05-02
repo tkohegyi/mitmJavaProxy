@@ -44,5 +44,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
+          chmod +x gradlew
           ./gradlew build -PbuildNumber=CI -PossrhUsername=foo -PossrhPassword=bar -xsignArchives -Djdk.tls.namedGroups="secp256r1, secp384r1, ffdhe2048, ffdhe3072" -Djdk.tls.client.protocols=TLSv1.2
-          echo test, and deploy your project.
+
