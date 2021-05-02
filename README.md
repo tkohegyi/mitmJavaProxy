@@ -43,7 +43,7 @@ Build from source
 -----------------
 Github CI Build status: [![CI](https://github.com/website-magyar/mitmJavaProxy/actions/workflows/main.yml/badge.svg)](https://github.com/website-magyar/mitmJavaProxy/actions/workflows/main.yml)
 
-[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/dashboard?id=tkohegyi_mitmJavaProxy)
+[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/dashboard?id=website-magyar_mitmJavaProxy)
 
 To build it locally, use this command:
 ```
@@ -52,21 +52,21 @@ To build it locally, use this command:
 
 Detailed User's Guide
 ----------------
-See detailed information of its usage at [wiki pages](https://github.com/tkohegyi/mitmJavaProxy/wiki).
+See detailed information of its usage at [wiki pages](https://github.com/website-magyar/mitmJavaProxy/wiki).
 
 HTTP Request Manipulation
 -------------------
-Just add a Request Interceptor to the proxy server, and manipulate the request as you wish. See details [here](https://github.com/tkohegyi/mitmJavaProxy/wiki/4.-How-to-manipulate-requests).
+Just add a Request Interceptor to the proxy server, and manipulate the request as you wish. See details [here](https://github.com/website-magyar/mitmJavaProxy/wiki/4.-How-to-manipulate-requests).
 
 HTTP Response Manipulation
 -------------------
 Just add a Response Interceptor to the proxy server, and you will get access to the responses.
 
 The key to manipulate responses is the Response Volatility attribute. 
-If a response is volatile, the proxy (or you) must work with the response a lot (extract, call interceptor, compress, then release response towards the Client). This takes time.
+If a response is volatile, the proxy (or you) must work with the response a lot (call interceptor, extract, manipulate the response, compress, then release response towards the Client). This takes time.
 If a response is not volatile, then the proxy don't need to do such things. This of course a much faster method, so in case you don't need to manipulate the response, just leave responses as not volatile.
 Response volatility can be set in general via static method: `ProxyServer.SetResponseVolatility(boolean)`
-Or can be set per request-response pair by using the Request Interceptors. See more details [here](https://github.com/tkohegyi/mitmJavaProxy/wiki/5.-How-to-manipulate-responses).
+Or can be set per request-response pair by using the Request Interceptors. See more details [here](https://github.com/website-magyar/mitmJavaProxy/wiki/5.-How-to-manipulate-responses).
 
 SSL Support
 -----------
@@ -74,5 +74,3 @@ While the proxy supports SSL, it requires that a Certificate Authority be instal
 This allows the client to trust all the SSL traffic coming from the proxy, which will be proxied using a classic man-in-the-middle technique. 
 
 **IT IS CRITICAL THAT YOU NOT INSTALL THIS CERTIFICATE AUTHORITY ON A CLIENT/BROWSER THAT IS USED FOR ANYTHING OTHER THAN TESTING.**
-
-
