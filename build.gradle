@@ -101,14 +101,14 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-io', version:'1.3.2'
     compile group: 'org.apache.ant', name: 'ant', version:'1.9.4'
     compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.68' //this includes bcprov-jdk15on too
-    compile group: 'org.eclipse.jetty', name: 'jetty-io', version: '9.4.35.v20201120'
+    implementation group: 'org.eclipse.jetty', name: 'jetty-io', version: '9.4.40.v20210413'
     compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
     compile group: 'dnsjava', name: 'dnsjava', version: '3.3.1'
     testCompile group: 'junit', name: 'junit', version:'4.12'
     testCompile group: 'com.google.guava', name: 'guava', version: '29.0-jre'
     testCompile group: 'org.mockito', name: 'mockito-all', version:'1.9.5'
     testCompile (group: 'io.netty', name: 'netty-all', version: '4.1.51.Final')
-    testCompile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.4.31.v20200723'
+    testImplementation group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.4.40.v20210413'
     testCompile group: 'org.springframework', name: 'spring-core', version: '5.3.2'
 }
 
