@@ -41,7 +41,7 @@ Latest announced release is available here: https://github.com/tkohegyi/mitmJava
 
 Build from source
 -----------------
-Github CI Build status: ![CI](https://github.com/tkohegyi/mitmJavaProxy/workflows/CI/badge.svg)
+Github CI Build status: [![CI](https://github.com/website-magyar/mitmJavaProxy/actions/workflows/main.yml/badge.svg)](https://github.com/website-magyar/mitmJavaProxy/actions/workflows/main.yml)
 
 [![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/dashboard?id=tkohegyi_mitmJavaProxy)
 
