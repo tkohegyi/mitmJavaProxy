@@ -15,7 +15,7 @@ It is possible to alter both the request before it hits the server (what is more
 
 Warning!
 ========
-This proxy is a Men-In-The-Middle type of proxy that is able to capture **ANY** http traffic, everything that is tranferred between the client and the server, even if it is encrypted. Use it carefully and only when you know what you do, and what you do is allowed/legal, and on environment where you are allowed/authorized to use the Proxy.
+This proxy is a Men-In-The-Middle type of proxy that is able to capture **ANY** http traffic, everything that is transferred between the client and the server, even if it is encrypted. Use it carefully and only when you know what you do, and what you do is allowed/legal, and on environment where you are allowed/authorized to use the Proxy.
 
 Embedded Mode
 -------------
@@ -30,7 +30,7 @@ repositories {
 }
     
 dependencies {
-    compile('website.magyar:mitm-java-proxy:2.0.19.93')
+    implementation('website.magyar:mitm-java-proxy:2.0.19.93')
     ...
 }    
 ```
