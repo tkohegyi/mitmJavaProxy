@@ -23,10 +23,24 @@ apply plugin: 'jacoco'
 
 group = "website.magyar"
 archivesBaseName = "mitm-java-proxy"
-version = "$wilmaVersion" + ".19." + "$buildNumber"
+
+def versionPropsFile = file('version.properties')
+
+if (versionPropsFile.canRead()) {
+    def Properties versionProps = new Properties()
+    versionProps.load(new FileInputStream(versionPropsFile))
+    def code = versionProps['VERSION_CODE'].toInteger() + 1
+    versionProps['VERSION_CODE']=code.toString()
+    versionProps.store(versionPropsFile.newWriter(), null)
+    buildNumber = code
+}
+else {
+    throw new GradleException("Could not read version.properties!")
+}
+
+version = "$wilmaVersion" + ".20." + "$buildNumber"
 
 repositories {
-    jcenter()
     maven { url "https://repo.maven.apache.org/maven2" }
     maven { url "https://repository.mulesoft.org/nexus/content/repositories/public/" }
     maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
@@ -175,12 +189,12 @@ uploadArchives {
                 packaging 'jar'
                 // optionally artifactId can be defined here
                 description 'HTTP/HTTPS MITM Java Proxy with the possibility of intercepting and investigating/altering both requests and responses.'
-                url 'https://github.com/tkohegyi/mitmJavaProxy/wiki'
+                url 'https://github.com/website-magyar/mitmJavaProxy/wiki'
 
                 scm {
-                    connection 'https://github.com/tkohegyi/mitmJavaProxy.git'
-                    developerConnection 'https://github.com/tkohegyi/mitmJavaProxy.git'
-                    url 'https://github.com/tkohegyi/mitmJavaProxy/tree/master/'
+                    connection 'https://github.com/website-magyar/mitmJavaProxy.git'
+                    developerConnection 'https://github.com/website-magyar/mitmJavaProxy.git'
+                    url 'https://github.com/website-magyar/mitmJavaProxy/tree/master/'
                 }
 
                 licenses {
