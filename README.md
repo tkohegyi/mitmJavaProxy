@@ -41,7 +41,7 @@ CI Build
 -----------------
 Github CI Build status: [![CI](https://github.com/website-magyar/mitmJavaProxy/actions/workflows/main.yml/badge.svg)](https://github.com/website-magyar/mitmJavaProxy/actions/workflows/main.yml)
 
-[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/dashboard?id=website-magyar_mitmJavaProxy)
+[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/dashboard?id=tkohegyi_mitmJavaProxy)
 
 To build it locally, use this command:
 ```
