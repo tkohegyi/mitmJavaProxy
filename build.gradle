@@ -64,13 +64,13 @@ jacocoTestReport {
 
 sonarqube {
     properties {
-        property "sonar.projectKey", "website-magyar_mitmJavaProxy"
-        property "sonar.organization", "website-magyar"
+        property "sonar.projectKey", "tkohegyi_mitmJavaProxy"
+        property "sonar.organization", "tkohegyi"
         property "sonar.host.url", "https://sonarcloud.io"
         property "sonar.java.checkstyle.reportPaths", "build/reports/checkstyle/main.xml"
     }
 }
-project.tasks["sonarqube"].onlyIf { project.hasProperty('systemProp.sonar.login') }
+//project.tasks["sonarqube"].onlyIf { project.hasProperty('systemProp.sonar.login') }
 
 test {
 //    jvmArgs '-Djavax.net.debug=all' // add line
@@ -127,11 +127,11 @@ publishing {
             pom {
                 name = 'MITM HTTP/HTTPS Java Proxy'
                 description = 'HTTP/HTTPS MITM Java Proxy with the possibility of intercepting and investigating/altering both requests and responses.'
-                url = 'https://github.com/website-magyar/mitmJavaProxy/wiki'
+                url = 'https://github.com/tkohegyi/mitmJavaProxy/wiki'
                 scm {
-                    connection = 'https://github.com/website-magyar/mitmJavaProxy.git'
-                    developerConnection = 'https://github.com/website-magyar/mitmJavaProxy.git'
-                    url = 'https://github.com/website-magyar/mitmJavaProxy/'
+                    connection = 'https://github.com/tkohegyi/mitmJavaProxy.git'
+                    developerConnection = 'https://github.com/tkohegyi/mitmJavaProxy.git'
+                    url = 'https://github.com/tkohegyi/mitmJavaProxy/'
                 }
                 licenses {
                     license {
