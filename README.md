@@ -39,7 +39,7 @@ Latest announced release is available [here](https://github.com/website-magyar/m
 
 CI Build
 -----------------
-Github CI Build status: [![CI](https://github.com/website-magyar/mitmJavaProxy/actions/workflows/main.yml/badge.svg)](https://github.com/website-magyar/mitmJavaProxy/actions/workflows/main.yml)
+Github CI Build status: [![CI](https://github.com/tkohegyi/mitmJavaProxy/actions/workflows/main.yml/badge.svg)](https://github.com/tkohegyi/mitmJavaProxy/actions/workflows/main.yml)
 
 [![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/dashboard?id=tkohegyi_mitmJavaProxy)
 
@@ -67,11 +67,11 @@ Please note that without specifying the build number, the build will be a SNAPSH
 
 Detailed User's Guide
 ----------------
-See detailed information of its usage at [wiki pages](https://github.com/website-magyar/mitmJavaProxy/wiki).
+See detailed information of its usage at [wiki pages](https://github.com/tkohegyi/mitmJavaProxy/wiki).
 
 HTTP Request Manipulation
 -------------------
-Just add a Request Interceptor to the proxy server, and manipulate the request as you wish. See details [here](https://github.com/website-magyar/mitmJavaProxy/wiki/4.-How-to-manipulate-requests).
+Just add a Request Interceptor to the proxy server, and manipulate the request as you wish. See details [here](https://github.com/tkohegyi/mitmJavaProxy/wiki/4.-How-to-manipulate-requests).
 
 HTTP Response Manipulation
 -------------------
@@ -81,7 +81,7 @@ The key to manipulate responses is the Response Volatility attribute.
 If a response is volatile, the proxy (or you) must work with the response a lot (call interceptor, extract, manipulate the response, compress, then release response towards the Client). This takes time.
 If a response is not volatile, then the proxy don't need to do such things. This of course a much faster method, so in case you don't need to manipulate the response, just leave responses as not volatile.
 Response volatility can be set in general via static method: `ProxyServer.setResponseVolatility(boolean)`
-Or can be set per request-response pair by using the Request Interceptors. See more details [here](https://github.com/website-magyar/mitmJavaProxy/wiki/5.-How-to-manipulate-responses).
+Or can be set per request-response pair by using the Request Interceptors. See more details [here](https://github.com/tkohegyi/mitmJavaProxy/wiki/5.-How-to-manipulate-responses).
 
 SSL Support
 -----------
