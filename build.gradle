@@ -1,72 +1,57 @@
-
 plugins {
-    id "org.sonarqube" version "3.0"
-}
-
-ext.componentDescription = "MITM Java Proxy"
-
-// Common local repository info
-ext.myLocalRepository='file://C:/tmp/myRepo/'
-ext.wilmaVersion=2.0
-
-if ( hasProperty('localRepository') ) {
-    myLocalRepository = "${project.ext.localRepository}"
+    id "org.sonarqube" version "3.2.0"
 }
 
 apply plugin: 'idea'
 apply plugin: 'checkstyle'
 apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'signing'
 apply plugin: 'java-library'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
 apply plugin: 'jacoco'
 
 group = "website.magyar"
 archivesBaseName = "mitm-java-proxy"
-version = "$wilmaVersion" + ".19." + "$buildNumber"
+ext.componentDescription = "MITM Java Proxy"
+
+ext.wilmaVersion=2.0
+ext.myBuildNumber='SNAPSHOT'
+if ( hasProperty('buildNumber') ) {
+    myBuildNumber = "${project.ext.buildNumber}"
+}
+version = "$wilmaVersion" + ".20." + "${project.ext.myBuildNumber}"
+
+def isSnapshot = project.version.contains('SNAPSHOT')
 
 repositories {
-    jcenter()
     maven { url "https://repo.maven.apache.org/maven2" }
     maven { url "https://repository.mulesoft.org/nexus/content/repositories/public/" }
     maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
 }
 
 // Source and target info
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+compileJava {
+    options.encoding = "UTF-8"
+}
+
+javadoc {
+    if(JavaVersion.current().isJava9Compatible()) {
+        options.addBooleanOption('html5', true)
+    }
+}
 
 java {
-//    withJavadocJar()
+    withJavadocJar()
     withSourcesJar()
-}
-
-task javadocJar(type: Jar) {
-    archiveClassifier = 'javadoc'
-    from javadoc
-}
-
-artifacts {
-    archives javadocJar, sourcesJar
-}
-
-signing {
-    sign configurations.archives
-}
-
-task sourceZip(type: Zip) {
-    from 'src'
-    baseName = "$archivesBaseName"
-    classifier 'sources'
-    extension 'jar'
 }
 
 checkstyle.toolVersion = '5.6'
 checkstyle.ignoreFailures = true
 checkstyle.configFile = file("$rootProject.rootDir/config/checkstyle/checkstyle.xml")
 checkstyle.configProperties = ['samedir' : "$rootProject.rootDir/config/checkstyle"]
-
-compileJava {options.encoding = "UTF-8"}
 
 jacoco {
     toolVersion = "0.8.6"
@@ -76,6 +61,16 @@ jacocoTestReport {
         xml.enabled true
     }
 }
+
+sonarqube {
+    properties {
+        property "sonar.projectKey", "website-magyar_mitmJavaProxy"
+        property "sonar.organization", "website-magyar"
+        property "sonar.host.url", "https://sonarcloud.io"
+        property "sonar.java.checkstyle.reportPaths", "build/reports/checkstyle/main.xml"
+    }
+}
+project.tasks["sonarqube"].onlyIf { project.hasProperty('systemProp.sonar.login') }
 
 test {
 //    jvmArgs '-Djavax.net.debug=all' // add line
@@ -94,22 +89,22 @@ test {
 test.finalizedBy jacocoTestReport
 
 dependencies {
-    compile group: 'ch.qos.logback', name: 'logback-classic', version:'1.0.13'
-    compile(group: 'org.slf4j', name: 'jcl-over-slf4j', version:'1.7.12')
-    compile(group: 'org.slf4j', name: 'jul-to-slf4j', version:'1.7.12')
-    compile group: 'org.apache.httpcomponents', name: 'httpmime', version:'4.5.13' //this includes httpclient too
-    compile group: 'org.apache.commons', name: 'commons-io', version:'1.3.2'
-    compile group: 'org.apache.ant', name: 'ant', version:'1.9.4'
-    compile group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.68' //this includes bcprov-jdk15on too
-    compile group: 'org.eclipse.jetty', name: 'jetty-io', version: '9.4.35.v20201120'
-    compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
-    compile group: 'dnsjava', name: 'dnsjava', version: '3.3.1'
-    testCompile group: 'junit', name: 'junit', version:'4.12'
-    testCompile group: 'com.google.guava', name: 'guava', version: '29.0-jre'
-    testCompile group: 'org.mockito', name: 'mockito-all', version:'1.9.5'
-    testCompile (group: 'io.netty', name: 'netty-all', version: '4.1.51.Final')
-    testCompile group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.4.31.v20200723'
-    testCompile group: 'org.springframework', name: 'spring-core', version: '5.3.2'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version:'1.0.13'
+    implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version:'1.7.12'
+    implementation group: 'org.slf4j', name: 'jul-to-slf4j', version:'1.7.12'
+    implementation group: 'org.apache.httpcomponents', name: 'httpmime', version:'4.5.13' //this includes httpclient too
+    implementation group: 'org.apache.commons', name: 'commons-io', version:'1.3.2'
+    implementation group: 'org.apache.ant', name: 'ant', version:'1.9.4'
+    implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.68' //this includes bcprov-jdk15on too
+    implementation group: 'org.eclipse.jetty', name: 'jetty-io', version: '9.4.40.v20210413'
+    implementation group: 'javax.servlet', name: 'servlet-api', version: '2.5'
+    implementation group: 'dnsjava', name: 'dnsjava', version: '3.3.1'
+    testImplementation group: 'junit', name: 'junit', version:'4.12'
+    testImplementation group: 'com.google.guava', name: 'guava', version: '29.0-jre'
+    testImplementation group: 'org.mockito', name: 'mockito-all', version:'1.9.5'
+    testImplementation group: 'io.netty', name: 'netty-all', version: '4.1.51.Final'
+    testImplementation group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.4.40.v20210413'
+    testImplementation group: 'org.springframework', name: 'spring-core', version: '5.3.2'
 }
 
 def myCopySpec = project.copySpec {
@@ -120,76 +115,54 @@ def myCopySpec = project.copySpec {
 }
 
 jar {
-    manifest.attributes( 'provider': 'gradle')
-    manifest.attributes( 'Implementation-Title': "$componentDescription - V$version")
-    archiveName = "$archivesBaseName-$version"+'.jar'
+    manifest.attributes( 'Implementation-Title': "$componentDescription - V${project.version}")
     with myCopySpec
 }
 
-task copyJarToDistributions (type: Copy) {
-    dependsOn(sourceZip)
-    from("$buildDir/libs/")
-	into("$buildDir/distributions")
-}
-
-task createPom {
-    doLast {
-        pom {
-            project {
-                groupId 'website.magyar'
-                artifactId 'mitm-java-proxy'
-            }
-        }.writeTo("$buildDir/distributions/$archivesBaseName-${version}.pom")
-    }
-}
-createPom.dependsOn(copyJarToDistributions)
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: "${myLocalRepository}")
-        }
-    }
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            pom.project {
-                name 'MITM HTTP/HTTPS Java Proxy'
-                packaging 'jar'
-                // optionally artifactId can be defined here
-                description 'HTTP/HTTPS MITM Java Proxy with the possibility of intercepting and investigating/altering both requests and responses.'
-                url 'https://github.com/tkohegyi/mitmJavaProxy/wiki'
-
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = archivesBaseName
+            from components.java
+            pom {
+                name = 'MITM HTTP/HTTPS Java Proxy'
+                description = 'HTTP/HTTPS MITM Java Proxy with the possibility of intercepting and investigating/altering both requests and responses.'
+                url = 'https://github.com/website-magyar/mitmJavaProxy/wiki'
                 scm {
-                    connection 'https://github.com/tkohegyi/mitmJavaProxy.git'
-                    developerConnection 'https://github.com/tkohegyi/mitmJavaProxy.git'
-                    url 'https://github.com/tkohegyi/mitmJavaProxy/tree/master/'
+                    connection = 'https://github.com/website-magyar/mitmJavaProxy.git'
+                    developerConnection = 'https://github.com/website-magyar/mitmJavaProxy.git'
+                    url = 'https://github.com/website-magyar/mitmJavaProxy/'
                 }
-
                 licenses {
                     license {
-                        name 'The Apache License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
                     }
                 }
-
                 developers {
                     developer {
-                        id 'tkohegyi'
-                        name 'Tamas Kohegyi'
-                        email 'tkohegyi2@gmail.com'
+                        id = 'tkohegyi'
+                        name = 'Tamas Kohegyi'
+                        email = 'tkohegyi2@gmail.com'
                     }
                 }
             }
         }
     }
+    repositories {
+        maven {
+            def stagingRepoUrl = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+            def snapshotRepoUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+            url isSnapshot ? snapshotRepoUrl : stagingRepoUrl
+            credentials {
+                username = rootProject.findProperty('ossrhUsername') ?: ''
+                password = rootProject.findProperty('ossrhPassword') ?: ''
+            }
+        }
+    }
+}
+
+signing {
+    required { isSnapshot }
+    sign publishing.publications.mavenJava
 }
