@@ -89,22 +89,22 @@ test {
 test.finalizedBy jacocoTestReport
 
 dependencies {
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version:'1.0.13'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version:'1.2.3'
     implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version:'1.7.30'
     implementation group: 'org.slf4j', name: 'jul-to-slf4j', version:'1.7.30'
     implementation group: 'org.apache.httpcomponents', name: 'httpmime', version:'4.5.13' //this includes httpclient too
     implementation group: 'org.apache.commons', name: 'commons-io', version:'1.3.2'
-    implementation group: 'org.apache.ant', name: 'ant', version:'1.9.4'
+    implementation group: 'org.apache.ant', name: 'ant', version:'1.10.10'
     implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version:'1.69' //this includes bcprov-jdk15on too
     implementation group: 'org.eclipse.jetty', name: 'jetty-io', version: '9.4.42.v20210604'
     implementation group: 'javax.servlet', name: 'servlet-api', version: '2.5'
     implementation group: 'dnsjava', name: 'dnsjava', version: '3.4.0'
-    testImplementation group: 'junit', name: 'junit', version:'4.12'
-    testImplementation group: 'com.google.guava', name: 'guava', version: '29.0-jre'
-    testImplementation group: 'org.mockito', name: 'mockito-all', version:'1.9.5'
-    testImplementation group: 'io.netty', name: 'netty-all', version: '4.1.51.Final'
+    testImplementation group: 'junit', name: 'junit', version:'4.13.2'
+    testImplementation group: 'com.google.guava', name: 'guava', version: '30.1.1-jre'
+    testImplementation group: 'org.mockito', name: 'mockito-all', version:'1.10.19'
+    testImplementation group: 'io.netty', name: 'netty-all', version: '4.1.65.Final'
     testImplementation group: 'org.eclipse.jetty', name: 'jetty-server', version: '9.4.42.v20210604'
-    testImplementation group: 'org.springframework', name: 'spring-core', version: '5.3.2'
+    testImplementation group: 'org.springframework', name: 'spring-core', version: '5.3.8'
 }
 
 def myCopySpec = project.copySpec {
