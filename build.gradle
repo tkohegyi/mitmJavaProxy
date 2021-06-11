@@ -19,7 +19,7 @@ ext.myBuildNumber='SNAPSHOT'
 if ( hasProperty('buildNumber') ) {
     myBuildNumber = "${project.ext.buildNumber}"
 }
-version = "$wilmaVersion" + ".20." + "${project.ext.myBuildNumber}"
+version = "$wilmaVersion" + ".21." + "${project.ext.myBuildNumber}"
 
 def isSnapshot = project.version.contains('SNAPSHOT')
 
