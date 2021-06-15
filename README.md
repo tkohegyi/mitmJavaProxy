@@ -29,7 +29,7 @@ repositories {
 }
     
 dependencies {
-    implementation('website.magyar:mitm-java-proxy:2.0.20.99')
+    implementation('website.magyar:mitm-java-proxy:2.0.21.100')
 }    
 ```
 
@@ -47,12 +47,6 @@ To build it locally, use this command:
 ```
 ./gradlew clean build
 ```
-Note that the tests of SSL part sometimes fail. There are some known issues on SSL side those need to be ironed out, still. 
-A good test result you will get if you use this command:
-```
-./gradlew build -Djdk.tls.namedGroups="secp256r1, secp384r1, ffdhe2048, ffdhe3072" -Djdk.tls.client.protocols=TLSv1.2 
-```
-Also, sometimes the build need to be executed several times till all the test run successfully - sorry, the SSL part (mainly because of the 3rd party libs and sometimes because of the JDK itself) is not error-free... 
 
 To publish the library on local machine (in local maven repository):
 ```
