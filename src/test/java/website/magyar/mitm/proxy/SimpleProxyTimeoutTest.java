@@ -2,6 +2,7 @@ package website.magyar.mitm.proxy;
 
 import org.junit.Test;
 import website.magyar.mitm.proxy.help.AbstractSimpleProxyTool;
+import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.DefaultRequestInterceptor;
 import website.magyar.mitm.proxy.help.DefaultResponseInterceptor;
 import website.magyar.mitm.proxy.help.ResponseInfo;
@@ -28,7 +29,7 @@ public class SimpleProxyTimeoutTest extends AbstractSimpleProxyTool {
 
     @Test
     public void testSimpleGetRequestNoTimeout() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, GET_QUICK_RESPONSE, true, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, GET_QUICK_RESPONSE, true, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -37,7 +38,7 @@ public class SimpleProxyTimeoutTest extends AbstractSimpleProxyTool {
 
     @Test
     public void testSimpleGetRequestOverHTTPSNoTimeout() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, GET_QUICK_RESPONSE, true, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, GET_QUICK_RESPONSE, true, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -46,7 +47,7 @@ public class SimpleProxyTimeoutTest extends AbstractSimpleProxyTool {
 
     @Test
     public void testSimpleGetRequestWithTimeout() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, GET_SLOW_RESPONSE, true, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, GET_SLOW_RESPONSE, true, false, ContentEncoding.ANY);
         assertEquals(504, proxiedResponse.getStatusCode());
         assertTrue(proxiedResponse.getBody().contains("PROXY: Connection timed out!"));
         assertEquals(1, requestCount.get());
@@ -54,7 +55,7 @@ public class SimpleProxyTimeoutTest extends AbstractSimpleProxyTool {
 
     @Test
     public void testSimpleGetRequestOverHTTPSWithTimeout() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, GET_SLOW_RESPONSE, true, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, GET_SLOW_RESPONSE, true, false, ContentEncoding.ANY);
         assertEquals(504, proxiedResponse.getStatusCode());
         assertTrue(proxiedResponse.getBody().contains("PROXY: Connection timed out!"));
         assertEquals(1, requestCount.get());

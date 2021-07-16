@@ -118,8 +118,8 @@ public abstract class AbstractSimpleProxyTool {
     protected void tearDown() throws Exception {
     }
 
-    protected ResponseInfo httpPostWithApacheClient(HttpHost host, String resourceUrl, boolean isProxied) throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(isProxied, proxyServer.getPort())) {
+    protected ResponseInfo httpPostWithApacheClient(HttpHost host, String resourceUrl, boolean isProxied, ContentEncoding contentEncoding) throws Exception {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(isProxied, proxyServer.getPort(), contentEncoding)) {
             final HttpPost request = new HttpPost(resourceUrl);
             final StringEntity entity = new StringEntity("adsf", "UTF-8");
             entity.setChunked(true);
@@ -127,12 +127,12 @@ public abstract class AbstractSimpleProxyTool {
 
             final HttpResponse response = httpClient.execute(host, request);
             final HttpEntity resEntity = response.getEntity();
-            return new ResponseInfo(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity));
+            return new ResponseInfo(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity), resEntity.getContentEncoding());
         }
     }
 
-    protected ResponseInfo httpGetWithApacheClient(HttpHost host, String resourceUrl, boolean isProxied, boolean callHeadFirst) throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(isProxied, proxyServer.getPort())) {
+    protected ResponseInfo httpGetWithApacheClient(HttpHost host, String resourceUrl, boolean isProxied, boolean callHeadFirst, ContentEncoding contentEncoding) throws Exception {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(isProxied, proxyServer.getPort(), contentEncoding)) {
             Integer contentLength = null;
             if (callHeadFirst) {
                 HttpHead request = new HttpHead(resourceUrl);
@@ -151,7 +151,7 @@ public abstract class AbstractSimpleProxyTool {
                         contentLength,
                         Integer.valueOf(response.getFirstHeader("Content-Length").getValue()));
             }
-            return new ResponseInfo(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity));
+            return new ResponseInfo(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity), resEntity.getContentEncoding());
         }
     }
 

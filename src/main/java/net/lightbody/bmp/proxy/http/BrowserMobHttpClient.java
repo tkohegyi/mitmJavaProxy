@@ -1,10 +1,5 @@
 package net.lightbody.bmp.proxy.http;
 
-import website.magyar.mitm.proxy.ProxyServer;
-import website.magyar.mitm.proxy.RequestInterceptor;
-import website.magyar.mitm.proxy.ResponseInterceptor;
-import website.magyar.mitm.proxy.http.MitmJavaProxyHttpRequest;
-import website.magyar.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarCookie;
 import net.lightbody.bmp.core.har.HarEntry;
@@ -65,10 +60,16 @@ import org.apache.http.impl.cookie.BrowserCompatSpec;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
+import org.brotli.dec.BrotliInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xbill.DNS.Cache;
 import org.xbill.DNS.DClass;
+import website.magyar.mitm.proxy.ProxyServer;
+import website.magyar.mitm.proxy.RequestInterceptor;
+import website.magyar.mitm.proxy.ResponseInterceptor;
+import website.magyar.mitm.proxy.http.MitmJavaProxyHttpRequest;
+import website.magyar.mitm.proxy.http.MitmJavaProxyHttpResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -115,15 +116,15 @@ public class BrowserMobHttpClient {
     // not using CopyOnWriteArray because we're WRITE heavy and it is for READ heavy operations
     // instead doing it the old fashioned way with a synchronized block
     private final Set<ActiveRequest> activeRequests = new HashSet<ActiveRequest>();
+    private final SimulatedSocketFactory socketFactory;
+    private final TrustingSSLSocketFactory sslSocketFactory;
+    private final PoolingHttpClientConnectionManager httpClientConnMgr;
+    private final HttpClient httpClient;
     private Har har;
     private String harPageRef;
     private boolean captureHeaders;
     private boolean captureContent; // if captureContent is set, default policy is to capture binary contents too
     private boolean captureBinaryContent = true;
-    private final SimulatedSocketFactory socketFactory;
-    private final TrustingSSLSocketFactory sslSocketFactory;
-    private final PoolingHttpClientConnectionManager httpClientConnMgr;
-    private final HttpClient httpClient;
     private int requestTimeout;
     private BrowserMobHostNameResolver hostNameResolver;
     private boolean decompress = true;
@@ -425,6 +426,7 @@ public class BrowserMobHttpClient {
         long bytes = 0;
         boolean gzipping = false;
         boolean deflating = false;
+        boolean brotling = false;
         OutputStream os = req.getOutputStream();
         if (os == null) {
             os = new CappedByteArrayOutputStream(MAX_BUFFER_SIZE);
@@ -459,7 +461,7 @@ public class BrowserMobHttpClient {
         try {
             // set the User-Agent if it's not already set
             if (method.getHeaders("User-Agent").length == 0) {
-                method.addHeader("User-Agent", "MITM-JavaProxy V/1.0");
+                method.addHeader("User-Agent", "MITM-JavaProxy V-22");
             }
 
             response = httpClient.execute(method, ctx);
@@ -480,14 +482,21 @@ public class BrowserMobHttpClient {
             if (is != null) {
                 Header contentEncodingHeader = response.getFirstHeader("Content-Encoding");
                 if (contentEncodingHeader != null) {
-                    if ("gzip".equalsIgnoreCase(contentEncodingHeader.getValue())) {
+                    String value = contentEncodingHeader.getValue();
+                    if ("gzip".equalsIgnoreCase(value)) {
                         gzipping = true;
-                    } else if ("deflate".equalsIgnoreCase(contentEncodingHeader.getValue())) {
-                        deflating = true;
+                    } else {
+                        if ("deflate".equalsIgnoreCase(value)) {
+                            deflating = true;
+                        } else {
+                            if ("br".equalsIgnoreCase(value)) {
+                                brotling = true;
+                            }
+                        }
                     }
                 }
 
-                // deal with GZIP content!
+                // deal with compressed content!
                 if (decompress && response.getEntity().getContentLength() != 0) { //getContentLength<0 if unknown
                     if (gzipping) {
                         is = new GZIPInputStream(is);
@@ -496,6 +505,10 @@ public class BrowserMobHttpClient {
                             // WARN : if system is using zlib<=1.1.4 the stream must be append with a dummy byte
                             // that is not required for zlib>1.1.4 (not mentioned on current Inflater javadoc)
                             is = new InflaterInputStream(is, new Inflater(true));
+                        } else {
+                            if (brotling) {
+                                is = new BrotliInputStream(is);
+                            }
                         }
                     }
                 }
@@ -638,17 +651,23 @@ public class BrowserMobHttpClient {
                     copy = bos;
                 }
                 if (captureContent && enableWorkWithCopy) {
-                    if (entry.getResponse().getBodySize() != 0 && (gzipping || deflating)) {
+                    if (entry.getResponse().getBodySize() != 0 && (gzipping || deflating || brotling)) {
                         // ok, we need to decompress it before we can put it in the har file
                         try {
                             InputStream temp = null;
                             if (gzipping) {
                                 temp = new GZIPInputStream(new ByteArrayInputStream(copy.toByteArray()));
-                            } else if (deflating) {
-                                //RAW deflate only
-                                // WARN : if system is using zlib<=1.1.4 the stream must be append with a dummy byte
-                                // that is not required for zlib>1.1.4 (not mentioned on current Inflater javadoc)
-                                temp = new InflaterInputStream(new ByteArrayInputStream(copy.toByteArray()), new Inflater(true));
+                            } else {
+                                if (deflating) {
+                                    //RAW deflate only
+                                    // WARN : if system is using zlib<=1.1.4 the stream must be append with a dummy byte
+                                    // that is not required for zlib>1.1.4 (not mentioned on current Inflater javadoc)
+                                    temp = new InflaterInputStream(new ByteArrayInputStream(copy.toByteArray()), new Inflater(true));
+                                } else {
+                                    if (brotling) {
+                                        temp = new BrotliInputStream(new ByteArrayInputStream(copy.toByteArray()));
+                                    }
+                                }
                             }
                             copy = new ByteArrayOutputStream();
                             IOUtils.copy(temp, copy);

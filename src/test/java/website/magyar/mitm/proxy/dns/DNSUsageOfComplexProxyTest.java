@@ -4,6 +4,7 @@ import org.apache.http.HttpHost;
 import org.junit.Test;
 import website.magyar.mitm.proxy.ProxyServer;
 import website.magyar.mitm.proxy.help.AbstractComplexProxyTool;
+import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.DefaultRequestInterceptor;
 import website.magyar.mitm.proxy.help.DefaultResponseInterceptor;
 import website.magyar.mitm.proxy.help.ResponseInfo;
@@ -35,7 +36,7 @@ public class DNSUsageOfComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimpleGetRequestUsingDNSNoProxyInUse() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, false, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, false, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(0, responseCount.get());
@@ -44,7 +45,7 @@ public class DNSUsageOfComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimplePostRequestUsingDNSNoProxyInUse() throws Exception {
-        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, false);
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(0, responseCount.get());
@@ -53,7 +54,7 @@ public class DNSUsageOfComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimpleGetRequestDNSAndProxyInUse() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -62,7 +63,7 @@ public class DNSUsageOfComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimpleGetRequestOverHTTPSDNSAndProxyInUse() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -71,7 +72,7 @@ public class DNSUsageOfComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimplePostRequestDNSAndProxyInUse() throws Exception {
-        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true);
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -80,7 +81,7 @@ public class DNSUsageOfComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimplePostRequestOverHTTPSDNSAndProxyInUse() throws Exception {
-        ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true);
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -89,7 +90,7 @@ public class DNSUsageOfComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimpleGetRequestToStubDNSAndProxyInUse() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NEED_STUB_RESPONSE, true, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NEED_STUB_RESPONSE, true, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -98,7 +99,7 @@ public class DNSUsageOfComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimpleGetRequestOverHTTPSToStubDNSAndProxyInUse() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -107,7 +108,7 @@ public class DNSUsageOfComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimplePostRequestToStubDNSAndProxyInUse() throws Exception {
-        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NEED_STUB_RESPONSE, true);
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NEED_STUB_RESPONSE, true, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -116,7 +117,7 @@ public class DNSUsageOfComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimplePostRequestOverHTTPSToStubDNSAndProxyInUse() throws Exception {
-        ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true);
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());

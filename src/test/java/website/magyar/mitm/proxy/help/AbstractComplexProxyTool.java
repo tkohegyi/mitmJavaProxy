@@ -1,5 +1,9 @@
 package website.magyar.mitm.proxy.help;
 
+import org.apache.http.Header;
+import org.apache.http.HeaderElement;
+import org.apache.http.client.entity.DeflateDecompressingEntity;
+import org.apache.http.client.entity.GzipDecompressingEntity;
 import website.magyar.mitm.proxy.ProxyServer;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -16,6 +20,8 @@ import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
@@ -178,24 +184,46 @@ public abstract class AbstractComplexProxyTool {
     protected void tearDown() throws Exception {
     }
 
-    protected ResponseInfo httpPostWithApacheClient(HttpHost host, String resourceUrl, boolean isProxied) throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(isProxied, proxyServer.getPort())) {
+    protected ResponseInfo httpPostWithApacheClient(HttpHost host, String resourceUrl, boolean isProxied, ContentEncoding contentEncoding) throws Exception {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(isProxied, proxyServer.getPort(), contentEncoding)) {
             final HttpPost request = new HttpPost(resourceUrl);
             final StringEntity entity = new StringEntity("adsf", "UTF-8");
             entity.setChunked(true);
             request.setEntity(entity);
 
             final HttpResponse response = httpClient.execute(host, request);
-            final HttpEntity resEntity = response.getEntity();
-            return new ResponseInfo(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity));
+            HttpEntity resEntity = response.getEntity();
+            Header contentEncodingHeader = resEntity.getContentEncoding();
+
+            if (contentEncodingHeader != null) {
+                HeaderElement[] encodings = contentEncodingHeader.getElements();
+                for (int i = 0; i < encodings.length; i++) {
+                    if (encodings[i].getName().equalsIgnoreCase("gzip")) {
+                        resEntity = new GzipDecompressingEntity(resEntity);
+                        break;
+                    }
+                    if (encodings[i].getName().equalsIgnoreCase("deflate")) {
+                        resEntity = new DeflateDecompressingEntity(resEntity);
+                        break;
+                    }
+                    if (encodings[i].getName().equalsIgnoreCase("br")) {
+                        resEntity = new BrotliDecompressingEntity(resEntity);
+                        break;
+                    }
+                }
+            }
+
+            String output = EntityUtils.toString(resEntity, Charset.forName("UTF-8").name());
+
+            return new ResponseInfo(response.getStatusLine().getStatusCode(), output, contentEncodingHeader);
         } catch (Exception e) {
             LOGGER.error(e.getLocalizedMessage(), e);
             throw e;
         }
     }
 
-    protected ResponseInfo httpGetWithApacheClient(HttpHost host, String resourceUrl, boolean isProxied, boolean callHeadFirst) throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(isProxied, proxyServer.getPort())) {
+    protected ResponseInfo httpGetWithApacheClient(HttpHost host, String resourceUrl, boolean isProxied, boolean callHeadFirst, ContentEncoding contentEncoding) throws Exception {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(isProxied, proxyServer.getPort(), contentEncoding)) {
 
             Integer contentLength = null;
             if (callHeadFirst) {
@@ -207,15 +235,38 @@ public abstract class AbstractComplexProxyTool {
             HttpGet request = new HttpGet(resourceUrl);
 
             HttpResponse response = httpClient.execute(host, request);
-            HttpEntity resEntity = response.getEntity();
-
             if (contentLength != null) {
                 assertEquals(
                         "Content-Length from GET should match that from HEAD",
                         contentLength,
                         Integer.valueOf(response.getFirstHeader("Content-Length").getValue()));
             }
-            return new ResponseInfo(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity));
+
+            HttpEntity resEntity = response.getEntity();
+
+            Header contentEncodingHeader = resEntity.getContentEncoding();
+
+            if (contentEncodingHeader != null) {
+                HeaderElement[] encodings = contentEncodingHeader.getElements();
+                for (int i = 0; i < encodings.length; i++) {
+                    if (encodings[i].getName().equalsIgnoreCase("gzip")) {
+                        resEntity = new GzipDecompressingEntity(resEntity);
+                        break;
+                    }
+                    if (encodings[i].getName().equalsIgnoreCase("deflate")) {
+                        resEntity = new DeflateDecompressingEntity(resEntity);
+                        break;
+                    }
+                    if (encodings[i].getName().equalsIgnoreCase("br")) {
+                        resEntity = new BrotliDecompressingEntity(resEntity);
+                        break;
+                    }
+                }
+            }
+
+            String output = EntityUtils.toString(resEntity, Charset.forName("UTF-8").name());
+
+            return new ResponseInfo(response.getStatusLine().getStatusCode(), output, contentEncodingHeader);
         } catch (Exception e) {
             LOGGER.error(e.getLocalizedMessage(), e);
             throw e;

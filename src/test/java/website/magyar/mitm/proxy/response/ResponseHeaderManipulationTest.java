@@ -9,6 +9,7 @@ import org.junit.Test;
 import website.magyar.mitm.proxy.ProxyServer;
 import website.magyar.mitm.proxy.ResponseInterceptor;
 import website.magyar.mitm.proxy.help.ClientServerBase;
+import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.TestUtils;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import org.slf4j.Logger;
@@ -57,7 +58,7 @@ public class ResponseHeaderManipulationTest extends ClientServerBase {
 
     @Test
     public void headerInterceptedAndAccessible() throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
@@ -80,7 +81,7 @@ public class ResponseHeaderManipulationTest extends ClientServerBase {
 
     @Test
     public void headerInterceptedAndAccessibleSecure() throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());
@@ -107,7 +108,7 @@ public class ResponseHeaderManipulationTest extends ClientServerBase {
     @Test
     public void headerInterceptedAndAccessibleButResponseIsNotVolatile() throws Exception {
         ProxyServer.setResponseVolatile(false); //interceptor shall not influence the response !
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
             assertNull(getLastException());

@@ -7,6 +7,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 import website.magyar.mitm.proxy.RequestInterceptor;
+import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.StubServerBase;
 import website.magyar.mitm.proxy.help.TestUtils;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpRequest;
@@ -74,7 +75,7 @@ public class RequestURIManipulationTest extends StubServerBase {
 
     @Test
     public void simpleCallNoRedirect() throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             int statusCode = response.getStatusLine().getStatusCode();
@@ -89,7 +90,7 @@ public class RequestURIManipulationTest extends StubServerBase {
 
     @Test
     public void simpleCallNoRedirectSecure() throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             int statusCode = response.getStatusLine().getStatusCode();
@@ -104,7 +105,7 @@ public class RequestURIManipulationTest extends StubServerBase {
 
     @Test
     public void callHttp2HttpStub() throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             request.addHeader("A", "A"); //header to be found -> redirect to sub / http
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
@@ -120,7 +121,7 @@ public class RequestURIManipulationTest extends StubServerBase {
 
     @Test
     public void callHttp2SecureHttpStub() throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             request.addHeader("B", "B"); //header to be found -> redirect to sub / http
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
@@ -136,7 +137,7 @@ public class RequestURIManipulationTest extends StubServerBase {
 
     @Test
     public void callSecureHttp2HttpStub() throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             request.addHeader("A", "A"); //header to be found -> redirect to sub / http
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
@@ -152,7 +153,7 @@ public class RequestURIManipulationTest extends StubServerBase {
 
     @Test
     public void callSecureHttp2SecureHttpStub() throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             request.addHeader("B", "B"); //header to be found -> redirect to sub / http
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());

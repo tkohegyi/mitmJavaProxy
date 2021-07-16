@@ -3,6 +3,7 @@ package website.magyar.mitm.proxy;
 import org.apache.http.HttpHost;
 import org.junit.Test;
 import website.magyar.mitm.proxy.help.AbstractComplexProxyTool;
+import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.DefaultRequestInterceptor;
 import website.magyar.mitm.proxy.help.DefaultResponseInterceptor;
 import website.magyar.mitm.proxy.help.ResponseInfo;
@@ -33,13 +34,13 @@ public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxy
         String CALL = "/ok";
         HttpHost externalHost = new HttpHost("127.0.0.1", 8443, "https");
         try {
-            httpGetWithApacheClient(externalHost, CALL, false, false);
+            httpGetWithApacheClient(externalHost, CALL, false, false, ContentEncoding.ANY);
         } catch (Exception e) {
             externalHost = null;
         }
         org.junit.Assume.assumeTrue(externalHost != null);
         //do test if available
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, true, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, true, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertTrue(proxiedResponse.getBody().contains("Wilma Test Server"));
         assertEquals(1, responseCount.get());
@@ -51,13 +52,13 @@ public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxy
         String CALL = "/ok";
         HttpHost externalHost = new HttpHost("127.0.0.1", 8443, "https");
         try {
-            httpGetWithApacheClient(externalHost, CALL, false, false);
+            httpGetWithApacheClient(externalHost, CALL, false, false, ContentEncoding.ANY);
         } catch (Exception e) {
             externalHost = null;
         }
         org.junit.Assume.assumeTrue(externalHost != null);
         //do test if available
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, false, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, false, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertTrue(proxiedResponse.getBody().contains("Wilma Test Server"));
         assertEquals(0, responseCount.get());
@@ -70,13 +71,13 @@ public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxy
         String CALL = "/search?q=mitmJavaProxy";
         HttpHost externalHost = new HttpHost("www.google.com", 443, "https");
         try {
-            httpGetWithApacheClient(externalHost, CALL, false, false);
+            httpGetWithApacheClient(externalHost, CALL, false, false, ContentEncoding.ANY);
         } catch (Exception e) {
             externalHost = null;
         }
         org.junit.Assume.assumeTrue(externalHost != null);
         //do test if available
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, true, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, true, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertTrue(requestCount.get() > 0);
         assertTrue(responseCount.get() > 0);
@@ -89,13 +90,13 @@ public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxy
         String CALL = "/search?q=mitmJavaProxy";
         HttpHost externalHost = new HttpHost("www.google.com", 443, "https");
         try {
-            httpGetWithApacheClient(externalHost, CALL, false, false);
+            httpGetWithApacheClient(externalHost, CALL, false, false, ContentEncoding.ANY);
         } catch (Exception e) {
             externalHost = null;
         }
         org.junit.Assume.assumeTrue(externalHost != null);
         //do test if available
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, false, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, false, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(0, responseCount.get());
         assertEquals(0, requestCount.get());

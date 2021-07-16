@@ -8,6 +8,7 @@ import org.junit.Test;
 import website.magyar.mitm.proxy.RequestInterceptor;
 import website.magyar.mitm.proxy.ResponseInterceptor;
 import website.magyar.mitm.proxy.help.ClientServerBase;
+import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.TestUtils;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpRequest;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpResponse;
@@ -70,7 +71,7 @@ public class RequestHeaderManipulationTest extends ClientServerBase {
 
     @Test
     public void headerInterceptedAndAccessible() throws Exception {
-        CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort());
+        CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY);
         HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
         httpClient.close();
         assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
@@ -79,7 +80,7 @@ public class RequestHeaderManipulationTest extends ClientServerBase {
 
     @Test
     public void headerInterceptedAndAccessibleSecure() throws Exception {
-        CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort());
+        CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY);
         HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
         httpClient.close();
         assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());

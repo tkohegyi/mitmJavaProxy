@@ -2,6 +2,7 @@ package website.magyar.mitm.proxy;
 
 import org.junit.Test;
 import website.magyar.mitm.proxy.help.AbstractComplexProxyTool;
+import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.DefaultRequestInterceptor;
 import website.magyar.mitm.proxy.help.DefaultResponseInterceptor;
 import website.magyar.mitm.proxy.help.ResponseInfo;
@@ -28,7 +29,7 @@ public class ComplexMitmComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimpleGetRequest() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -37,7 +38,25 @@ public class ComplexMitmComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimpleGetRequestOverHTTPS() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true, false, ContentEncoding.ANY);
+        assertEquals(200, proxiedResponse.getStatusCode());
+        assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
+    }
+
+    @Test
+    public void testSimpleGetRequestOverHTTPS_Gzip() throws Exception {
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true, false, ContentEncoding.GZIP);
+        assertEquals(200, proxiedResponse.getStatusCode());
+        assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
+    }
+
+    @Test
+    public void testSimpleGetRequestOverHTTPS_Brotli() throws Exception {
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true, false, ContentEncoding.BROTLI);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -46,7 +65,7 @@ public class ComplexMitmComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimplePostRequest() throws Exception {
-        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true);
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NO_NEED_STUB_RESPONSE, true, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -55,7 +74,7 @@ public class ComplexMitmComplexProxyTest extends AbstractComplexProxyTool {
 
     @Test
     public void testSimplePostRequestOverHTTPS() throws Exception {
-        ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true);
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NO_NEED_STUB_RESPONSE, true, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -63,8 +82,8 @@ public class ComplexMitmComplexProxyTest extends AbstractComplexProxyTool {
     }
 
     @Test
-    public void testSimpleGetRequestToStub() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NEED_STUB_RESPONSE, true, false);
+    public void testSimpleGetRequestToStub_Gzip() throws Exception {
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NEED_STUB_RESPONSE, true, false, ContentEncoding.GZIP);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -72,8 +91,8 @@ public class ComplexMitmComplexProxyTest extends AbstractComplexProxyTool {
     }
 
     @Test
-    public void testSimpleGetRequestOverHTTPSToStub() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true, false);
+    public void testSimpleGetRequestOverHTTPSToStub_Gzip() throws Exception {
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true, false, ContentEncoding.GZIP);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -81,8 +100,8 @@ public class ComplexMitmComplexProxyTest extends AbstractComplexProxyTool {
     }
 
     @Test
-    public void testSimplePostRequestToStub() throws Exception {
-        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NEED_STUB_RESPONSE, true);
+    public void testSimplePostRequestToStub_Gzip() throws Exception {
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NEED_STUB_RESPONSE, true, ContentEncoding.GZIP);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());
@@ -90,8 +109,44 @@ public class ComplexMitmComplexProxyTest extends AbstractComplexProxyTool {
     }
 
     @Test
-    public void testSimplePostRequestOverHTTPSToStub() throws Exception {
-        ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true);
+    public void testSimplePostRequestOverHTTPSToStub_Gzip() throws Exception {
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true, ContentEncoding.GZIP);
+        assertEquals(200, proxiedResponse.getStatusCode());
+        assertEquals(STUB_BACKEND, proxiedResponse.getBody());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
+    }
+
+    @Test
+    public void testSimpleGetRequestToStub_Brotli() throws Exception {
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, NEED_STUB_RESPONSE, true, false, ContentEncoding.BROTLI);
+        assertEquals(200, proxiedResponse.getStatusCode());
+        assertEquals(STUB_BACKEND, proxiedResponse.getBody());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
+    }
+
+    @Test
+    public void testSimpleGetRequestOverHTTPSToStub_Brotli() throws Exception {
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true, false, ContentEncoding.BROTLI);
+        assertEquals(200, proxiedResponse.getStatusCode());
+        assertEquals(STUB_BACKEND, proxiedResponse.getBody());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
+    }
+
+    @Test
+    public void testSimplePostRequestToStub_Brotli() throws Exception {
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(webHost, NEED_STUB_RESPONSE, true, ContentEncoding.BROTLI);
+        assertEquals(200, proxiedResponse.getStatusCode());
+        assertEquals(STUB_BACKEND, proxiedResponse.getBody());
+        assertEquals(1, responseCount.get());
+        assertEquals(1, requestCount.get());
+    }
+
+    @Test
+    public void testSimplePostRequestOverHTTPSToStub_Brotli() throws Exception {
+        ResponseInfo proxiedResponse = httpPostWithApacheClient(httpsWebHost, NEED_STUB_RESPONSE, true, ContentEncoding.BROTLI);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(STUB_BACKEND, proxiedResponse.getBody());
         assertEquals(1, responseCount.get());

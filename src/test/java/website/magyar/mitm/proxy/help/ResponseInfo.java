@@ -1,13 +1,17 @@
 package website.magyar.mitm.proxy.help;
 
-public class ResponseInfo {
-    private int statusCode;
-    private String body;
+import org.apache.http.Header;
 
-    public ResponseInfo(int statusCode, String body) {
+public class ResponseInfo {
+    private final int statusCode;
+    private final Header contentEncoding;
+    private final String body;
+
+    public ResponseInfo(int statusCode, String body, Header contentEncoding) {
         super();
         this.statusCode = statusCode;
         this.body = body;
+        this.contentEncoding = contentEncoding;
     }
 
     public int getStatusCode() {
@@ -49,4 +53,7 @@ public class ResponseInfo {
         return "ResponseInfo [statusCode=" + statusCode + ", body=" + body + "]";
     }
 
+    public Header getContentEncoding() {
+        return contentEncoding;
+    }
 }

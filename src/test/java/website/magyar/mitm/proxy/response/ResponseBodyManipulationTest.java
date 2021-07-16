@@ -9,6 +9,7 @@ import org.junit.Test;
 import website.magyar.mitm.proxy.ProxyServer;
 import website.magyar.mitm.proxy.ResponseInterceptor;
 import website.magyar.mitm.proxy.help.ClientServerBase;
+import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.TestUtils;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import org.slf4j.Logger;
@@ -64,7 +65,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
     public void bodyInterceptedAndAccessibleButResponseIsNotVolatile() throws Exception {
         ProxyServer.setResponseVolatile(false); //interceptor shall not influence the response !
         request.addHeader("A", "A"); //this orders interceptor to alter the response
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
@@ -76,7 +77,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
 
     @Test
     public void noRequestBodyChange() throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
@@ -88,7 +89,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
 
     @Test
     public void noRequestBodyChangeSecure() throws Exception {
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
@@ -104,7 +105,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
     @Test
     public void reduceTo5Chars() throws Exception {
         request.addHeader("A", "A");
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
@@ -117,7 +118,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
     @Test
     public void reduceTo5CharsSecure() throws Exception {
         request.addHeader("A", "A");
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
@@ -133,7 +134,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
     @Test
     public void doubleBodySize() throws Exception {
         request.addHeader("B", "B");
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
@@ -146,7 +147,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
     @Test
     public void doubleBodySizeSecure() throws Exception {
         request.addHeader("B", "B");
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
@@ -162,7 +163,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
     @Test
     public void replaceWithJson() throws Exception {
         request.addHeader("C", "C");
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
@@ -176,7 +177,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
     @Test
     public void replaceWithJsonSecure() throws Exception {
         request.addHeader("C", "C");
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("application/json", response.getEntity().getContentType().getValue());
@@ -193,7 +194,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
     @Test
     public void getResponseAsByteResponseNotAltered() throws Exception {
         request.addHeader("D", "D");
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             httpClient.close();
@@ -207,7 +208,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
     @Test
     public void getResponseAsByteResponseNotAlteredSecure() throws Exception {
         request.addHeader("D", "D");
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
@@ -223,7 +224,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
     @Test
     public void getResponseAsByteResponseIsAltered() throws Exception {
         request.addHeader("E", "E");
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
@@ -237,7 +238,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
     @Test
     public void getResponseAsByteResponseIsAlteredSecure() throws Exception {
         request.addHeader("E", "E");
-        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort())) {
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             String body = EntityUtils.toString(response.getEntity());
             assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());

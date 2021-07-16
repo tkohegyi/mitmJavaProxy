@@ -2,6 +2,7 @@ package website.magyar.mitm.proxy;
 
 import org.junit.Test;
 import website.magyar.mitm.proxy.help.AbstractSimpleProxyTool;
+import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.DefaultRequestInterceptor;
 import website.magyar.mitm.proxy.help.DefaultResponseInterceptor;
 import website.magyar.mitm.proxy.help.ResponseInfo;
@@ -31,7 +32,7 @@ public class SimpleProxyResponseNotVolatileTest extends AbstractSimpleProxyTool 
 
     @Test
     public void testSimpleGetRequestNoTimeout() throws Exception {
-        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, GET_QUICK_RESPONSE, true, false);
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(webHost, GET_QUICK_RESPONSE, true, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
         assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         Thread.sleep(1000);
@@ -42,7 +43,7 @@ public class SimpleProxyResponseNotVolatileTest extends AbstractSimpleProxyTool 
     @Test
     public void testSimpleGetRequestOverHTTPSNoTimeout() throws Exception {
         try {
-            ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, GET_QUICK_RESPONSE, true, false);
+            ResponseInfo proxiedResponse = httpGetWithApacheClient(httpsWebHost, GET_QUICK_RESPONSE, true, false, ContentEncoding.ANY);
             assertEquals(200, proxiedResponse.getStatusCode());
             assertEquals(SERVER_BACKEND, proxiedResponse.getBody());
         } catch (SSLException | IndexOutOfBoundsException e) {

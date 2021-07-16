@@ -1,5 +1,7 @@
 package website.magyar.mitm.proxy.help;
 
+import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -12,6 +14,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Request;
@@ -26,10 +29,13 @@ import javax.net.ssl.SSLContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -64,7 +70,7 @@ public class TestUtils {
                         numberOfBytesRead += 1;
                     }
                 }
-                LOGGER.info("Done reading # of bytes: {}", numberOfBytesRead);
+                LOGGER.info("Done reading # of bytes from request: {}", numberOfBytesRead);
 
                 //slow response handling
                 if (request.getRequestURI().contains("SlowResponse")) {
@@ -77,12 +83,34 @@ public class TestUtils {
                     }
                 }
 
+                //prepare response
+                byte[] finalContent = content; //by default
+                String encoding = request.getHeader("Accept-Encoding");
+                BodyCompressor bodyCompressor = new BodyCompressor();
+                if (encoding.contains(ContentEncoding.GZIP.getValue())) {
+                    //need gzip encoding
+                    finalContent = bodyCompressor.compressGzip(new ByteArrayInputStream(content)).toByteArray();
+                    response.addHeader("Content-Encoding", "gzip");
+                } else {
+                    if (encoding.contains(ContentEncoding.DEFLATE.getValue())) {
+                        //need deflate encoding
+                        finalContent = bodyCompressor.compressDeflate(new ByteArrayInputStream(content)).toByteArray();
+                        response.addHeader("Content-Encoding", "deflate");
+                    } else {
+                        if (encoding.contains(ContentEncoding.BROTLI.getValue())) {
+                            //need brotli encoding
+                            finalContent = bodyCompressor.compressBrotli(new ByteArrayInputStream(content)).toByteArray();
+                            response.addHeader("Content-Encoding", "br");
+                        }
+                    }
+                }
+
                 //finish response
                 response.setStatus(HttpServletResponse.SC_OK);
                 baseRequest.setHandled(true);
 
-                response.addHeader("Content-Length", Integer.toString(content.length));
-                response.getOutputStream().write(content);
+                response.addHeader("Content-Length", Integer.toString(finalContent.length));
+                response.getOutputStream().write(finalContent);
             }
         });
 
@@ -149,10 +177,11 @@ public class TestUtils {
      *
      * @param isProxied if the request must go through proxy or not
      * @param port      is the proxy port
+     * @param contentEncoding defines the Accept-Encoding header
      * @return instance of DefaultHttpClient
      * @throws Exception is something wrong happens
      */
-    public static CloseableHttpClient buildHttpClient(boolean isProxied, int port) throws Exception {
+    public static CloseableHttpClient buildHttpClient(boolean isProxied, int port, ContentEncoding contentEncoding) throws Exception {
 //        TrustStrategy acceptingTrustStrategy = (cert, authType) -> true;  //checkstyle cannot handle this, so using a bit more complex code below
         TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
             @Override
@@ -175,12 +204,18 @@ public class TestUtils {
 
         HttpClientBuilder httpClientBuilder = HttpClients.custom()
                 .setSSLSocketFactory(sslsf)
-                .setConnectionManager(connectionManager);
+                .setConnectionManager(connectionManager)
+                .disableContentCompression();
 
         if (isProxied) {
             HttpHost proxy = new HttpHost("127.0.0.1", port);
             httpClientBuilder.setProxy(proxy);
         }
+
+        //set accepted content encodings
+        Header header = new BasicHeader(HttpHeaders.ACCEPT_ENCODING, contentEncoding.getValue());
+        List<Header> headers = Arrays.asList(header);
+        httpClientBuilder.setDefaultHeaders(headers);
 
         CloseableHttpClient httpClient = httpClientBuilder.build();
         return httpClient;
