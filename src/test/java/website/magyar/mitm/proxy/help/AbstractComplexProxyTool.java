@@ -20,7 +20,6 @@ import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -192,21 +191,22 @@ public abstract class AbstractComplexProxyTool {
             request.setEntity(entity);
 
             final HttpResponse response = httpClient.execute(host, request);
+            Thread.sleep(GRACE_PERIOD);
             HttpEntity resEntity = response.getEntity();
             Header contentEncodingHeader = resEntity.getContentEncoding();
 
             if (contentEncodingHeader != null) {
                 HeaderElement[] encodings = contentEncodingHeader.getElements();
-                for (int i = 0; i < encodings.length; i++) {
-                    if (encodings[i].getName().equalsIgnoreCase("gzip")) {
+                for (HeaderElement encoding : encodings) {
+                    if (encoding.getName().equalsIgnoreCase("gzip")) {
                         resEntity = new GzipDecompressingEntity(resEntity);
                         break;
                     }
-                    if (encodings[i].getName().equalsIgnoreCase("deflate")) {
+                    if (encoding.getName().equalsIgnoreCase("deflate")) {
                         resEntity = new DeflateDecompressingEntity(resEntity);
                         break;
                     }
-                    if (encodings[i].getName().equalsIgnoreCase("br")) {
+                    if (encoding.getName().equalsIgnoreCase("br")) {
                         resEntity = new BrotliDecompressingEntity(resEntity);
                         break;
                     }
@@ -243,21 +243,22 @@ public abstract class AbstractComplexProxyTool {
             }
 
             HttpEntity resEntity = response.getEntity();
+            Thread.sleep(GRACE_PERIOD);
 
             Header contentEncodingHeader = resEntity.getContentEncoding();
 
             if (contentEncodingHeader != null) {
                 HeaderElement[] encodings = contentEncodingHeader.getElements();
-                for (int i = 0; i < encodings.length; i++) {
-                    if (encodings[i].getName().equalsIgnoreCase("gzip")) {
+                for (HeaderElement encoding : encodings) {
+                    if (encoding.getName().equalsIgnoreCase("gzip")) {
                         resEntity = new GzipDecompressingEntity(resEntity);
                         break;
                     }
-                    if (encodings[i].getName().equalsIgnoreCase("deflate")) {
+                    if (encoding.getName().equalsIgnoreCase("deflate")) {
                         resEntity = new DeflateDecompressingEntity(resEntity);
                         break;
                     }
-                    if (encodings[i].getName().equalsIgnoreCase("br")) {
+                    if (encoding.getName().equalsIgnoreCase("br")) {
                         resEntity = new BrotliDecompressingEntity(resEntity);
                         break;
                     }
