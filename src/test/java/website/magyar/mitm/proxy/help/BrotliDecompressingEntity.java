@@ -9,4 +9,4 @@ public class BrotliDecompressingEntity extends DecompressingEntity {
             super(entity, BrotliInputStreamFactory.getInstance());
         }
 
-    }
+}

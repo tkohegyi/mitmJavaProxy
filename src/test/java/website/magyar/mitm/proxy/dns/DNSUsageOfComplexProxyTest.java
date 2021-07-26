@@ -13,6 +13,8 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * Tests that DNS resolution works properly inside the proxy.
+ *
+ * @author Tamas_Kohegyi
  */
 public class DNSUsageOfComplexProxyTest extends AbstractComplexProxyTool {
 

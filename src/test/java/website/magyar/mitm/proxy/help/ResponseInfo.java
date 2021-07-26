@@ -2,6 +2,10 @@ package website.magyar.mitm.proxy.help;
 
 import org.apache.http.Header;
 
+/**
+ *
+ * @author Tamas_Kohegyi
+ */
 public class ResponseInfo {
     private final int statusCode;
     private final Header contentEncoding;

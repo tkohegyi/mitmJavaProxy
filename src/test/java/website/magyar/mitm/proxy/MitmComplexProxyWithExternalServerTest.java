@@ -13,6 +13,8 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Tests just a single basic proxy running as a man in the middle.
+ *
+ * @author Tamas_Kohegyi
  */
 public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxyTool {
 

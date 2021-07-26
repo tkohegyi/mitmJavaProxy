@@ -29,6 +29,8 @@ import static org.junit.Assert.assertNull;
  * No special header: no change in url - goes to webserver
  * 'A'->'A' forward to stubServer / http
  * 'B'->'B' forward to stubServer / https
+ *
+ * @author Tamas_Kohegyi
  */
 public class RequestURIManipulationTest extends StubServerBase {
     private static final String GET_REQUEST = "/anyUrl";

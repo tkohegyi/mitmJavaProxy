@@ -11,6 +11,8 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * Tests just a single basic proxy running as a man in the middle.
+ *
+ * @author Tamas_Kohegyi
  */
 public class ClientToServerWithoutProxyTest extends AbstractComplexProxyTool {
 

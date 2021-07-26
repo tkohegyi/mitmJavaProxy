@@ -31,6 +31,8 @@ import static org.junit.Assert.assertEquals;
  * - the proxy itself with default request/response interceptors, that is able to select between servers (server or stub)
  * - server that answers to the client (SERVER_BACKEND)
  * - a stub server that answers to the client (STUB_BACKEND)
+ *
+ * @author Tamas_Kohegyi
  */
 public abstract class AbstractComplexProxyTool {
 

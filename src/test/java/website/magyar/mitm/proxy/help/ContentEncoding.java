@@ -1,5 +1,10 @@
 package website.magyar.mitm.proxy.help;
 
+/**
+ *
+ * @author Tamas_Kohegyi
+ */
+
 public enum ContentEncoding {
 
     //See further info on Content Encoding here: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding

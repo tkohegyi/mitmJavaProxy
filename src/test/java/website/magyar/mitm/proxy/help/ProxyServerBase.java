@@ -11,6 +11,8 @@ import static org.junit.Assert.assertThat;
 /**
  * Base for tests that test the proxy. This base class encapsulates:
  * - the proxy itself
+ *
+ * @author Tamas_Kohegyi
  */
 public class ProxyServerBase {
 

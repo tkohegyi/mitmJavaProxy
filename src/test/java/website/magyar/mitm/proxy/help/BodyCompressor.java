@@ -23,7 +23,7 @@ public class BodyCompressor {
             gout.finish();
             gout.close();
         } catch (IOException e) {
-            throw new IllegalArgumentException("Could not gzip message body!", e);
+            throw new IllegalArgumentException("Could not encode the message body with gzip!", e);
         }
         return baos;
     }
@@ -38,7 +38,7 @@ public class BodyCompressor {
             gout.finish();
             gout.close();
         } catch (IOException e) {
-            throw new IllegalArgumentException("Could not deflate message body!", e);
+            throw new IllegalArgumentException("Could not encode the message body with deflate!", e);
         }
         return baos;
     }
@@ -60,7 +60,7 @@ public class BodyCompressor {
             brotliOutputStream.close();
             source.close();
         } catch (IOException e) {
-            throw new IllegalArgumentException("Could not deflate message body!", e);
+            throw new IllegalArgumentException("Could not encode the message body with brotli!", e);
         }
         return baos;
     }

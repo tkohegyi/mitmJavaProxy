@@ -30,6 +30,8 @@ import static org.junit.Assert.assertNull;
  * 'B'->'Bb' is altered to 'B'->'bBB' at request interceptor
  * 'C'->'Cc' is removed at request interceptor
  * + 1 header 'D'->'Dd' is added to response by response interceptor
+ *
+ * @author Tamas_Kohegyi
  */
 public class ResponseHeaderManipulationTest extends ClientServerBase {
     private static final String GET_REQUEST = "/anyUrl";

@@ -15,6 +15,8 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * Tests just a single basic proxy running as a man in the middle, with defining response as not volatile.
+ *
+ * @author Tamas_Kohegyi
  */
 public class SimpleProxyResponseNotVolatileTest extends AbstractSimpleProxyTool {
     private final Logger logger = LoggerFactory.getLogger(SimpleProxyResponseNotVolatileTest.class);

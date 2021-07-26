@@ -24,6 +24,8 @@ import static org.junit.Assert.assertEquals;
  * Base for tests that test the proxy. This base class encapsulates:
  * - the proxy itself with default request/response interceptors
  * - server that answers to the client (SERVER_BACKEND)
+ *
+ * @author Tamas_Kohegyi
  */
 public abstract class AbstractSimpleProxyTool {
 

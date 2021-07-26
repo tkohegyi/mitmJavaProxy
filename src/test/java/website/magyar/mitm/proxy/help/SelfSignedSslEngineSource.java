@@ -20,6 +20,8 @@ import java.security.cert.X509Certificate;
  * The {@link SSLContext} uses
  * self-signed certificates that are generated lazily if the given key store
  * file doesn't yet exist.
+ *
+ * @author Tamas_Kohegyi
  */
 public class SelfSignedSslEngineSource {
     private static final String PROTOCOL = "TLSv1.2";

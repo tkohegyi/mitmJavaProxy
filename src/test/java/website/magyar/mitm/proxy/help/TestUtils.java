@@ -41,6 +41,8 @@ import java.util.Objects;
 /**
  * Utility class to provide static methods to start a web server with a specific text answer,
  * and to create a httpClient to initiate a request via the proxy.
+ *
+ * @author Tamas_Kohegyi
  */
 public class TestUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestUtils.class);

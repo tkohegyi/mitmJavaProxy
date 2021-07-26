@@ -44,6 +44,8 @@ import static org.junit.Assert.assertThat;
  * Base for tests that test the proxy. This base class encapsulates:
  * - HTTP/HTTPS server that answers to the client (SERVER_BACKEND)
  * - the proxyServer via class extension
+ *
+ * @author Tamas_Kohegyi
  */
 public abstract class ClientServerBase extends ProxyServerBase {
 

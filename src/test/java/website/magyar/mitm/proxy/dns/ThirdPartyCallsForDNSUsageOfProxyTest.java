@@ -19,6 +19,8 @@ import static org.junit.Assert.assertNull;
 
 /**
  * Tests that DNS resolution works properly inside the proxy.
+ *
+ * @author Tamas_Kohegyi
  */
 public class ThirdPartyCallsForDNSUsageOfProxyTest extends HttpClientBase {
     private static final String GET_REQUEST = "/";

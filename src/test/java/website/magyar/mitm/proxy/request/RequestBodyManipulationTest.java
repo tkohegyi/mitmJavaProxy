@@ -33,6 +33,8 @@ import static org.junit.Assert.assertNull;
  * - If header "A" added - reduce body size to 5 chars
  * - If header "B" added - duplicate the body text
  * - If header "C" added - replace it with a json message (changes content-type too)
+ *
+ * @author Tamas_Kohegyi
  */
 public class RequestBodyManipulationTest extends ClientServerBase {
     private static final String GET_REQUEST = "/anyUrl";

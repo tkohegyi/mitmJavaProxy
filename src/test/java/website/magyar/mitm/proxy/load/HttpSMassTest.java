@@ -23,6 +23,8 @@ import static org.junit.Assert.assertNull;
 
 /**
  * This test runs simple http request 1000 times.
+ *
+ * @author Tamas_Kohegyi
  */
 public class HttpSMassTest extends ClientServerBase {
     private static final String GET_REQUEST = "/anyUrl";

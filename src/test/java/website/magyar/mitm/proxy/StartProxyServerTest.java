@@ -10,6 +10,10 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertThat;
 
+/**
+ *
+ * @author Tamas_Kohegyi
+ */
 public class StartProxyServerTest {
     public static final int PROXY_TIMEOUT = 60000; //1 minute
     private final Logger logger = LoggerFactory.getLogger(StartProxyServerTest.class);

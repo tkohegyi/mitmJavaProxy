@@ -7,6 +7,10 @@ import org.brotli.dec.BrotliInputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
+/**
+ *
+ * @author Tamas_Kohegyi
+ */
 
 @Contract(threading = ThreadingBehavior.IMMUTABLE)
 public class BrotliInputStreamFactory implements InputStreamFactory {

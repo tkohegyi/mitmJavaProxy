@@ -33,6 +33,8 @@ import static org.junit.Assert.assertNull;
  * - If header "C" added - replace it with a json message (changes content-type too)
  * - If header "D" added - tries to get the response as byte[], meanwhile the content is not altered
  * - If header "E" added - tries to get the response as byte[], meanwhile the content is altered (replaced with a json message)
+ *
+ * @author Tamas_Kohegyi
  */
 public class ResponseBodyManipulationTest extends ClientServerBase {
     public static final String GET_REQUEST = "/anyUrl";
