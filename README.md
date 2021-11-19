@@ -43,7 +43,11 @@ Github CI Build status: [![CI](https://github.com/tkohegyi/mitmJavaProxy/actions
 
 [![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-white.svg)](https://sonarcloud.io/dashboard?id=tkohegyi_mitmJavaProxy)
 
-To build it locally, use this command:
+Before building the proxy locally, create a `gradle.properties` file in root folder with the following content:
+```
+org.gradle.jvmargs=-Xmx2048m -XX:MaxPermSize=512m
+```
+Then use this command to start the build:
 ```
 ./gradlew clean build
 ```
@@ -53,11 +57,11 @@ To publish the library on local machine (in local maven repository):
 ./gradlew clean build publishToMavenLocal
 ```
 
-To publish the library for public use (into public maven repository):
+To publish the library for public use (into public maven repository), you need the necessary right there and use this command:
 ```
 ./gradlew clean build publish -PbuildNumber=x
 ```
-Please note that without specifying the build number, the build will be a SNAPSHOT build. 
+Please note that without specifying the build number, the build will be a SNAPSHOT build.
 
 Detailed User's Guide
 ----------------
