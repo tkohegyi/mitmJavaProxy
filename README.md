@@ -29,7 +29,7 @@ repositories {
 }
     
 dependencies {
-    implementation('website.magyar:mitm-java-proxy:2.0.22.104')
+    implementation('website.magyar:mitm-java-proxy:2.0.23.105')
 }    
 ```
 
