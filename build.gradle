@@ -54,11 +54,12 @@ checkstyle.configFile = file("$rootProject.rootDir/config/checkstyle/checkstyle.
 checkstyle.configProperties = ['samedir' : "$rootProject.rootDir/config/checkstyle"]
 
 jacoco {
-    toolVersion = "0.8.6"
+    toolVersion = "0.8.7"
 }
+
 jacocoTestReport {
     reports {
-        xml.enabled true
+        xml.required = true
     }
 }
 
