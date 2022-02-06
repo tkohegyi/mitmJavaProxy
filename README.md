@@ -45,7 +45,7 @@ Github CI Build status: [![CI](https://github.com/tkohegyi/mitmJavaProxy/actions
 
 Before building the proxy locally, create a `gradle.properties` file in root folder with the following content:
 ```
-org.gradle.jvmargs=-Xmx2048m -XX:MaxPermSize=512m
+org.gradle.jvmargs=-Xmx2048m
 ```
 Then use this command to start the build:
 ```
