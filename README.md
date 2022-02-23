@@ -35,7 +35,7 @@ dependencies {
 
 Release
 ------------
-Latest announced release is available [here](https://github.com/website-magyar/mitmJavaProxy/releases). 
+Latest announced release is available [here](https://github.com/tkohegyi/mitmJavaProxy/releases). 
 
 CI Build
 -----------------
