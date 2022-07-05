@@ -118,7 +118,7 @@ public class TestUtils {
 
         if (enableHttps) {
             // Add SSL connector
-            SslContextFactory sslContextFactory = new SslContextFactory.Server.Server();
+            SslContextFactory sslContextFactory = new SslContextFactory.Server();
 
             SelfSignedSslEngineSource contextSource = new SelfSignedSslEngineSource();
             SSLContext sslContext = contextSource.getSslContext();
