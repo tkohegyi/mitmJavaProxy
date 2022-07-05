@@ -175,7 +175,7 @@ public abstract class AbstractComplexProxyTool {
                     webServer.stop();
                 }
                 if (this.stubServer != null) {
-                    webServer.stop();
+                    stubServer.stop();
                 }
             }
         }
