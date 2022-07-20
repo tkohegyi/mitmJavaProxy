@@ -1,3 +1,12 @@
+/*==========================================================================
+Author: Tamas Kohegyi
+===========================================================================*/
+buildscript {
+    dependencies {
+        classpath 'gradle.plugin.com.github.jengelman.gradle.plugins:shadow:7.0.0'
+    }
+}
+
 plugins {
     id "org.sonarqube" version "3.2.0"
 }
@@ -9,6 +18,15 @@ apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 apply plugin: 'jacoco'
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+repositories {
+    mavenCentral()
+    maven { url "https://repo.maven.apache.org/maven2" }
+    maven { url "https://repository.mulesoft.org/nexus/content/repositories/public/" }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+}
 
 group = "website.magyar"
 archivesBaseName = "mitm-java-proxy"
@@ -19,15 +37,10 @@ ext.myBuildNumber='SNAPSHOT'
 if ( hasProperty('buildNumber') ) {
     myBuildNumber = "${project.ext.buildNumber}"
 }
-version = "$wilmaVersion" + ".24." + "${project.ext.myBuildNumber}"
+version = "$wilmaVersion" + ".25." + "${project.ext.myBuildNumber}"
+mainClassName = "website.magyar.mitm.standalone.StandaloneProxy"
 
 def isSnapshot = project.version.contains('SNAPSHOT')
-
-repositories {
-    maven { url "https://repo.maven.apache.org/maven2" }
-    maven { url "https://repository.mulesoft.org/nexus/content/repositories/public/" }
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-}
 
 // Source and target info
 sourceCompatibility = JavaVersion.VERSION_15
@@ -92,6 +105,34 @@ test {
 
 test.finalizedBy jacocoTestReport
 
+def configFileDefaultPath = "$project.projectDir/proxy.conf.properties"
+if (!hasProperty("configFilePath")) {
+    project.ext.configFilePath = configFileDefaultPath
+}
+
+run{
+    args = ["$configFilePath"]
+}
+
+shadowJar {
+    append('META-INF/spring.handlers')
+    append('META-INF/spring.schemas')
+
+    excludes = [
+            'META-INF/*.SF',
+            'META-INF/*.DSA',
+            'META-INF/*.RSA',
+            'images/',
+            '*.txt',
+            '*.gif',
+            '*.png',
+            '*.dtd',
+            'build.properties',
+            'XPP3_1.1.4c_MIN_VERSION',
+            'activemq.xsd.*',
+            'about.html'] as Iterable<String>
+}
+
 dependencies {
     implementation group: 'ch.qos.logback', name: 'logback-classic', version:'1.2.11'
     implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version:'1.7.36'
@@ -123,8 +164,34 @@ def myCopySpec = project.copySpec {
 }
 
 jar {
+    manifest.attributes( 'provider': 'gradle')
+    manifest.attributes( 'Main-Class': mainClassName)
     manifest.attributes( 'Implementation-Title': "$componentDescription - V${project.version}")
     with myCopySpec
+    finalizedBy shadowJar
+}
+
+def myCopySpec2 = project.copySpec {
+    from(rootProject.rootDir.absolutePath + '/build/libs/') {
+        include "mitm-java-proxy-$version" + '-all.jar'
+    }
+    from(rootProject.rootDir.absolutePath + '/') {
+        include 'LICENSE.txt'
+        include 'README.txt'
+        include 'README.md'
+    }
+}
+
+task copyToReleaseRoot (type: Copy) {
+    dependsOn shadowJar
+    into(rootProject.rootDir.absolutePath + '/release')
+    rename "mitm-java-proxy-$version" + '-all.jar', "mitm-java-proxy-" + "$version" + ".jar"
+    with myCopySpec2
+}
+
+task release(type: Zip) {
+    dependsOn copyToReleaseRoot
+    from rootProject.rootDir.absolutePath + '/release'
 }
 
 publishing {

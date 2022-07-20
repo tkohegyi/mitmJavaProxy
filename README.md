@@ -86,4 +86,6 @@ SSL Support
 While the proxy supports SSL, it requires that a Certificate Authority be installed in to the browser / at client from where you call a server via the proxy.
 This allows the client to trust all the SSL traffic coming from the proxy, which will be proxied using a classic man-in-the-middle technique. 
 
-**IT IS CRITICAL THAT YOU NOT INSTALL THIS CERTIFICATE AUTHORITY ON A CLIENT/BROWSER THAT IS USED FOR ANYTHING OTHER THAN TESTING.**
+**IT IS CRITICAL THAT YOU DO NOT INSTALL THIS CERTIFICATE AUTHORITY ON A CLIENT/BROWSER THAT IS USED FOR ANYTHING OTHER THAN TESTING.**
+
+It is recommended to use `-Djdk.tls.namedGroups="secp256r1, secp384r1, ffdhe2048, ffdhe3072"` java arguments to address some issues still existing in some JDK implementations.
