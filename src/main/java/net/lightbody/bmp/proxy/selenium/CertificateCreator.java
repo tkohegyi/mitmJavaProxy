@@ -46,7 +46,7 @@ public class CertificateCreator {
     /**
      * The default sign algorithm for this package is SHA1 with RSA.
      */
-    public static final String SIGN_ALGO = "SHA1withRSA";
+    public static final String SIGN_ALGO = "SHA256withRSA";  //was SHA1withRSA --hmm maybe SHA256WithRSAEncryption  ???
     /**
      * X.509 OID for Subject Key Identifier Extension - Replaced when duplicating a cert.
      */
