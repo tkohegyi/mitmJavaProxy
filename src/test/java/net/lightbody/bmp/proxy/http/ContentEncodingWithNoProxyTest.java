@@ -1,16 +1,16 @@
 package net.lightbody.bmp.proxy.http;
 
 import org.apache.http.Header;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.help.AbstractComplexProxyTool;
 import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.DefaultRequestInterceptor;
 import website.magyar.mitm.proxy.help.DefaultResponseInterceptor;
 import website.magyar.mitm.proxy.help.ResponseInfo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ContentEncodingWithNoProxyTest extends AbstractComplexProxyTool {
 
@@ -30,8 +30,8 @@ public class ContentEncodingWithNoProxyTest extends AbstractComplexProxyTool {
         if (contentEncoding == ContentEncoding.NONE) {
             assertNull(contentEncodingHeader);
         } else {
-            assertTrue("Response is not encoded with:" + contentEncoding.getValue(),
-                    contentEncodingHeader != null && contentEncodingHeader.getValue().contains(contentEncoding.getValue()));
+            assertTrue(
+                    contentEncodingHeader != null && contentEncodingHeader.getValue().contains(contentEncoding.getValue()), "Response is not encoded with:" + contentEncoding.getValue());
         }
     }
 

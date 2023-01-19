@@ -5,7 +5,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.RequestInterceptor;
 import website.magyar.mitm.proxy.ResponseInterceptor;
 import website.magyar.mitm.proxy.help.HttpClientBase;
@@ -13,9 +14,6 @@ import website.magyar.mitm.proxy.http.MitmJavaProxyHttpRequest;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 /**
  * Tests that DNS resolution works properly inside the proxy.
@@ -49,9 +47,9 @@ public class ThirdPartyCallsForDNSUsageOfProxyTest extends HttpClientBase {
             int statusCode = response.getStatusLine().getStatusCode();
             String body = EntityUtils.toString(response.getEntity());
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
+            Assertions.assertEquals( 200, statusCode, "HTTP Response Status code is:" + statusCode);
             logger.debug("Body length: {}, first few data:{}...", body.length(), body.substring(0,30));
-            assertNull(getLastException());
+            Assertions.assertNull(getLastException());
         }
     }
 
@@ -64,9 +62,9 @@ public class ThirdPartyCallsForDNSUsageOfProxyTest extends HttpClientBase {
             int statusCode = response.getStatusLine().getStatusCode();
             String body = EntityUtils.toString(response.getEntity());
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
+            Assertions.assertEquals( 200, statusCode, "HTTP Response Status code is:" + statusCode);
             logger.debug("Body length: {}, first few data:{}...", body.length(), body.substring(0,30));
-            assertNull(getLastException());
+            Assertions.assertNull(getLastException());
         }
     }
 

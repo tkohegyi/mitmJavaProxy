@@ -1,6 +1,6 @@
 package website.magyar.mitm.proxy;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.help.AbstractSimpleProxyTool;
 import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.DefaultRequestInterceptor;
@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests just a single basic proxy running as a man in the middle, with defining response as not volatile.

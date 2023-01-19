@@ -1,14 +1,14 @@
 package website.magyar.mitm.proxy;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.help.AbstractSimpleProxyTool;
 import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.DefaultRequestInterceptor;
 import website.magyar.mitm.proxy.help.DefaultResponseInterceptor;
 import website.magyar.mitm.proxy.help.ResponseInfo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests just a single basic proxy running as a man in the middle.

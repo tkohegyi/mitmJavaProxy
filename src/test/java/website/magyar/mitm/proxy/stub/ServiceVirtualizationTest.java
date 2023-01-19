@@ -1,10 +1,10 @@
 package website.magyar.mitm.proxy.stub;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.ProxyServer;
 import website.magyar.mitm.proxy.help.*;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * This is an example Service Virtualization - uses the proxy to redirect the request to an internal stub server.

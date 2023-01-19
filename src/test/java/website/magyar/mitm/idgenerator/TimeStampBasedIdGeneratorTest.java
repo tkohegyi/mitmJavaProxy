@@ -1,8 +1,8 @@
 package website.magyar.mitm.idgenerator;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -27,7 +27,7 @@ public class TimeStampBasedIdGeneratorTest {
     @Mock
     private CurrentDateProvider currentDateProvider;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         Whitebox.setInternalState(underTest, "currentDateProvider", currentDateProvider);
@@ -47,7 +47,7 @@ public class TimeStampBasedIdGeneratorTest {
         String actual = underTest.nextIdentifier();
         // THEN
         verify(currentDateProvider).getCurrentDate();
-        Assert.assertEquals(actual, expected);
+        Assertions.assertEquals(actual, expected);
     }
 
     @Test
@@ -64,7 +64,7 @@ public class TimeStampBasedIdGeneratorTest {
         String actual = underTest.nextIdentifier();
         // THEN
         verify(currentDateProvider).getCurrentDate();
-        Assert.assertEquals(actual, expected);
+        Assertions.assertEquals(actual, expected);
     }
 
     @Test
@@ -82,7 +82,7 @@ public class TimeStampBasedIdGeneratorTest {
         String actual = underTest.nextIdentifier();
         // THEN
         verify(currentDateProvider).getCurrentDate();
-        Assert.assertEquals(actual, expected);
+        Assertions.assertEquals(actual, expected);
     }
 
     @Test
@@ -100,7 +100,7 @@ public class TimeStampBasedIdGeneratorTest {
         underTest.nextIdentifier();
         String actual = underTest.nextIdentifier();
         // THEN
-        Assert.assertEquals(actual, expected);
+        Assertions.assertEquals(actual, expected);
     }
 
 }

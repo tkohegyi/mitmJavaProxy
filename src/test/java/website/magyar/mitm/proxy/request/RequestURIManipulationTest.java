@@ -5,7 +5,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.RequestInterceptor;
 import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.StubServerBase;
@@ -20,8 +20,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * This test checks if the request header can be accessed and altered by the request interceptors.
@@ -82,7 +82,7 @@ public class RequestURIManipulationTest extends StubServerBase {
             String body = EntityUtils.toString(response.getEntity());
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTP Response Status code is:" + statusCode);
             assertNull(getLastException());
             assertNull(getLastStubException());
             //check that answer is not changed
@@ -97,7 +97,7 @@ public class RequestURIManipulationTest extends StubServerBase {
             String body = EntityUtils.toString(response.getEntity());
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTP Response Status code is:" + statusCode);
             assertNull(getLastException());
             assertNull(getLastStubException());
             //check that answer is not changed
@@ -113,7 +113,7 @@ public class RequestURIManipulationTest extends StubServerBase {
             String body = EntityUtils.toString(response.getEntity());
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTP Response Status code is:" + statusCode);
             assertNull(getLastException());
             assertNull(getLastStubException());
             //check that answer is not changed
@@ -129,7 +129,7 @@ public class RequestURIManipulationTest extends StubServerBase {
             String body = EntityUtils.toString(response.getEntity());
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTP Response Status code is:" + statusCode);
             assertNull(getLastException());
             assertNull(getLastStubException());
             //check that answer is not changed
@@ -145,7 +145,7 @@ public class RequestURIManipulationTest extends StubServerBase {
             String body = EntityUtils.toString(response.getEntity());
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTP Response Status code is:" + statusCode);
             assertNull(getLastException());
             assertNull(getLastStubException());
             //check that answer is not changed
@@ -161,7 +161,7 @@ public class RequestURIManipulationTest extends StubServerBase {
             String body = EntityUtils.toString(response.getEntity());
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTP Response Status code is:" + statusCode);
             assertNull(getLastException());
             assertNull(getLastStubException());
             //check that answer is not changed

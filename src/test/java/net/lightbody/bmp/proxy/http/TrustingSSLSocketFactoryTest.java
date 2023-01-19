@@ -1,14 +1,14 @@
 package net.lightbody.bmp.proxy.http;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Test class to test TrustingSSLSocketFactory class.
@@ -16,7 +16,7 @@ import static org.junit.Assert.assertNotNull;
 public class TrustingSSLSocketFactoryTest {
     private TrustingSSLSocketFactory underTest;
 
-    @Before
+    @BeforeEach
     public void setUp() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         underTest = new TrustingSSLSocketFactory(60000);
     }

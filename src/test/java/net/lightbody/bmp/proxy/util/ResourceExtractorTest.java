@@ -1,13 +1,14 @@
 package net.lightbody.bmp.proxy.util;
 
-import junit.framework.TestCase;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-public class ResourceExtractorTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.fail;
+
+public class ResourceExtractorTest {
 
     @Test
     public void testLoadIllegalFile() throws IOException {
@@ -18,7 +19,7 @@ public class ResourceExtractorTest extends TestCase {
         try {
             ResourceExtractor.extractResourcePath(getClass(), "/somethingDoesNotExit", root);
         } catch (IllegalArgumentException e) {
-            Assert.assertTrue(e.getMessage().contains("Resource not found"));
+            Assertions.assertTrue(e.getMessage().contains("Resource not found"));
             return;
         }
         fail();

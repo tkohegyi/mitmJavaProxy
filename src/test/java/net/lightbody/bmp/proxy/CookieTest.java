@@ -10,8 +10,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.cookie.BasicClientCookie;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -31,8 +31,8 @@ public class CookieTest extends DummyServerTest {
         String body = IOUtils.readFully(client.execute(new HttpGet(ECHO_URL)).getEntity().getContent());
         int first = body.indexOf("foo=bar");
         int last = body.lastIndexOf("foo=bar");
-        Assert.assertTrue("foo=bar cookie not found", first != -1);
-        Assert.assertEquals("Multiple foo=bar cookies found", first, last);
+        Assertions.assertTrue(first != -1, "foo=bar cookie not found");
+        Assertions.assertEquals(first, last);
     }
 
     @Test
@@ -53,8 +53,8 @@ public class CookieTest extends DummyServerTest {
         Har har = proxy.getHar();
         HarEntry entry = har.getLog().getEntries().get(0);
         HarCookie harCookie = entry.getRequest().getCookies().get(0);
-        Assert.assertEquals("foo", harCookie.getName());
-        Assert.assertEquals("bar", harCookie.getValue());
+        Assertions.assertEquals("foo", harCookie.getName());
+        Assertions.assertEquals("bar", harCookie.getValue());
     }
 
 }

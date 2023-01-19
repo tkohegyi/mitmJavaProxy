@@ -1,14 +1,14 @@
 package website.magyar.mitm.proxy;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertThat;
 
 /**
  *
@@ -20,12 +20,12 @@ public class StartProxyServerTest {
 
     private final ProxyServer server = new ProxyServer(0);
 
-    @Before
+    @BeforeEach
     public void startServer() throws Exception {
         server.start(PROXY_TIMEOUT);
     }
 
-    @After
+    @AfterEach
     public void stopServer() throws Exception {
         server.stop();
     }
@@ -33,6 +33,6 @@ public class StartProxyServerTest {
     @Test
     public void portAllocation() throws Exception {
         logger.info("PROXY SERVER IS RUNNING.");
-        assertThat(server.getPort(), not(equalTo(0)));
+        Assertions.assertNotEquals(0, server.getPort());
     }
 }

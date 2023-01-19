@@ -6,7 +6,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.RequestInterceptor;
 import website.magyar.mitm.proxy.ResponseInterceptor;
 import website.magyar.mitm.proxy.help.ClientServerBase;
@@ -17,9 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 /**
  * This test runs simple http request 1000 times.
@@ -60,8 +58,8 @@ public class HttpMassTest extends ClientServerBase {
                 HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
                 int statusCode = response.getStatusLine().getStatusCode();
                 EntityUtils.consume(response.getEntity());
-                assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
-                assertNull(getLastException());
+                Assertions.assertEquals( 200, statusCode, "HTTP Response Status code is:" + statusCode);
+                Assertions.assertNull(getLastException());
                 logger.info("Request no:{} done successfully.", i);
             }
         }

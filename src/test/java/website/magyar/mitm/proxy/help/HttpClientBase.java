@@ -13,9 +13,9 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,17 +41,17 @@ public abstract class HttpClientBase extends ProxyServerBase {
      */
     private Exception lastException;
 
-    @Before
-    public void runSetup() throws Exception {
+    @BeforeEach
+    public void runSetup(TestInfo testInfo) throws Exception {
         startProxyServer();
         setUp();
         Thread.sleep(GRACE_PERIOD);
-        logger.info("*** Test INIT DONE - starting the Test: {}:{}", this.getClass().getCanonicalName(), new TestName());
+        logger.info("*** Test INIT DONE - starting the Test: {}:{}", this.getClass().getCanonicalName(), testInfo.getDisplayName());
     }
 
     protected abstract void setUp() throws Exception;
 
-    @After
+    @AfterEach
     public void runTearDown() throws Exception {
         logger.info("*** Test DONE - starting TearDown");
         try {

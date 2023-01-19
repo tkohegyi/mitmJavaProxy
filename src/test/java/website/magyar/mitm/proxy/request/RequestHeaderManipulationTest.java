@@ -4,7 +4,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.RequestInterceptor;
 import website.magyar.mitm.proxy.ResponseInterceptor;
 import website.magyar.mitm.proxy.help.ClientServerBase;
@@ -18,10 +18,10 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * This test checks if the request header can be accessed and altered by the request interceptors.
@@ -76,7 +76,7 @@ public class RequestHeaderManipulationTest extends ClientServerBase {
         CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY);
         HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
         httpClient.close();
-        assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+        assertEquals(200, response.getStatusLine().getStatusCode(), "HTTP Response Status code is:" + response.getStatusLine().getStatusCode());
         assertNull(getLastException());
     }
 
@@ -85,7 +85,7 @@ public class RequestHeaderManipulationTest extends ClientServerBase {
         CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY);
         HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
         httpClient.close();
-        assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+        assertEquals(200, response.getStatusLine().getStatusCode(), "HTTPS Response Status code is:" + response.getStatusLine().getStatusCode());
         assertNull(getLastException());
     }
 
@@ -127,7 +127,7 @@ public class RequestHeaderManipulationTest extends ClientServerBase {
                     }
                 }
             }
-            assertTrue("Cannot find request header 'A'->'A'", found);
+            assertTrue(found, "Cannot find request header 'A'->'A'");
 
             //header to be found as altered
             found = false;
@@ -139,7 +139,7 @@ public class RequestHeaderManipulationTest extends ClientServerBase {
                     }
                 }
             }
-            assertTrue("Cannot find altered request header 'B'->'BB'", found);
+            assertTrue(found, "Cannot find altered request header 'B'->'BB'");
 
             //header not to be found
             found = false;
@@ -149,7 +149,7 @@ public class RequestHeaderManipulationTest extends ClientServerBase {
                     found = true;
                 }
             }
-            assertFalse("Shall not find deleted request header 'C'", found);
+            assertFalse(found, "Shall not find deleted request header 'C'");
         }
     }
 }

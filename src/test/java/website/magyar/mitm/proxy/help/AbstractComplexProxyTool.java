@@ -4,6 +4,9 @@ import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.client.entity.DeflateDecompressingEntity;
 import org.apache.http.client.entity.GzipDecompressingEntity;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import website.magyar.mitm.proxy.ProxyServer;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -15,15 +18,11 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.jetty.server.Server;
-import org.junit.After;
-import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.Charset;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Base for tests that test the proxy. This base class encapsulates all of the
@@ -104,7 +103,7 @@ public abstract class AbstractComplexProxyTool {
         return responseCount;
     }
 
-    @Before
+    @BeforeEach
     public void runSetup() throws Exception {
         initializeCounters();
         startServers();
@@ -159,7 +158,7 @@ public abstract class AbstractComplexProxyTool {
 
     }
 
-    @After
+    @AfterEach
     public void runTearDown() throws Exception {
         LOGGER.info("*** Test DONE - starting TEARDOWN");
 
@@ -238,10 +237,10 @@ public abstract class AbstractComplexProxyTool {
 
             HttpResponse response = httpClient.execute(host, request);
             if (contentLength != null) {
-                assertEquals(
-                        "Content-Length from GET should match that from HEAD",
+                Assertions.assertEquals(
                         contentLength,
-                        Integer.valueOf(response.getFirstHeader("Content-Length").getValue()));
+                        Integer.valueOf(response.getFirstHeader("Content-Length").getValue()),
+                        "Content-Length from GET should match that from HEAD");
             }
 
             HttpEntity resEntity = response.getEntity();

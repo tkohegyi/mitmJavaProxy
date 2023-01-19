@@ -7,7 +7,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.RequestInterceptor;
 import website.magyar.mitm.proxy.help.ClientServerBase;
 import website.magyar.mitm.proxy.help.ContentEncoding;
@@ -23,8 +23,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * This test checks if the request body can be accessed and altered by the request interceptors.
@@ -91,7 +91,7 @@ public class RequestBodyManipulationTest extends ClientServerBase {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTP Response Status code is:" + statusCode);
             assertNull(getLastException());
         }
     }
@@ -102,7 +102,7 @@ public class RequestBodyManipulationTest extends ClientServerBase {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTPS Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTPS Response Status code is:" + statusCode);
             assertNull(getLastException());
         } catch (SSLException | IndexOutOfBoundsException e) {
             logger.error("Ups", e);
@@ -117,7 +117,7 @@ public class RequestBodyManipulationTest extends ClientServerBase {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTPS Response Status code is:" + statusCode);
             assertNull(getLastException());
         }
     }
@@ -129,7 +129,7 @@ public class RequestBodyManipulationTest extends ClientServerBase {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTPS Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTPS Response Status code is:" + statusCode);
             assertNull(getLastException());
         } catch (SSLException | IndexOutOfBoundsException e) {
             logger.error("Ups", e);
@@ -144,7 +144,7 @@ public class RequestBodyManipulationTest extends ClientServerBase {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTPS Response Status code is:" + statusCode);
             assertNull(getLastException());
         }
     }
@@ -156,7 +156,7 @@ public class RequestBodyManipulationTest extends ClientServerBase {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTPS Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTPS Response Status code is:" + statusCode);
             assertNull(getLastException());
         } catch (SSLException | IndexOutOfBoundsException e) {
             logger.error("Ups", e);
@@ -171,7 +171,7 @@ public class RequestBodyManipulationTest extends ClientServerBase {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTP Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTPS Response Status code is:" + statusCode);
             assertNull(getLastException());
         }
     }
@@ -183,7 +183,7 @@ public class RequestBodyManipulationTest extends ClientServerBase {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
             int statusCode = response.getStatusLine().getStatusCode();
             EntityUtils.consume(response.getEntity());
-            assertEquals("HTTPS Response Status code is:" + statusCode, 200, statusCode);
+            assertEquals(200, statusCode, "HTTPS Response Status code is:" + statusCode);
             assertNull(getLastException());
         } catch (SSLException | IndexOutOfBoundsException e) {
             logger.error("Ups", e);

@@ -5,7 +5,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicHeader;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.ProxyServer;
 import website.magyar.mitm.proxy.ResponseInterceptor;
 import website.magyar.mitm.proxy.help.ClientServerBase;
@@ -19,9 +19,9 @@ import javax.net.ssl.SSLException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * This test checks if the response header can be accessed and altered by the response interceptors.
@@ -62,22 +62,22 @@ public class ResponseHeaderManipulationTest extends ClientServerBase {
     public void headerInterceptedAndAccessible() throws Exception {
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
-            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            assertEquals(200, response.getStatusLine().getStatusCode(), "HTTP Response Status code is:" + response.getStatusLine().getStatusCode());
             assertNull(getLastException());
             //check headers in response
             Header h;
             //'A' existence
             h = response.getFirstHeader("A");
-            assertNotNull("Cannot find 'A' header in response", h);
+            assertNotNull(h, "Cannot find 'A' header in response");
             //'B' changed
             h = response.getFirstHeader("B");
             assertEquals("bBB", h.getValue());
             //'C' must missing
             h = response.getFirstHeader("C");
-            assertNull("Deleted header 'C' found", h);
+            assertNull(h, "Deleted header 'C' found");
             //'D' (the new header) must exist
             h = response.getFirstHeader("D");
-            assertNotNull("Cannot find 'D' header in response", h);
+            assertNotNull(h, "Cannot find 'D' header in response");
         }
     }
 
@@ -85,22 +85,22 @@ public class ResponseHeaderManipulationTest extends ClientServerBase {
     public void headerInterceptedAndAccessibleSecure() throws Exception {
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
-            assertEquals("HTTPS Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            assertEquals(200, response.getStatusLine().getStatusCode(), "HTTPS Response Status code is:" + response.getStatusLine().getStatusCode());
             assertNull(getLastException());
             //check headers in response
             Header h;
             //'A' existence
             h = response.getFirstHeader("A");
-            assertNotNull("Cannot find 'A' header in response", h);
+            assertNotNull(h, "Cannot find 'A' header in response");
             //'B' changed
             h = response.getFirstHeader("B");
             assertEquals("bBB", h.getValue());
             //'C' must missing
             h = response.getFirstHeader("C");
-            assertNull("Deleted header 'C' found", h);
+            assertNull(h, "Deleted header 'C' found");
             //'D' (the new header) must exist
             h = response.getFirstHeader("D");
-            assertNotNull("Cannot find 'D' header in response", h);
+            assertNotNull(h, "Cannot find 'D' header in response");
         } catch (SSLException | IndexOutOfBoundsException e) {
             logger.error("Ups", e);
             throw e;
@@ -112,22 +112,22 @@ public class ResponseHeaderManipulationTest extends ClientServerBase {
         ProxyServer.setResponseVolatile(false); //interceptor shall not influence the response !
         try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
             HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
-            assertEquals("HTTP Response Status code is:" + response.getStatusLine().getStatusCode(), 200, response.getStatusLine().getStatusCode());
+            assertEquals(200, response.getStatusLine().getStatusCode(), "HTTP Response Status code is:" + response.getStatusLine().getStatusCode());
             assertNull(getLastException());
             //check headers in response
             Header h;
             //'A' existence
             h = response.getFirstHeader("A");
-            assertNotNull("Cannot find 'A' header in response", h);
+            assertNotNull(h, "Cannot find 'A' header in response");
             //'B' unchanged
             h = response.getFirstHeader("B");
             assertEquals("Bb", h.getValue());
             //'C' must present
             h = response.getFirstHeader("C");
-            assertNotNull("Header 'C' seems deleted", h);
+            assertNotNull(h, "Header 'C' seems deleted");
             //'D' (the new header) must not exist
             h = response.getFirstHeader("D");
-            assertNull("Shall not find 'D' header in response", h);
+            assertNull(h, "Shall not find 'D' header in response");
         }
     }
 

@@ -18,9 +18,10 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StreamUtils;
@@ -37,8 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Base for tests that test the proxy. This base class encapsulates:
@@ -76,8 +76,8 @@ public abstract class ClientServerBase extends ProxyServerBase {
         return secureHost;
     }
 
-    @Before
-    public void runSetup() throws Exception {
+    @BeforeEach
+    public void runSetup(TestInfo testInfo) throws Exception {
         initializeCounters();
         startProxyServer();
         startServer();
@@ -85,7 +85,7 @@ public abstract class ClientServerBase extends ProxyServerBase {
         logger.info("*** Backed httpS Server started on port: {}", securePort);
         setUp();
         Thread.sleep(GRACE_PERIOD);
-        logger.info("*** Test INIT DONE - starting the Test: {}:{}", this.getClass().getCanonicalName(), new TestName());
+        logger.info("*** Test INIT DONE - starting the Test: {}:{}", this.getClass().getCanonicalName(), testInfo.getDisplayName());
     }
 
     protected abstract void setUp() throws Exception;
@@ -99,9 +99,9 @@ public abstract class ClientServerBase extends ProxyServerBase {
 
         // find out what ports the HTTP and HTTPS connectors were bound to
         securePort = TestUtils.findLocalHttpsPort(webServer);
-        assertThat(securePort, not(equalTo(0)));
+        Assertions.assertFalse(securePort == 0);
         httpPort = TestUtils.findLocalHttpPort(webServer);
-        assertThat(securePort, not(equalTo(0)));
+        Assertions.assertFalse(httpPort == 0);
 
         httpHost = new HttpHost("127.0.0.1", httpPort);
         secureHost = new HttpHost("127.0.0.1", securePort, "https");
@@ -110,7 +110,7 @@ public abstract class ClientServerBase extends ProxyServerBase {
         lastException = null;
     }
 
-    @After
+    @AfterEach
     public void runTearDown() throws Exception {
         logger.info("*** Test DONE - starting TearDown");
         try {
@@ -158,7 +158,7 @@ public abstract class ClientServerBase extends ProxyServerBase {
         });
 
         // Add SSL connector
-        SslContextFactory sslContextFactory = new SslContextFactory.Server.Server();
+        SslContextFactory sslContextFactory = new SslContextFactory.Server();
 
         SelfSignedSslEngineSource contextSource = new SelfSignedSslEngineSource();
         SSLContext sslContext = contextSource.getSslContext();

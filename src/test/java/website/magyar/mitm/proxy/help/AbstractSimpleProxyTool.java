@@ -1,5 +1,8 @@
 package website.magyar.mitm.proxy.help;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import website.magyar.mitm.proxy.ProxyServer;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -11,14 +14,10 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.eclipse.jetty.server.Server;
-import org.junit.After;
-import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * Base for tests that test the proxy. This base class encapsulates:
@@ -51,7 +50,7 @@ public abstract class AbstractSimpleProxyTool {
      */
     private Server webServer;
 
-    @Before
+    @BeforeEach
     public void runSetup() throws Exception {
         initializeCounters();
         startServers();
@@ -97,7 +96,7 @@ public abstract class AbstractSimpleProxyTool {
         httpsWebHost = new HttpHost("127.0.0.1", httpsWebServerPort, "https");
     }
 
-    @After
+    @AfterEach
     public void runTearDown() throws Exception {
         LOGGER.info("*** Test DONE - starting TEARDOWN");
 
@@ -148,10 +147,10 @@ public abstract class AbstractSimpleProxyTool {
             HttpEntity resEntity = response.getEntity();
 
             if (contentLength != null) {
-                assertEquals(
-                        "Content-Length from GET should match that from HEAD",
+                Assertions.assertEquals(
                         contentLength,
-                        Integer.valueOf(response.getFirstHeader("Content-Length").getValue()));
+                        Integer.valueOf(response.getFirstHeader("Content-Length").getValue()),
+                        "Content-Length from GET should match that from HEAD");
             }
             return new ResponseInfo(response.getStatusLine().getStatusCode(), EntityUtils.toString(resEntity), resEntity.getContentEncoding());
         }

@@ -6,6 +6,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StreamUtils;
@@ -17,10 +18,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertThat;
 
 /**
  * Base for tests that test the proxy. This base class encapsulates:
@@ -77,9 +74,10 @@ public abstract class StubServerBase extends ClientServerBase {
 
         // find out what ports the HTTP and HTTPS connectors were bound to
         secureStubPort = TestUtils.findLocalHttpsPort(webStubServer);
-        assertThat(secureStubPort, not(equalTo(0)));
+        Assertions.assertTrue(secureStubPort != 0);
+
         httpStubPort = TestUtils.findLocalHttpPort(webStubServer);
-        assertThat(secureStubPort, not(equalTo(0)));
+        Assertions.assertTrue(httpStubPort != 0);
 
         lastStubException = null;
     }
@@ -142,7 +140,7 @@ public abstract class StubServerBase extends ClientServerBase {
         });
 
         // Add SSL connector
-        SslContextFactory sslContextFactory = new SslContextFactory.Server.Server();
+        SslContextFactory sslContextFactory = new SslContextFactory.Server();
 
         SelfSignedSslEngineSource contextSource = new SelfSignedSslEngineSource();
         SSLContext sslContext = contextSource.getSslContext();

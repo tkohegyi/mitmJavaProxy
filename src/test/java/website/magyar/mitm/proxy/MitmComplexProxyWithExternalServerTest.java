@@ -1,15 +1,16 @@
 package website.magyar.mitm.proxy;
 
 import org.apache.http.HttpHost;
-import org.junit.Test;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.help.AbstractComplexProxyTool;
 import website.magyar.mitm.proxy.help.ContentEncoding;
 import website.magyar.mitm.proxy.help.DefaultRequestInterceptor;
 import website.magyar.mitm.proxy.help.DefaultResponseInterceptor;
 import website.magyar.mitm.proxy.help.ResponseInfo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests just a single basic proxy running as a man in the middle.
@@ -40,7 +41,7 @@ public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxy
         } catch (Exception e) {
             externalHost = null;
         }
-        org.junit.Assume.assumeTrue(externalHost != null);
+        Assumptions.assumeTrue(externalHost != null);
         //do test if available
         ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, true, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
@@ -58,7 +59,7 @@ public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxy
         } catch (Exception e) {
             externalHost = null;
         }
-        org.junit.Assume.assumeTrue(externalHost != null);
+        Assumptions.assumeTrue(externalHost != null);
         //do test if available
         ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, false, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
@@ -77,7 +78,7 @@ public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxy
         } catch (Exception e) {
             externalHost = null;
         }
-        org.junit.Assume.assumeTrue(externalHost != null);
+        Assumptions.assumeTrue(externalHost != null);
         //do test if available
         ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, true, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
@@ -96,7 +97,7 @@ public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxy
         } catch (Exception e) {
             externalHost = null;
         }
-        org.junit.Assume.assumeTrue(externalHost != null);
+        Assumptions.assumeTrue(externalHost != null);
         //do test if available
         ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, false, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
@@ -114,7 +115,7 @@ public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxy
         } catch (Exception e) {
             externalHost = null;
         }
-        org.junit.Assume.assumeTrue(externalHost != null);
+        Assumptions.assumeTrue(externalHost != null);
         //do test if available
         ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, true, false, ContentEncoding.ANY);
         assertEquals(200, proxiedResponse.getStatusCode());
