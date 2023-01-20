@@ -8,6 +8,7 @@ import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.RequestInterceptor;
 import website.magyar.mitm.proxy.help.ContentEncoding;
+import website.magyar.mitm.proxy.help.ProxyServerBase;
 import website.magyar.mitm.proxy.help.StubServerBase;
 import website.magyar.mitm.proxy.help.TestUtils;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpRequest;
@@ -42,6 +43,11 @@ public class RequestURIManipulationTest extends StubServerBase {
         TestRequestInterceptor testRequestInterceptor = new TestRequestInterceptor();
         getProxyServer().addRequestInterceptor(testRequestInterceptor);
         request = new HttpGet(GET_REQUEST);
+    }
+
+    @Override
+    protected int getProxyTimeout() {
+        return ProxyServerBase.PROXY_LONG_TIMEOUT;
     }
 
     @Override

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.RequestInterceptor;
 import website.magyar.mitm.proxy.ResponseInterceptor;
 import website.magyar.mitm.proxy.help.ClientServerBase;
+import website.magyar.mitm.proxy.help.ProxyServerBase;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpRequest;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import org.slf4j.Logger;
@@ -38,6 +39,11 @@ public class HttpMassTest extends ClientServerBase {
         getProxyServer().addResponseInterceptor(testResponseInterceptor);
         request = new HttpGet(GET_REQUEST);
         request.addHeader("A", "A"); //a header to start with
+    }
+
+    @Override
+    protected int getProxyTimeout() {
+        return ProxyServerBase.PROXY_LONG_TIMEOUT;
     }
 
     @Override

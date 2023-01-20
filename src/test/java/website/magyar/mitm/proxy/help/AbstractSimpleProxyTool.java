@@ -31,12 +31,12 @@ public abstract class AbstractSimpleProxyTool {
     /**
      * The server used by the tests.
      */
-    public static final int PROXY_TIMEOUT = 5000; //5 sec
+    public static final int PROXY_SHORT_TIMEOUT = 5000; //5 sec
     private static final int GRACE_PERIOD = 500; //0.5 sec
     protected final static Logger LOGGER = LoggerFactory.getLogger(AbstractSimpleProxyTool.class);
     protected static final String SERVER_BACKEND = "server-backend";
     protected static final String GET_QUICK_RESPONSE = "/getServerQuickResponse";
-    protected static final String GET_SLOW_RESPONSE = "/getServerSlowResponse";
+    public static final String GET_SLOW_RESPONSE = "/getServerSlowResponse";
     public ProxyServer proxyServer;
     protected int webServerPort = -1;
     protected int httpsWebServerPort = -1;
@@ -73,7 +73,7 @@ public abstract class AbstractSimpleProxyTool {
 
     private void startProxy() throws Exception {
         proxyServer = new ProxyServer(0);
-        proxyServer.start(PROXY_TIMEOUT);
+        proxyServer.start(PROXY_SHORT_TIMEOUT);
         proxyPort = proxyServer.getPort();
         ProxyServer.setShouldKeepSslConnectionAlive(false);
         Thread.sleep(GRACE_PERIOD);

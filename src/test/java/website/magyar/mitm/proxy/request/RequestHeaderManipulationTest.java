@@ -9,6 +9,7 @@ import website.magyar.mitm.proxy.RequestInterceptor;
 import website.magyar.mitm.proxy.ResponseInterceptor;
 import website.magyar.mitm.proxy.help.ClientServerBase;
 import website.magyar.mitm.proxy.help.ContentEncoding;
+import website.magyar.mitm.proxy.help.ProxyServerBase;
 import website.magyar.mitm.proxy.help.TestUtils;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpRequest;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpResponse;
@@ -52,6 +53,11 @@ public class RequestHeaderManipulationTest extends ClientServerBase {
 
     @Override
     protected void tearDown() {
+    }
+
+    @Override
+    protected int getProxyTimeout() {
+        return ProxyServerBase.PROXY_LONG_TIMEOUT;
     }
 
     @Override

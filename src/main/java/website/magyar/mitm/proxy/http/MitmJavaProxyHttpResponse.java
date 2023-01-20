@@ -35,7 +35,8 @@ public class MitmJavaProxyHttpResponse {
     private final String body;
     private final String contentType;
     private final String charSet;
-    private final int status;
+    private int status;
+    private String reasonPhrase;
     private final OutputStream os;
     private final Map<String, HttpHeaderChange> headerChanges = new HashMap<>();
     private ByteArrayOutputStream bos;
@@ -57,6 +58,7 @@ public class MitmJavaProxyHttpResponse {
         this.bos = bos;
         this.os = os;
         this.responseVolatile = responseVolatile;
+        this.reasonPhrase = null;
     }
 
     /**
@@ -182,6 +184,24 @@ public class MitmJavaProxyHttpResponse {
         return status;
     }
 
+    /**
+     * Sets the status of the response message. To alter the response, the response must be volatile.
+     * @param newStatus is the new status, like 404.
+     */
+    public void setStatus(int newStatus) {
+        response.setStatusCode(newStatus);
+        status = newStatus;
+    }
+
+    /**
+     * Sets the reason phrase text at the StatusLine field of the response. Independent of the status value.
+     * To alter the response, the response must be volatile.
+     * @param newReasonPhrase to be used in the response.
+     */
+    public void setReasonPhrase(String newReasonPhrase) {
+        reasonPhrase = newReasonPhrase;
+    }
+
     public HttpResponse getRawResponse() {
         return response;
     }
@@ -216,6 +236,16 @@ public class MitmJavaProxyHttpResponse {
                     httpFields.remove(key);
                 }
             }
+        }
+
+        //update status as necessary
+        if (responseVolatile && status != response.getStatus() && status != -998) { //-998 is a bad URI / request timeout status info - leave that unchanged
+            response.setStatus(status);
+            entry.getResponse().setStatus(status);
+        }
+        if (responseVolatile && reasonPhrase != null) {
+            entry.getResponse().setStatusText(reasonPhrase);
+            response.setStatus(status, reasonPhrase);
         }
 
         //prepare body update - only if response is volatile and well prepared

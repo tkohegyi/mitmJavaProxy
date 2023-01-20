@@ -10,6 +10,7 @@ import website.magyar.mitm.proxy.ProxyServer;
 import website.magyar.mitm.proxy.ResponseInterceptor;
 import website.magyar.mitm.proxy.help.ClientServerBase;
 import website.magyar.mitm.proxy.help.ContentEncoding;
+import website.magyar.mitm.proxy.help.ProxyServerBase;
 import website.magyar.mitm.proxy.help.TestUtils;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import org.slf4j.Logger;
@@ -33,6 +34,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  * - If header "C" added - replace it with a json message (changes content-type too)
  * - If header "D" added - tries to get the response as byte[], meanwhile the content is not altered
  * - If header "E" added - tries to get the response as byte[], meanwhile the content is altered (replaced with a json message)
+ * - If header "F" added - tries to change the status to E404, meanwhile the content is not altered
+ * - If header "G" added - tries to change the status to E503, status text to "MITM" meanwhile the content is not altered
+ * - If header "H" added - tries to change the status text to "MITM2" meanwhile don1t touch the status or the message content
  *
  * @author Tamas_Kohegyi
  */
@@ -53,6 +57,11 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
         getProxyServer().setCaptureBinaryContent(true);
         //note that if response has no Content-Type header then response body is available via getBodyBytes() method.
         request = new HttpGet(GET_REQUEST);
+    }
+
+    @Override
+    protected int getProxyTimeout() {
+        return ProxyServerBase.PROXY_LONG_TIMEOUT;
     }
 
     @Override
@@ -254,6 +263,102 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
         }
     }
 
+    @Test
+    public void alterStatusStatusTextNotAltered() throws Exception {
+        request.addHeader("F", "F");
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
+            HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
+            String body = EntityUtils.toString(response.getEntity());
+            httpClient.close();
+            assertEquals(404, response.getStatusLine().getStatusCode(), "HTTP Response Status code is:" + response.getStatusLine().getStatusCode());
+            assertEquals("OK", response.getStatusLine().getReasonPhrase(), "HTTP Response Reason Phrase is:" + response.getStatusLine().getReasonPhrase());
+            assertNull(getLastException());
+            //check that answer is not changed
+            assertEquals(SERVER_BACKEND, body);
+        }
+    }
+
+    @Test
+    public void alterStatusStatusTextNotAlteredSecure() throws Exception {
+        request.addHeader("F", "F");
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
+            HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
+            String body = EntityUtils.toString(response.getEntity());
+            assertEquals(404, response.getStatusLine().getStatusCode(), "HTTP Response Status code is:" + response.getStatusLine().getStatusCode());
+            assertEquals("OK", response.getStatusLine().getReasonPhrase(), "HTTP Response Reason Phrase is:" + response.getStatusLine().getReasonPhrase());
+            assertNull(getLastException());
+            //check that answer is not changed
+            assertEquals(SERVER_BACKEND, body);
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
+        }
+    }
+
+    @Test
+    public void alterStatusStatusTextAltered() throws Exception {
+        request.addHeader("G", "G");
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
+            HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
+            String body = EntityUtils.toString(response.getEntity());
+            httpClient.close();
+            assertEquals(503, response.getStatusLine().getStatusCode(), "HTTP Response Status code is:" + response.getStatusLine().getStatusCode());
+            assertEquals("MITM", response.getStatusLine().getReasonPhrase(), "HTTP Response Reason Phrase is:" + response.getStatusLine().getReasonPhrase());
+            assertNull(getLastException());
+            //check that answer is not changed
+            assertEquals(SERVER_BACKEND, body);
+        }
+    }
+
+    @Test
+    public void alterStatusSecureStatusTextAltered() throws Exception {
+        request.addHeader("G", "G");
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
+            HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
+            String body = EntityUtils.toString(response.getEntity());
+            assertEquals(503, response.getStatusLine().getStatusCode(), "HTTP Response Status code is:" + response.getStatusLine().getStatusCode());
+            assertEquals("MITM", response.getStatusLine().getReasonPhrase(), "HTTP Response Reason Phrase is:" + response.getStatusLine().getReasonPhrase());
+            assertNull(getLastException());
+            //check that answer is not changed
+            assertEquals(SERVER_BACKEND, body);
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
+        }
+    }
+
+    @Test
+    public void alterStatusTextStatusNotAltered() throws Exception {
+        request.addHeader("H", "H");
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
+            HttpResponse response = httpClient.execute(getHttpHost(), request); //request is here
+            String body = EntityUtils.toString(response.getEntity());
+            httpClient.close();
+            assertEquals(200, response.getStatusLine().getStatusCode(), "HTTP Response Status code is:" + response.getStatusLine().getStatusCode());
+            assertEquals("MITM2", response.getStatusLine().getReasonPhrase(), "HTTP Response Reason Phrase is:" + response.getStatusLine().getReasonPhrase());
+            assertNull(getLastException());
+            //check that answer is not changed
+            assertEquals(SERVER_BACKEND, body);
+        }
+    }
+
+    @Test
+    public void alterStatusTextStatusNotAlteredSecure() throws Exception {
+        request.addHeader("H", "H");
+        try (CloseableHttpClient httpClient = TestUtils.buildHttpClient(true, getProxyPort(), ContentEncoding.ANY)) {
+            HttpResponse response = httpClient.execute(getSecureHost(), request); //request is here
+            String body = EntityUtils.toString(response.getEntity());
+            assertEquals(200, response.getStatusLine().getStatusCode(), "HTTP Response Status code is:" + response.getStatusLine().getStatusCode());
+            assertEquals("MITM2", response.getStatusLine().getReasonPhrase(), "HTTP Response Reason Phrase is:" + response.getStatusLine().getReasonPhrase());
+            assertNull(getLastException());
+            //check that answer is not changed
+            assertEquals(SERVER_BACKEND, body);
+        } catch (SSLException | IndexOutOfBoundsException e) {
+            logger.error("Ups", e);
+            throw e;
+        }
+    }
+
     class TestResponseInterceptor implements ResponseInterceptor {
 
         @Override
@@ -281,7 +386,7 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
                 response.setContentType("application/json");
             }
 
-            //don't alter body - if 'D' header - bug get body as byte[]
+            //don't alter body - if 'D' header - but get body as byte[]
             if (response.findHeader(requestHeaders, "D") != null) {
                 byte[] oldBody = response.getBodyBytes();
                 String bodyString = new String(oldBody);
@@ -290,12 +395,36 @@ public class ResponseBodyManipulationTest extends ClientServerBase {
 
             //alter body - if 'E' header - use json request + get raw body too
             if (response.findHeader(requestHeaders, "E") != null) {
-
                 byte[] oldBody = response.getBodyBytes();
                 String bodyString = new String(oldBody);
                 detectIssue(!SERVER_BACKEND.equals(bodyString), "Cannot find the expected body");
                 newBody = REQ_JSON_BODY.getBytes(StandardCharsets.UTF_8);
                 response.setContentType("application/json");
+            }
+
+            //alter body - if 'F' header - change response status to 404, don't touch status text
+            if (response.findHeader(requestHeaders, "F") != null) {
+                byte[] oldBody = response.getBodyBytes();
+                String bodyString = new String(oldBody);
+                detectIssue(!SERVER_BACKEND.equals(bodyString), "Cannot find the expected body");
+                response.setStatus(404);
+            }
+
+            //alter body - if 'G' header - change response status to 503 and status text as "MITM"
+            if (response.findHeader(requestHeaders, "G") != null) {
+                byte[] oldBody = response.getBodyBytes();
+                String bodyString = new String(oldBody);
+                detectIssue(!SERVER_BACKEND.equals(bodyString), "Cannot find the expected body");
+                response.setStatus(503);
+                response.setReasonPhrase("MITM");
+            }
+
+            //alter body - if 'H' header - change status text as "MITM2", don't change the status
+            if (response.findHeader(requestHeaders, "H") != null) {
+                byte[] oldBody = response.getBodyBytes();
+                String bodyString = new String(oldBody);
+                detectIssue(!SERVER_BACKEND.equals(bodyString), "Cannot find the expected body");
+                response.setReasonPhrase("MITM2");
             }
 
             try {

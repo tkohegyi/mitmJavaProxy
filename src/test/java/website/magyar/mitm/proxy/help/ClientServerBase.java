@@ -36,9 +36,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.not;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static website.magyar.mitm.proxy.help.TestUtils.TEN_SEC_LENGTH;
 
 /**
  * Base for tests that test the proxy. This base class encapsulates:
@@ -79,7 +78,8 @@ public abstract class ClientServerBase extends ProxyServerBase {
     @BeforeEach
     public void runSetup(TestInfo testInfo) throws Exception {
         initializeCounters();
-        startProxyServer();
+        int proxyTimeout = getProxyTimeout();
+        startProxyServer(proxyTimeout);
         startServer();
         logger.info("*** Backed http Server started on port: {}", httpPort);
         logger.info("*** Backed httpS Server started on port: {}", securePort);
@@ -89,6 +89,7 @@ public abstract class ClientServerBase extends ProxyServerBase {
     }
 
     protected abstract void setUp() throws Exception;
+    protected abstract int getProxyTimeout() throws Exception;
 
     private void initializeCounters() {
         requestCount = new AtomicInteger(0);
@@ -141,6 +142,17 @@ public abstract class ClientServerBase extends ProxyServerBase {
                     numberOfBytesRead = bodyString.length();
                 }
                 logger.info("Done reading # of bytes: {}", numberOfBytesRead);
+
+                //slow response handling
+                if (request.getRequestURI().contains("SlowResponse")) {
+                    //requesting timeout - 10 sec response time
+                    logger.info("Requesting 10 sec delay in Server answer");
+                    try {
+                        Thread.sleep(TEN_SEC_LENGTH);
+                    } catch (InterruptedException e) {
+                        logger.warn("Thread Interrupt arrived");
+                    }
+                }
 
                 //finish response
                 response.setStatus(HttpServletResponse.SC_OK);

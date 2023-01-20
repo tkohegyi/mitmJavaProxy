@@ -46,7 +46,7 @@ import java.util.Objects;
  */
 public class TestUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestUtils.class);
-    private static final int TEN_SEC_LENGTH = 10000;
+    public static final int TEN_SEC_LENGTH = 10000;
 
     /**
      * Creates and starts an embedded web server on JVM-assigned HTTP and HTTPS ports.

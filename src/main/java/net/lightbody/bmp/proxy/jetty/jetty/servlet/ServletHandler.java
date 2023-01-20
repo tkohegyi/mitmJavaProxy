@@ -840,6 +840,7 @@ public class ServletHandler extends Container implements HttpHandler {
         /**
          * @deprecated
          */
+        @Deprecated
         public Servlet getServlet(String name) {
             return null;
         }
@@ -847,6 +848,7 @@ public class ServletHandler extends Container implements HttpHandler {
         /**
          * @deprecated
          */
+        @Deprecated
         public Enumeration getServlets() {
             return Collections.enumeration(Collections.EMPTY_LIST);
         }
@@ -854,6 +856,7 @@ public class ServletHandler extends Container implements HttpHandler {
         /**
          * @deprecated
          */
+        @Deprecated
         public Enumeration getServletNames() {
             return Collections.enumeration(Collections.EMPTY_LIST);
         }
@@ -871,6 +874,7 @@ public class ServletHandler extends Container implements HttpHandler {
         /**
          * @deprecated As of Java Servlet API 2.1, use {@link #log(String message, Throwable throwable)} instead.
          */
+        @Deprecated
         public void log(Exception e, String msg) {
             log.warn(msg, e);
         }

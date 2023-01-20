@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import website.magyar.mitm.proxy.RequestInterceptor;
 import website.magyar.mitm.proxy.help.ClientServerBase;
 import website.magyar.mitm.proxy.help.ContentEncoding;
+import website.magyar.mitm.proxy.help.ProxyServerBase;
 import website.magyar.mitm.proxy.help.TestUtils;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpRequest;
 import org.slf4j.Logger;
@@ -51,6 +52,11 @@ public class RequestBodyManipulationTest extends ClientServerBase {
         final StringEntity entity = new StringEntity(REQ_STRING_BODY, "UTF-8");
         entity.setChunked(true);
         request.setEntity(entity);
+    }
+
+    @Override
+    protected int getProxyTimeout() {
+        return ProxyServerBase.PROXY_LONG_TIMEOUT;
     }
 
     @Override

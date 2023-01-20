@@ -29,7 +29,7 @@ repositories {
 }
     
 dependencies {
-    implementation('website.magyar:mitm-java-proxy:2.1.24.112')
+    implementation('website.magyar:mitm-java-proxy:2.5.26.113')
 }    
 ```
 
@@ -75,7 +75,7 @@ HTTP Response Manipulation
 -------------------
 Just add a Response Interceptor to the proxy server, and you will get access to the responses.
 
-The key to manipulate responses is the Response Volatility attribute. 
+The key to manipulate responses is the **Response Volatility** attribute. 
 If a response is volatile, the proxy (or you) must work with the response a lot (call interceptor, extract, manipulate the response, compress, then release response towards the Client). This takes time.
 If a response is not volatile, then the proxy don't need to do such things. This of course a much faster method, so in case you don't need to manipulate the response, just leave responses as not volatile.
 Response volatility can be set in general via static method: `ProxyServer.setResponseVolatility(boolean)`

@@ -10,6 +10,7 @@ import website.magyar.mitm.proxy.ProxyServer;
 import website.magyar.mitm.proxy.ResponseInterceptor;
 import website.magyar.mitm.proxy.help.ClientServerBase;
 import website.magyar.mitm.proxy.help.ContentEncoding;
+import website.magyar.mitm.proxy.help.ProxyServerBase;
 import website.magyar.mitm.proxy.help.TestUtils;
 import website.magyar.mitm.proxy.http.MitmJavaProxyHttpResponse;
 import org.slf4j.Logger;
@@ -44,6 +45,11 @@ public class ResponseHeaderManipulationTest extends ClientServerBase {
         getProxyServer().addResponseInterceptor(testResponseInterceptor);
         ProxyServer.setResponseVolatile(true); //this is a must !!!
         request = new HttpGet(GET_REQUEST);
+    }
+
+    @Override
+    protected int getProxyTimeout() {
+        return ProxyServerBase.PROXY_LONG_TIMEOUT;
     }
 
     @Override
