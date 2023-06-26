@@ -7,6 +7,7 @@ import website.magyar.mitm.proxy.http.MitmJavaProxyHttpResponse;
  *
  * @author Tamas Kohegyi
  */
+@FunctionalInterface
 public interface ResponseInterceptor {
     void process(MitmJavaProxyHttpResponse response);
 }
