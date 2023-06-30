@@ -1,6 +1,7 @@
 package net.lightbody.bmp.proxy.http;
 
 import org.apache.http.HttpHost;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContexts;
@@ -54,7 +55,7 @@ public class TrustingSSLSocketFactory extends SSLConnectionSocketFactory {
                         .loadKeyMaterial(keyStore, keyStorePassword.toCharArray())
                         .loadTrustMaterial(null, (cert, authType) -> true) //trust strategy is here
                         .build(),
-                new AllowAllHostnameVerifier()
+                new NoopHostnameVerifier()
         );
 
         this.timeout = timeout;
