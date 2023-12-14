@@ -445,15 +445,7 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
 
         try {
             log.debug("CONNECT: {}", uri);
-            InetAddrPort addrPort;
-            // When logging, we'll attempt to send messages to hosts that don't exist
-            if (uri.toString().endsWith(".selenium.doesnotexist:443")) {
-                // so we have to do set the host to be localhost (you can't new up an IAP with a non-existent hostname)
-                addrPort = new InetAddrPort(443);
-            } else {
-                addrPort = new InetAddrPort(uri.toString());
-            }
-
+            InetAddrPort addrPort = new InetAddrPort(uri.toString());
             if (isForbidden(HttpMessage.__SSL_SCHEME, addrPort.getHost(), addrPort.getPort(), false)) {
                 sendForbid(request, response, uri);
             } else {
@@ -497,6 +489,9 @@ public class SeleniumProxyHandler extends AbstractHttpHandler {
                 }
                 request.setHandled(true);
             }
+        } catch (UnknownHostException e) {
+            log.debug("error during handleConnect - UnknownHostException", e);
+            response.sendError(HttpResponse.__400_Bad_Request, e.toString());
         } catch (Exception e) {
             log.debug("error during handleConnect", e);
             response.sendError(HttpResponse.__500_Internal_Server_Error, e.toString());

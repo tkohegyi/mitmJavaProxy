@@ -39,8 +39,8 @@ public class ThirdPartyCallsForDNSUsageOfProxyTest extends HttpClientBase {
     }
 
     @Test
-    public void testGoogleViaProxy() throws Exception {
-        HttpHost host = new HttpHost("www.google.com", 443, "https");
+    public void testAppleViaProxy() throws Exception {
+        HttpHost host = new HttpHost("www.apple.com", 443, "https");
         HttpGet request = new HttpGet(GET_REQUEST);
         try (CloseableHttpClient httpClient = getHttpClient()) {
             HttpResponse response = httpClient.execute(host, request); //request is here
@@ -63,6 +63,36 @@ public class ThirdPartyCallsForDNSUsageOfProxyTest extends HttpClientBase {
             String body = EntityUtils.toString(response.getEntity());
             EntityUtils.consume(response.getEntity());
             Assertions.assertEquals( 200, statusCode, "HTTP Response Status code is:" + statusCode);
+            logger.debug("Body length: {}, first few data:{}...", body.length(), body.substring(0,30));
+            Assertions.assertNull(getLastException());
+        }
+    }
+
+    @Test
+    public void testNoDnsHttpViaProxyGET() throws Exception {
+        HttpHost host = new HttpHost("no.dns.record.here", 80, "http");
+        HttpGet request = new HttpGet(GET_REQUEST + "tkohegyi/mitmJavaProxy/master/LICENSE.txt");
+        try (CloseableHttpClient httpClient = getHttpClient()) {
+            HttpResponse response = httpClient.execute(host, request); //request is here
+            int statusCode = response.getStatusLine().getStatusCode();
+            String body = EntityUtils.toString(response.getEntity());
+            EntityUtils.consume(response.getEntity());
+            Assertions.assertEquals( 400, statusCode, "HTTP Response Status code is:" + statusCode);
+            logger.debug("Body length: {}, first few data:{}...", body.length(), body.substring(0,30));
+            Assertions.assertNull(getLastException());
+        }
+    }
+
+    @Test
+    public void testNoDnsHttpSViaProxyGET() throws Exception {
+        HttpHost host = new HttpHost("no.dns.record.here", 443, "https");
+        HttpGet request = new HttpGet(GET_REQUEST + "tkohegyi/mitmJavaProxy/master/LICENSE.txt");
+        try (CloseableHttpClient httpClient = getHttpClient()) {
+            HttpResponse response = httpClient.execute(host, request); //request is here
+            int statusCode = response.getStatusLine().getStatusCode();
+            String body = EntityUtils.toString(response.getEntity());
+            EntityUtils.consume(response.getEntity());
+            Assertions.assertEquals( 400, statusCode, "HTTP Response Status code is:" + statusCode);
             logger.debug("Body length: {}, first few data:{}...", body.length(), body.substring(0,30));
             Assertions.assertNull(getLastException());
         }

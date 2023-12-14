@@ -78,8 +78,8 @@ public class BrowserMobProxyHandler extends SeleniumProxyHandler {
         String shortDesc = "PROXY: Bad Gateway";
         String longDesc = "The server was acting as a gateway or proxy and received an invalid response from the upstream server.";
         if (e instanceof UnknownHostException) {
-            status = HttpServletResponse.SC_NOT_FOUND;
-            shortDesc = "PROXY: Not Found";
+            status = HttpServletResponse.SC_BAD_REQUEST;
+            shortDesc = "PROXY: Unknown Host Exception";
             longDesc = "The requested resource could not be found but may be available again in the future. Subsequent requests by the client are permissible.";
         } else if (e instanceof ConnectException) {
             status = HttpServletResponse.SC_SERVICE_UNAVAILABLE;

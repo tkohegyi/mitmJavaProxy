@@ -37,7 +37,7 @@ ext.myBuildNumber='SNAPSHOT'
 if ( hasProperty('buildNumber') ) {
     myBuildNumber = "${project.ext.buildNumber}"
 }
-version = "$wilmaVersion" + ".27." + "${project.ext.myBuildNumber}"
+version = "$wilmaVersion" + ".28." + "${project.ext.myBuildNumber}"
 mainClassName = "website.magyar.mitm.standalone.StandaloneProxy"
 
 def isSnapshot = project.version.contains('SNAPSHOT')
