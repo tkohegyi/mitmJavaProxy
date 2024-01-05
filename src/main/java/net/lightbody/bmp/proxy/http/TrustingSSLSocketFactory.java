@@ -5,11 +5,14 @@ import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContexts;
+import org.bouncycastle.util.encoders.Base64Encoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.KeyManagementException;
@@ -22,17 +25,32 @@ import java.security.cert.CertificateException;
 public class TrustingSSLSocketFactory extends SSLConnectionSocketFactory {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(TrustingSSLSocketFactory.class);
+    private final static String DEFAULT_PASSWORD = "password";
+    private final static String DEFAULT_KEYSTORE_PATH = "/sslSupport/cybervillainsCA.jks";
     private static KeyStore keyStore;
     private static String keyStorePassword;
 
     static {
         try {
-//            keyStorePassword = "vvilma";
-//            String keyStorePath = "/sslSupport/mitmProxy_keystore.jks";
-            keyStorePassword = "password";
-            String keyStorePath = "/sslSupport/cybervillainsCA.jks";
-//            keyStorePassword = System.getProperty("javax.net.ssl.keyStorePassword");
-//            String keyStorePath = System.getProperty("javax.net.ssl.keyStore");
+        	
+/* **** kept original hard-coded values here in case they are needed by original author for convenience
+ *         	
+            keyStorePassword = "vvilma";
+            String keyStorePath = "/sslSupport/mitmProxy_keystore.jks";
+            keyStorePassword = System.getProperty("javax.net.ssl.keyStorePassword");
+            String keyStorePath = System.getProperty("javax.net.ssl.keyStore");
+       	    String keyStorePath = "/sslSupport/cybervillainsCA.jks";
+*/       	            	
+        	
+        	// obtains the obfuscated password from system property, but has a default if the property is not present
+        	// now only the encoded value is stored as an attribute, somewhat preventing exposure in case of memory dump
+            keyStorePassword = System.getProperty("javax.net.ssl.keyStorePassword", DEFAULT_PASSWORD);
+            
+            
+            //obtains the keyStorePath from system property, but has a default if property is not present
+            String keyStorePath = System.getProperty("javax.net.ssl.keyStorePath", DEFAULT_KEYSTORE_PATH);;
+
+
             if (keyStorePath != null) {
                 InputStream fis = TrustingSSLSocketFactory.class.getResourceAsStream(keyStorePath);
                 keyStore = KeyStore.getInstance("jks");
@@ -52,7 +70,8 @@ public class TrustingSSLSocketFactory extends SSLConnectionSocketFactory {
             UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException {
         super(
                 SSLContexts.custom()
-                        .loadKeyMaterial(keyStore, keyStorePassword.toCharArray())
+                        //.loadKeyMaterial(keyStore, keyStorePassword.toCharArray())
+                		.loadKeyMaterial(keyStore, decodeKeyStorePassword(keyStorePassword).toCharArray())
                         .loadTrustMaterial(null, (cert, authType) -> true) //trust strategy is here
                         .build(),
                 new NoopHostnameVerifier()
@@ -114,6 +133,30 @@ public class TrustingSSLSocketFactory extends SSLConnectionSocketFactory {
         } catch (Exception e) {
             //this is fine not to do anything here
         }
+    }
+    
+    private static final String decodeKeyStorePassword(final String encodedKeyStorePassword) {
+        // this requires that passwords set as a system property are Base64 encoded 
+        // maybe a little better than having them in plain view
+        // might want to upgrade this to use better encryption
+    	
+        
+    	String passwordToReturn = encodedKeyStorePassword;
+    	
+    	//if it is not the default then decode it
+        if(! DEFAULT_PASSWORD.equals(encodedKeyStorePassword)) {
+        	Base64Encoder b64 = new Base64Encoder();
+        	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        	try {
+        		b64.decode(encodedKeyStorePassword, baos);
+        	}
+        	catch(IOException io) {
+        		throw new RuntimeException("Issue decoding keyStorePassword.  Please check that the value is set and properly encoded.", io);
+        	}
+        	passwordToReturn = new String(baos.toByteArray());
+        }
+        
+        return passwordToReturn;
     }
 
 }
