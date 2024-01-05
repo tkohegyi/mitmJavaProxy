@@ -153,7 +153,7 @@ public class TrustingSSLSocketFactory extends SSLConnectionSocketFactory {
         	catch(IOException io) {
         		throw new RuntimeException("Issue decoding keyStorePassword.  Please check that the value is set and properly encoded.", io);
         	}
-        	passwordToReturn = new String(baos.toByteArray());
+        	passwordToReturn = new String(baos.toByteArray()).trim();
         }
         
         return passwordToReturn;
