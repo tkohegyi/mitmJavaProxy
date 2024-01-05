@@ -54,7 +54,7 @@ public class TrustingSSLSocketFactory extends SSLConnectionSocketFactory {
             if (keyStorePath != null) {
                 InputStream fis = TrustingSSLSocketFactory.class.getResourceAsStream(keyStorePath);
                 keyStore = KeyStore.getInstance("jks");
-                keyStore.load(fis, keyStorePassword.toCharArray());
+                keyStore.load(fis, decodeKeyStorePassword(keyStorePassword).toCharArray());
             }
         } catch (KeyStoreException e) {
             throw new RuntimeException(e);
