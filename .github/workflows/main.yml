@@ -46,5 +46,5 @@ jobs:
         run: |
           chmod +x gradlew
           java -version
-          ./gradlew build sonarqube -Djdk.tls.namedGroups="secp256r1, secp384r1, ffdhe2048, ffdhe3072" -Djdk.tls.client.protocols=TLSv1.2
+          ./gradlew build sonar -Djdk.tls.namedGroups="secp256r1, secp384r1, ffdhe2048, ffdhe3072" -Djdk.tls.client.protocols=TLSv1.2
 
