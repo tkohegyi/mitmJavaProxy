@@ -8,7 +8,7 @@ buildscript {
 }
 
 plugins {
-    id "org.sonarqube" version "3.2.0"
+    id "org.sonarqube" version "4.4.1.3373"
 }
 
 apply plugin: 'idea'
@@ -79,15 +79,15 @@ jacocoTestReport {
     }
 }
 
-sonarqube {
+sonar {
     properties {
+        property "sonar.gradle.skipCompile", true
         property "sonar.projectKey", "tkohegyi_mitmJavaProxy"
         property "sonar.organization", "tkohegyi"
         property "sonar.host.url", "https://sonarcloud.io"
         property "sonar.java.checkstyle.reportPaths", "build/reports/checkstyle/main.xml"
     }
 }
-//project.tasks["sonarqube"].onlyIf { project.hasProperty('systemProp.sonar.login') }
 
 test {
     useJUnitPlatform()
