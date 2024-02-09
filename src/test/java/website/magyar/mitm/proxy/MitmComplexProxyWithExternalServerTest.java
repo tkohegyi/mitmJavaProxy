@@ -124,4 +124,23 @@ public class MitmComplexProxyWithExternalServerTest extends AbstractComplexProxy
         assertEquals(requestCount.get(), responseCount.get());
     }
 
+    @Test
+    public void testSimpleRemoteGetRequestOverHTTPSThroughProxy_ReqRes() throws Exception {
+        //check if external test server is available
+        String CALL = "/api/users?page/2";
+        HttpHost externalHost = new HttpHost("reqres.in", 443, "https");
+        try {
+            httpGetWithApacheClient(externalHost, CALL, false, false, ContentEncoding.ANY);
+        } catch (Exception e) {
+            externalHost = null;
+        }
+        Assumptions.assumeTrue(externalHost != null);
+        //do test if available
+        ResponseInfo proxiedResponse = httpGetWithApacheClient(externalHost, CALL, true, false, ContentEncoding.ANY);
+        assertEquals(200, proxiedResponse.getStatusCode());
+        assertTrue(requestCount.get() > 0);
+        assertTrue(responseCount.get() > 0);
+        assertEquals(requestCount.get(), responseCount.get());
+    }
+
 }
