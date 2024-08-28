@@ -1,7 +1,10 @@
 package net.lightbody.bmp.proxy.selenium;
 
-import org.bouncycastle.asn1.x509.BasicConstraints;
-import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.asn1.x500.RDN;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
+import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
@@ -22,9 +25,7 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Methods for creating certificates.
@@ -210,13 +211,14 @@ public class CertificateCreator {
             final String subject)
             throws InvalidKeyException, CertificateException, CertIOException, OperatorCreationException {
 
+        X500Principal x500Principal = new X500Principal(subject);
         X509v3CertificateBuilder x509v3CertificateBuilder = new JcaX509v3CertificateBuilder(
                 caCert.getSubjectX500Principal(),
                 // This is not a secure serial number generator, (duh!) but it's good enough for our purposes.
                 new BigInteger(Long.toString(System.currentTimeMillis())),
                 new Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 30 * 12),
                 new Date(System.currentTimeMillis() + 30L * 60 * 60 * 24 * 30 * 12),
-                new X500Principal(subject),
+                x500Principal,
                 newPubKey
         );
         x509v3CertificateBuilder.addExtension(
@@ -227,6 +229,10 @@ public class CertificateCreator {
                 X509Extensions.AuthorityKeyIdentifier,
                 false,
                 new AuthorityKeyIdentifierStructure(caCert.getPublicKey()));
+
+        GeneralNames subjectAltName = new GeneralNames(new GeneralName(GeneralName.dNSName, getCn(x500Principal)));
+        x509v3CertificateBuilder.addExtension(X509Extensions.SubjectAlternativeName, false, subjectAltName);
+
         /*
                 //TODO
 //		x509v3CertificateBuilder.addExtension(
@@ -266,6 +272,17 @@ public class CertificateCreator {
         X509Certificate newCert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
         //newCert.verify(newPubKey, "BC"); //- seems this throws ex always.... ????
         return newCert;
+    }
+
+    private static String getCn(X500Principal x500Principal) {
+        X500Name x500Name = new X500Name(x500Principal.getName());
+        RDN[] rdns = x500Name.getRDNs(BCStyle.CN);
+        List<String> names = new ArrayList<>();
+        for (RDN rdn : rdns) {
+            String name = IETFUtils.valueToString(rdn.getFirst().getValue());
+            names.add(name);
+        }
+        return names.getFirst();
     }
 
 }
