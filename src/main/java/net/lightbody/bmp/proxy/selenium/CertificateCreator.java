@@ -1,16 +1,26 @@
 package net.lightbody.bmp.proxy.selenium;
 
+import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x509.BasicConstraints;
-import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.asn1.x509.CRLDistPoint;
+import org.bouncycastle.asn1.x509.DistributionPoint;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.GeneralNames;
+import org.bouncycastle.asn1.x509.KeyPurposeId;
+import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.cert.CertIOException;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.x509.extension.AuthorityKeyIdentifierStructure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.x500.X500Principal;
 import java.math.BigInteger;
@@ -22,8 +32,10 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -38,6 +50,8 @@ import java.util.Set;
  * @author Brad Hill
  */
 public class CertificateCreator {
+    private static final Logger log = LoggerFactory.getLogger(CertificateCreator.class);
+
 
     /**
      * The default key generation algorithm for this package is RSA.
@@ -157,19 +171,15 @@ public class CertificateCreator {
                 originalCert.getSubjectX500Principal(),
                 newPubKey
         );
+        JcaX509ExtensionUtils jcaX509ExtensionUtils = new JcaX509ExtensionUtils();
         x509v3CertificateBuilder.addExtension(
-                X509Extensions.AuthorityKeyIdentifier,
-                false,
-                new AuthorityKeyIdentifierStructure(caCert.getPublicKey()));
+                Extension.authorityKeyIdentifier,
+                false, jcaX509ExtensionUtils.createAuthorityKeyIdentifier(caCert.getPublicKey()));
 
-        /* TODO
-		x509v3CertificateBuilder.addExtension(
-				X509Extensions.SubjectKeyIdentifier,
-				false,
-				new SubjectKeyIdentifierStructure(newPubKey));
-        */
+        x509v3CertificateBuilder.addExtension(
+                Extension.subjectKeyIdentifier,
+                false, jcaX509ExtensionUtils.createSubjectKeyIdentifier(caCert.getPublicKey()));
 
-        //ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(caPrivateKey);
         ContentSigner signer = new JcaContentSignerBuilder(CertificateCreator.SIGN_ALGO).build(caPrivateKey); // needs to be the same as the signing cert, not the copied cert
         X509CertificateHolder certHolder = x509v3CertificateBuilder.build(signer);
         X509Certificate cert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);
@@ -207,8 +217,9 @@ public class CertificateCreator {
             final PublicKey newPubKey,
             final X509Certificate caCert,
             final PrivateKey caPrivateKey,
-            final String subject)
-            throws InvalidKeyException, CertificateException, CertIOException, OperatorCreationException {
+            final String subject,
+            final String hostName)
+            throws CertificateException, CertIOException, OperatorCreationException, NoSuchAlgorithmException {
 
         X509v3CertificateBuilder x509v3CertificateBuilder = new JcaX509v3CertificateBuilder(
                 caCert.getSubjectX500Principal(),
@@ -219,33 +230,41 @@ public class CertificateCreator {
                 new X500Principal(subject),
                 newPubKey
         );
+
         x509v3CertificateBuilder.addExtension(
-                X509Extensions.BasicConstraints,
+                Extension.basicConstraints,
                 true,
                 new BasicConstraints(false));
+
+        JcaX509ExtensionUtils jcaX509ExtensionUtils = new JcaX509ExtensionUtils();
+
         x509v3CertificateBuilder.addExtension(
-                X509Extensions.AuthorityKeyIdentifier,
+                Extension.authorityKeyIdentifier,
+                false, jcaX509ExtensionUtils.createAuthorityKeyIdentifier(caCert.getPublicKey()));
+
+        KeyUsage keyUsage = new KeyUsage(KeyUsage.keyCertSign | KeyUsage.digitalSignature | KeyUsage.keyEncipherment);
+        x509v3CertificateBuilder.addExtension(Extension.keyUsage, false, keyUsage);
+
+        x509v3CertificateBuilder.addExtension(
+                Extension.subjectAlternativeName,
                 false,
-                new AuthorityKeyIdentifierStructure(caCert.getPublicKey()));
-        /*
-                //TODO
-//		x509v3CertificateBuilder.addExtension(
-//				X509Extensions.SubjectKeyIdentifier,
-//				false,
-//				new SubjectKeyIdentifierStructure(newPubKey));
+                new GeneralNames(new GeneralName(GeneralName.dNSName, hostName)));
 
-        //TODO
-//		DEREncodableVector typicalSSLServerExtendedKeyUsages = new DEREncodableVector();
+        x509v3CertificateBuilder.addExtension(
+                Extension.subjectKeyIdentifier,
+                false,
+                jcaX509ExtensionUtils.createSubjectKeyIdentifier(caCert.getPublicKey()));
 
-//		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.serverAuth));
-//		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.clientAuth));
-//		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.netscapeServerGatedCrypto));
-//		typicalSSLServerExtendedKeyUsages.add(new DERObjectIdentifier(ExtendedKeyUsageConstants.msServerGatedCrypto));
+        ASN1EncodableVector typicalSSLServerExtendedKeyUsages = new ASN1EncodableVector();
 
-//		x509v3CertificateBuilder.addExtension(
-//				X509Extensions.ExtendedKeyUsage,
-//				false,
-//				new DERSequence(typicalSSLServerExtendedKeyUsages));
+		typicalSSLServerExtendedKeyUsages.add(KeyPurposeId.id_kp_serverAuth);
+		typicalSSLServerExtendedKeyUsages.add(KeyPurposeId.id_kp_clientAuth);
+		typicalSSLServerExtendedKeyUsages.add(KeyPurposeId.id_kp_msSGC);
+		typicalSSLServerExtendedKeyUsages.add(KeyPurposeId.id_kp_nsSGC);
+
+		x509v3CertificateBuilder.addExtension(Extension.extendedKeyUsage,
+				false,
+				new DERSequence(typicalSSLServerExtendedKeyUsages));
 
 //  Disabled by default.  Left in comments in case this is desired.
 //
@@ -255,12 +274,11 @@ public class CertificateCreator {
 //				new AuthorityInformationAccess(new DERObjectIdentifier(OID_ID_AD_CAISSUERS),
 //						new GeneralName(GeneralName.uniformResourceIdentifier, "http://" + subject + "/aia")));
 
-//		x509v3CertificateBuilder.addExtension(
-//				X509Extensions.CRLDistributionPoints,
-//				false,
-//				new CRLDistPoint(new DistributionPoint[] {}));
-         */
-//        ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSAEncryption").build(caPrivateKey);
+		x509v3CertificateBuilder.addExtension(
+				Extension.cRLDistributionPoints,
+				false,
+				new CRLDistPoint(new DistributionPoint[] {}));
+
         ContentSigner signer = new JcaContentSignerBuilder(CertificateCreator.SIGN_ALGO).build(caPrivateKey);
         X509CertificateHolder certHolder = x509v3CertificateBuilder.build(signer);
         X509Certificate newCert = new JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder);

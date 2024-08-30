@@ -457,7 +457,7 @@ public class KeyStoreManager {
             X509Certificate newCert = CertificateCreator.generateStdSSLServerCertificate(kp.getPublic(),
                     getSigningCert(),
                     getSigningPrivateKey(),
-                    subject);
+                    subject, hostname);
 
             addCertAndPrivateKey(hostname, newCert, kp.getPrivate());
 
@@ -478,7 +478,8 @@ public class KeyStoreManager {
 
     private String getSubjectForHostname(String hostname) {
         //String subject = "C=USA, ST=WA, L=Seattle, O=Cybervillains, OU=CertificationAutority, CN=" + hostname + ", EmailAddress=evilRoot@cybervillains.com";
-        String subject = "CN=" + hostname + ", OU=Test, O=CyberVillainsCA, L=Seattle, S=Washington, C=US";
+        //String subject = "CN=" + hostname + ", OU=Test, O=CyberVillainsCA, L=Seattle, S=Washington, C=US";
+        String subject = "CN=" + hostname + ", OU=CyberVillians Certification Authority,O=CyberVillians.com,C=US";
         return subject;
     }
 
