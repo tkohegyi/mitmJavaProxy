@@ -12,6 +12,7 @@ public final class StandaloneProxy {
      */
     public static void main(final String[] args) {
         arguments = args; //NOSONAR
-        new Bootstrap().bootstrap(args);
+        //new Bootstrap().bootstrap(args);
+        new Bootstrap().bootstrapFixed();
     }
 }

@@ -27,7 +27,7 @@ public class PropertyLoader {
                 properties.load(inputStream);
                 logger.debug("Properties loaded from external configuration.");
             } catch (IOException e) {
-                throw new PropertiesNotAvailableException("Configuration file " + configFile + " cannot be loaded.");
+                throw new PropertiesNotAvailableException("Configuration file " + configFile + " cannot be loaded.", e);
             }
         }
         return properties;

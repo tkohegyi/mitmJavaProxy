@@ -12,6 +12,7 @@ import website.magyar.mitm.standalone.helper.PropertiesNotAvailableException;
 
 import java.util.Properties;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.BDDMockito.given;
@@ -53,6 +54,16 @@ public class BootstrapTest {
         //THEN
         assertNotNull(proxyServer);
         assertTrue(proxyServer.getPort() > 0);
+    }
+
+    @Test
+    public void bootstrapWithHardcodedParameters() {
+        //GIVEN
+        //WHEN
+        ProxyServer proxyServer = underTest.bootstrapFixed();
+        //THEN
+        assertNotNull(proxyServer);
+        assertEquals(9092, proxyServer.getPort());
     }
 
 }

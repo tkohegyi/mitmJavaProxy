@@ -48,6 +48,20 @@ public class Bootstrap {
         return proxyServer;
     }
 
+    /**
+     * Starts the application with hardcoded parameters.
+     *
+     */
+    public ProxyServer bootstrapFixed() {
+        ProxyServer proxyServer = null;
+        try {
+            proxyServer = startProxy(9092, 30000, false);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return proxyServer;
+    }
+
     private Boolean getKeepSslAlive() {
         return Boolean.valueOf(properties.getProperty("proxy.keepSslAlive"));
     }
