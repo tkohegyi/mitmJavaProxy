@@ -19,8 +19,6 @@ import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.security.auth.x500.X500Principal;
 import java.math.BigInteger;
@@ -32,10 +30,8 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -50,13 +46,7 @@ import java.util.Set;
  * @author Brad Hill
  */
 public class CertificateCreator {
-    private static final Logger log = LoggerFactory.getLogger(CertificateCreator.class);
 
-
-    /**
-     * The default key generation algorithm for this package is RSA.
-     */
-    public static final String KEYGEN_ALGO = "RSA";
     /**
      * The default sign algorithm for this package is SHA1 with RSA.
      */
