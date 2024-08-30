@@ -237,8 +237,10 @@ public class CertificateCreator {
                 false,
                 new AuthorityKeyIdentifierStructure(caCert.getPublicKey()));
 
-        GeneralNames subjectAltName = new GeneralNames(new GeneralName(GeneralName.dNSName, getCn(x500Principal)));
-        x509v3CertificateBuilder.addExtension(X509Extensions.SubjectAlternativeName, false, subjectAltName);
+        x509v3CertificateBuilder.addExtension(
+                X509Extensions.SubjectAlternativeName,
+                false,
+                new GeneralNames(new GeneralName(GeneralName.dNSName, getCn(x500Principal))));
 
         /*
                 //TODO
@@ -289,7 +291,7 @@ public class CertificateCreator {
             String name = IETFUtils.valueToString(rdn.getFirst().getValue());
             names.add(name);
         }
-        return names.getFirst();
+        return names.get(0);
     }
 
 }
